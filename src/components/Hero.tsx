@@ -1,8 +1,21 @@
 import { Button } from "./ui/button";
 import { ArrowRight } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
+import { useNavigate } from "react-router-dom";
 import heroImage from "@/assets/hero-dashboard.jpg";
 
 const Hero = () => {
+  const { user } = useAuth();
+  const navigate = useNavigate();
+
+  const handleGetStarted = () => {
+    if (user) {
+      navigate('/dashboard');
+    } else {
+      navigate('/auth');
+    }
+  };
+
   return (
     <section className="relative overflow-hidden bg-hero-gradient">
       <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-accent/10" />
@@ -23,8 +36,9 @@ const Hero = () => {
               <Button 
                 size="lg" 
                 className="bg-white text-primary hover:bg-white/90 shadow-medium text-lg px-8"
+                onClick={handleGetStarted}
               >
-                Start Free Trial
+                {user ? 'Go to Dashboard' : 'Start Free Trial'}
                 <ArrowRight className="ml-2 h-5 w-5" />
               </Button>
               <Button 

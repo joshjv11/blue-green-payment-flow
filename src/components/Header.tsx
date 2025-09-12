@@ -1,6 +1,19 @@
 import { Button } from "./ui/button";
+import { useAuth } from "@/hooks/useAuth";
+import { useNavigate } from "react-router-dom";
 
 const Header = () => {
+  const { user } = useAuth();
+  const navigate = useNavigate();
+
+  const handleGetStarted = () => {
+    if (user) {
+      navigate('/dashboard');
+    } else {
+      navigate('/auth');
+    }
+  };
+
   return (
     <header className="absolute top-0 w-full z-50 bg-transparent">
       <nav className="container mx-auto px-4 py-6">
@@ -25,17 +38,30 @@ const Header = () => {
           </div>
           
           <div className="flex items-center space-x-4">
-            <Button 
-              variant="ghost" 
-              className="text-white hover:bg-white/10"
-            >
-              Sign In
-            </Button>
-            <Button 
-              className="bg-white text-primary hover:bg-white/90"
-            >
-              Get Started
-            </Button>
+            {user ? (
+              <Button 
+                onClick={() => navigate('/dashboard')}
+                className="bg-white text-primary hover:bg-white/90"
+              >
+                Dashboard
+              </Button>
+            ) : (
+              <>
+                <Button 
+                  variant="ghost" 
+                  className="text-white hover:bg-white/10"
+                  onClick={() => navigate('/auth')}
+                >
+                  Sign In
+                </Button>
+                <Button 
+                  className="bg-white text-primary hover:bg-white/90"
+                  onClick={handleGetStarted}
+                >
+                  Get Started
+                </Button>
+              </>
+            )}
           </div>
         </div>
       </nav>

@@ -1,7 +1,20 @@
 import { Button } from "./ui/button";
 import { ArrowRight, Check } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
+import { useNavigate } from "react-router-dom";
 
 const CallToAction = () => {
+  const { user } = useAuth();
+  const navigate = useNavigate();
+
+  const handleGetStarted = () => {
+    if (user) {
+      navigate('/dashboard');
+    } else {
+      navigate('/auth');
+    }
+  };
+
   const benefits = [
     "14-day free trial",
     "No credit card required",
@@ -38,8 +51,9 @@ const CallToAction = () => {
             <Button 
               size="lg" 
               className="bg-white text-primary hover:bg-white/90 shadow-medium text-lg px-8"
+              onClick={handleGetStarted}
             >
-              Get Started Free
+              {user ? 'Go to Dashboard' : 'Get Started Free'}
               <ArrowRight className="ml-2 h-5 w-5" />
             </Button>
             <Button 
