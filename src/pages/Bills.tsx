@@ -10,8 +10,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/hooks/useAuth';
-import { supabase } from '@/lib/supabase';
+import { supabase, isSupabaseConfigured } from '@/lib/supabase';
 import { useToast } from '@/hooks/use-toast';
+import { useLocalStorage } from '@/hooks/useLocalStorage';
 import { Plus, Edit, Trash2, ArrowUpDown, LogOut, Calendar, DollarSign, AlertCircle } from 'lucide-react';
 import { format, parseISO, differenceInDays, isAfter, isBefore, addDays } from 'date-fns';
 
@@ -69,6 +70,7 @@ const Bills = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [sortField, setSortField] = useState<keyof Bill>('due_date');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
+  const [localBills, setLocalBills] = useLocalStorage<Bill[]>(`bills_${user?.id}`, []);
 
   useEffect(() => {
     if (user) {
@@ -79,41 +81,66 @@ const Bills = () => {
   const fetchBills = async () => {
     try {
       setLoading(true);
-      const { data, error } = await supabase
-        .from('bills')
-        .select('*')
-        .eq('user_id', user!.id)
-        .order('due_date', { ascending: true });
 
-      if (error) throw error;
+      if (isSupabaseConfigured && supabase) {
+        const { data, error } = await supabase
+          .from('bills')
+          .select('*')
+          .eq('user_id', user!.id)
+          .order('due_date', { ascending: true });
 
-      // Auto-update overdue bills
-      const updatedBills = data.map(bill => {
-        const today = new Date();
-        const dueDate = parseISO(bill.due_date);
+        if (error) throw error;
+
+        // Auto-update overdue bills
+        const updatedBills = data.map(bill => {
+          const today = new Date();
+          const dueDate = parseISO(bill.due_date);
+          
+          if (bill.status === 'unpaid' && isBefore(dueDate, today)) {
+            return { ...bill, status: 'overdue' as const };
+          }
+          return bill;
+        });
+
+        setBills(updatedBills);
         
-        if (bill.status === 'unpaid' && isBefore(dueDate, today)) {
-          return { ...bill, status: 'overdue' as const };
-        }
-        return bill;
-      });
-
-      setBills(updatedBills);
-      
-      // Update overdue bills in database
-      const overdueBills = updatedBills.filter(bill => 
-        bill.status === 'overdue' && data.find(b => b.id === bill.id)?.status !== 'overdue'
-      );
-      
-      if (overdueBills.length > 0) {
-        await Promise.all(
-          overdueBills.map(bill =>
-            supabase
-              .from('bills')
-              .update({ status: 'overdue' })
-              .eq('id', bill.id)
-          )
+        // Update overdue bills in database
+        const overdueBills = updatedBills.filter(bill => 
+          bill.status === 'overdue' && data.find(b => b.id === bill.id)?.status !== 'overdue'
         );
+        
+        if (overdueBills.length > 0) {
+          await Promise.all(
+            overdueBills.map(bill =>
+              supabase
+                .from('bills')
+                .update({ status: 'overdue' })
+                .eq('id', bill.id)
+            )
+          );
+        }
+      } else {
+        // localStorage mode
+        const updatedBills = localBills.map(bill => {
+          const today = new Date();
+          const dueDate = parseISO(bill.due_date);
+          
+          if (bill.status === 'unpaid' && isBefore(dueDate, today)) {
+            return { ...bill, status: 'overdue' as const };
+          }
+          return bill;
+        });
+
+        setBills(updatedBills);
+        
+        // Update overdue bills in localStorage
+        const hasOverdueChanges = updatedBills.some((bill, index) => 
+          bill.status !== localBills[index]?.status
+        );
+        
+        if (hasOverdueChanges) {
+          setLocalBills(updatedBills);
+        }
       }
     } catch (error: any) {
       toast({
@@ -140,6 +167,7 @@ const Bills = () => {
 
     try {
       const billData = {
+        id: editingBill ? editingBill.id : crypto.randomUUID(),
         user_id: user!.id,
         name: formData.name,
         amount: parseFloat(formData.amount),
@@ -148,30 +176,40 @@ const Bills = () => {
         recurring: formData.recurring,
         status: formData.status,
         notes: formData.notes || null,
+        created_at: editingBill ? editingBill.created_at : new Date().toISOString(),
+        updated_at: new Date().toISOString(),
       };
 
-      if (editingBill) {
-        const { error } = await supabase
-          .from('bills')
-          .update({ ...billData, updated_at: new Date().toISOString() })
-          .eq('id', editingBill.id);
+      if (isSupabaseConfigured && supabase) {
+        if (editingBill) {
+          const { error } = await supabase
+            .from('bills')
+            .update({ ...billData, updated_at: new Date().toISOString() })
+            .eq('id', editingBill.id);
 
-        if (error) throw error;
+          if (error) throw error;
+        } else {
+          const { error } = await supabase
+            .from('bills')
+            .insert([billData]);
 
-        toast({
-          title: "Bill updated successfully!",
-        });
+          if (error) throw error;
+        }
       } else {
-        const { error } = await supabase
-          .from('bills')
-          .insert([billData]);
-
-        if (error) throw error;
-
-        toast({
-          title: "Bill added successfully!",
-        });
+        // localStorage mode
+        if (editingBill) {
+          const updatedBills = localBills.map(bill =>
+            bill.id === editingBill.id ? billData : bill
+          );
+          setLocalBills(updatedBills);
+        } else {
+          setLocalBills([...localBills, billData]);
+        }
       }
+
+      toast({
+        title: editingBill ? "Bill updated successfully!" : "Bill added successfully!",
+      });
 
       setFormData(initialFormData);
       setEditingBill(null);
@@ -204,12 +242,18 @@ const Bills = () => {
     if (!confirm('Are you sure you want to delete this bill?')) return;
 
     try {
-      const { error } = await supabase
-        .from('bills')
-        .delete()
-        .eq('id', billId);
+      if (isSupabaseConfigured && supabase) {
+        const { error } = await supabase
+          .from('bills')
+          .delete()
+          .eq('id', billId);
 
-      if (error) throw error;
+        if (error) throw error;
+      } else {
+        // localStorage mode
+        const updatedBills = localBills.filter(bill => bill.id !== billId);
+        setLocalBills(updatedBills);
+      }
 
       toast({
         title: "Bill deleted successfully!",
@@ -228,15 +272,23 @@ const Bills = () => {
     const newStatus = bill.status === 'paid' ? 'unpaid' : 'paid';
     
     try {
-      const { error } = await supabase
-        .from('bills')
-        .update({ 
-          status: newStatus,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', bill.id);
+      if (isSupabaseConfigured && supabase) {
+        const { error } = await supabase
+          .from('bills')
+          .update({ 
+            status: newStatus,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', bill.id);
 
-      if (error) throw error;
+        if (error) throw error;
+      } else {
+        // localStorage mode
+        const updatedBills = localBills.map(b =>
+          b.id === bill.id ? { ...b, status: newStatus as 'unpaid' | 'paid' | 'overdue', updated_at: new Date().toISOString() } : b
+        );
+        setLocalBills(updatedBills);
+      }
 
       toast({
         title: `Bill marked as ${newStatus}!`,

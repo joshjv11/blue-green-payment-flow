@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useAuth } from '@/hooks/useAuth';
-import { supabase } from '@/lib/supabase';
+import { supabase, isSupabaseConfigured } from '@/lib/supabase';
 import { LogOut, User, Building, Mail, FileText, ArrowRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
@@ -25,17 +25,30 @@ const Dashboard = () => {
 
   const fetchProfile = async () => {
     try {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', user!.id)
-        .single();
+      if (isSupabaseConfigured && supabase) {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', user!.id)
+          .single();
 
-      if (error) throw error;
+        if (error) throw error;
 
-      setProfile(data);
-      setFullName(data.full_name || '');
-      setCompany(data.company || '');
+        setProfile(data);
+        setFullName(data.full_name || '');
+        setCompany(data.company || '');
+      } else {
+        // localStorage mode - get user data from the user object
+        const userData = {
+          id: user!.id,
+          email: user!.email,
+          full_name: (user as any).full_name || null,
+          company: (user as any).company || null,
+        };
+        setProfile(userData);
+        setFullName(userData.full_name || '');
+        setCompany(userData.company || '');
+      }
     } catch (error) {
       console.error('Error fetching profile:', error);
     }

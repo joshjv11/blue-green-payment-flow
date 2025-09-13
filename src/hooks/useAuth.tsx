@@ -1,7 +1,8 @@
 import { createContext, useContext, useEffect, useState } from 'react';
 import { User, Session } from '@supabase/supabase-js';
-import { supabase } from '@/lib/supabase';
+import { supabase, isSupabaseConfigured } from '@/lib/supabase';
 import { useToast } from '@/hooks/use-toast';
+import { useLocalStorage } from '@/hooks/useLocalStorage';
 
 interface AuthContextType {
   user: User | null;
@@ -15,58 +16,100 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+// Mock user for localStorage mode
+interface MockUser {
+  id: string;
+  email: string;
+  full_name?: string;
+  company?: string;
+}
+
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
+  const [localUser, setLocalUser] = useLocalStorage<MockUser | null>('auth_user', null);
+  const [localUsers] = useLocalStorage<MockUser[]>('users', []);
 
   useEffect(() => {
-    // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      setLoading(false);
-    });
-
-    // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
+    if (isSupabaseConfigured && supabase) {
+      // Get initial session
+      supabase.auth.getSession().then(({ data: { session } }) => {
         setSession(session);
         setUser(session?.user ?? null);
         setLoading(false);
-      }
-    );
+      });
 
-    return () => subscription.unsubscribe();
-  }, []);
+      // Listen for auth changes
+      const { data: { subscription } } = supabase.auth.onAuthStateChange(
+        async (event, session) => {
+          setSession(session);
+          setUser(session?.user ?? null);
+          setLoading(false);
+        }
+      );
+
+      return () => subscription.unsubscribe();
+    } else {
+      // Use localStorage mode
+      if (localUser) {
+        setUser(localUser as any);
+      }
+      setLoading(false);
+    }
+  }, [localUser]);
 
   const signUp = async (email: string, password: string, fullName?: string, company?: string) => {
     try {
       setLoading(true);
-      const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
-      });
 
-      if (error) throw error;
+      if (isSupabaseConfigured && supabase) {
+        const { data, error } = await supabase.auth.signUp({
+          email,
+          password,
+        });
 
-      if (data.user) {
-        // Create profile
-        const { error: profileError } = await supabase
-          .from('profiles')
-          .insert({
-            id: data.user.id,
-            email: data.user.email!,
-            full_name: fullName || null,
-            company: company || null,
+        if (error) throw error;
+
+        if (data.user) {
+          // Create profile
+          const { error: profileError } = await supabase
+            .from('profiles')
+            .insert({
+              id: data.user.id,
+              email: data.user.email!,
+              full_name: fullName || null,
+              company: company || null,
+            });
+
+          if (profileError) throw profileError;
+
+          toast({
+            title: "Account created successfully!",
+            description: "Please check your email to verify your account.",
           });
+        }
+      } else {
+        // localStorage mode
+        const existingUser = localUsers.find(u => u.email === email);
+        if (existingUser) {
+          throw new Error('User already exists');
+        }
 
-        if (profileError) throw profileError;
+        const newUser: MockUser = {
+          id: crypto.randomUUID(),
+          email,
+          full_name: fullName,
+          company,
+        };
+
+        setLocalUser(newUser);
+        setUser(newUser as any);
 
         toast({
           title: "Account created successfully!",
-          description: "Please check your email to verify your account.",
+          description: "You're now logged in with local storage.",
         });
       }
     } catch (error: any) {
@@ -84,17 +127,34 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const signIn = async (email: string, password: string) => {
     try {
       setLoading(true);
-      const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
 
-      if (error) throw error;
+      if (isSupabaseConfigured && supabase) {
+        const { error } = await supabase.auth.signInWithPassword({
+          email,
+          password,
+        });
 
-      toast({
-        title: "Welcome back!",
-        description: "You've successfully signed in.",
-      });
+        if (error) throw error;
+
+        toast({
+          title: "Welcome back!",
+          description: "You've successfully signed in.",
+        });
+      } else {
+        // localStorage mode - simplified login (just check if user exists)
+        const existingUser = localUsers.find(u => u.email === email);
+        if (!existingUser) {
+          throw new Error('User not found. Please sign up first.');
+        }
+
+        setLocalUser(existingUser);
+        setUser(existingUser as any);
+
+        toast({
+          title: "Welcome back!",
+          description: "You've successfully signed in.",
+        });
+      }
     } catch (error: any) {
       toast({
         title: "Error signing in",
@@ -109,8 +169,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const signOut = async () => {
     try {
-      const { error } = await supabase.auth.signOut();
-      if (error) throw error;
+      if (isSupabaseConfigured && supabase) {
+        const { error } = await supabase.auth.signOut();
+        if (error) throw error;
+      } else {
+        // localStorage mode
+        setLocalUser(null);
+        setUser(null);
+      }
 
       toast({
         title: "Signed out successfully",
@@ -129,16 +195,23 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     try {
       if (!user) throw new Error('No user logged in');
 
-      const { error } = await supabase
-        .from('profiles')
-        .update({
-          full_name: fullName,
-          company: company || null,
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', user.id);
+      if (isSupabaseConfigured && supabase) {
+        const { error } = await supabase
+          .from('profiles')
+          .update({
+            full_name: fullName,
+            company: company || null,
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', user.id);
 
-      if (error) throw error;
+        if (error) throw error;
+      } else {
+        // localStorage mode
+        const updatedUser = { ...localUser, full_name: fullName, company } as MockUser;
+        setLocalUser(updatedUser);
+        setUser(updatedUser as any);
+      }
 
       toast({
         title: "Profile updated successfully!",
