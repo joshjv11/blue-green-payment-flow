@@ -5,10 +5,12 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/lib/supabase';
-import { LogOut, User, Building, Mail } from 'lucide-react';
+import { LogOut, User, Building, Mail, FileText, ArrowRight } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 const Dashboard = () => {
   const { user, signOut, updateProfile } = useAuth();
+  const navigate = useNavigate();
   const [profile, setProfile] = useState<any>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [fullName, setFullName] = useState('');
@@ -195,6 +197,29 @@ const Dashboard = () => {
             </Card>
           </div>
 
+          {/* Quick Actions */}
+          <Card className="shadow-soft">
+            <CardHeader>
+              <CardTitle>Quick Actions</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <Button 
+                onClick={() => navigate('/bills')}
+                className="w-full justify-between"
+                variant="outline"
+              >
+                <div className="flex items-center space-x-3">
+                  <FileText className="h-5 w-5 text-primary" />
+                  <div className="text-left">
+                    <div className="font-medium">Manage Bills</div>
+                    <div className="text-sm text-muted-foreground">Add, edit, and track your bills</div>
+                  </div>
+                </div>
+                <ArrowRight className="h-4 w-4" />
+              </Button>
+            </CardContent>
+          </Card>
+
           {/* Getting Started */}
           <Card className="shadow-soft">
             <CardHeader>
@@ -211,7 +236,7 @@ const Dashboard = () => {
                 </li>
                 <li className="flex items-center space-x-2">
                   <div className="w-2 h-2 bg-primary rounded-full"></div>
-                  <span>Create your first invoice</span>
+                  <span>Add your first bill</span>
                 </li>
                 <li className="flex items-center space-x-2">
                   <div className="w-2 h-2 bg-primary rounded-full"></div>
