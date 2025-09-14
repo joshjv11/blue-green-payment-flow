@@ -25,7 +25,10 @@ export const useAIAssistant = () => {
   const [isLoading, setIsLoading] = useState(false);
 
   const sendMessage = async (message: string, bills: Bill[] = [], context?: string) => {
+    console.log('🤖 AI Assistant - Sending message:', { message, billsCount: bills.length, context });
+    
     if (!isSupabaseConfigured || !supabase) {
+      console.error('❌ Supabase not configured');
       toast({
         title: "Supabase Required",
         description: "Please connect to Supabase to use the AI assistant.",
@@ -49,8 +52,11 @@ export const useAIAssistant = () => {
       // Get current session
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
+        console.error('❌ User not authenticated');
         throw new Error('User not authenticated');
       }
+
+      console.log('🤖 Calling AI assistant edge function...');
 
       // Call the Edge Function
       const { data, error } = await supabase.functions.invoke('ai-assistant', {
@@ -62,11 +68,14 @@ export const useAIAssistant = () => {
       });
 
       if (error) {
+        console.error('❌ Edge function error:', error);
         throw error;
       }
 
-      if (!data.success) {
-        throw new Error(data.error || 'AI assistant request failed');
+      console.log('🤖 AI response received:', { success: data?.success, hasResponse: !!data?.response });
+
+      if (!data || !data.success) {
+        throw new Error(data?.error || 'AI assistant request failed');
       }
 
       // Add AI response to chat
@@ -78,19 +87,35 @@ export const useAIAssistant = () => {
       };
       setMessages(prev => [...prev, aiMessage]);
 
+      console.log('✅ AI message added to chat successfully');
+
     } catch (error) {
-      console.error('Error sending message to AI assistant:', error);
+      console.error('❌ Error sending message to AI assistant:', error);
+      
+      let errorDescription = "Failed to get AI response. Please try again.";
+      
+      // Provide more specific error messages
+      if (error instanceof Error) {
+        if (error.message.includes('not authenticated')) {
+          errorDescription = "Please log in to use the AI assistant.";
+        } else if (error.message.includes('API key')) {
+          errorDescription = "AI service is temporarily unavailable. Please try again later.";
+        } else if (error.message.includes('network') || error.message.includes('fetch')) {
+          errorDescription = "Network error. Please check your connection and try again.";
+        }
+      }
+      
       toast({
         title: "AI Assistant Error",
-        description: error instanceof Error ? error.message : "Failed to get AI response",
+        description: errorDescription,
         variant: "destructive"
       });
 
-      // Add error message to chat
+      // Add helpful error message to chat
       const errorMessage: ChatMessage = {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
-        content: "I'm sorry, I encountered an error processing your request. Please try again.",
+        content: "I'm sorry, I'm having trouble responding right now. This could be due to:\n\n• Network connectivity issues\n• Service temporarily unavailable\n• Authentication problems\n\nPlease try again in a moment. If the issue persists, try refreshing the page.",
         timestamp: new Date()
       };
       setMessages(prev => [...prev, errorMessage]);

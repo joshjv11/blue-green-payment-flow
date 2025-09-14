@@ -38,12 +38,26 @@ const EnhancedAIAssistantV2 = ({ bills, context, trigger }: EnhancedAIAssistantV
   const isPro = hasUnlimitedAI;
 
   const handleSendMessage = async (message: string) => {
+    if (!message.trim()) return;
+    
+    console.log('🤖 Enhanced AI - Handling message:', { 
+      message: message.substring(0, 50) + '...', 
+      canQuery: canMakeAIQuery(), 
+      hasUnlimited: hasUnlimitedAI,
+      queriesRemaining: getAIQueriesRemaining()
+    });
+    
+    setInputMessage('');
+    
+    // Check if user can make AI queries
     if (!canMakeAIQuery()) {
+      console.log('⚠️ AI query limit reached, showing upgrade modal');
       setShowUpgradeModal(true);
       return;
     }
 
     if (!isAvailable) {
+      console.error('❌ AI assistant not available');
       toast({
         title: "AI Assistant Unavailable",
         description: "AI assistant is not configured. Please check your settings.",
@@ -55,21 +69,31 @@ const EnhancedAIAssistantV2 = ({ bills, context, trigger }: EnhancedAIAssistantV
     try {
       // Track the AI query for free users
       if (!isPro) {
+        console.log('📊 Tracking AI query usage...');
         const success = await trackAIQuery();
         if (!success) {
+          console.error('❌ Failed to track AI query');
           setShowUpgradeModal(true);
           return;
         }
+        console.log('✅ AI query tracked successfully');
       }
 
       // Send message with enhanced context for Pro users
       const enhancedContext = isPro 
-        ? `${context || ''} - Pro user with access to advanced insights, spending analysis, and personalized coaching`
-        : context;
-
+        ? `Pro user with ${bills.length} bills. Provide detailed financial insights, advanced strategies, and comprehensive bill management advice. Focus on optimization, investment planning, and smart financial decisions. ${context || ''}`
+        : `Free user with ${bills.length} bills. Provide helpful but concise advice within free tier limits. Focus on basic bill management and payment reminders. ${context || ''}`;
+      
+      console.log('🤖 Sending to AI with enhanced context:', { 
+        billsCount: bills.length, 
+        contextLength: enhancedContext.length,
+        isPro 
+      });
+      
       await sendMessage(message, bills, enhancedContext);
-      setInputMessage('');
+      
     } catch (error) {
+      console.error('❌ Error sending message to AI:', error);
       toast({
         title: "Error",
         description: "Failed to send message to AI assistant",
@@ -133,25 +157,48 @@ const EnhancedAIAssistantV2 = ({ bills, context, trigger }: EnhancedAIAssistantV
             {/* Messages */}
             <div className="flex-1 overflow-y-auto border rounded-lg p-4 space-y-4 min-h-0">
               {messages.length === 0 ? (
-                <div className="text-center text-muted-foreground py-8">
-                  <Bot className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                  <p className="text-lg font-medium mb-2">Welcome to your AI Financial Coach!</p>
-                  <div className="text-sm space-y-1">
-                    <p>Ask me anything about your bills and finances:</p>
-                    <div className="grid grid-cols-1 gap-2 mt-4 text-left">
-                      <div className="text-xs bg-muted p-2 rounded">
-                        "What bills are due this week?"
-                      </div>
-                      <div className="text-xs bg-muted p-2 rounded">
-                        "Help me create a payment schedule"
-                      </div>
-                      {isPro && (
-                        <div className="text-xs bg-gradient-to-r from-purple-100 to-blue-100 p-2 rounded">
-                          "Analyze my spending patterns and suggest optimizations" 
-                          <Crown className="h-3 w-3 inline ml-1" />
-                        </div>
-                      )}
+                <div className="flex flex-col items-center justify-center h-full text-center p-6">
+                  <div className="bg-gradient-to-r from-primary/10 to-accent/10 rounded-full p-6 mb-4">
+                    <Bot className="h-12 w-12 text-primary" />
+                  </div>
+                  <h3 className="text-lg font-semibold mb-2">AI Financial Coach</h3>
+                  <p className="text-muted-foreground mb-6 max-w-sm">
+                    {isPro 
+                      ? `Get unlimited AI-powered financial insights about your ${bills.length} bills.`
+                      : `Ask me about your ${bills.length} bills. ${queriesRemaining} queries remaining this month.`
+                    }
+                  </p>
+                  
+                  <div className="space-y-2 w-full max-w-sm">
+                    <p className="text-sm font-medium text-left">Try asking:</p>
+                    <div className="grid gap-2">
+                      {[
+                        isPro ? "Create a comprehensive financial plan" : "Summarize my bills",
+                        isPro ? "Advanced saving strategies for my situation" : "Quick payment tips",
+                        isPro ? "Detailed cash flow analysis" : "Which bills are due soon?",
+                        isPro ? "Investment advice based on my expenses" : "How to avoid late fees"
+                      ].map((question, index) => (
+                        <button
+                          key={index}
+                          onClick={() => handleSendMessage(question)}
+                          className="text-left p-3 text-sm bg-muted/50 hover:bg-muted rounded-lg transition-colors disabled:opacity-50"
+                          disabled={!canMakeAIQuery() || isLoading}
+                        >
+                          <div className="flex items-center gap-2">
+                            "{question}"
+                            {isPro && index > 1 && <Crown className="h-3 w-3 text-yellow-500" />}
+                          </div>
+                        </button>
+                      ))}
                     </div>
+                    
+                    {!canMakeAIQuery() && (
+                      <div className="bg-orange-50 dark:bg-orange-950/20 border border-orange-200 dark:border-orange-800 rounded-lg p-3 mt-4">
+                        <p className="text-sm text-orange-700 dark:text-orange-300">
+                          You've reached your monthly AI query limit. Upgrade to Pro for unlimited access.
+                        </p>
+                      </div>
+                    )}
                   </div>
                 </div>
               ) : (

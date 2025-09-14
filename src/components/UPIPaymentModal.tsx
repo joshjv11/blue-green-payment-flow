@@ -11,6 +11,8 @@ import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
+import { PAYMENT_CONFIG, getUPIPaymentString } from '@/config/payment';
+
 interface UPIPaymentModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -26,11 +28,15 @@ const UPIPaymentModal = ({ open, onOpenChange, plan }: UPIPaymentModalProps) => 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [copied, setCopied] = useState(false);
 
-  // Replace with your actual UPI ID
-  const merchantUpiId = 'your-upi-id@paytm';
+  const currentPlan = PAYMENT_CONFIG.PLANS[plan];
+  const merchantUpiId = PAYMENT_CONFIG.UPI_ID;
   
-  const amount = plan === 'monthly' ? 99 : 999;
-  const planType = plan === 'monthly' ? 'pro_monthly' : 'pro_yearly';
+  console.log('🏦 Payment Modal - Plan Details:', { 
+    plan, 
+    amount: currentPlan.amount, 
+    upiId: merchantUpiId, 
+    user: user?.email 
+  });
 
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
@@ -44,44 +50,77 @@ const UPIPaymentModal = ({ open, onOpenChange, plan }: UPIPaymentModalProps) => 
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!user || !transactionId.trim() || !userPhone.trim()) return;
+    
+    console.log('🏦 Submitting payment details:', { 
+      userPhone, 
+      transactionId, 
+      plan: currentPlan.name,
+      amount: currentPlan.amount,
+      user: user?.email 
+    });
+    
+    if (!user || !transactionId.trim() || !userPhone.trim()) {
+      toast({
+        title: "Missing Information",
+        description: "Please fill in all required fields",
+        variant: "destructive"
+      });
+      return;
+    }
 
     setIsSubmitting(true);
+    
     try {
-      // Store payment details locally for now - in production this would go to Supabase
-      const paymentData = {
-        user_id: user.id,
-        user_email: user.email,
-        user_phone: userPhone,
-        upi_id: upiId,
-        transaction_id: transactionId,
-        amount: amount,
-        plan_type: planType,
-        status: 'pending',
-        payment_method: 'UPI',
-        currency: 'INR',
-        created_at: new Date().toISOString()
-      };
+      // Submit to Supabase payment_transactions table
+      const { data, error } = await supabase
+        .from('payment_transactions')
+        .insert({
+          user_id: user.id,
+          user_email: user.email,
+          user_phone: userPhone,
+          upi_id: upiId || null,
+          transaction_id: transactionId,
+          amount: currentPlan.amount,
+          currency: currentPlan.currency,
+          payment_method: 'UPI',
+          plan_type: currentPlan.id,
+          status: 'pending',
+          payment_date: new Date().toISOString()
+        })
+        .select()
+        .single();
 
-      // Store in localStorage temporarily
-      const existingPayments = JSON.parse(localStorage.getItem('pending_payments') || '[]');
-      existingPayments.push(paymentData);
-      localStorage.setItem('pending_payments', JSON.stringify(existingPayments));
+      if (error) {
+        console.error('❌ Payment submission error:', error);
+        throw error;
+      }
+
+      console.log('✅ Payment submitted successfully:', data);
 
       toast({
-        title: "Payment Submitted!",
-        description: "Your payment is being verified. You'll be upgraded within 24 hours.",
+        title: "Payment Details Submitted!",
+        description: `Your payment for ${currentPlan.name} has been submitted for verification. You'll be upgraded within ${PAYMENT_CONFIG.VERIFICATION_TIME}.`,
       });
 
-      onOpenChange(false);
+      // Reset form and close modal
       setTransactionId('');
       setUpiId('');
       setUserPhone('');
+      onOpenChange(false);
+      
     } catch (error: any) {
-      console.error('Payment submission error:', error);
+      console.error('❌ Payment submission error:', error);
+      
+      let errorMessage = 'Failed to submit payment details. Please try again.';
+      if (error.message?.includes('duplicate')) {
+        errorMessage = 'This transaction ID has already been submitted.';
+      } else if (error.message?.includes('network')) {
+        errorMessage = 'Network error. Please check your connection and try again.';
+      }
+      
       toast({
-        title: "Error",
-        description: "Failed to submit payment details. Please try again.",
+        title: "Submission Failed",
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {
@@ -95,7 +134,7 @@ const UPIPaymentModal = ({ open, onOpenChange, plan }: UPIPaymentModalProps) => 
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Smartphone className="h-5 w-5 text-primary" />
-            UPI Payment - ₹{amount}
+            UPI Payment - ₹{currentPlan.amount}
           </DialogTitle>
         </DialogHeader>
 
@@ -103,15 +142,18 @@ const UPIPaymentModal = ({ open, onOpenChange, plan }: UPIPaymentModalProps) => 
           {/* Plan Details */}
           <Card className="p-4 bg-muted/30">
             <div className="flex justify-between items-center mb-2">
-              <h3 className="font-semibold">Pro Plan</h3>
+              <h3 className="font-semibold">{currentPlan.name}</h3>
               <Badge variant="secondary">
                 {plan === 'monthly' ? 'Monthly' : 'Yearly'}
               </Badge>
             </div>
-            <div className="text-2xl font-bold text-primary">₹{amount}</div>
+            <div className="text-2xl font-bold text-primary">₹{currentPlan.amount}</div>
+            <div className="text-sm text-muted-foreground mt-1">
+              {currentPlan.description}
+            </div>
             {plan === 'yearly' && (
-              <div className="text-sm text-muted-foreground">
-                Save ₹189 (2 months free!)
+              <div className="text-sm text-green-600 font-medium mt-1">
+                Save ₹{PAYMENT_CONFIG.PLANS.yearly.discount} (2 months free!)
               </div>
             )}
           </Card>
@@ -120,24 +162,44 @@ const UPIPaymentModal = ({ open, onOpenChange, plan }: UPIPaymentModalProps) => 
           <div className="space-y-4">
             <div>
               <Label className="text-sm font-medium">Step 1: Pay via UPI</Label>
-              <Card className="p-4 mt-2 bg-blue-50 dark:bg-blue-900/20 border-blue-200">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <div className="font-medium">Pay to UPI ID:</div>
-                    <div className="font-mono text-lg">{merchantUpiId}</div>
-                    <div className="text-sm text-muted-foreground mt-1">
-                      Amount: ₹{amount}
+                <Card className="p-4 mt-2 bg-green-50 dark:bg-green-900/20 border-green-200">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <div className="font-medium">Pay to UPI ID:</div>
+                      <div className="font-mono text-lg text-green-700 dark:text-green-400">
+                        {merchantUpiId}
+                      </div>
+                      <div className="text-sm text-muted-foreground mt-1">
+                        Amount: ₹{currentPlan.amount} • Official {PAYMENT_CONFIG.UPI_NAME} Payment ID ✓
+                      </div>
+                    </div>
+                    <div className="flex flex-col gap-2">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => copyToClipboard(merchantUpiId)}
+                        className="border-green-200 hover:bg-green-50"
+                      >
+                        {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                      </Button>
+                      <Button
+                        size="sm"
+                        onClick={() => {
+                          const upiLink = getUPIPaymentString(currentPlan.amount, `${PAYMENT_CONFIG.UPI_NAME} ${currentPlan.name}`);
+                          if (navigator.share) {
+                            navigator.share({ url: upiLink });
+                          } else {
+                            window.open(upiLink, '_blank');
+                          }
+                        }}
+                        className="bg-green-600 hover:bg-green-700 text-white text-xs"
+                      >
+                        <Smartphone className="h-3 w-3 mr-1" />
+                        Pay
+                      </Button>
                     </div>
                   </div>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => copyToClipboard(merchantUpiId)}
-                  >
-                    {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-                  </Button>
-                </div>
-              </Card>
+                </Card>
             </div>
 
             <Separator />

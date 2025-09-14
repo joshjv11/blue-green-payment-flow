@@ -66,7 +66,9 @@ Guidelines:
 
 Current context: ${context || 'General bill management assistance'}`;
 
-    // Call OpenAI API
+    console.log('🤖 Calling OpenAI API with model: gpt-4o-mini');
+
+    // Call OpenAI API with better error handling
     const openaiResponse = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -85,15 +87,22 @@ Current context: ${context || 'General bill management assistance'}`;
     });
 
     if (!openaiResponse.ok) {
-      throw new Error(`OpenAI API error: ${openaiResponse.statusText}`);
+      const errorText = await openaiResponse.text();
+      console.error('❌ OpenAI API error:', { status: openaiResponse.status, error: errorText });
+      throw new Error(`OpenAI API error: ${openaiResponse.status} - ${openaiResponse.statusText}`);
     }
 
     const aiData = await openaiResponse.json();
-    const aiResponse = aiData.choices[0]?.message?.content;
+    console.log('✅ OpenAI response received:', { hasChoices: !!aiData.choices?.length });
+
+    const aiResponse = aiData.choices?.[0]?.message?.content;
 
     if (!aiResponse) {
-      throw new Error('No response from AI');
+      console.error('❌ No response content from OpenAI:', aiData);
+      throw new Error('No response from AI - please try again');
     }
+
+    console.log('✅ AI response prepared successfully');
 
     return new Response(
       JSON.stringify({ 
@@ -109,14 +118,31 @@ Current context: ${context || 'General bill management assistance'}`;
     );
 
   } catch (error) {
-    console.error('Error in AI assistant function:', error);
+    console.error('❌ Error in AI assistant function:', error);
+    
+    // Provide user-friendly error messages
+    let userMessage = 'I apologize, but I encountered an issue processing your request.';
+    let statusCode = 500;
+    
+    if (error.message?.includes('authentication') || error.message?.includes('unauthorized')) {
+      userMessage = 'Please log in to use the AI assistant.';
+      statusCode = 401;
+    } else if (error.message?.includes('OpenAI API')) {
+      userMessage = 'The AI service is temporarily unavailable. Please try again in a moment.';
+      statusCode = 503;
+    } else if (error.message?.includes('network') || error.message?.includes('fetch')) {
+      userMessage = 'Network connection issue. Please check your internet and try again.';
+      statusCode = 502;
+    }
+    
     return new Response(
       JSON.stringify({ 
-        error: error.message,
-        success: false 
+        error: userMessage,
+        success: false,
+        debug: error.message // Keep for debugging
       }),
       { 
-        status: 400,
+        status: statusCode,
         headers: { 
           ...corsHeaders, 
           'Content-Type': 'application/json' 

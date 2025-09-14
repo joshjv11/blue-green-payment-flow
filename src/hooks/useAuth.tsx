@@ -226,31 +226,42 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   const signOut = async () => {
+    console.log('🚪 Starting logout process...');
+    setLoading(true);
+    
     try {
-      console.log('🔐 Signing out user...');
-      setLoading(true);
+      // Clear user state immediately for faster UX
+      setUser(null);
+      setSession(null);
       
+      // Sign out from Supabase (this clears server-side session)
       const { error } = await supabase.auth.signOut();
       if (error) {
-        console.error('❌ Signout error:', error);
+        console.error('❌ Supabase signOut error:', error);
         throw error;
       }
       
-      console.log('✅ Signout successful');
-      
-      // Clear local state immediately
-      setSession(null);
-      setUser(null);
+      console.log('✅ Logout successful');
       
       toast({
         title: "Signed out successfully",
-        description: "You've been logged out of your account.",
+        description: "You have been logged out",
       });
     } catch (error: any) {
-      console.error('❌ Signout failed:', error);
+      console.error('❌ Sign out error:', error);
+      
+      // Re-fetch user state if logout failed
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        setSession(session);
+        setUser(session?.user ?? null);
+      } catch (fetchError) {
+        console.error('❌ Error fetching session after logout failure:', fetchError);
+      }
+      
       toast({
-        title: "Error signing out",
-        description: error.message || 'Failed to sign out. Please try again.',
+        title: "Sign out failed",
+        description: error.message || "Failed to sign out",
         variant: "destructive",
       });
     } finally {
