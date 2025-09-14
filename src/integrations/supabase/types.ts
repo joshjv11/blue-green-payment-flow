@@ -16,29 +16,38 @@ export type Database = {
     Tables: {
       admin_users: {
         Row: {
+          approved_at: string | null
+          approved_by: string | null
           created_at: string | null
           granted_at: string | null
           granted_by: string | null
           id: string
           role: string
+          status: string | null
           updated_at: string | null
           user_id: string
         }
         Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
           created_at?: string | null
           granted_at?: string | null
           granted_by?: string | null
           id?: string
           role?: string
+          status?: string | null
           updated_at?: string | null
           user_id: string
         }
         Update: {
+          approved_at?: string | null
+          approved_by?: string | null
           created_at?: string | null
           granted_at?: string | null
           granted_by?: string | null
           id?: string
           role?: string
+          status?: string | null
           updated_at?: string | null
           user_id?: string
         }
@@ -126,6 +135,33 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      payment_access_log: {
+        Row: {
+          accessed_at: string | null
+          accessed_by: string
+          action: string
+          id: string
+          notes: string | null
+          payment_transaction_id: string | null
+        }
+        Insert: {
+          accessed_at?: string | null
+          accessed_by: string
+          action: string
+          id?: string
+          notes?: string | null
+          payment_transaction_id?: string | null
+        }
+        Update: {
+          accessed_at?: string | null
+          accessed_by?: string
+          action?: string
+          id?: string
+          notes?: string | null
+          payment_transaction_id?: string | null
+        }
+        Relationships: []
       }
       payment_transactions: {
         Row: {
@@ -425,6 +461,14 @@ export type Database = {
       }
       is_system_admin: {
         Args: { user_id?: string }
+        Returns: boolean
+      }
+      log_payment_access: {
+        Args: { p_action: string; p_notes?: string; p_payment_id?: string }
+        Returns: undefined
+      }
+      require_payment_access_verification: {
+        Args: Record<PropertyKey, never>
         Returns: boolean
       }
     }
