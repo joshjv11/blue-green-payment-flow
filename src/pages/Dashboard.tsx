@@ -14,6 +14,7 @@ import { useToast } from '@/hooks/use-toast';
 import { LogOut, User, Building, Mail, FileText, ArrowRight, Plus, DollarSign, Calendar, AlertCircle, CheckCircle, Clock, BarChart3, Settings, Download, Upload, Crown } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { parseISO, differenceInDays, isBefore, isToday, isAfter, addDays, format } from 'date-fns';
+// Dashboard component with bills management
 import ExportImport from '@/components/ExportImport';
 import { useUserPlan } from '@/hooks/useUserPlan';
 import UpgradeModal from '@/components/UpgradeModal';
