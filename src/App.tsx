@@ -25,8 +25,8 @@ const App = () => (
         <Toaster />
         <Sonner />
         <DebugInfo />
-        <MobileOptimizer />
         <BrowserRouter>
+          <MobileOptimizer />
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/auth" element={<Auth />} />
