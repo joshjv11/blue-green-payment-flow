@@ -3,23 +3,47 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Badge } from '@/components/ui/badge';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useAuth } from '@/hooks/useAuth';
+import { useLocalStorage } from '@/hooks/useLocalStorage';
 import { supabase, isSupabaseConfigured } from '@/lib/supabase';
-import { LogOut, User, Building, Mail, FileText, ArrowRight } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+import { LogOut, User, Building, Mail, FileText, ArrowRight, Plus, DollarSign, Calendar, AlertCircle, CheckCircle, Clock } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { parseISO, differenceInDays, isBefore, isToday, isAfter, addDays, format } from 'date-fns';
+
+interface Bill {
+  id: string;
+  user_id: string;
+  name: string;
+  amount: number;
+  due_date: string;
+  category: string;
+  recurring: boolean;
+  status: 'unpaid' | 'paid' | 'overdue';
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+}
 
 const Dashboard = () => {
   const { user, signOut, updateProfile } = useAuth();
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [profile, setProfile] = useState<any>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [fullName, setFullName] = useState('');
   const [company, setCompany] = useState('');
   const [loading, setLoading] = useState(false);
+  const [bills, setBills] = useState<Bill[]>([]);
+  const [billsLoading, setBillsLoading] = useState(true);
+  const [localBills, setLocalBills] = useLocalStorage<Bill[]>(`bills_${user?.id}`, []);
 
   useEffect(() => {
     if (user) {
       fetchProfile();
+      fetchBills();
     }
   }, [user]);
 
@@ -54,6 +78,61 @@ const Dashboard = () => {
     }
   };
 
+  const fetchBills = async () => {
+    try {
+      setBillsLoading(true);
+
+      if (isSupabaseConfigured && supabase) {
+        const { data, error } = await supabase
+          .from('bills')
+          .select('*')
+          .eq('user_id', user!.id)
+          .order('due_date', { ascending: true });
+
+        if (error) throw error;
+
+        // Auto-update overdue bills
+        const updatedBills = data.map(bill => {
+          const today = new Date();
+          const dueDate = parseISO(bill.due_date);
+          
+          if (bill.status === 'unpaid' && isBefore(dueDate, today)) {
+            return { ...bill, status: 'overdue' as const };
+          }
+          return bill;
+        });
+
+        setBills(updatedBills);
+      } else {
+        // localStorage mode
+        const updatedBills = localBills.map(bill => {
+          const today = new Date();
+          const dueDate = parseISO(bill.due_date);
+          
+          if (bill.status === 'unpaid' && isBefore(dueDate, today)) {
+            return { ...bill, status: 'overdue' as const };
+          }
+          return bill;
+        });
+
+        setBills(updatedBills);
+        
+        // Update overdue bills in localStorage
+        const hasOverdueChanges = updatedBills.some((bill, index) => 
+          bill.status !== localBills[index]?.status
+        );
+        
+        if (hasOverdueChanges) {
+          setLocalBills(updatedBills);
+        }
+      }
+    } catch (error: any) {
+      console.error('Error fetching bills:', error);
+    } finally {
+      setBillsLoading(false);
+    }
+  };
+
   const handleUpdateProfile = async () => {
     try {
       setLoading(true);
@@ -65,6 +144,66 @@ const Dashboard = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const toggleBillStatus = async (bill: Bill) => {
+    const newStatus = bill.status === 'paid' ? 'unpaid' : 'paid';
+    
+    try {
+      if (isSupabaseConfigured && supabase) {
+        const { error } = await supabase
+          .from('bills')
+          .update({ 
+            status: newStatus,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', bill.id);
+
+        if (error) throw error;
+      } else {
+        // localStorage mode
+        const updatedBills = localBills.map(b =>
+          b.id === bill.id ? { ...b, status: newStatus as 'unpaid' | 'paid' | 'overdue', updated_at: new Date().toISOString() } : b
+        );
+        setLocalBills(updatedBills);
+      }
+
+      toast({
+        title: `Bill marked as ${newStatus}!`,
+      });
+      await fetchBills();
+    } catch (error: any) {
+      toast({
+        title: "Error updating bill status",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
+  // Calculate statistics
+  const activeBills = bills.filter(bill => bill.status !== 'paid');
+  const overdueBills = bills.filter(bill => bill.status === 'overdue');
+  const billsDueIn7Days = bills.filter(bill => {
+    const dueDate = parseISO(bill.due_date);
+    const today = new Date();
+    const daysUntilDue = differenceInDays(dueDate, today);
+    return bill.status === 'unpaid' && daysUntilDue >= 0 && daysUntilDue <= 7;
+  });
+  const paidBills = bills.filter(bill => bill.status === 'paid');
+  const billsDueToday = bills.filter(bill => {
+    const dueDate = parseISO(bill.due_date);
+    return bill.status === 'unpaid' && isToday(dueDate);
+  });
+
+  const getBillStatusColor = (bill: Bill) => {
+    if (bill.status === 'paid') return 'bg-green-100 text-green-800 border-green-200';
+    if (bill.status === 'overdue') return 'bg-red-100 text-red-800 border-red-200';
+    
+    const daysUntilDue = differenceInDays(parseISO(bill.due_date), new Date());
+    if (daysUntilDue <= 3) return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+    
+    return 'bg-blue-100 text-blue-800 border-blue-200';
   };
 
   return (
@@ -107,9 +246,197 @@ const Dashboard = () => {
               Welcome to your Dashboard
             </h1>
             <p className="text-muted-foreground">
-              Manage your invoices, track payments, and stay on top of your business finances.
+              Manage your bills, track payments, and stay on top of your finances.
             </p>
           </div>
+
+          {/* Bill Statistics */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <Card className="shadow-soft">
+              <CardContent className="p-6">
+                <div className="flex items-center space-x-2">
+                  <FileText className="h-8 w-8 text-primary" />
+                  <div>
+                    <div className="text-2xl font-bold text-foreground">{activeBills.length}</div>
+                    <div className="text-sm text-muted-foreground">Active Bills</div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+            
+            <Card className="shadow-soft">
+              <CardContent className="p-6">
+                <div className="flex items-center space-x-2">
+                  <AlertCircle className="h-8 w-8 text-destructive" />
+                  <div>
+                    <div className="text-2xl font-bold text-destructive">{overdueBills.length}</div>
+                    <div className="text-sm text-muted-foreground">Overdue Bills</div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+            
+            <Card className="shadow-soft">
+              <CardContent className="p-6">
+                <div className="flex items-center space-x-2">
+                  <Clock className="h-8 w-8 text-yellow-600" />
+                  <div>
+                    <div className="text-2xl font-bold text-yellow-600">{billsDueIn7Days.length}</div>
+                    <div className="text-sm text-muted-foreground">Due in 7 Days</div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+            
+            <Card className="shadow-soft">
+              <CardContent className="p-6">
+                <div className="flex items-center space-x-2">
+                  <CheckCircle className="h-8 w-8 text-green-600" />
+                  <div>
+                    <div className="text-2xl font-bold text-green-600">{paidBills.length}</div>
+                    <div className="text-sm text-muted-foreground">Paid Bills</div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Bills Due Today */}
+          {billsDueToday.length > 0 && (
+            <Card className="shadow-soft border-yellow-200 bg-yellow-50">
+              <CardHeader>
+                <CardTitle className="flex items-center space-x-2 text-yellow-800">
+                  <Calendar className="h-5 w-5" />
+                  <span>Bills Due Today ({billsDueToday.length})</span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {billsDueToday.map((bill) => (
+                  <div key={bill.id} className="flex items-center justify-between p-3 bg-white rounded-lg border">
+                    <div className="flex-1">
+                      <div className="font-medium text-foreground">{bill.name}</div>
+                      <div className="text-sm text-muted-foreground">
+                        ${bill.amount.toFixed(2)} • {bill.category.charAt(0).toUpperCase() + bill.category.slice(1)}
+                      </div>
+                    </div>
+                    <Button 
+                      size="sm" 
+                      onClick={() => toggleBillStatus(bill)}
+                      className="bg-green-600 hover:bg-green-700"
+                    >
+                      Mark as Paid
+                    </Button>
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Quick Actions */}
+          <Card className="shadow-soft">
+            <CardHeader>
+              <CardTitle>Quick Actions</CardTitle>
+            </CardHeader>
+            <CardContent className="grid md:grid-cols-2 gap-4">
+              <Button 
+                onClick={() => navigate('/bills')}
+                className="h-auto p-4 justify-start"
+                variant="outline"
+              >
+                <div className="flex items-center space-x-3">
+                  <Plus className="h-6 w-6 text-primary" />
+                  <div className="text-left">
+                    <div className="font-medium">Add New Bill</div>
+                    <div className="text-sm text-muted-foreground">Create a new bill entry</div>
+                  </div>
+                </div>
+              </Button>
+              
+              <Button 
+                onClick={() => navigate('/bills')}
+                className="h-auto p-4 justify-start"
+                variant="outline"
+              >
+                <div className="flex items-center space-x-3">
+                  <FileText className="h-6 w-6 text-primary" />
+                  <div className="text-left">
+                    <div className="font-medium">Manage Bills</div>
+                    <div className="text-sm text-muted-foreground">View and edit all bills</div>
+                  </div>
+                </div>
+              </Button>
+            </CardContent>
+          </Card>
+
+          {/* Recent Bills Table */}
+          <Card className="shadow-soft">
+            <CardHeader>
+              <CardTitle>Recent Bills</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {billsLoading ? (
+                <div className="flex items-center justify-center py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                </div>
+              ) : bills.length === 0 ? (
+                <div className="text-center py-8">
+                  <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                  <h3 className="text-lg font-medium text-foreground mb-2">No bills yet</h3>
+                  <p className="text-muted-foreground mb-4">Get started by adding your first bill</p>
+                  <Button onClick={() => navigate('/bills')}>
+                    <Plus className="h-4 w-4 mr-2" />
+                    Add Your First Bill
+                  </Button>
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Bill Name</TableHead>
+                        <TableHead>Amount</TableHead>
+                        <TableHead>Due Date</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead>Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {bills.slice(0, 5).map((bill) => (
+                        <TableRow key={bill.id}>
+                          <TableCell className="font-medium">{bill.name}</TableCell>
+                          <TableCell>${bill.amount.toFixed(2)}</TableCell>
+                          <TableCell>{format(parseISO(bill.due_date), 'MMM dd, yyyy')}</TableCell>
+                          <TableCell>
+                            <Badge className={getBillStatusColor(bill)}>
+                              {bill.status.charAt(0).toUpperCase() + bill.status.slice(1)}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            <Button 
+                              size="sm" 
+                              variant="outline"
+                              onClick={() => toggleBillStatus(bill)}
+                              disabled={bill.status === 'paid'}
+                            >
+                              {bill.status === 'paid' ? 'Paid' : 'Mark Paid'}
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                  {bills.length > 5 && (
+                    <div className="text-center mt-4">
+                      <Button variant="outline" onClick={() => navigate('/bills')}>
+                        View All Bills
+                        <ArrowRight className="h-4 w-4 ml-2" />
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              )}
+            </CardContent>
+          </Card>
 
           {/* Profile Card */}
           <Card className="shadow-soft">
@@ -186,82 +513,6 @@ const Dashboard = () => {
             </CardContent>
           </Card>
 
-          {/* Quick Stats */}
-          <div className="grid md:grid-cols-3 gap-6">
-            <Card className="shadow-soft">
-              <CardContent className="p-6 text-center">
-                <div className="text-2xl font-bold text-primary mb-2">0</div>
-                <div className="text-sm text-muted-foreground">Total Invoices</div>
-              </CardContent>
-            </Card>
-            
-            <Card className="shadow-soft">
-              <CardContent className="p-6 text-center">
-                <div className="text-2xl font-bold text-accent mb-2">$0.00</div>
-                <div className="text-sm text-muted-foreground">Outstanding</div>
-              </CardContent>
-            </Card>
-            
-            <Card className="shadow-soft">
-              <CardContent className="p-6 text-center">
-                <div className="text-2xl font-bold text-foreground mb-2">0</div>
-                <div className="text-sm text-muted-foreground">Overdue</div>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Quick Actions */}
-          <Card className="shadow-soft">
-            <CardHeader>
-              <CardTitle>Quick Actions</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <Button 
-                onClick={() => navigate('/bills')}
-                className="w-full justify-between"
-                variant="outline"
-              >
-                <div className="flex items-center space-x-3">
-                  <FileText className="h-5 w-5 text-primary" />
-                  <div className="text-left">
-                    <div className="font-medium">Manage Bills</div>
-                    <div className="text-sm text-muted-foreground">Add, edit, and track your bills</div>
-                  </div>
-                </div>
-                <ArrowRight className="h-4 w-4" />
-              </Button>
-            </CardContent>
-          </Card>
-
-          {/* Getting Started */}
-          <Card className="shadow-soft">
-            <CardHeader>
-              <CardTitle>Getting Started</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-muted-foreground mb-4">
-                Welcome to InvoiceFlow! Here are some next steps to get you started:
-              </p>
-              <ul className="space-y-2 text-sm">
-                <li className="flex items-center space-x-2">
-                  <div className="w-2 h-2 bg-primary rounded-full"></div>
-                  <span>Complete your profile information</span>
-                </li>
-                <li className="flex items-center space-x-2">
-                  <div className="w-2 h-2 bg-primary rounded-full"></div>
-                  <span>Add your first bill</span>
-                </li>
-                <li className="flex items-center space-x-2">
-                  <div className="w-2 h-2 bg-primary rounded-full"></div>
-                  <span>Set up payment reminders</span>
-                </li>
-                <li className="flex items-center space-x-2">
-                  <div className="w-2 h-2 bg-primary rounded-full"></div>
-                  <span>Explore analytics and reports</span>
-                </li>
-              </ul>
-            </CardContent>
-          </Card>
         </div>
       </main>
     </div>
