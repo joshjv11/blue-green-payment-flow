@@ -22,6 +22,8 @@ import BillLimitBanner from '@/components/BillLimitBanner';
 import EnhancedAIAssistantV2 from '@/components/EnhancedAIAssistantV2';
 import { usePaymentVerification } from '@/hooks/usePaymentVerification';
 import { Navigation } from '@/components/Navigation';
+import PlanStatusCard from '@/components/PlanStatusCard';
+import UpgradeTrigger from '@/components/UpgradeTrigger';
 
 interface Bill {
   id: string;

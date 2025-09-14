@@ -42,9 +42,31 @@ export const useSupabasePlan = () => {
         .from('user_plans')
         .select('*')
         .eq('user_id', user.id)
-        .single();
+        .maybeSingle();
 
-      if (error && error.code === 'PGRST116') {
+      if (error) {
+        console.error('Error fetching user plan:', error);
+        // If there's an error, create a default plan
+        const { data: newPlan, error: createError } = await supabase
+          .from('user_plans')
+          .insert({
+            user_id: user.id,
+            plan: 'free',
+            ai_queries_used: 0,
+            ai_queries_limit: 3,
+            ai_queries_reset_date: new Date().toISOString().split('T')[0]
+          })
+          .select()
+          .maybeSingle();
+
+        if (createError) {
+          console.error('Error creating user plan:', createError);
+          // If we can't create, use default values
+          setUserPlan(null);
+        } else {
+          setUserPlan(newPlan as SupabaseUserPlan);
+        }
+      } else if (!data) {
         // No plan exists, create default free plan
         const { data: newPlan, error: createError } = await supabase
           .from('user_plans')
@@ -53,24 +75,24 @@ export const useSupabasePlan = () => {
             plan: 'free',
             ai_queries_used: 0,
             ai_queries_limit: 3,
+            ai_queries_reset_date: new Date().toISOString().split('T')[0]
           })
           .select()
-          .single();
+          .maybeSingle();
 
-        if (createError) throw createError;
-        setUserPlan(newPlan as SupabaseUserPlan);
-      } else if (error) {
-        throw error;
+        if (createError) {
+          console.error('Error creating user plan:', createError);
+          setUserPlan(null);
+        } else {
+          setUserPlan(newPlan as SupabaseUserPlan);
+        }
       } else {
         setUserPlan(data as SupabaseUserPlan);
       }
     } catch (error: any) {
-      console.error('Error fetching user plan:', error);
-      toast({
-        title: "Error",
-        description: "Failed to fetch user plan",
-        variant: "destructive",
-      });
+      console.error('Error in fetchUserPlan:', error);
+      // Set to null but don't show error toast - app should still work
+      setUserPlan(null);
     } finally {
       setLoading(false);
     }

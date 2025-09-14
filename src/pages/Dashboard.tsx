@@ -17,12 +17,14 @@ import { parseISO, differenceInDays, isBefore, isToday, isAfter, addDays, format
 // Dashboard component with bills management
 import ExportImport from '@/components/ExportImport';
 import { useSupabasePlan } from '@/hooks/useSupabasePlan';
-import UpgradeModal from '@/components/UpgradeModal';
 import { Navigation } from '@/components/Navigation';
 import { usePaymentVerification } from '@/hooks/usePaymentVerification';
 import FreemiumLimitCard from '@/components/FreemiumLimitCard';
 import AIQueryCounter from '@/components/AIQueryCounter';
 import EnhancedAIAssistantV2 from '@/components/EnhancedAIAssistantV2';
+import PlanStatusCard from '@/components/PlanStatusCard';
+import UpgradeTrigger from '@/components/UpgradeTrigger';
+import UpgradeModal from '@/components/UpgradeModal';
 
 interface Bill {
   id: string;
@@ -42,6 +44,7 @@ const Dashboard = () => {
   const { user, signOut, updateProfile } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { plan, aiQueriesUsed, aiQueriesLimit, loading: planLoading } = useSupabasePlan();
   const [profile, setProfile] = useState<any>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [fullName, setFullName] = useState('');
@@ -52,7 +55,7 @@ const Dashboard = () => {
   const [localBills, setLocalBills] = useLocalStorage<Bill[]>(`bills_${user?.id}`, []);
   const [showExportImport, setShowExportImport] = useState(false);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
-  const { plan, billLimit, canAddBill, aiQueriesUsed, aiQueriesLimit, canMakeAIQuery, getAIQueriesRemaining } = useSupabasePlan();
+  const { billLimit, canAddBill, canMakeAIQuery, getAIQueriesRemaining } = useSupabasePlan();
   
   // Initialize notifications, email reminders, and payment verification
   useNotifications();
@@ -683,6 +686,16 @@ const Dashboard = () => {
       <EnhancedAIAssistantV2 
         bills={bills}
         context="dashboard - managing bills and getting financial insights"
+      />
+
+      {/* Upgrade Modal */}
+      <UpgradeModal
+        open={showUpgradeModal}
+        onOpenChange={setShowUpgradeModal}
+        currentBillCount={bills.length}
+        aiQueriesUsed={aiQueriesUsed}
+        aiQueriesLimit={aiQueriesLimit}
+        trigger="general"
       />
     </div>
   );
