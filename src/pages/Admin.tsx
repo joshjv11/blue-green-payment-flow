@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
@@ -6,12 +6,63 @@ import { Shield, CreditCard, Users, TrendingUp } from 'lucide-react';
 import PaymentVerificationDashboard from '@/components/PaymentVerificationDashboard';
 import { Navigation } from '@/components/Navigation';
 import { useAuth } from '@/hooks/useAuth';
+import { supabase } from '@/integrations/supabase/client';
 
 const Admin = () => {
   const { user } = useAuth();
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   
-  // Simple admin check - in production, you'd want proper role-based access
-  const isAdmin = user?.email === 'admin@example.com'; // Replace with your admin email
+  // Check if user is a system administrator using the secure admin system
+  useEffect(() => {
+    const checkAdminStatus = async () => {
+      if (!user?.id) {
+        setIsAdmin(false);
+        setIsLoading(false);
+        return;
+      }
+
+      try {
+        const { data, error } = await supabase
+          .rpc('is_system_admin', { user_id: user.id });
+        
+        if (error) {
+          console.error('Error checking admin status:', error);
+          setIsAdmin(false);
+        } else {
+          setIsAdmin(data || false);
+        }
+      } catch (error) {
+        console.error('Error checking admin status:', error);
+        setIsAdmin(false);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    checkAdminStatus();
+  }, [user?.id]);
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-background to-muted/20">
+        <Navigation />
+        <div className="container mx-auto px-4 py-8">
+          <div className="flex items-center justify-center min-h-[400px]">
+            <Card className="w-full max-w-md">
+              <CardContent className="p-6 text-center">
+                <Shield className="h-12 w-12 mx-auto mb-4 text-muted-foreground animate-pulse" />
+                <h2 className="text-xl font-semibold mb-2">Verifying Access</h2>
+                <p className="text-muted-foreground">
+                  Checking admin credentials...
+                </p>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (!isAdmin) {
     return (
@@ -21,10 +72,10 @@ const Admin = () => {
           <div className="flex items-center justify-center min-h-[400px]">
             <Card className="w-full max-w-md">
               <CardContent className="p-6 text-center">
-                <Shield className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+                <Shield className="h-12 w-12 mx-auto mb-4 text-destructive" />
                 <h2 className="text-xl font-semibold mb-2">Access Denied</h2>
                 <p className="text-muted-foreground">
-                  You don't have permission to access the admin dashboard.
+                  You don't have system administrator privileges to access this dashboard.
                 </p>
               </CardContent>
             </Card>

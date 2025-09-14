@@ -8,69 +8,114 @@ import { Separator } from '@/components/ui/separator';
 import { CheckCircle, XCircle, Clock, Search, ArrowUpDown } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
 
 interface PaymentTransaction {
   id: string;
   user_id: string;
-  user_email: string;
-  user_phone?: string;
-  upi_id?: string;
+  user_email: string | null;
+  user_phone?: string | null;
+  upi_id?: string | null;
   transaction_id: string;
   amount: number;
+  currency: string;
+  payment_method: string;
   plan_type: string;
-  status: 'pending' | 'verified' | 'rejected';
+  status: string; // Changed from union type to string to match database
   payment_date: string;
-  verified_by?: string;
-  verified_at?: string;
-  notes?: string;
+  verified_by?: string | null;
+  verified_at?: string | null;
+  notes?: string | null;
   created_at: string;
+  updated_at: string;
 }
 
 const PaymentVerificationDashboard = () => {
   const { toast } = useToast();
+  const { user } = useAuth();
   const [transactions, setTransactions] = useState<PaymentTransaction[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
 
-  const mockTransactions: PaymentTransaction[] = [
-    {
-      id: '1',
-      user_id: 'user1',
-      user_email: 'user@example.com',
-      user_phone: '+91 9876543210',
-      upi_id: 'user@paytm',
-      transaction_id: '123456789012',
-      amount: 99,
-      plan_type: 'pro_monthly',
-      status: 'pending',
-      payment_date: new Date().toISOString(),
-      created_at: new Date().toISOString(),
+  const fetchTransactions = async () => {
+    try {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from('payment_transactions')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('Error fetching transactions:', error);
+        toast({
+          title: "Error",
+          description: "Failed to fetch payment transactions",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      setTransactions(data || []);
+    } catch (error) {
+      console.error('Error fetching transactions:', error);
+      toast({
+        title: "Error",
+        description: "Failed to fetch payment transactions",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
     }
-  ];
+  };
 
   useEffect(() => {
-    // Simulate loading and use mock data for now
-    setTimeout(() => {
-      setTransactions(mockTransactions);
-      setLoading(false);
-    }, 1000);
+    fetchTransactions();
   }, []);
 
   const handleVerification = async (transactionId: string, status: 'verified' | 'rejected') => {
-    // Mock verification - in production this would update Supabase
-    setTransactions(prev => 
-      prev.map(t => 
-        t.id === transactionId 
-          ? { ...t, status, verified_at: new Date().toISOString() }
-          : t
-      )
-    );
+    try {
+      const { error } = await supabase
+        .from('payment_transactions')
+        .update({
+          status,
+          verified_by: user?.id,
+          verified_at: new Date().toISOString(),
+        })
+        .eq('id', transactionId);
 
-    toast({
-      title: status === 'verified' ? "Payment Verified" : "Payment Rejected",
-      description: `Transaction ${status} successfully`,
-    });
+      if (error) {
+        console.error('Error updating transaction:', error);
+        toast({
+          title: "Error",
+          description: "Failed to update transaction status",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      // Update local state
+      setTransactions(prev => 
+        prev.map(t => 
+          t.id === transactionId 
+            ? { ...t, status, verified_by: user?.id, verified_at: new Date().toISOString() }
+            : t
+        )
+      );
+
+      toast({
+        title: status === 'verified' ? "Payment Verified" : "Payment Rejected",
+        description: `Transaction ${status} successfully`,
+      });
+    } catch (error) {
+      console.error('Error updating transaction:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update transaction status",
+        variant: "destructive"
+      });
+    }
   };
 
   const filteredTransactions = transactions.filter(transaction => {
@@ -99,9 +144,13 @@ const PaymentVerificationDashboard = () => {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold">Payment Verification</h2>
-        <Button variant="outline">
+        <Button 
+          variant="outline"
+          onClick={fetchTransactions}
+          disabled={loading}
+        >
           <ArrowUpDown className="h-4 w-4 mr-2" />
-          Refresh
+          {loading ? 'Loading...' : 'Refresh'}
         </Button>
       </div>
 
@@ -137,50 +186,75 @@ const PaymentVerificationDashboard = () => {
       </div>
 
       <div className="space-y-4">
-        {filteredTransactions.map((transaction) => (
-          <Card key={transaction.id}>
-            <CardContent className="p-4">
-              <div className="flex items-start justify-between gap-4">
-                <div className="flex-1 space-y-2">
-                  <div className="flex items-center gap-2">
-                    <Badge className={getStatusColor(transaction.status)}>
-                      {transaction.status === 'pending' && <Clock className="h-4 w-4 mr-1" />}
-                      {transaction.status === 'verified' && <CheckCircle className="h-4 w-4 mr-1" />}
-                      {transaction.status === 'rejected' && <XCircle className="h-4 w-4 mr-1" />}
-                      {transaction.status}
-                    </Badge>
-                    <Badge variant="outline">₹{transaction.amount}</Badge>
-                  </div>
-                  
-                  <div className="text-sm space-y-1">
-                    <div><span className="font-medium">Email:</span> {transaction.user_email}</div>
-                    <div><span className="font-medium">Transaction ID:</span> {transaction.transaction_id}</div>
-                    <div><span className="font-medium">Created:</span> {format(new Date(transaction.created_at), 'MMM dd, yyyy')}</div>
-                  </div>
-                </div>
-
-                {transaction.status === 'pending' && (
-                  <div className="flex gap-2">
-                    <Button
-                      size="sm"
-                      onClick={() => handleVerification(transaction.id, 'verified')}
-                      className="bg-green-600 hover:bg-green-700"
-                    >
-                      Verify
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="destructive"
-                      onClick={() => handleVerification(transaction.id, 'rejected')}
-                    >
-                      Reject
-                    </Button>
-                  </div>
-                )}
-              </div>
+        {filteredTransactions.length === 0 ? (
+          <Card>
+            <CardContent className="p-8 text-center">
+              <Clock className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+              <h3 className="text-lg font-semibold mb-2">No Transactions Found</h3>
+              <p className="text-muted-foreground">
+                {searchTerm || statusFilter !== 'all' 
+                  ? "No transactions match your current filters."
+                  : "No payment transactions have been submitted yet."
+                }
+              </p>
             </CardContent>
           </Card>
-        ))}
+        ) : (
+          filteredTransactions.map((transaction) => (
+            <Card key={transaction.id}>
+              <CardContent className="p-4">
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex-1 space-y-2">
+                    <div className="flex items-center gap-2">
+                      <Badge className={getStatusColor(transaction.status)}>
+                        {transaction.status === 'pending' && <Clock className="h-4 w-4 mr-1" />}
+                        {transaction.status === 'verified' && <CheckCircle className="h-4 w-4 mr-1" />}
+                        {transaction.status === 'rejected' && <XCircle className="h-4 w-4 mr-1" />}
+                        {transaction.status}
+                      </Badge>
+                      <Badge variant="outline">₹{transaction.amount}</Badge>
+                      <Badge variant="secondary">{transaction.plan_type}</Badge>
+                    </div>
+                    
+                    <div className="text-sm space-y-1">
+                      <div><span className="font-medium">Email:</span> {transaction.user_email}</div>
+                      <div><span className="font-medium">Transaction ID:</span> {transaction.transaction_id}</div>
+                      {transaction.user_phone && (
+                        <div><span className="font-medium">Phone:</span> {transaction.user_phone}</div>
+                      )}
+                      {transaction.upi_id && (
+                        <div><span className="font-medium">UPI ID:</span> {transaction.upi_id}</div>
+                      )}
+                      <div><span className="font-medium">Created:</span> {format(new Date(transaction.created_at), 'MMM dd, yyyy HH:mm')}</div>
+                      {transaction.verified_at && (
+                        <div><span className="font-medium">Verified:</span> {format(new Date(transaction.verified_at), 'MMM dd, yyyy HH:mm')}</div>
+                      )}
+                    </div>
+                  </div>
+
+                  {transaction.status === 'pending' && (
+                    <div className="flex gap-2">
+                      <Button
+                        size="sm"
+                        onClick={() => handleVerification(transaction.id, 'verified')}
+                        className="bg-green-600 hover:bg-green-700"
+                      >
+                        Verify
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="destructive"
+                        onClick={() => handleVerification(transaction.id, 'rejected')}
+                      >
+                        Reject
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          ))
+        )}
       </div>
     </div>
   );
