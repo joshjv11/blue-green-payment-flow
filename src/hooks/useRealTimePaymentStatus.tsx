@@ -7,7 +7,7 @@ import { useNavigate } from 'react-router-dom';
 interface PaymentStatus {
   hasPendingPayments: boolean;
   hasVerifiedPayments: boolean;
-  lastPaymentStatus?: 'pending' | 'verified' | 'rejected';
+  lastPaymentStatus?: string;
   pendingCount: number;
 }
 
@@ -40,7 +40,7 @@ export const useRealTimePaymentStatus = () => {
         setPaymentStatus({
           hasPendingPayments: pending.length > 0,
           hasVerifiedPayments: verified.length > 0,
-          lastPaymentStatus: payments?.[0]?.status,
+          lastPaymentStatus: payments?.[0]?.status || undefined,
           pendingCount: pending.length,
         });
 

@@ -10,9 +10,10 @@ interface PaymentTransaction {
   transaction_id: string;
   amount: number;
   plan_type: string;
-  status: 'pending' | 'verified' | 'rejected';
+  status: string;
   created_at: string;
   verified_at?: string;
+  processed?: boolean;
 }
 
 const PaymentStatusTracker = () => {
@@ -33,7 +34,7 @@ const PaymentStatusTracker = () => {
           .limit(5);
 
         if (error) throw error;
-        setPayments(data || []);
+        setPayments((data || []) as PaymentTransaction[]);
       } catch (error) {
         console.error('Error fetching payments:', error);
       } finally {

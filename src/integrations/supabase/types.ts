@@ -173,6 +173,7 @@ export type Database = {
           payment_date: string
           payment_method: string
           plan_type: string
+          processed: boolean | null
           status: string
           transaction_id: string
           updated_at: string
@@ -192,6 +193,7 @@ export type Database = {
           payment_date?: string
           payment_method?: string
           plan_type: string
+          processed?: boolean | null
           status?: string
           transaction_id: string
           updated_at?: string
@@ -211,6 +213,7 @@ export type Database = {
           payment_date?: string
           payment_method?: string
           plan_type?: string
+          processed?: boolean | null
           status?: string
           transaction_id?: string
           updated_at?: string

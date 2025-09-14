@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from '@/hooks/useAuth';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import DebugInfo from '@/components/DebugInfo';
+import MobileOptimizer from '@/components/MobileOptimizer';
 import Index from './pages/Index';
 import Auth from './pages/Auth';
 import Dashboard from './pages/Dashboard';
@@ -24,6 +25,7 @@ const App = () => (
         <Toaster />
         <Sonner />
         <DebugInfo />
+        <MobileOptimizer />
         <BrowserRouter>
           <Routes>
             <Route path="/" element={<Index />} />

@@ -26,7 +26,7 @@ export const usePaymentVerification = () => {
           .select('*')
           .eq('user_id', user.id)
           .eq('status', 'verified')
-          .is('processed', null); // Only get unprocessed verified payments
+          .eq('processed', false); // Only get unprocessed verified payments
 
         if (error) {
           console.error('❌ Error checking payment status:', error);
