@@ -450,6 +450,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      can_manage_team_members: {
+        Args: { target_team_id: string }
+        Returns: boolean
+      }
+      can_view_team_membership: {
+        Args: { target_team_id: string; target_user_id: string }
+        Returns: boolean
+      }
       create_default_user_plan: {
         Args: { _user_id: string }
         Returns: undefined
