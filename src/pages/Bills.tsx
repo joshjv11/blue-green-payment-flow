@@ -17,6 +17,8 @@ import { Plus, Edit, Trash2, ArrowUpDown, LogOut, Calendar, DollarSign, AlertCir
 import { format, parseISO, differenceInDays, isAfter, isBefore, addDays } from 'date-fns';
 import { useUserPlan } from '@/hooks/useUserPlan';
 import UpgradeModal from '@/components/UpgradeModal';
+import { Navigation } from '@/components/Navigation';
+import { AIAssistant } from '@/components/AIAssistant';
 
 interface Bill {
   id: string;
@@ -764,6 +766,11 @@ const Bills = () => {
           />
         </div>
       </main>
+
+      <AIAssistant 
+        bills={bills}
+        context="bills management - adding, editing, and organizing bills"
+      />
     </div>
   );
 };

@@ -10,6 +10,8 @@ import { LogOut, BarChart3, PieChart as PieChartIcon, TrendingUp, CheckCircle, X
 import { useNavigate } from 'react-router-dom';
 import { parseISO, format, isBefore, isAfter, startOfMonth, endOfMonth, differenceInDays } from 'date-fns';
 import { BarChart, Bar, PieChart, Pie, Cell, ResponsiveContainer, XAxis, YAxis, CartesianGrid } from 'recharts';
+import { Navigation } from '@/components/Navigation';
+import { AIAssistant } from '@/components/AIAssistant';
 
 interface Bill {
   id: string;
@@ -167,23 +169,8 @@ const Analytics = () => {
               <span className="text-lg sm:text-xl font-bold text-foreground">InvoiceFlow</span>
             </div>
             
-            <div className="flex items-center space-x-1 sm:space-x-4">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => navigate('/dashboard')}
-                className="h-9 px-2 sm:px-3"
-              >
-                <span className="text-xs sm:text-sm">Dashboard</span>
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => navigate('/bills')}
-                className="h-9 px-2 sm:px-3"
-              >
-                <span className="text-xs sm:text-sm">Bills</span>
-              </Button>
+            <div className="flex items-center gap-4">
+              <Navigation />
               <Button
                 variant="outline"
                 size="sm"
@@ -439,6 +426,11 @@ const Analytics = () => {
           </div>
         </div>
       </main>
+
+      <AIAssistant 
+        bills={localBills}
+        context="analytics - reviewing payment patterns and financial insights"
+      />
     </div>
   );
 };

@@ -17,6 +17,8 @@ import { parseISO, differenceInDays, isBefore, isToday, isAfter, addDays, format
 import ExportImport from '@/components/ExportImport';
 import { useUserPlan } from '@/hooks/useUserPlan';
 import UpgradeModal from '@/components/UpgradeModal';
+import { Navigation } from '@/components/Navigation';
+import { AIAssistant } from '@/components/AIAssistant';
 
 interface Bill {
   id: string;
@@ -688,6 +690,11 @@ const Dashboard = () => {
 
         </div>
       </main>
+
+      <AIAssistant 
+        bills={bills}
+        context="dashboard - managing bills and getting financial insights"
+      />
     </div>
   );
 };
