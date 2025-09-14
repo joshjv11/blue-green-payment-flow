@@ -25,6 +25,7 @@ import { Navigation } from '@/components/Navigation';
 import PlanStatusCard from '@/components/PlanStatusCard';
 import UpgradeTrigger from '@/components/UpgradeTrigger';
 import { useIsMobile } from '@/hooks/use-mobile';
+import BillReminderManager from '@/components/BillReminderManager';
 
 interface Bill {
   id: string;
@@ -105,15 +106,32 @@ const Bills = () => {
           .eq('user_id', user!.id)
           .order('due_date', { ascending: true });
 
-        if (error) throw error;
+        if (error) {
+          console.error('🔴 Bills fetch error:', error);
+          
+          // Handle specific Supabase errors
+          if (error.code === 'PGRST116') {
+            throw new Error('No bills found. Start by adding your first bill!');
+          } else if (error.code === '42501') {
+            throw new Error('Permission denied. Please log in again.');
+          } else if (error.message.includes('network')) {
+            throw new Error('Network error. Please check your connection and try again.');
+          } else {
+            throw new Error(`Database error: ${error.message}`);
+          }
+        }
+        
         setBills(data || []);
+        console.log(`✅ Loaded ${data?.length || 0} bills successfully`);
       } else {
         setBills(localBills);
+        console.log(`📱 Loaded ${localBills.length} bills from local storage`);
       }
     } catch (error: any) {
+      console.error('❌ Error in fetchBills:', error);
       toast({
-        title: "Error fetching bills",
-        description: error.message,
+        title: "Failed to load bills",
+        description: error.message || "Unable to fetch your bills. Please try again.",
         variant: "destructive",
       });
     } finally {
@@ -124,10 +142,31 @@ const Bills = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.name || !formData.amount || !formData.due_date) {
+    console.log('💾 Submitting bill form:', { name: formData.name, amount: formData.amount, editing: !!editingBill });
+    
+    // Enhanced validation
+    if (!formData.name.trim()) {
       toast({
-        title: "Validation Error",
-        description: "Please fill in all required fields",
+        title: "Missing Bill Name",
+        description: "Please enter a name for your bill",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!formData.amount || parseFloat(formData.amount) <= 0) {
+      toast({
+        title: "Invalid Amount",
+        description: "Please enter a valid amount greater than 0",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!formData.due_date) {
+      toast({
+        title: "Missing Due Date",
+        description: "Please select a due date for your bill",
         variant: "destructive",
       });
       return;
@@ -135,6 +174,7 @@ const Bills = () => {
 
     // Check bill limit for new bills (not edits)
     if (!editingBill && !canAddBill(bills.length)) {
+      console.log('🚫 Bill limit reached, showing upgrade modal');
       setShowUpgradeModal(true);
       return;
     }
@@ -143,16 +183,18 @@ const Bills = () => {
       const billData = {
         id: editingBill ? editingBill.id : crypto.randomUUID(),
         user_id: user!.id,
-        name: formData.name,
+        name: formData.name.trim(),
         amount: parseFloat(formData.amount),
         due_date: formData.due_date,
         category: formData.category,
         recurring: formData.recurring,
         status: formData.status,
-        notes: formData.notes || null,
+        notes: formData.notes?.trim() || null,
         created_at: editingBill ? editingBill.created_at : new Date().toISOString(),
         updated_at: new Date().toISOString(),
       };
+
+      console.log(`💾 ${editingBill ? 'Updating' : 'Creating'} bill:`, billData);
 
       if (isSupabaseConfigured && supabase) {
         if (editingBill) {
@@ -160,14 +202,37 @@ const Bills = () => {
             .from('bills')
             .update(billData)
             .eq('id', editingBill.id);
-          if (error) throw error;
+          
+          if (error) {
+            console.error('🔴 Bill update error:', error);
+            
+            if (error.code === '42501') {
+              throw new Error('Permission denied. This bill may belong to another user.');
+            } else if (error.code === 'PGRST116') {
+              throw new Error('Bill not found. It may have been deleted.');
+            } else {
+              throw new Error(`Failed to update bill: ${error.message}`);
+            }
+          }
         } else {
           const { error } = await supabase
             .from('bills')
             .insert([billData]);
-          if (error) throw error;
+          
+          if (error) {
+            console.error('🔴 Bill creation error:', error);
+            
+            if (error.code === '23505') {
+              throw new Error('A bill with this information already exists.');
+            } else if (error.code === '42501') {
+              throw new Error('Permission denied. Please log in again.');
+            } else {
+              throw new Error(`Failed to create bill: ${error.message}`);
+            }
+          }
         }
       } else {
+        // Local storage fallback
         if (editingBill) {
           const updatedBills = localBills.map(bill =>
             bill.id === editingBill.id ? billData : bill
@@ -179,17 +244,28 @@ const Bills = () => {
       }
 
       toast({
-        title: editingBill ? "Bill updated successfully!" : "Bill added successfully!",
+        title: editingBill ? "✅ Bill Updated!" : "✅ Bill Added!",
+        description: editingBill 
+          ? `${billData.name} has been updated successfully`
+          : `${billData.name} added to your bills list`,
       });
 
+      console.log(`✅ Bill ${editingBill ? 'updated' : 'created'} successfully`);
+
+      // Reset form and close dialog
       setFormData(initialFormData);
       setEditingBill(null);
       setIsDialogOpen(false);
+      
+      // Refresh bills list
       await fetchBills();
+      
     } catch (error: any) {
+      console.error('❌ Error in handleSubmit:', error);
+      
       toast({
-        title: "Error saving bill",
-        description: error.message,
+        title: "Failed to Save Bill",
+        description: error.message || "Something went wrong. Please try again.",
         variant: "destructive",
       });
     }
@@ -217,25 +293,44 @@ const Bills = () => {
 
   const deleteBill = async (billId: string) => {
     try {
+      console.log('🗑️ Deleting bill:', billId);
+      
       if (isSupabaseConfigured && supabase) {
         const { error } = await supabase
           .from('bills')
           .delete()
           .eq('id', billId);
-        if (error) throw error;
+        
+        if (error) {
+          console.error('🔴 Bill deletion error:', error);
+          
+          if (error.code === '42501') {
+            throw new Error('Permission denied. You can only delete your own bills.');
+          } else if (error.code === 'PGRST116') {
+            throw new Error('Bill not found. It may have already been deleted.');
+          } else {
+            throw new Error(`Failed to delete bill: ${error.message}`);
+          }
+        }
       } else {
         const updatedBills = localBills.filter(bill => bill.id !== billId);
         setLocalBills(updatedBills);
       }
       
       toast({
-        title: "Bill deleted successfully!",
+        title: "✅ Bill Deleted!",
+        description: "The bill has been removed from your list",
       });
+      
+      console.log('✅ Bill deleted successfully');
       await fetchBills();
+      
     } catch (error: any) {
+      console.error('❌ Error in deleteBill:', error);
+      
       toast({
-        title: "Error deleting bill",
-        description: error.message,
+        title: "Failed to Delete Bill",
+        description: error.message || "Something went wrong. Please try again.",
         variant: "destructive",
       });
     }
@@ -563,6 +658,8 @@ const Bills = () => {
             bills={bills}
             context="bills page - managing and organizing bills, payment tracking"
           />
+
+          <BillReminderManager />
         </div>
       </main>
     </div>
