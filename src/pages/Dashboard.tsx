@@ -11,9 +11,10 @@ import { useNotifications } from '@/hooks/useNotifications';
 import { useEmailReminders } from '@/hooks/useEmailReminders';
 import { supabase, isSupabaseConfigured } from '@/lib/supabase';
 import { useToast } from '@/hooks/use-toast';
-import { LogOut, User, Building, Mail, FileText, ArrowRight, Plus, DollarSign, Calendar, AlertCircle, CheckCircle, Clock, BarChart3, Settings } from 'lucide-react';
+import { LogOut, User, Building, Mail, FileText, ArrowRight, Plus, DollarSign, Calendar, AlertCircle, CheckCircle, Clock, BarChart3, Settings, Download, Upload } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { parseISO, differenceInDays, isBefore, isToday, isAfter, addDays, format } from 'date-fns';
+import ExportImport from '@/components/ExportImport';
 
 interface Bill {
   id: string;
@@ -41,6 +42,7 @@ const Dashboard = () => {
   const [bills, setBills] = useState<Bill[]>([]);
   const [billsLoading, setBillsLoading] = useState(true);
   const [localBills, setLocalBills] = useLocalStorage<Bill[]>(`bills_${user?.id}`, []);
+  const [showExportImport, setShowExportImport] = useState(false);
   
   // Initialize notifications and email reminders
   useNotifications();
@@ -181,6 +183,44 @@ const Dashboard = () => {
     } catch (error: any) {
       toast({
         title: "Error updating bill status",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleImportBills = async (importedBills: Partial<Bill>[]) => {
+    try {
+      const billsToImport = importedBills.map(bill => ({
+        ...bill,
+        id: bill.id || crypto.randomUUID(),
+        user_id: user!.id,
+        created_at: bill.created_at || new Date().toISOString(),
+        updated_at: bill.updated_at || new Date().toISOString(),
+      })) as Bill[];
+
+      if (isSupabaseConfigured && supabase) {
+        // For Supabase, insert the bills
+        const { error } = await supabase
+          .from('bills')
+          .insert(billsToImport);
+
+        if (error) throw error;
+      } else {
+        // For localStorage, merge with existing bills
+        const existingIds = new Set(localBills.map(b => b.id));
+        const newBills = billsToImport.filter(b => !existingIds.has(b.id));
+        setLocalBills([...localBills, ...newBills]);
+      }
+
+      await fetchBills();
+      toast({
+        title: "Bills imported successfully!",
+        description: `Added ${billsToImport.length} bills to your account.`,
+      });
+    } catch (error: any) {
+      toast({
+        title: "Import failed",
         description: error.message,
         variant: "destructive",
       });
@@ -399,6 +439,20 @@ const Dashboard = () => {
                   </div>
                 </div>
               </Button>
+
+              <Button 
+                onClick={() => setShowExportImport(true)}
+                className="h-auto p-3 sm:p-4 justify-start min-h-[48px] sm:col-span-2"
+                variant="outline"
+              >
+                <div className="flex items-center space-x-3">
+                  <Download className="h-5 w-5 sm:h-6 sm:w-6 text-primary flex-shrink-0" />
+                  <div className="text-left">
+                    <div className="font-medium text-sm sm:text-base">Export/Import Bills</div>
+                    <div className="text-xs sm:text-sm text-muted-foreground">Backup or import your bill data</div>
+                  </div>
+                </div>
+              </Button>
             </CardContent>
           </Card>
 
@@ -474,6 +528,31 @@ const Dashboard = () => {
               )}
             </CardContent>
           </Card>
+
+          {/* Export/Import Section */}
+          {showExportImport && (
+            <Card className="shadow-soft">
+              <CardHeader>
+                <CardTitle className="flex items-center justify-between">
+                  <span>Export/Import Bills</span>
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    onClick={() => setShowExportImport(false)}
+                  >
+                    ✕
+                  </Button>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ExportImport 
+                  bills={bills} 
+                  onImportBills={handleImportBills}
+                  userId={user!.id}
+                />
+              </CardContent>
+            </Card>
+          )}
 
           {/* Profile Card */}
           <Card className="shadow-soft">

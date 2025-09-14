@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
+import { useAuth } from '@/hooks/useAuth';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
@@ -7,7 +8,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import { Bell, Settings as SettingsIcon, Save, Mail } from 'lucide-react';
+import { Bell, Settings as SettingsIcon, Save, Mail, Download } from 'lucide-react';
+import ExportImport from '@/components/ExportImport';
 
 interface UserSettings {
   defaultReminderDays: number;
@@ -17,8 +19,24 @@ interface UserSettings {
   reminderEmail: string;
 }
 
+interface Bill {
+  id: string;
+  user_id: string;
+  name: string;
+  amount: number;
+  due_date: string;
+  category: string;
+  recurring: boolean;
+  status: 'unpaid' | 'paid' | 'overdue';
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
 const SettingsPage = () => {
   const { toast } = useToast();
+  const { user } = useAuth();
+  const [localBills, setLocalBills] = useLocalStorage<Bill[]>(`bills_${user?.id}`, []);
   const [settings, setSettings] = useLocalStorage<UserSettings>('userSettings', {
     defaultReminderDays: 3,
     notificationsEnabled: false,
@@ -90,6 +108,34 @@ const SettingsPage = () => {
       reminderEmail: ''
     };
     setTempSettings(defaultSettings);
+  };
+
+  const handleImportBills = async (importedBills: Partial<Bill>[]) => {
+    try {
+      const billsToImport = importedBills.map(bill => ({
+        ...bill,
+        id: bill.id || crypto.randomUUID(),
+        user_id: user!.id,
+        created_at: bill.created_at || new Date().toISOString(),
+        updated_at: bill.updated_at || new Date().toISOString(),
+      })) as Bill[];
+
+      // For localStorage, merge with existing bills (avoid duplicates)
+      const existingIds = new Set(localBills.map(b => b.id));
+      const newBills = billsToImport.filter(b => !existingIds.has(b.id));
+      setLocalBills([...localBills, ...newBills]);
+
+      toast({
+        title: "Bills imported successfully!",
+        description: `Added ${newBills.length} new bills to your account.`,
+      });
+    } catch (error: any) {
+      toast({
+        title: "Import failed",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
   };
 
   return (
@@ -217,6 +263,23 @@ const SettingsPage = () => {
                 Click the toggle above to request notification permission.
               </div>
             )}
+          </CardContent>
+        </Card>
+
+        {/* Export/Import Section */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Download className="h-5 w-5" />
+              Data Management
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ExportImport 
+              bills={localBills} 
+              onImportBills={handleImportBills}
+              userId={user?.id || ''}
+            />
           </CardContent>
         </Card>
 
