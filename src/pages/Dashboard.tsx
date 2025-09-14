@@ -11,10 +11,12 @@ import { useNotifications } from '@/hooks/useNotifications';
 import { useEmailReminders } from '@/hooks/useEmailReminders';
 import { supabase, isSupabaseConfigured } from '@/lib/supabase';
 import { useToast } from '@/hooks/use-toast';
-import { LogOut, User, Building, Mail, FileText, ArrowRight, Plus, DollarSign, Calendar, AlertCircle, CheckCircle, Clock, BarChart3, Settings, Download, Upload } from 'lucide-react';
+import { LogOut, User, Building, Mail, FileText, ArrowRight, Plus, DollarSign, Calendar, AlertCircle, CheckCircle, Clock, BarChart3, Settings, Download, Upload, Crown } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { parseISO, differenceInDays, isBefore, isToday, isAfter, addDays, format } from 'date-fns';
 import ExportImport from '@/components/ExportImport';
+import { useUserPlan } from '@/hooks/useUserPlan';
+import UpgradeModal from '@/components/UpgradeModal';
 
 interface Bill {
   id: string;
@@ -43,6 +45,8 @@ const Dashboard = () => {
   const [billsLoading, setBillsLoading] = useState(true);
   const [localBills, setLocalBills] = useLocalStorage<Bill[]>(`bills_${user?.id}`, []);
   const [showExportImport, setShowExportImport] = useState(false);
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  const { plan, billLimit, canAddBill } = useUserPlan();
   
   // Initialize notifications and email reminders
   useNotifications();
@@ -304,9 +308,44 @@ const Dashboard = () => {
                   <FileText className="h-6 w-6 sm:h-8 sm:w-8 text-primary" />
                   <div>
                     <div className="text-xl sm:text-2xl font-bold text-foreground">{activeBills.length}</div>
-                    <div className="text-xs sm:text-sm text-muted-foreground">Active Bills</div>
+                    <div className="text-xs sm:text-sm text-muted-foreground">
+                      Active Bills
+                      {plan === 'free' && (
+                        <div className="text-xs text-orange-600">({bills.length}/{billLimit})</div>
+                      )}
+                    </div>
+                  </div>
+          </div>
+
+          {/* Plan Limit Warning */}
+          {plan === 'free' && bills.length >= billLimit - 1 && (
+            <Card className="shadow-soft bg-gradient-to-r from-orange-50 to-yellow-50 border-orange-200">
+              <CardContent className="p-4 sm:p-6">
+                <div className="flex items-start gap-3">
+                  <Crown className="h-6 w-6 text-yellow-600 mt-1 flex-shrink-0" />
+                  <div className="flex-1">
+                    <h3 className="font-semibold text-orange-800 mb-1">
+                      {bills.length >= billLimit ? 'You\'ve reached your limit!' : 'Almost at your limit!'}
+                    </h3>
+                    <p className="text-sm text-orange-700 mb-3">
+                      {bills.length >= billLimit 
+                        ? `You have ${bills.length} bills (free limit: ${billLimit}). Upgrade to Pro for unlimited bills and advanced features.`
+                        : `You have ${bills.length} of ${billLimit} bills. Upgrade to Pro for unlimited bills, advanced analytics, and more.`
+                      }
+                    </p>
+                    <Button 
+                      size="sm" 
+                      onClick={() => setShowUpgradeModal(true)}
+                      className="bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70"
+                    >
+                      <Crown className="h-4 w-4 mr-2" />
+                      Upgrade to Pro
+                    </Button>
                   </div>
                 </div>
+              </CardContent>
+            </Card>
+          )}
               </CardContent>
             </Card>
             
@@ -388,12 +427,23 @@ const Dashboard = () => {
                 onClick={() => navigate('/bills')}
                 className="h-auto p-3 sm:p-4 justify-start min-h-[48px]"
                 variant="outline"
+                disabled={!canAddBill(bills.length)}
               >
                 <div className="flex items-center space-x-3">
                   <Plus className="h-5 w-5 sm:h-6 sm:w-6 text-primary flex-shrink-0" />
-                  <div className="text-left">
-                    <div className="font-medium text-sm sm:text-base">Add New Bill</div>
-                    <div className="text-xs sm:text-sm text-muted-foreground">Create a new bill entry</div>
+                  <div className="text-left flex-1">
+                    <div className="font-medium text-sm sm:text-base flex items-center gap-2">
+                      Add New Bill
+                      {!canAddBill(bills.length) && (
+                        <Crown className="h-4 w-4 text-yellow-500" />
+                      )}
+                    </div>
+                    <div className="text-xs sm:text-sm text-muted-foreground">
+                      {canAddBill(bills.length) 
+                        ? 'Create a new bill entry'
+                        : 'Upgrade to Pro for unlimited bills'
+                      }
+                    </div>
                   </div>
                 </div>
               </Button>
@@ -511,18 +561,18 @@ const Dashboard = () => {
                                 {bill.status === 'paid' ? 'Paid' : 'Mark Paid'}
                               </Button>
                             </TableCell>
-                         </TableRow>
-                       ))}
-                     </TableBody>
-                   </Table>
-                   {bills.length > 5 && (
-                     <div className="text-center mt-4">
-                       <Button variant="outline" onClick={() => navigate('/bills')}>
-                         View All Bills
-                         <ArrowRight className="h-4 w-4 ml-2" />
-                       </Button>
-                     </div>
-                   )}
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                    {bills.length > 5 && (
+                      <div className="text-center mt-4">
+                        <Button variant="outline" onClick={() => navigate('/bills')}>
+                          View All Bills
+                          <ArrowRight className="h-4 w-4 ml-2" />
+                        </Button>
+                      </div>
+                    )}
                   </div>
                 </div>
               )}
@@ -553,6 +603,13 @@ const Dashboard = () => {
               </CardContent>
             </Card>
           )}
+
+          {/* Upgrade Modal */}
+          <UpgradeModal 
+            open={showUpgradeModal}
+            onOpenChange={setShowUpgradeModal}
+            currentBillCount={bills.length}
+          />
 
           {/* Profile Card */}
           <Card className="shadow-soft">
