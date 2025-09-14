@@ -8,6 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { useAuth } from '@/hooks/useAuth';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
 import { useNotifications } from '@/hooks/useNotifications';
+import { useEmailReminders } from '@/hooks/useEmailReminders';
 import { supabase, isSupabaseConfigured } from '@/lib/supabase';
 import { useToast } from '@/hooks/use-toast';
 import { LogOut, User, Building, Mail, FileText, ArrowRight, Plus, DollarSign, Calendar, AlertCircle, CheckCircle, Clock, BarChart3, Settings } from 'lucide-react';
@@ -41,8 +42,9 @@ const Dashboard = () => {
   const [billsLoading, setBillsLoading] = useState(true);
   const [localBills, setLocalBills] = useLocalStorage<Bill[]>(`bills_${user?.id}`, []);
   
-  // Initialize notifications
+  // Initialize notifications and email reminders
   useNotifications();
+  useEmailReminders();
 
   useEffect(() => {
     if (user) {

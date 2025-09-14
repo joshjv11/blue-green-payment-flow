@@ -15,6 +15,8 @@ interface UserSettings {
   defaultReminderDays: number;
   notificationsEnabled: boolean;
   notificationPermission: string;
+  emailRemindersEnabled: boolean;
+  reminderEmail: string;
 }
 
 export const useNotifications = () => {
@@ -22,7 +24,9 @@ export const useNotifications = () => {
   const [settings] = useLocalStorage<UserSettings>('userSettings', {
     defaultReminderDays: 3,
     notificationsEnabled: false,
-    notificationPermission: 'default'
+    notificationPermission: 'default',
+    emailRemindersEnabled: false,
+    reminderEmail: ''
   });
 
   const showNotification = (title: string, body: string, icon?: string) => {

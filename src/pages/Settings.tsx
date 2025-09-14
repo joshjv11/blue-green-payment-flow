@@ -4,14 +4,17 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import { Bell, Settings as SettingsIcon, Save } from 'lucide-react';
+import { Bell, Settings as SettingsIcon, Save, Mail } from 'lucide-react';
 
 interface UserSettings {
   defaultReminderDays: number;
   notificationsEnabled: boolean;
   notificationPermission: string;
+  emailRemindersEnabled: boolean;
+  reminderEmail: string;
 }
 
 const SettingsPage = () => {
@@ -19,7 +22,9 @@ const SettingsPage = () => {
   const [settings, setSettings] = useLocalStorage<UserSettings>('userSettings', {
     defaultReminderDays: 3,
     notificationsEnabled: false,
-    notificationPermission: 'default'
+    notificationPermission: 'default',
+    emailRemindersEnabled: false,
+    reminderEmail: ''
   });
 
   const [tempSettings, setTempSettings] = useState(settings);
@@ -80,7 +85,9 @@ const SettingsPage = () => {
     const defaultSettings = {
       defaultReminderDays: 3,
       notificationsEnabled: false,
-      notificationPermission: Notification.permission || 'default'
+      notificationPermission: Notification.permission || 'default',
+      emailRemindersEnabled: false,
+      reminderEmail: ''
     };
     setTempSettings(defaultSettings);
   };
@@ -122,6 +129,60 @@ const SettingsPage = () => {
                 </SelectContent>
               </Select>
             </div>
+          </CardContent>
+        </Card>
+
+        {/* Email Reminder Settings */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Mail className="h-5 w-5" />
+              Email Reminders
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="space-y-1">
+                <Label>Email reminders for bills due soon</Label>
+                <p className="text-sm text-muted-foreground">
+                  Get email notifications for upcoming and overdue bills
+                </p>
+              </div>
+              <Switch
+                checked={tempSettings.emailRemindersEnabled}
+                onCheckedChange={(enabled) => setTempSettings(prev => ({
+                  ...prev,
+                  emailRemindersEnabled: enabled
+                }))}
+              />
+            </div>
+            
+            {tempSettings.emailRemindersEnabled && (
+              <div className="space-y-2">
+                <Label htmlFor="reminder-email">Email address for reminders</Label>
+                <Input
+                  id="reminder-email"
+                  type="email"
+                  placeholder="your.email@example.com"
+                  value={tempSettings.reminderEmail}
+                  onChange={(e) => setTempSettings(prev => ({
+                    ...prev,
+                    reminderEmail: e.target.value
+                  }))}
+                />
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                  <div className="flex items-start gap-2">
+                    <Mail className="h-4 w-4 text-blue-600 mt-0.5" />
+                    <div className="text-sm">
+                      <p className="text-blue-800 font-medium">Demo Mode</p>
+                      <p className="text-blue-700">
+                        Currently sending demo emails. <strong>Upgrade to connect real email reminders</strong> with your preferred email service.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
           </CardContent>
         </Card>
 
