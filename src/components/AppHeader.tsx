@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { DollarSign, Menu, User, LogOut, LayoutDashboard, FileText, BarChart3, Settings } from 'lucide-react';
+import { DollarSign, Menu, User, LogOut, LayoutDashboard, FileText, BarChart3, Settings, LogIn } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { 
@@ -43,51 +43,69 @@ const AppHeader = () => {
               </div>
             )}
             
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="sm" className="lg:hidden h-8 w-8 p-0">
-                  <Menu className="h-4 w-4" />
-                  <span className="sr-only">Open menu</span>
+            {/* Mobile Auth Buttons - Show only when not authenticated */}
+            {!user && (
+              <div className="flex md:hidden items-center space-x-2">
+                <Button variant="ghost" size="sm" asChild>
+                  <Link to="/auth">
+                    <LogIn className="h-4 w-4 mr-1" />
+                    Sign In
+                  </Link>
                 </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56 mr-2">
-                <div className="px-2 py-2 border-b">
-                  <p className="text-sm font-medium truncate">{user?.email}</p>
-                </div>
-                <DropdownMenuItem asChild>
-                  <Link to="/dashboard" className="flex items-center">
-                    <LayoutDashboard className="mr-2 h-4 w-4" />
-                    Dashboard
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link to="/bills" className="flex items-center">
-                    <FileText className="mr-2 h-4 w-4" />
-                    Bills
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link to="/analytics" className="flex items-center">
-                    <BarChart3 className="mr-2 h-4 w-4" />
-                    Analytics
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link to="/settings" className="flex items-center">
-                    <Settings className="mr-2 h-4 w-4" />
-                    Settings
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem 
-                  onClick={signOut}
-                  className="text-destructive focus:text-destructive"
-                >
-                  <LogOut className="mr-2 h-4 w-4" />
-                  Sign Out
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+                <Button size="sm" asChild>
+                  <Link to="/auth">Get Started</Link>
+                </Button>
+              </div>
+            )}
+            
+            {/* Mobile Menu - Show only when authenticated */}
+            {user && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="sm" className="lg:hidden h-8 w-8 p-0">
+                    <Menu className="h-4 w-4" />
+                    <span className="sr-only">Open menu</span>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56 mr-2">
+                  <div className="px-2 py-2 border-b">
+                    <p className="text-sm font-medium truncate">{user?.email}</p>
+                  </div>
+                  <DropdownMenuItem asChild>
+                    <Link to="/dashboard" className="flex items-center">
+                      <LayoutDashboard className="mr-2 h-4 w-4" />
+                      Dashboard
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link to="/bills" className="flex items-center">
+                      <FileText className="mr-2 h-4 w-4" />
+                      Bills
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link to="/analytics" className="flex items-center">
+                      <BarChart3 className="mr-2 h-4 w-4" />
+                      Analytics
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link to="/settings" className="flex items-center">
+                      <Settings className="mr-2 h-4 w-4" />
+                      Settings
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem 
+                    onClick={signOut}
+                    className="text-destructive focus:text-destructive"
+                  >
+                    <LogOut className="mr-2 h-4 w-4" />
+                    Sign Out
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
 
             {user && (
               <DropdownMenu>

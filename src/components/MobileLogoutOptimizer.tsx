@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { LogOut, Loader2 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
@@ -24,12 +24,16 @@ export const MobileLogoutOptimizer = ({
     console.log('📱 Mobile logout initiated');
     setIsLoggingOut(true);
     
-    // Call signOut and complete immediately
-    await signOut();
-    
-    // Quick visual feedback then clear
-    setTimeout(() => setIsLoggingOut(false), 100);
-    console.log('✅ Mobile logout completed instantly');
+    try {
+      // Call signOut and complete quickly
+      await signOut();
+      console.log('✅ Mobile logout completed instantly');
+    } catch (error) {
+      console.error('❌ Mobile logout error:', error);
+    } finally {
+      // Quick visual feedback then clear immediately
+      setTimeout(() => setIsLoggingOut(false), 50);
+    }
   };
 
   const isProcessing = loading || isLoggingOut;
@@ -41,7 +45,7 @@ export const MobileLogoutOptimizer = ({
       onClick={handleLogout}
       disabled={isProcessing}
       className={cn(
-        "transition-all duration-200",
+        "transition-all duration-150",
         isProcessing && "opacity-75",
         className
       )}

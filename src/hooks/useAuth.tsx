@@ -83,29 +83,19 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       }
     );
 
-    // THEN check for existing session
-    const initializeSession = async () => {
-      try {
-        const { data: { session }, error } = await supabase.auth.getSession();
-        if (error) {
-          console.error('❌ Error getting session:', error);
-          throw error;
-        }
-        
+    // THEN check for existing session immediately
+    supabase.auth.getSession().then(({ data: { session }, error }) => {
+      if (error) {
+        console.error('❌ Error getting initial session:', error);
+        setSession(null);
+        setUser(null);
+      } else {
         console.log('🔐 Initial session check:', session?.user?.email || 'No session found');
         setSession(session);
         setUser(session?.user ?? null);
-      } catch (error) {
-        console.error('❌ Failed to initialize session:', error);
-        // Don't throw - just set to null state
-        setSession(null);
-        setUser(null);
-      } finally {
-        setLoading(false);
       }
-    };
-
-    initializeSession();
+      setLoading(false);
+    });
 
     // Cleanup subscription on unmount
     return () => {
