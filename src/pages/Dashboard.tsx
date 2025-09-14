@@ -9,7 +9,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
 import { supabase, isSupabaseConfigured } from '@/lib/supabase';
 import { useToast } from '@/hooks/use-toast';
-import { LogOut, User, Building, Mail, FileText, ArrowRight, Plus, DollarSign, Calendar, AlertCircle, CheckCircle, Clock } from 'lucide-react';
+import { LogOut, User, Building, Mail, FileText, ArrowRight, Plus, DollarSign, Calendar, AlertCircle, CheckCircle, Clock, BarChart3 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { parseISO, differenceInDays, isBefore, isToday, isAfter, addDays, format } from 'date-fns';
 
@@ -362,6 +362,20 @@ const Dashboard = () => {
                   <div className="text-left">
                     <div className="font-medium">Manage Bills</div>
                     <div className="text-sm text-muted-foreground">View and edit all bills</div>
+                  </div>
+                </div>
+              </Button>
+              
+              <Button 
+                onClick={() => navigate('/analytics')}
+                className="h-auto p-4 justify-start"
+                variant="outline"
+              >
+                <div className="flex items-center space-x-3">
+                  <BarChart3 className="h-6 w-6 text-primary" />
+                  <div className="text-left">
+                    <div className="font-medium">View Analytics</div>
+                    <div className="text-sm text-muted-foreground">Financial insights and reports</div>
                   </div>
                 </div>
               </Button>
