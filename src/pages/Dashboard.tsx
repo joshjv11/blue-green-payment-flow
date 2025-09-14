@@ -16,9 +16,12 @@ import { useNavigate } from 'react-router-dom';
 import { parseISO, differenceInDays, isBefore, isToday, isAfter, addDays, format } from 'date-fns';
 // Dashboard component with bills management
 import ExportImport from '@/components/ExportImport';
-import { useUserPlan } from '@/hooks/useUserPlan';
+import { useSupabasePlan } from '@/hooks/useSupabasePlan';
 import UpgradeModal from '@/components/UpgradeModal';
 import { Navigation } from '@/components/Navigation';
+import { usePaymentVerification } from '@/hooks/usePaymentVerification';
+import FreemiumLimitCard from '@/components/FreemiumLimitCard';
+import AIQueryCounter from '@/components/AIQueryCounter';
 import { AIAssistant } from '@/components/AIAssistant';
 
 interface Bill {
@@ -49,11 +52,12 @@ const Dashboard = () => {
   const [localBills, setLocalBills] = useLocalStorage<Bill[]>(`bills_${user?.id}`, []);
   const [showExportImport, setShowExportImport] = useState(false);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
-  const { plan, billLimit, canAddBill } = useUserPlan();
+  const { plan, billLimit, canAddBill, aiQueriesUsed, aiQueriesLimit, canMakeAIQuery, getAIQueriesRemaining } = useSupabasePlan();
   
-  // Initialize notifications and email reminders
+  // Initialize notifications, email reminders, and payment verification
   useNotifications();
   useEmailReminders();
+  usePaymentVerification();
 
   useEffect(() => {
     if (user) {
@@ -320,35 +324,19 @@ const Dashboard = () => {
                   </div>
           </div>
 
-          {/* Plan Limit Warning */}
-          {plan === 'free' && bills.length >= billLimit - 1 && (
-            <Card className="shadow-soft bg-gradient-to-r from-orange-50 to-yellow-50 border-orange-200">
-              <CardContent className="p-4 sm:p-6">
-                <div className="flex items-start gap-3">
-                  <Crown className="h-6 w-6 text-yellow-600 mt-1 flex-shrink-0" />
-                  <div className="flex-1">
-                    <h3 className="font-semibold text-orange-800 mb-1">
-                      {bills.length >= billLimit ? 'You\'ve reached your limit!' : 'Almost at your limit!'}
-                    </h3>
-                    <p className="text-sm text-orange-700 mb-3">
-                      {bills.length >= billLimit 
-                        ? `You have ${bills.length} bills (free limit: ${billLimit}). Upgrade to Pro for unlimited bills and advanced features.`
-                        : `You have ${bills.length} of ${billLimit} bills. Upgrade to Pro for unlimited bills, advanced analytics, and more.`
-                      }
-                    </p>
-                    <Button 
-                      size="sm" 
-                      onClick={() => setShowUpgradeModal(true)}
-                      className="bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70"
-                    >
-                      <Crown className="h-4 w-4 mr-2" />
-                      Upgrade to Pro
-                    </Button>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          )}
+          {/* Plan Limit Warnings */}
+          <div className="space-y-4">
+            <FreemiumLimitCard
+              type="bills"
+              currentCount={bills.length}
+              onUpgrade={() => setShowUpgradeModal(true)}
+            />
+            <FreemiumLimitCard
+              type="ai"
+              currentCount={aiQueriesUsed}
+              onUpgrade={() => setShowUpgradeModal(true)}
+            />
+          </div>
               </CardContent>
             </Card>
             
