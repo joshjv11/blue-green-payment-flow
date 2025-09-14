@@ -314,13 +314,14 @@ const PDFExport = ({ bills, teamId }: PDFExportProps) => {
             <div class="chart-card">
               <h3>Spending by Category</h3>
               ${Object.entries(categoryTotals).map(([category, amount]) => {
-                const percentage = (amount / totalAmount) * 100;
+                const numAmount = Number(amount);
+                const percentage = (numAmount / totalAmount) * 100;
                 return `
                   <div class="chart-item">
                     <span>${category.charAt(0).toUpperCase() + category.slice(1)}</span>
                     <div style="display: flex; align-items: center; flex: 1;">
                       <div class="chart-bar" style="width: ${percentage}%;"></div>
-                      <span style="margin-left: 10px;">$${amount.toFixed(2)}</span>
+                      <span style="margin-left: 10px;">$${numAmount.toFixed(2)}</span>
                     </div>
                   </div>
                 `;
@@ -330,13 +331,15 @@ const PDFExport = ({ bills, teamId }: PDFExportProps) => {
             <div class="chart-card">
               <h3>Monthly Spending</h3>
               ${Object.entries(monthlyTotals).map(([month, amount]) => {
-                const percentage = (amount / Math.max(...Object.values(monthlyTotals))) * 100;
+                const numAmount = Number(amount);
+                const maxAmount = Math.max(...Object.values(monthlyTotals).map(Number));
+                const percentage = (numAmount / maxAmount) * 100;
                 return `
                   <div class="chart-item">
                     <span>${format(new Date(month + '-01'), 'MMM yyyy')}</span>
                     <div style="display: flex; align-items: center; flex: 1;">
                       <div class="chart-bar" style="width: ${percentage}%;"></div>
-                      <span style="margin-left: 10px;">$${amount.toFixed(2)}</span>
+                      <span style="margin-left: 10px;">$${numAmount.toFixed(2)}</span>
                     </div>
                   </div>
                 `;

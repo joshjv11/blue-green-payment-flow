@@ -178,7 +178,7 @@ const ConnectionStatus = () => {
                 size="sm" 
                 variant="outline"
                 onClick={handleRetryConnection}
-                disabled={connectionState === 'syncing'}
+                disabled={false}
               >
                 <RefreshCw className="h-4 w-4 mr-1" />
                 Retry
