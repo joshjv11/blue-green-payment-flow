@@ -34,58 +34,82 @@ export const useSupabasePlan = () => {
   const [loading, setLoading] = useState(true);
 
   const fetchUserPlan = async () => {
-    if (!user) return;
-
+    if (!user) {
+      console.log('📊 No user found, skipping plan fetch');
+      return;
+    }
+    
+    console.log('📊 Fetching plan for user:', user.email);
+    setLoading(true);
+    
     try {
-      setLoading(true);
-      
       // First try to get existing plan
-      const { data, error } = await supabase
+      const { data: existingPlan, error: fetchError } = await supabase
         .from('user_plans')
         .select('*')
         .eq('user_id', user.id)
         .maybeSingle();
 
-      if (data) {
-        setUserPlan(data as SupabaseUserPlan);
-        return;
+      if (fetchError) {
+        console.error('❌ Error fetching user plan:', fetchError);
+        throw fetchError;
       }
 
-      // If no plan exists or there's an error, try to create one using the security definer function
-      if (!data || error) {
-        console.log('No user plan found, attempting to create one');
+      if (!existingPlan) {
+        console.log('📊 No existing plan found, creating default plan...');
+        // Create default plan using RPC
+        const { error: rpcError } = await supabase
+          .rpc('create_default_user_plan', { _user_id: user.id });
         
-        try {
-          // Use the security definer function to create the plan
-          const { error: functionError } = await supabase.rpc('create_default_user_plan', {
-            _user_id: user.id
-          });
-
-          if (functionError) {
-            console.error('Error calling create_default_user_plan:', functionError);
-          }
-
-          // Try to fetch the plan again
-          const { data: newData, error: fetchError } = await supabase
-            .from('user_plans')
-            .select('*')
-            .eq('user_id', user.id)
-            .maybeSingle();
-
-          if (newData) {
-            setUserPlan(newData as SupabaseUserPlan);
-          } else {
-            console.warn('Could not create or fetch user plan, using defaults');
-            setUserPlan(null);
-          }
-        } catch (createError) {
-          console.error('Error creating user plan:', createError);
-          setUserPlan(null);
+        if (rpcError) {
+          console.error('❌ Error creating default plan:', rpcError);
+          throw rpcError;
         }
+
+        // Fetch the newly created plan
+        const { data: newPlan, error: newFetchError } = await supabase
+          .from('user_plans')
+          .select('*')
+          .eq('user_id', user.id)
+          .maybeSingle();
+
+        if (newFetchError) {
+          console.error('❌ Error fetching new plan:', newFetchError);
+          throw newFetchError;
+        }
+        
+        console.log('✅ Default plan created successfully');
+        setUserPlan(newPlan as SupabaseUserPlan);
+      } else {
+        console.log('✅ Existing plan found:', existingPlan.plan);
+        setUserPlan(existingPlan as SupabaseUserPlan);
       }
     } catch (error: any) {
-      console.error('Error in fetchUserPlan:', error);
-      setUserPlan(null);
+      console.error('❌ Failed to fetch user plan:', error);
+      
+      // Set a safe default plan to prevent crashes
+      const defaultPlan = {
+        id: crypto.randomUUID(),
+        user_id: user.id,
+        plan: 'free',
+        ai_queries_used: 0,
+        ai_queries_limit: 3,
+        ai_queries_reset_date: new Date().toISOString().split('T')[0],
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      } as SupabaseUserPlan;
+      
+      console.log('⚠️ Using fallback default plan');
+      setUserPlan(defaultPlan);
+      
+      // Only show error toast for non-permission errors
+      if (!error.message?.includes('permission') && !error.message?.includes('policy')) {
+        toast({
+          title: "Plan loading issue",
+          description: "Using free plan temporarily. Some features may be limited.",
+          variant: "destructive",
+        });
+      }
     } finally {
       setLoading(false);
     }

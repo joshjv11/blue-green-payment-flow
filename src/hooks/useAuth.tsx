@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useState } from 'react';
-import { User, Session } from '@supabase/supabase-js';
+import { User, Session, AuthChangeEvent } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase';
 import { useToast } from '@/hooks/use-toast';
 
@@ -22,49 +22,102 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const { toast } = useToast();
 
   useEffect(() => {
-    console.log('🔐 Auth: Initializing auth state...');
+    console.log('🔐 Auth: Initializing Supabase auth state management...');
     
-    // Set up auth state listener FIRST
+    // Set up auth state listener FIRST to catch all events
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        console.log('🔐 Auth state changed:', event, session?.user?.email);
+      async (event: AuthChangeEvent, session: Session | null) => {
+        console.log('🔐 Auth state changed:', event, session?.user?.email || 'No user');
+        
+        // Update state with session data from Supabase
         setSession(session);
         setUser(session?.user ?? null);
         setLoading(false);
         
-        // Create profile after successful signup
-        if (event === 'SIGNED_UP' && session?.user) {
-          console.log('👤 Creating profile for new user:', session.user.email);
-          try {
-            await supabase.from('profiles').insert({
-              id: session.user.id,
-              email: session.user.email!,
-              full_name: session.user.user_metadata?.full_name || null,
-              company: session.user.user_metadata?.company || null,
-            });
-            console.log('✅ Profile created successfully');
-          } catch (error) {
-            console.error('❌ Error creating profile:', error);
-          }
+        // Handle different auth events
+        switch (event) {
+          case 'SIGNED_IN':
+            console.log('✅ User signed in successfully');
+            // Create profile if this is a new signup (user_metadata exists)
+            if (session?.user?.user_metadata?.full_name && session?.user?.created_at) {
+              const userCreatedAt = new Date(session.user.created_at);
+              const now = new Date();
+              const timeDiff = now.getTime() - userCreatedAt.getTime();
+              
+              // If user was created within the last 5 minutes, likely a new signup
+              if (timeDiff < 5 * 60 * 1000) {
+                console.log('👤 Creating profile for new user:', session.user.email);
+                try {
+                  const { error: profileError } = await supabase
+                    .from('profiles')
+                    .insert({
+                      id: session.user.id,
+                      email: session.user.email!,
+                      full_name: session.user.user_metadata?.full_name || null,
+                      company: session.user.user_metadata?.company || null,
+                    });
+                  
+                  if (profileError) {
+                    console.warn('⚠️ Profile creation error (might already exist):', profileError);
+                  } else {
+                    console.log('✅ Profile created successfully');
+                  }
+                } catch (error) {
+                  console.error('❌ Error creating profile:', error);
+                }
+              }
+            }
+            break;
+            
+          case 'SIGNED_OUT':
+            console.log('👋 User signed out');
+            break;
+            
+          case 'TOKEN_REFRESHED':
+            console.log('🔄 Token refreshed successfully');
+            break;
+            
+          default:
+            console.log('🔐 Auth event:', event);
         }
       }
     );
 
     // THEN check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      console.log('🔐 Initial session check:', session?.user?.email || 'No session');
-      setSession(session);
-      setUser(session?.user ?? null);
-      setLoading(false);
-    });
+    const initializeSession = async () => {
+      try {
+        const { data: { session }, error } = await supabase.auth.getSession();
+        if (error) {
+          console.error('❌ Error getting session:', error);
+          throw error;
+        }
+        
+        console.log('🔐 Initial session check:', session?.user?.email || 'No session found');
+        setSession(session);
+        setUser(session?.user ?? null);
+      } catch (error) {
+        console.error('❌ Failed to initialize session:', error);
+        // Don't throw - just set to null state
+        setSession(null);
+        setUser(null);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-    return () => subscription.unsubscribe();
+    initializeSession();
+
+    // Cleanup subscription on unmount
+    return () => {
+      console.log('🔐 Cleaning up auth subscription');
+      subscription.unsubscribe();
+    };
   }, []);
 
   const signUp = async (email: string, password: string, fullName?: string, company?: string) => {
     try {
       setLoading(true);
-      console.log('🔐 Signing up user:', email);
+      console.log('🔐 Attempting signup for:', email);
       
       const redirectUrl = `${window.location.origin}/`;
       
@@ -85,17 +138,34 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         throw error;
       }
 
-      console.log('✅ Signup successful:', data.user?.email);
+      console.log('✅ Signup successful for:', data.user?.email);
       
-      toast({
-        title: "Account created successfully!",
-        description: "Please check your email to verify your account.",
-      });
+      // Check if email confirmation is required
+      if (data.user && !data.session) {
+        toast({
+          title: "Account created successfully!",
+          description: "Please check your email to verify your account before signing in.",
+        });
+      } else {
+        toast({
+          title: "Account created and signed in!",
+          description: "Welcome to InvoiceFlow!",
+        });
+      }
     } catch (error: any) {
       console.error('❌ Signup failed:', error);
-      const errorMessage = error.message === 'User already registered' 
-        ? 'An account with this email already exists. Please try signing in instead.'
-        : error.message;
+      
+      let errorMessage = 'Failed to create account. Please try again.';
+      
+      if (error.message?.includes('User already registered')) {
+        errorMessage = 'An account with this email already exists. Please try signing in instead.';
+      } else if (error.message?.includes('Password should be')) {
+        errorMessage = 'Password must be at least 6 characters long.';
+      } else if (error.message?.includes('Invalid email')) {
+        errorMessage = 'Please enter a valid email address.';
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
       
       toast({
         title: "Error creating account",
@@ -111,9 +181,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const signIn = async (email: string, password: string) => {
     try {
       setLoading(true);
-      console.log('🔐 Signing in user:', email);
+      console.log('🔐 Attempting signin for:', email);
 
-      const { error } = await supabase.auth.signInWithPassword({
+      const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
@@ -123,7 +193,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         throw error;
       }
 
-      console.log('✅ Signin successful');
+      console.log('✅ Signin successful for:', data.user?.email);
       
       toast({
         title: "Welcome back!",
@@ -131,9 +201,18 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       });
     } catch (error: any) {
       console.error('❌ Signin failed:', error);
-      const errorMessage = error.message === 'Invalid login credentials' 
-        ? 'Invalid email or password. Please check your credentials and try again.'
-        : error.message;
+      
+      let errorMessage = 'Failed to sign in. Please try again.';
+      
+      if (error.message?.includes('Invalid login credentials')) {
+        errorMessage = 'Invalid email or password. Please check your credentials and try again.';
+      } else if (error.message?.includes('Email not confirmed')) {
+        errorMessage = 'Please check your email and click the confirmation link before signing in.';
+      } else if (error.message?.includes('Too many requests')) {
+        errorMessage = 'Too many login attempts. Please wait a moment before trying again.';
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
       
       toast({
         title: "Error signing in",
@@ -149,10 +228,20 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const signOut = async () => {
     try {
       console.log('🔐 Signing out user...');
+      setLoading(true);
+      
       const { error } = await supabase.auth.signOut();
-      if (error) throw error;
+      if (error) {
+        console.error('❌ Signout error:', error);
+        throw error;
+      }
       
       console.log('✅ Signout successful');
+      
+      // Clear local state immediately
+      setSession(null);
+      setUser(null);
+      
       toast({
         title: "Signed out successfully",
         description: "You've been logged out of your account.",
@@ -161,16 +250,22 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       console.error('❌ Signout failed:', error);
       toast({
         title: "Error signing out",
-        description: error.message,
+        description: error.message || 'Failed to sign out. Please try again.',
         variant: "destructive",
       });
+    } finally {
+      setLoading(false);
     }
   };
 
   const updateProfile = async (fullName: string, company?: string) => {
     try {
-      if (!user) throw new Error('No user logged in');
+      if (!user) {
+        throw new Error('No user logged in');
+      }
+      
       console.log('👤 Updating profile for user:', user.email);
+      setLoading(true);
 
       const { error } = await supabase
         .from('profiles')
@@ -195,10 +290,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       console.error('❌ Profile update failed:', error);
       toast({
         title: "Error updating profile",
-        description: error.message,
+        description: error.message || 'Failed to update profile. Please try again.',
         variant: "destructive",
       });
       throw error;
+    } finally {
+      setLoading(false);
     }
   };
 
