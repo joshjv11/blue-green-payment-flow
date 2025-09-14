@@ -216,27 +216,27 @@ const Dashboard = () => {
     <div className="min-h-screen bg-background">
       {/* Header */}
       <header className="border-b border-border bg-card">
-        <div className="container mx-auto px-4 py-4">
+        <div className="container mx-auto px-4 py-3 sm:py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-2">
               <div className="w-8 h-8 bg-hero-gradient rounded-lg flex items-center justify-center">
                 <div className="w-4 h-4 bg-white rounded-sm"></div>
               </div>
-              <span className="text-xl font-bold text-foreground">InvoiceFlow</span>
+              <span className="text-lg sm:text-xl font-bold text-foreground">InvoiceFlow</span>
             </div>
             
-            <div className="flex items-center space-x-4">
-              <span className="text-sm text-muted-foreground">
+            <div className="flex items-center space-x-2 sm:space-x-4">
+              <span className="hidden sm:block text-sm text-muted-foreground">
                 Welcome, {profile?.full_name || user?.email}
               </span>
               <Button
                 variant="outline"
                 size="sm"
                 onClick={signOut}
-                className="flex items-center space-x-2"
+                className="flex items-center space-x-1 sm:space-x-2 h-9"
               >
                 <LogOut className="h-4 w-4" />
-                <span>Sign Out</span>
+                <span className="hidden xs:inline">Sign Out</span>
               </Button>
             </div>
           </div>
@@ -244,63 +244,63 @@ const Dashboard = () => {
       </header>
 
       {/* Main Content */}
-      <main className="container mx-auto px-4 py-8">
-        <div className="max-w-4xl mx-auto space-y-8">
+      <main className="container mx-auto px-4 py-6 sm:py-8">
+        <div className="max-w-6xl mx-auto space-y-6 sm:space-y-8">
           {/* Welcome Section */}
           <div className="text-center">
-            <h1 className="text-3xl font-bold text-foreground mb-2">
+            <h1 className="text-2xl sm:text-3xl font-bold text-foreground mb-2">
               Welcome to your Dashboard
             </h1>
-            <p className="text-muted-foreground">
+            <p className="text-sm sm:text-base text-muted-foreground">
               Manage your bills, track payments, and stay on top of your finances.
             </p>
           </div>
 
           {/* Bill Statistics */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
             <Card className="shadow-soft">
-              <CardContent className="p-6">
+              <CardContent className="p-4 sm:p-6">
                 <div className="flex items-center space-x-2">
-                  <FileText className="h-8 w-8 text-primary" />
+                  <FileText className="h-6 w-6 sm:h-8 sm:w-8 text-primary" />
                   <div>
-                    <div className="text-2xl font-bold text-foreground">{activeBills.length}</div>
-                    <div className="text-sm text-muted-foreground">Active Bills</div>
+                    <div className="text-xl sm:text-2xl font-bold text-foreground">{activeBills.length}</div>
+                    <div className="text-xs sm:text-sm text-muted-foreground">Active Bills</div>
                   </div>
                 </div>
               </CardContent>
             </Card>
             
             <Card className="shadow-soft">
-              <CardContent className="p-6">
+              <CardContent className="p-4 sm:p-6">
                 <div className="flex items-center space-x-2">
-                  <AlertCircle className="h-8 w-8 text-destructive" />
+                  <AlertCircle className="h-6 w-6 sm:h-8 sm:w-8 text-destructive" />
                   <div>
-                    <div className="text-2xl font-bold text-destructive">{overdueBills.length}</div>
-                    <div className="text-sm text-muted-foreground">Overdue Bills</div>
+                    <div className="text-xl sm:text-2xl font-bold text-destructive">{overdueBills.length}</div>
+                    <div className="text-xs sm:text-sm text-muted-foreground">Overdue Bills</div>
                   </div>
                 </div>
               </CardContent>
             </Card>
             
             <Card className="shadow-soft">
-              <CardContent className="p-6">
+              <CardContent className="p-4 sm:p-6">
                 <div className="flex items-center space-x-2">
-                  <Clock className="h-8 w-8 text-yellow-600" />
+                  <Clock className="h-6 w-6 sm:h-8 sm:w-8 text-yellow-600" />
                   <div>
-                    <div className="text-2xl font-bold text-yellow-600">{billsDueIn7Days.length}</div>
-                    <div className="text-sm text-muted-foreground">Due in 7 Days</div>
+                    <div className="text-xl sm:text-2xl font-bold text-yellow-600">{billsDueIn7Days.length}</div>
+                    <div className="text-xs sm:text-sm text-muted-foreground">Due in 7 Days</div>
                   </div>
                 </div>
               </CardContent>
             </Card>
             
             <Card className="shadow-soft">
-              <CardContent className="p-6">
+              <CardContent className="p-4 sm:p-6">
                 <div className="flex items-center space-x-2">
-                  <CheckCircle className="h-8 w-8 text-green-600" />
+                  <CheckCircle className="h-6 w-6 sm:h-8 sm:w-8 text-green-600" />
                   <div>
-                    <div className="text-2xl font-bold text-green-600">{paidBills.length}</div>
-                    <div className="text-sm text-muted-foreground">Paid Bills</div>
+                    <div className="text-xl sm:text-2xl font-bold text-green-600">{paidBills.length}</div>
+                    <div className="text-xs sm:text-sm text-muted-foreground">Paid Bills</div>
                   </div>
                 </div>
               </CardContent>
@@ -318,9 +318,9 @@ const Dashboard = () => {
               </CardHeader>
               <CardContent className="space-y-3">
                 {billsDueToday.map((bill) => (
-                  <div key={bill.id} className="flex items-center justify-between p-3 bg-white rounded-lg border">
-                    <div className="flex-1">
-                      <div className="font-medium text-foreground">{bill.name}</div>
+                  <div key={bill.id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 bg-white rounded-lg border">
+                    <div className="flex-1 min-w-0">
+                      <div className="font-medium text-foreground truncate">{bill.name}</div>
                       <div className="text-sm text-muted-foreground">
                         ${bill.amount.toFixed(2)} • {bill.category.charAt(0).toUpperCase() + bill.category.slice(1)}
                       </div>
@@ -328,7 +328,7 @@ const Dashboard = () => {
                     <Button 
                       size="sm" 
                       onClick={() => toggleBillStatus(bill)}
-                      className="bg-green-600 hover:bg-green-700"
+                      className="bg-green-600 hover:bg-green-700 h-9 w-full sm:w-auto"
                     >
                       Mark as Paid
                     </Button>
@@ -343,59 +343,59 @@ const Dashboard = () => {
             <CardHeader>
               <CardTitle>Quick Actions</CardTitle>
             </CardHeader>
-            <CardContent className="grid md:grid-cols-2 gap-4">
+            <CardContent className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
               <Button 
                 onClick={() => navigate('/bills')}
-                className="h-auto p-4 justify-start"
+                className="h-auto p-3 sm:p-4 justify-start min-h-[48px]"
                 variant="outline"
               >
                 <div className="flex items-center space-x-3">
-                  <Plus className="h-6 w-6 text-primary" />
+                  <Plus className="h-5 w-5 sm:h-6 sm:w-6 text-primary flex-shrink-0" />
                   <div className="text-left">
-                    <div className="font-medium">Add New Bill</div>
-                    <div className="text-sm text-muted-foreground">Create a new bill entry</div>
+                    <div className="font-medium text-sm sm:text-base">Add New Bill</div>
+                    <div className="text-xs sm:text-sm text-muted-foreground">Create a new bill entry</div>
                   </div>
                 </div>
               </Button>
               
               <Button 
                 onClick={() => navigate('/bills')}
-                className="h-auto p-4 justify-start"
+                className="h-auto p-3 sm:p-4 justify-start min-h-[48px]"
                 variant="outline"
               >
                 <div className="flex items-center space-x-3">
-                  <FileText className="h-6 w-6 text-primary" />
+                  <FileText className="h-5 w-5 sm:h-6 sm:w-6 text-primary flex-shrink-0" />
                   <div className="text-left">
-                    <div className="font-medium">Manage Bills</div>
-                    <div className="text-sm text-muted-foreground">View and edit all bills</div>
+                    <div className="font-medium text-sm sm:text-base">Manage Bills</div>
+                    <div className="text-xs sm:text-sm text-muted-foreground">View and edit all bills</div>
                   </div>
                 </div>
               </Button>
               
               <Button 
                 onClick={() => navigate('/analytics')}
-                className="h-auto p-4 justify-start"
+                className="h-auto p-3 sm:p-4 justify-start min-h-[48px]"
                 variant="outline"
               >
                 <div className="flex items-center space-x-3">
-                  <BarChart3 className="h-6 w-6 text-primary" />
+                  <BarChart3 className="h-5 w-5 sm:h-6 sm:w-6 text-primary flex-shrink-0" />
                   <div className="text-left">
-                    <div className="font-medium">View Analytics</div>
-                    <div className="text-sm text-muted-foreground">Financial insights and reports</div>
+                    <div className="font-medium text-sm sm:text-base">View Analytics</div>
+                    <div className="text-xs sm:text-sm text-muted-foreground">Financial insights and reports</div>
                   </div>
                 </div>
               </Button>
               
               <Button 
                 onClick={() => navigate('/settings')}
-                className="h-auto p-4 justify-start"
+                className="h-auto p-3 sm:p-4 justify-start min-h-[48px]"
                 variant="outline"
               >
                 <div className="flex items-center space-x-3">
-                  <Settings className="h-6 w-6 text-primary" />
+                  <Settings className="h-5 w-5 sm:h-6 sm:w-6 text-primary flex-shrink-0" />
                   <div className="text-left">
-                    <div className="font-medium">Settings</div>
-                    <div className="text-sm text-muted-foreground">Manage preferences and notifications</div>
+                    <div className="font-medium text-sm sm:text-base">Settings</div>
+                    <div className="text-xs sm:text-sm text-muted-foreground">Manage preferences and notifications</div>
                   </div>
                 </div>
               </Button>
@@ -423,50 +423,53 @@ const Dashboard = () => {
                   </Button>
                 </div>
               ) : (
-                <div className="overflow-x-auto">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Bill Name</TableHead>
-                        <TableHead>Amount</TableHead>
-                        <TableHead>Due Date</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead>Actions</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {bills.slice(0, 5).map((bill) => (
-                        <TableRow key={bill.id}>
-                          <TableCell className="font-medium">{bill.name}</TableCell>
-                          <TableCell>${bill.amount.toFixed(2)}</TableCell>
-                          <TableCell>{format(parseISO(bill.due_date), 'MMM dd, yyyy')}</TableCell>
-                          <TableCell>
-                            <Badge className={getBillStatusColor(bill)}>
-                              {bill.status.charAt(0).toUpperCase() + bill.status.slice(1)}
-                            </Badge>
-                          </TableCell>
-                          <TableCell>
-                            <Button 
-                              size="sm" 
-                              variant="outline"
-                              onClick={() => toggleBillStatus(bill)}
-                              disabled={bill.status === 'paid'}
-                            >
-                              {bill.status === 'paid' ? 'Paid' : 'Mark Paid'}
-                            </Button>
-                          </TableCell>
+                <div className="overflow-x-auto -mx-4 sm:mx-0">
+                  <div className="min-w-full inline-block align-middle">
+                    <Table className="min-w-[600px] sm:min-w-full">
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead className="text-xs sm:text-sm">Bill Name</TableHead>
+                          <TableHead className="text-xs sm:text-sm">Amount</TableHead>
+                          <TableHead className="text-xs sm:text-sm">Due Date</TableHead>
+                          <TableHead className="text-xs sm:text-sm">Status</TableHead>
+                          <TableHead className="text-xs sm:text-sm">Actions</TableHead>
                         </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                  {bills.length > 5 && (
-                    <div className="text-center mt-4">
-                      <Button variant="outline" onClick={() => navigate('/bills')}>
-                        View All Bills
-                        <ArrowRight className="h-4 w-4 ml-2" />
-                      </Button>
-                    </div>
-                  )}
+                      </TableHeader>
+                      <TableBody>
+                        {bills.slice(0, 5).map((bill) => (
+                          <TableRow key={bill.id}>
+                            <TableCell className="font-medium text-xs sm:text-sm">{bill.name}</TableCell>
+                            <TableCell className="text-xs sm:text-sm">${bill.amount.toFixed(2)}</TableCell>
+                            <TableCell className="text-xs sm:text-sm">{format(parseISO(bill.due_date), 'MMM dd, yyyy')}</TableCell>
+                            <TableCell>
+                              <Badge className={`${getBillStatusColor(bill)} text-xs`}>
+                                {bill.status.charAt(0).toUpperCase() + bill.status.slice(1)}
+                              </Badge>
+                            </TableCell>
+                            <TableCell>
+                              <Button 
+                                size="sm" 
+                                variant="outline"
+                                onClick={() => toggleBillStatus(bill)}
+                                disabled={bill.status === 'paid'}
+                                className="h-8 px-2 text-xs sm:h-9 sm:px-3 sm:text-sm"
+                              >
+                                {bill.status === 'paid' ? 'Paid' : 'Mark Paid'}
+                              </Button>
+                            </TableCell>
+                         </TableRow>
+                       ))}
+                     </TableBody>
+                   </Table>
+                   {bills.length > 5 && (
+                     <div className="text-center mt-4">
+                       <Button variant="outline" onClick={() => navigate('/bills')}>
+                         View All Bills
+                         <ArrowRight className="h-4 w-4 ml-2" />
+                       </Button>
+                     </div>
+                   )}
+                  </div>
                 </div>
               )}
             </CardContent>

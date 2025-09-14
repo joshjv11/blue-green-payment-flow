@@ -361,24 +361,24 @@ const Bills = () => {
     <div className="min-h-screen bg-background">
       {/* Header */}
       <header className="border-b border-border bg-card">
-        <div className="container mx-auto px-4 py-4">
+        <div className="container mx-auto px-4 py-3 sm:py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-2">
               <div className="w-8 h-8 bg-hero-gradient rounded-lg flex items-center justify-center">
                 <div className="w-4 h-4 bg-white rounded-sm"></div>
               </div>
-              <span className="text-xl font-bold text-foreground">InvoiceFlow</span>
+              <span className="text-lg sm:text-xl font-bold text-foreground">InvoiceFlow</span>
             </div>
             
-            <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-2 sm:space-x-4">
               <Button
                 variant="outline"
                 size="sm"
                 onClick={signOut}
-                className="flex items-center space-x-2"
+                className="flex items-center space-x-1 sm:space-x-2 h-9"
               >
                 <LogOut className="h-4 w-4" />
-                <span>Sign Out</span>
+                <span className="hidden xs:inline">Sign Out</span>
               </Button>
             </div>
           </div>
@@ -386,25 +386,25 @@ const Bills = () => {
       </header>
 
       {/* Main Content */}
-      <main className="container mx-auto px-4 py-8">
-        <div className="max-w-7xl mx-auto space-y-8">
+      <main className="container mx-auto px-4 py-6 sm:py-8">
+        <div className="max-w-7xl mx-auto space-y-6 sm:space-y-8">
           {/* Header Section */}
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
-              <h1 className="text-3xl font-bold text-foreground">Bills Management</h1>
-              <p className="text-muted-foreground">Track and manage all your bills in one place</p>
+              <h1 className="text-2xl sm:text-3xl font-bold text-foreground">Bills Management</h1>
+              <p className="text-sm sm:text-base text-muted-foreground">Track and manage all your bills in one place</p>
             </div>
             
             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
               <DialogTrigger asChild>
-                <Button onClick={resetForm} className="flex items-center space-x-2">
+                <Button onClick={resetForm} className="flex items-center space-x-2 h-10 w-full sm:w-auto">
                   <Plus className="h-4 w-4" />
                   <span>Add New Bill</span>
                 </Button>
               </DialogTrigger>
-              <DialogContent className="max-w-md">
+              <DialogContent className="max-w-md mx-4 sm:mx-auto">
                 <DialogHeader>
-                  <DialogTitle>
+                  <DialogTitle className="text-lg sm:text-xl">
                     {editingBill ? 'Edit Bill' : 'Add New Bill'}
                   </DialogTitle>
                 </DialogHeader>
@@ -508,38 +508,38 @@ const Bills = () => {
           </div>
 
           {/* Stats Cards */}
-          <div className="grid md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6">
             <Card>
-              <CardContent className="p-6">
-                <div className="flex items-center space-x-4">
-                  <DollarSign className="h-8 w-8 text-primary" />
+              <CardContent className="p-4 sm:p-6">
+                <div className="flex items-center space-x-2 sm:space-x-4">
+                  <DollarSign className="h-6 w-6 sm:h-8 sm:w-8 text-primary" />
                   <div>
-                    <div className="text-2xl font-bold">${totalAmount.toFixed(2)}</div>
-                    <div className="text-sm text-muted-foreground">Total Bills</div>
+                    <div className="text-lg sm:text-2xl font-bold">${totalAmount.toFixed(2)}</div>
+                    <div className="text-xs sm:text-sm text-muted-foreground">Total Bills</div>
                   </div>
                 </div>
               </CardContent>
             </Card>
             
             <Card>
-              <CardContent className="p-6">
-                <div className="flex items-center space-x-4">
-                  <Calendar className="h-8 w-8 text-accent" />
+              <CardContent className="p-4 sm:p-6">
+                <div className="flex items-center space-x-2 sm:space-x-4">
+                  <Calendar className="h-6 w-6 sm:h-8 sm:w-8 text-accent" />
                   <div>
-                    <div className="text-2xl font-bold">${unpaidAmount.toFixed(2)}</div>
-                    <div className="text-sm text-muted-foreground">Outstanding</div>
+                    <div className="text-lg sm:text-2xl font-bold">${unpaidAmount.toFixed(2)}</div>
+                    <div className="text-xs sm:text-sm text-muted-foreground">Outstanding</div>
                   </div>
                 </div>
               </CardContent>
             </Card>
             
             <Card>
-              <CardContent className="p-6">
-                <div className="flex items-center space-x-4">
-                  <AlertCircle className="h-8 w-8 text-red-500" />
+              <CardContent className="p-4 sm:p-6">
+                <div className="flex items-center space-x-2 sm:space-x-4">
+                  <AlertCircle className="h-6 w-6 sm:h-8 sm:w-8 text-red-500" />
                   <div>
-                    <div className="text-2xl font-bold text-red-500">{overdueBills}</div>
-                    <div className="text-sm text-muted-foreground">Overdue Bills</div>
+                    <div className="text-lg sm:text-2xl font-bold text-red-500">{overdueBills}</div>
+                    <div className="text-xs sm:text-sm text-muted-foreground">Overdue Bills</div>
                   </div>
                 </div>
               </CardContent>
@@ -559,91 +559,146 @@ const Bills = () => {
                   No bills found. Add your first bill to get started!
                 </div>
               ) : (
-                <div className="overflow-x-auto">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>
-                          <Button variant="ghost" onClick={() => sortBills('name')} className="h-auto p-0 font-semibold">
-                            Name <ArrowUpDown className="ml-2 h-4 w-4" />
-                          </Button>
-                        </TableHead>
-                        <TableHead>
-                          <Button variant="ghost" onClick={() => sortBills('amount')} className="h-auto p-0 font-semibold">
-                            Amount <ArrowUpDown className="ml-2 h-4 w-4" />
-                          </Button>
-                        </TableHead>
-                        <TableHead>
-                          <Button variant="ghost" onClick={() => sortBills('due_date')} className="h-auto p-0 font-semibold">
-                            Due Date <ArrowUpDown className="ml-2 h-4 w-4" />
-                          </Button>
-                        </TableHead>
-                        <TableHead>Category</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead>Actions</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {bills.map((bill) => (
-                        <TableRow key={bill.id} className={getBillRowColor(bill)}>
-                          <TableCell className="font-medium">
-                            <div className="flex items-center space-x-2">
-                              <span>{bill.name}</span>
-                              {bill.recurring && (
-                                <Badge variant="secondary" className="text-xs">Recurring</Badge>
-                              )}
+                <>
+                  {/* Mobile Card View */}
+                  <div className="block sm:hidden space-y-4">
+                    {bills.map((bill) => (
+                      <Card key={bill.id} className={`${getBillRowColor(bill)} p-4`}>
+                        <div className="space-y-3">
+                          <div className="flex justify-between items-start">
+                            <div>
+                              <h3 className="font-semibold text-foreground">{bill.name}</h3>
+                              <p className="text-lg font-bold text-foreground">${bill.amount.toFixed(2)}</p>
                             </div>
-                          </TableCell>
-                          <TableCell className="font-semibold">${bill.amount.toFixed(2)}</TableCell>
-                          <TableCell>
-                            <div className="flex flex-col">
-                              <span>{format(parseISO(bill.due_date), 'MMM dd, yyyy')}</span>
-                              <span className="text-xs text-muted-foreground">
-                                {differenceInDays(parseISO(bill.due_date), new Date()) === 0
-                                  ? 'Due today'
-                                  : differenceInDays(parseISO(bill.due_date), new Date()) > 0
-                                  ? `${differenceInDays(parseISO(bill.due_date), new Date())} days left`
-                                  : `${Math.abs(differenceInDays(parseISO(bill.due_date), new Date()))} days overdue`
-                                }
-                              </span>
-                            </div>
-                          </TableCell>
-                          <TableCell className="capitalize">
-                            {bill.category.replace('_', ' ')}
-                          </TableCell>
-                          <TableCell>
-                            <Badge 
-                              className={`capitalize cursor-pointer hover:opacity-80 transition-opacity ${getBillStatusColor(bill)}`}
-                              onClick={() => toggleBillStatus(bill)}
-                            >
-                              {bill.status}
+                            <Badge className={getBillStatusColor(bill)}>
+                              {bill.status.charAt(0).toUpperCase() + bill.status.slice(1)}
                             </Badge>
-                          </TableCell>
-                          <TableCell>
-                            <div className="flex items-center space-x-2">
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => handleEdit(bill)}
-                                className="h-8 w-8 p-0"
-                              >
-                                <Edit className="h-4 w-4" />
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => handleDelete(bill.id)}
-                                className="h-8 w-8 p-0 text-destructive hover:text-destructive"
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            </div>
-                          </TableCell>
+                          </div>
+                          
+                          <div className="text-sm text-muted-foreground space-y-1">
+                            <p>Due: {format(parseISO(bill.due_date), 'MMM dd, yyyy')}</p>
+                            <p>Category: {bill.category.charAt(0).toUpperCase() + bill.category.slice(1).replace('_', ' ')}</p>
+                          </div>
+                          
+                          <div className="flex flex-wrap gap-2">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => toggleBillStatus(bill)}
+                              disabled={bill.status === 'paid'}
+                              className="flex-1 min-w-0 h-9"
+                            >
+                              {bill.status === 'paid' ? 'Paid' : 'Mark Paid'}
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => handleEdit(bill)}
+                              className="h-9 px-3"
+                            >
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => handleDelete(bill.id)}
+                              className="text-destructive hover:text-destructive h-9 px-3"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </div>
+                      </Card>
+                    ))}
+                  </div>
+
+                  {/* Desktop Table View */}
+                  <div className="hidden sm:block overflow-x-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>
+                            <Button variant="ghost" onClick={() => sortBills('name')} className="h-auto p-0 font-semibold text-xs sm:text-sm">
+                              Name <ArrowUpDown className="ml-2 h-4 w-4" />
+                            </Button>
+                          </TableHead>
+                          <TableHead>
+                            <Button variant="ghost" onClick={() => sortBills('amount')} className="h-auto p-0 font-semibold text-xs sm:text-sm">
+                              Amount <ArrowUpDown className="ml-2 h-4 w-4" />
+                            </Button>
+                          </TableHead>
+                          <TableHead>
+                            <Button variant="ghost" onClick={() => sortBills('due_date')} className="h-auto p-0 font-semibold text-xs sm:text-sm">
+                              Due Date <ArrowUpDown className="ml-2 h-4 w-4" />
+                            </Button>
+                          </TableHead>
+                          <TableHead className="text-xs sm:text-sm">Category</TableHead>
+                          <TableHead className="text-xs sm:text-sm">Status</TableHead>
+                          <TableHead className="text-xs sm:text-sm">Actions</TableHead>
                         </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
+                      </TableHeader>
+                      <TableBody>
+                        {bills.map((bill) => (
+                          <TableRow key={bill.id} className={getBillRowColor(bill)}>
+                            <TableCell className="font-medium text-xs sm:text-sm">
+                              <div className="flex items-center space-x-2">
+                                <span>{bill.name}</span>
+                                {bill.recurring && (
+                                  <Badge variant="secondary" className="text-xs">Recurring</Badge>
+                                )}
+                              </div>
+                            </TableCell>
+                            <TableCell className="font-semibold text-xs sm:text-sm">${bill.amount.toFixed(2)}</TableCell>
+                            <TableCell className="text-xs sm:text-sm">
+                              <div className="flex flex-col">
+                                <span>{format(parseISO(bill.due_date), 'MMM dd, yyyy')}</span>
+                                <span className="text-xs text-muted-foreground">
+                                  {differenceInDays(parseISO(bill.due_date), new Date()) === 0
+                                    ? 'Due today'
+                                    : differenceInDays(parseISO(bill.due_date), new Date()) > 0
+                                    ? `${differenceInDays(parseISO(bill.due_date), new Date())} days left`
+                                    : `${Math.abs(differenceInDays(parseISO(bill.due_date), new Date()))} days overdue`
+                                  }
+                                </span>
+                              </div>
+                            </TableCell>
+                            <TableCell className="capitalize text-xs sm:text-sm">
+                              {bill.category.replace('_', ' ')}
+                            </TableCell>
+                            <TableCell>
+                              <Badge 
+                                className={`capitalize cursor-pointer hover:opacity-80 transition-opacity text-xs ${getBillStatusColor(bill)}`}
+                                onClick={() => toggleBillStatus(bill)}
+                              >
+                                {bill.status}
+                              </Badge>
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex items-center space-x-1 sm:space-x-2">
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => handleEdit(bill)}
+                                  className="h-8 w-8 p-0"
+                                >
+                                  <Edit className="h-3 w-3 sm:h-4 sm:w-4" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => handleDelete(bill.id)}
+                                  className="h-8 w-8 p-0 text-destructive hover:text-destructive"
+                                >
+                                  <Trash2 className="h-3 w-3 sm:h-4 sm:w-4" />
+                                </Button>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                </>
               )}
             </CardContent>
           </Card>

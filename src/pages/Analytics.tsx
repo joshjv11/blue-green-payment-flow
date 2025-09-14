@@ -158,38 +158,40 @@ const Analytics = () => {
     <div className="min-h-screen bg-background">
       {/* Header */}
       <header className="border-b border-border bg-card">
-        <div className="container mx-auto px-4 py-4">
+        <div className="container mx-auto px-4 py-3 sm:py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-2">
               <div className="w-8 h-8 bg-hero-gradient rounded-lg flex items-center justify-center">
                 <div className="w-4 h-4 bg-white rounded-sm"></div>
               </div>
-              <span className="text-xl font-bold text-foreground">InvoiceFlow</span>
+              <span className="text-lg sm:text-xl font-bold text-foreground">InvoiceFlow</span>
             </div>
             
-            <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-1 sm:space-x-4">
               <Button
                 variant="outline"
                 size="sm"
                 onClick={() => navigate('/dashboard')}
+                className="h-9 px-2 sm:px-3"
               >
-                Dashboard
+                <span className="text-xs sm:text-sm">Dashboard</span>
               </Button>
               <Button
                 variant="outline"
                 size="sm"
                 onClick={() => navigate('/bills')}
+                className="h-9 px-2 sm:px-3"
               >
-                Bills
+                <span className="text-xs sm:text-sm">Bills</span>
               </Button>
               <Button
                 variant="outline"
                 size="sm"
                 onClick={signOut}
-                className="flex items-center space-x-2"
+                className="flex items-center space-x-1 sm:space-x-2 h-9 px-2 sm:px-3"
               >
                 <LogOut className="h-4 w-4" />
-                <span>Sign Out</span>
+                <span className="hidden xs:inline text-xs sm:text-sm">Sign Out</span>
               </Button>
             </div>
           </div>
@@ -197,71 +199,71 @@ const Analytics = () => {
       </header>
 
       {/* Main Content */}
-      <main className="container mx-auto px-4 py-8">
-        <div className="max-w-7xl mx-auto space-y-8">
+      <main className="container mx-auto px-4 py-6 sm:py-8">
+        <div className="max-w-7xl mx-auto space-y-6 sm:space-y-8">
           {/* Header Section */}
           <div className="text-center">
-            <h1 className="text-3xl font-bold text-foreground mb-2">
+            <h1 className="text-2xl sm:text-3xl font-bold text-foreground mb-2">
               Financial Analytics
             </h1>
-            <p className="text-muted-foreground">
+            <p className="text-sm sm:text-base text-muted-foreground">
               Track your spending patterns and payment performance
             </p>
           </div>
 
           {/* Top Stats */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
             <Card className="shadow-soft">
-              <CardContent className="p-6">
+              <CardContent className="p-4 sm:p-6">
                 <div className="flex items-center space-x-2">
-                  <BarChart3 className="h-8 w-8 text-primary" />
+                  <BarChart3 className="h-6 w-6 sm:h-8 sm:w-8 text-primary" />
                   <div>
-                    <div className="text-2xl font-bold text-foreground">
+                    <div className="text-lg sm:text-2xl font-bold text-foreground">
                       ${totalMonthlySpending.toFixed(2)}
                     </div>
-                    <div className="text-sm text-muted-foreground">Monthly Spending</div>
+                    <div className="text-xs sm:text-sm text-muted-foreground">Monthly Spending</div>
                   </div>
                 </div>
               </CardContent>
             </Card>
             
             <Card className="shadow-soft">
-              <CardContent className="p-6">
+              <CardContent className="p-4 sm:p-6">
                 <div className="flex items-center space-x-2">
-                  <CheckCircle className="h-8 w-8 text-green-600" />
+                  <CheckCircle className="h-6 w-6 sm:h-8 sm:w-8 text-green-600" />
                   <div>
-                    <div className="text-2xl font-bold text-green-600">
+                    <div className="text-lg sm:text-2xl font-bold text-green-600">
                       {paymentAnalysis.onTimeRate}%
                     </div>
-                    <div className="text-sm text-muted-foreground">On-Time Rate</div>
+                    <div className="text-xs sm:text-sm text-muted-foreground">On-Time Rate</div>
                   </div>
                 </div>
               </CardContent>
             </Card>
             
             <Card className="shadow-soft">
-              <CardContent className="p-6">
+              <CardContent className="p-4 sm:p-6">
                 <div className="flex items-center space-x-2">
-                  <Calendar className="h-8 w-8 text-blue-600" />
+                  <Calendar className="h-6 w-6 sm:h-8 sm:w-8 text-blue-600" />
                   <div>
-                    <div className="text-2xl font-bold text-blue-600">
+                    <div className="text-lg sm:text-2xl font-bold text-blue-600">
                       {paidBills.length}
                     </div>
-                    <div className="text-sm text-muted-foreground">Total Payments</div>
+                    <div className="text-xs sm:text-sm text-muted-foreground">Total Payments</div>
                   </div>
                 </div>
               </CardContent>
             </Card>
             
             <Card className={`shadow-soft ${getHealthScoreBg(healthScore)}`}>
-              <CardContent className="p-6">
+              <CardContent className="p-4 sm:p-6">
                 <div className="flex items-center space-x-2">
-                  <TrendingUp className={`h-8 w-8 ${getHealthScoreColor(healthScore)}`} />
+                  <TrendingUp className={`h-6 w-6 sm:h-8 sm:w-8 ${getHealthScoreColor(healthScore)}`} />
                   <div>
-                    <div className={`text-2xl font-bold ${getHealthScoreColor(healthScore)}`}>
+                    <div className={`text-lg sm:text-2xl font-bold ${getHealthScoreColor(healthScore)}`}>
                       {healthScore}
                     </div>
-                    <div className="text-sm text-muted-foreground">Health Score</div>
+                    <div className="text-xs sm:text-sm text-muted-foreground">Health Score</div>
                   </div>
                 </div>
               </CardContent>
@@ -269,7 +271,7 @@ const Analytics = () => {
           </div>
 
           {/* Charts Row */}
-          <div className="grid lg:grid-cols-2 gap-8">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8">
             {/* Monthly Spending Bar Chart */}
             <Card className="shadow-soft">
               <CardHeader>
@@ -287,7 +289,7 @@ const Analytics = () => {
                         color: "hsl(var(--primary))",
                       },
                     }}
-                    className="h-[300px]"
+                    className="h-[250px] sm:h-[300px]"
                   >
                     <BarChart data={monthlySpending}>
                       <CartesianGrid strokeDasharray="3 3" />
@@ -298,7 +300,7 @@ const Analytics = () => {
                     </BarChart>
                   </ChartContainer>
                 ) : (
-                  <div className="flex items-center justify-center h-[300px] text-muted-foreground">
+                  <div className="flex items-center justify-center h-[250px] sm:h-[300px] text-muted-foreground text-sm">
                     No payment data available for this month
                   </div>
                 )}
@@ -321,7 +323,7 @@ const Analytics = () => {
                         label: "Amount",
                       },
                     }}
-                    className="h-[300px]"
+                    className="h-[250px] sm:h-[300px]"
                   >
                     <PieChart>
                       <ChartTooltip content={<ChartTooltipContent />} />
@@ -342,7 +344,7 @@ const Analytics = () => {
                     </PieChart>
                   </ChartContainer>
                 ) : (
-                  <div className="flex items-center justify-center h-[300px] text-muted-foreground">
+                  <div className="flex items-center justify-center h-[250px] sm:h-[300px] text-muted-foreground text-sm">
                     No payment data available for this month
                   </div>
                 )}
@@ -351,7 +353,7 @@ const Analytics = () => {
           </div>
 
           {/* Payment Performance and Recent Payments */}
-          <div className="grid lg:grid-cols-2 gap-8">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8">
             {/* Payment Performance */}
             <Card className="shadow-soft">
               <CardHeader>
@@ -406,14 +408,14 @@ const Analytics = () => {
                 {recentPayments.length > 0 ? (
                   <div className="space-y-3">
                     {recentPayments.map((bill) => (
-                      <div key={bill.id} className="flex items-center justify-between p-3 rounded-lg border bg-card">
-                        <div className="flex-1">
-                          <div className="font-medium text-foreground">{bill.name}</div>
+                      <div key={bill.id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 rounded-lg border bg-card">
+                        <div className="flex-1 min-w-0">
+                          <div className="font-medium text-foreground truncate">{bill.name}</div>
                           <div className="text-sm text-muted-foreground">
                             {format(parseISO(bill.updated_at), 'MMM dd, yyyy')} • {categoryLabels[bill.category as keyof typeof categoryLabels]}
                           </div>
                         </div>
-                        <div className="text-right">
+                        <div className="text-right sm:text-right">
                           <div className="font-medium text-foreground">${bill.amount.toFixed(2)}</div>
                           <Badge className="bg-green-100 text-green-800 text-xs">
                             Paid

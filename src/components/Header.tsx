@@ -16,16 +16,16 @@ const Header = () => {
 
   return (
     <header className="absolute top-0 w-full z-50 bg-transparent">
-      <nav className="container mx-auto px-4 py-6">
+      <nav className="container mx-auto px-4 py-4 sm:py-6">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-2">
             <div className="w-8 h-8 bg-white rounded-lg flex items-center justify-center">
               <div className="w-4 h-4 bg-hero-gradient rounded-sm"></div>
             </div>
-            <span className="text-xl font-bold text-white">InvoiceFlow</span>
+            <span className="text-lg sm:text-xl font-bold text-white">InvoiceFlow</span>
           </div>
           
-          <div className="hidden md:flex items-center space-x-8">
+          <div className="hidden lg:flex items-center space-x-8">
             <a href="#features" className="text-white/90 hover:text-white transition-colors">
               Features
             </a>
@@ -37,28 +37,28 @@ const Header = () => {
             </a>
           </div>
           
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-2 sm:space-x-4">
             {user ? (
               <Button 
                 onClick={() => navigate('/dashboard')}
-                className="bg-white text-primary hover:bg-white/90"
+                className="bg-white text-primary hover:bg-white/90 h-9 px-3 sm:h-10 sm:px-4"
               >
-                Dashboard
+                <span className="text-sm sm:text-base">Dashboard</span>
               </Button>
             ) : (
               <>
                 <Button 
                   variant="ghost" 
-                  className="text-white hover:bg-white/10"
+                  className="text-white hover:bg-white/10 h-9 px-3 sm:h-10 sm:px-4 hidden xs:flex"
                   onClick={() => navigate('/auth')}
                 >
-                  Sign In
+                  <span className="text-sm sm:text-base">Sign In</span>
                 </Button>
                 <Button 
-                  className="bg-white text-primary hover:bg-white/90"
+                  className="bg-white text-primary hover:bg-white/90 h-9 px-3 sm:h-10 sm:px-4"
                   onClick={handleGetStarted}
                 >
-                  Get Started
+                  <span className="text-sm sm:text-base">Get Started</span>
                 </Button>
               </>
             )}
