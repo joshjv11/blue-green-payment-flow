@@ -1,60 +1,95 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
+import { useAuth } from './useAuth';
 import { useSupabasePlan } from './useSupabasePlan';
 import { useToast } from './use-toast';
+import { supabase } from '@/integrations/supabase/client';
+import { useNavigate } from 'react-router-dom';
 
-// Mock payment verification service - replace with actual Supabase integration
 export const usePaymentVerification = () => {
+  const { user } = useAuth();
   const { upgradeToPro, fetchUserPlan } = useSupabasePlan();
   const { toast } = useToast();
+  const navigate = useNavigate();
+  const [pendingPayments, setPendingPayments] = useState<any[]>([]);
 
-  // Check for payment verification status periodically
+  // Check for real-time payment verification from Supabase
   useEffect(() => {
+    if (!user) return;
+
     const checkPaymentStatus = async () => {
       try {
-        // Check localStorage for pending payments (mock)
-        const pendingPayments = JSON.parse(localStorage.getItem('pending_payments') || '[]');
+        console.log('💳 Checking payment status for user:', user.email);
         
-        // Simulate payment verification (in production, this would check Supabase)
-        const verifiedPayments = pendingPayments.filter((payment: any) => {
-          // Mock: verify payments older than 5 seconds (for demo purposes)
-          const paymentAge = Date.now() - new Date(payment.created_at).getTime();
-          return paymentAge > 5000; // 5 seconds
-        });
+        // Get user's payment transactions that are verified but not processed
+        const { data: verifiedPayments, error } = await supabase
+          .from('payment_transactions')
+          .select('*')
+          .eq('user_id', user.id)
+          .eq('status', 'verified')
+          .is('processed', null); // Only get unprocessed verified payments
 
-        if (verifiedPayments.length > 0) {
+        if (error) {
+          console.error('❌ Error checking payment status:', error);
+          return;
+        }
+
+        if (verifiedPayments && verifiedPayments.length > 0) {
+          console.log('✅ Found verified payments:', verifiedPayments.length);
+          
           // Auto-upgrade user to Pro
           await upgradeToPro();
           
-          // Remove verified payments from localStorage
-          const remainingPayments = pendingPayments.filter((payment: any) => 
-            !verifiedPayments.some((verified: any) => verified.transaction_id === payment.transaction_id)
-          );
-          localStorage.setItem('pending_payments', JSON.stringify(remainingPayments));
+          // Mark payments as processed
+          const { error: updateError } = await supabase
+            .from('payment_transactions')
+            .update({ processed: true })
+            .in('id', verifiedPayments.map(p => p.id));
 
+          if (updateError) {
+            console.error('❌ Error marking payments as processed:', updateError);
+          }
+
+          // Show success message and redirect
           toast({
-            title: "Payment Verified! 🎉",
-            description: "Your account has been upgraded to Pro. Welcome to unlimited bills and AI coaching!",
-            duration: 5000,
+            title: "🎉 Welcome to Pro!",
+            description: "Your payment has been verified! All Pro features are now unlocked.",
+            duration: 8000,
           });
+
+          // Redirect to dashboard with success state
+          setTimeout(() => {
+            navigate('/dashboard?welcome=true');
+          }, 2000);
 
           // Refresh plan data
           await fetchUserPlan();
         }
+
+        // Get pending payments for UI feedback
+        const { data: pending } = await supabase
+          .from('payment_transactions')
+          .select('*')
+          .eq('user_id', user.id)
+          .eq('status', 'pending');
+
+        setPendingPayments(pending || []);
+
       } catch (error) {
-        console.error('Error checking payment status:', error);
+        console.error('❌ Error checking payment status:', error);
       }
     };
 
-    // Check every 10 seconds for demo purposes
-    const interval = setInterval(checkPaymentStatus, 10000);
-    
     // Initial check
     checkPaymentStatus();
 
+    // Check every 30 seconds for payment updates
+    const interval = setInterval(checkPaymentStatus, 30000);
+
     return () => clearInterval(interval);
-  }, [upgradeToPro, fetchUserPlan, toast]);
+  }, [user, upgradeToPro, fetchUserPlan, toast, navigate]);
 
   return {
-    // Expose any needed methods here
+    pendingPayments,
+    hasPendingPayments: pendingPayments.length > 0,
   };
 };

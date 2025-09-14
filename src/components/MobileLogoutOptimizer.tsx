@@ -24,15 +24,12 @@ export const MobileLogoutOptimizer = ({
     console.log('📱 Mobile logout initiated');
     setIsLoggingOut(true);
     
-    try {
-      await signOut();
-      console.log('✅ Mobile logout completed');
-    } catch (error) {
-      console.error('❌ Mobile logout failed:', error);
-    } finally {
-      // Keep loading state for a brief moment to show completion
-      setTimeout(() => setIsLoggingOut(false), 300);
-    }
+    // Call signOut and complete immediately
+    await signOut();
+    
+    // Quick visual feedback then clear
+    setTimeout(() => setIsLoggingOut(false), 100);
+    console.log('✅ Mobile logout completed instantly');
   };
 
   const isProcessing = loading || isLoggingOut;

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -27,6 +27,8 @@ const UPIPaymentModal = ({ open, onOpenChange, plan }: UPIPaymentModalProps) => 
   const [userPhone, setUserPhone] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [isSubmitted, setIsSubmitted] = useState(false);
+  const [hasPendingPayment, setHasPendingPayment] = useState(false);
 
   const currentPlan = PAYMENT_CONFIG.PLANS[plan];
   const merchantUpiId = PAYMENT_CONFIG.UPI_ID;
@@ -37,6 +39,33 @@ const UPIPaymentModal = ({ open, onOpenChange, plan }: UPIPaymentModalProps) => 
     upiId: merchantUpiId, 
     user: user?.email 
   });
+
+  // Check for existing pending payments on modal open
+  useEffect(() => {
+    const checkPendingPayments = async () => {
+      if (!user || !open) return;
+      
+      try {
+        const { data: pendingPayments } = await supabase
+          .from('payment_transactions')
+          .select('*')
+          .eq('user_id', user.id)
+          .eq('status', 'pending')
+          .gte('created_at', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()); // Last 24 hours
+
+        setHasPendingPayment((pendingPayments && pendingPayments.length > 0) || false);
+        
+        // If there are pending payments, show submitted state
+        if (pendingPayments && pendingPayments.length > 0) {
+          setIsSubmitted(true);
+        }
+      } catch (error) {
+        console.error('❌ Error checking pending payments:', error);
+      }
+    };
+
+    checkPendingPayments();
+  }, [user, open]);
 
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
@@ -68,9 +97,35 @@ const UPIPaymentModal = ({ open, onOpenChange, plan }: UPIPaymentModalProps) => 
       return;
     }
 
+    // Check for duplicate transaction ID
+    if (transactionId.trim().length < 8) {
+      toast({
+        title: "Invalid Transaction ID",
+        description: "Please enter a valid UPI transaction ID (minimum 8 characters)",
+        variant: "destructive"
+      });
+      return;
+    }
+
     setIsSubmitting(true);
     
     try {
+      // Check for duplicate transaction ID first
+      const { data: existingTransaction } = await supabase
+        .from('payment_transactions')
+        .select('id')
+        .eq('transaction_id', transactionId)
+        .maybeSingle();
+
+      if (existingTransaction) {
+        toast({
+          title: "Duplicate Transaction",
+          description: "This transaction ID has already been submitted. Please check your UPI app for a different transaction.",
+          variant: "destructive"
+        });
+        return;
+      }
+
       // Submit to Supabase payment_transactions table
       const { data, error } = await supabase
         .from('payment_transactions')
@@ -92,30 +147,44 @@ const UPIPaymentModal = ({ open, onOpenChange, plan }: UPIPaymentModalProps) => 
 
       if (error) {
         console.error('❌ Payment submission error:', error);
+        
+        if (error.code === '23505') { // Unique constraint violation
+          toast({
+            title: "Duplicate Transaction",
+            description: "This transaction ID has already been submitted.",
+            variant: "destructive"
+          });
+          return;
+        }
         throw error;
       }
 
       console.log('✅ Payment submitted successfully:', data);
+      
+      setIsSubmitted(true);
+      setHasPendingPayment(true);
 
       toast({
-        title: "Payment Details Submitted!",
-        description: `Your payment for ${currentPlan.name} has been submitted for verification. You'll be upgraded within ${PAYMENT_CONFIG.VERIFICATION_TIME}.`,
+        title: "✅ Payment Submitted Successfully!",
+        description: "Your payment is now under review. You'll be upgraded to Pro within 24 hours once verified.",
+        duration: 6000,
       });
 
-      // Reset form and close modal
+      // Reset form fields
       setTransactionId('');
       setUpiId('');
       setUserPhone('');
-      onOpenChange(false);
       
     } catch (error: any) {
       console.error('❌ Payment submission error:', error);
       
       let errorMessage = 'Failed to submit payment details. Please try again.';
-      if (error.message?.includes('duplicate')) {
-        errorMessage = 'This transaction ID has already been submitted.';
+      if (error.message?.includes('duplicate') || error.code === '23505') {
+        errorMessage = 'This transaction ID has already been submitted. Please use a different transaction.';
       } else if (error.message?.includes('network')) {
         errorMessage = 'Network error. Please check your connection and try again.';
+      } else if (error.message?.includes('invalid')) {
+        errorMessage = 'Invalid transaction details. Please check and try again.';
       }
       
       toast({
@@ -139,6 +208,27 @@ const UPIPaymentModal = ({ open, onOpenChange, plan }: UPIPaymentModalProps) => 
         </DialogHeader>
 
         <div className="space-y-6">
+          {/* Payment Status - Show if submitted or has pending payment */}
+          {(isSubmitted || hasPendingPayment) && (
+            <Card className="p-4 bg-amber-50 dark:bg-amber-900/20 border-amber-200">
+              <div className="flex items-center gap-3">
+                <div className="h-2 w-2 bg-amber-500 rounded-full animate-pulse"></div>
+                <div>
+                  <h3 className="font-semibold text-amber-800 dark:text-amber-400">
+                    ⏳ Payment Under Review
+                  </h3>
+                  <p className="text-sm text-amber-700 dark:text-amber-300 mt-1">
+                    Your payment has been submitted and is being verified by our team. 
+                    You'll be upgraded to Pro automatically once approved (usually within 24 hours).
+                  </p>
+                  <p className="text-xs text-amber-600 dark:text-amber-400 mt-2">
+                    💡 No need to submit another payment - we'll notify you once it's verified!
+                  </p>
+                </div>
+              </div>
+            </Card>
+          )}
+
           {/* Plan Details */}
           <Card className="p-4 bg-muted/30">
             <div className="flex justify-between items-center mb-2">
@@ -206,6 +296,8 @@ const UPIPaymentModal = ({ open, onOpenChange, plan }: UPIPaymentModalProps) => 
 
             {/* Transaction Details Form */}
             <form onSubmit={handleSubmit} className="space-y-4">
+              {/* Disable form if payment already submitted */}
+              <fieldset disabled={isSubmitted || hasPendingPayment}>
               <div>
                 <Label className="text-sm font-medium">Step 2: Enter Payment Details</Label>
               </div>
@@ -250,18 +342,21 @@ const UPIPaymentModal = ({ open, onOpenChange, plan }: UPIPaymentModalProps) => 
                 <Button
                   type="submit"
                   className="flex-1"
-                  disabled={isSubmitting || !transactionId.trim() || !userPhone.trim()}
+                  disabled={isSubmitting || !transactionId.trim() || !userPhone.trim() || isSubmitted || hasPendingPayment}
                 >
-                  {isSubmitting ? 'Submitting...' : 'Submit Payment Details'}
+                  {isSubmitting ? 'Submitting...' : 
+                   (isSubmitted || hasPendingPayment) ? 'Payment Already Submitted' : 
+                   'Submit Payment Details'}
                 </Button>
                 <Button 
                   type="button" 
                   variant="outline" 
                   onClick={() => onOpenChange(false)}
                 >
-                  Cancel
+                  {isSubmitted || hasPendingPayment ? 'Close' : 'Cancel'}
                 </Button>
               </div>
+              </fieldset>
             </form>
 
             <div className="text-xs text-muted-foreground bg-muted/50 p-3 rounded">

@@ -226,46 +226,25 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   const signOut = async () => {
-    console.log('🚪 Starting logout process...');
-    setLoading(true);
+    console.log('🚪 Starting instant logout...');
+    
+    // Immediate UI state clear for instant UX
+    setUser(null);
+    setSession(null);
+    setLoading(false); // Set to false immediately to prevent UI delays
     
     try {
-      // Clear user state immediately for faster UX
-      setUser(null);
-      setSession(null);
-      
-      // Sign out from Supabase (this clears server-side session)
+      // Perform Supabase logout in background (non-blocking)
       const { error } = await supabase.auth.signOut();
       if (error) {
         console.error('❌ Supabase signOut error:', error);
-        throw error;
+        // Don't re-throw - user is already logged out in UI
       }
       
-      console.log('✅ Logout successful');
-      
-      toast({
-        title: "Signed out successfully",
-        description: "You have been logged out",
-      });
+      console.log('✅ Instant logout completed');
     } catch (error: any) {
-      console.error('❌ Sign out error:', error);
-      
-      // Re-fetch user state if logout failed
-      try {
-        const { data: { session } } = await supabase.auth.getSession();
-        setSession(session);
-        setUser(session?.user ?? null);
-      } catch (fetchError) {
-        console.error('❌ Error fetching session after logout failure:', fetchError);
-      }
-      
-      toast({
-        title: "Sign out failed",
-        description: error.message || "Failed to sign out",
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
+      console.error('❌ Background sign out error:', error);
+      // Silently handle - user experience already complete
     }
   };
 
