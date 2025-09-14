@@ -7,9 +7,10 @@ import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useAuth } from '@/hooks/useAuth';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
+import { useNotifications } from '@/hooks/useNotifications';
 import { supabase, isSupabaseConfigured } from '@/lib/supabase';
 import { useToast } from '@/hooks/use-toast';
-import { LogOut, User, Building, Mail, FileText, ArrowRight, Plus, DollarSign, Calendar, AlertCircle, CheckCircle, Clock, BarChart3 } from 'lucide-react';
+import { LogOut, User, Building, Mail, FileText, ArrowRight, Plus, DollarSign, Calendar, AlertCircle, CheckCircle, Clock, BarChart3, Settings } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { parseISO, differenceInDays, isBefore, isToday, isAfter, addDays, format } from 'date-fns';
 
@@ -39,6 +40,9 @@ const Dashboard = () => {
   const [bills, setBills] = useState<Bill[]>([]);
   const [billsLoading, setBillsLoading] = useState(true);
   const [localBills, setLocalBills] = useLocalStorage<Bill[]>(`bills_${user?.id}`, []);
+  
+  // Initialize notifications
+  useNotifications();
 
   useEffect(() => {
     if (user) {
@@ -376,6 +380,20 @@ const Dashboard = () => {
                   <div className="text-left">
                     <div className="font-medium">View Analytics</div>
                     <div className="text-sm text-muted-foreground">Financial insights and reports</div>
+                  </div>
+                </div>
+              </Button>
+              
+              <Button 
+                onClick={() => navigate('/settings')}
+                className="h-auto p-4 justify-start"
+                variant="outline"
+              >
+                <div className="flex items-center space-x-3">
+                  <Settings className="h-6 w-6 text-primary" />
+                  <div className="text-left">
+                    <div className="font-medium">Settings</div>
+                    <div className="text-sm text-muted-foreground">Manage preferences and notifications</div>
                   </div>
                 </div>
               </Button>
