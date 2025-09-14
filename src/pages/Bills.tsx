@@ -24,6 +24,7 @@ import { usePaymentVerification } from '@/hooks/usePaymentVerification';
 import { Navigation } from '@/components/Navigation';
 import PlanStatusCard from '@/components/PlanStatusCard';
 import UpgradeTrigger from '@/components/UpgradeTrigger';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface Bill {
   id: string;
@@ -81,6 +82,7 @@ const Bills = () => {
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
   const [localBills, setLocalBills] = useLocalStorage<Bill[]>(`bills_${user?.id}`, []);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  const isMobile = useIsMobile();
   
   const { plan, billLimit, canAddBill, loading: planLoading, aiQueriesUsed, aiQueriesLimit } = useSupabasePlan();
   
@@ -199,6 +201,109 @@ const Bills = () => {
     setIsDialogOpen(false);
   };
 
+  const editBill = (bill: Bill) => {
+    setFormData({
+      name: bill.name,
+      amount: bill.amount.toString(),
+      due_date: bill.due_date,
+      category: bill.category,
+      recurring: bill.recurring,
+      status: bill.status,
+      notes: bill.notes || '',
+    });
+    setEditingBill(bill);
+    setIsDialogOpen(true);
+  };
+
+  const deleteBill = async (billId: string) => {
+    try {
+      if (isSupabaseConfigured && supabase) {
+        const { error } = await supabase
+          .from('bills')
+          .delete()
+          .eq('id', billId);
+        if (error) throw error;
+      } else {
+        const updatedBills = localBills.filter(bill => bill.id !== billId);
+        setLocalBills(updatedBills);
+      }
+      
+      toast({
+        title: "Bill deleted successfully!",
+      });
+      await fetchBills();
+    } catch (error: any) {
+      toast({
+        title: "Error deleting bill",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
+  const getBillStatusColor = (status: string) => {
+    switch (status) {
+      case 'paid':
+        return 'default';
+      case 'overdue':
+        return 'destructive';
+      default:
+        return 'secondary';
+    }
+  };
+
+  const BillCard = ({ bill }: { bill: Bill }) => (
+    <Card className="p-4 space-y-3">
+      <div className="flex items-start justify-between">
+        <div className="flex-1 min-w-0">
+          <h3 className="font-semibold text-foreground truncate">{bill.name}</h3>
+          <p className="text-sm text-muted-foreground capitalize">{bill.category}</p>
+        </div>
+        <Badge variant={getBillStatusColor(bill.status)} className="ml-2">
+          {bill.status}
+        </Badge>
+      </div>
+      
+      <div className="flex items-center justify-between text-sm">
+        <div className="flex items-center space-x-2">
+          <DollarSign className="h-4 w-4 text-muted-foreground" />
+          <span className="font-medium">₹{bill.amount.toFixed(2)}</span>
+        </div>
+        <div className="flex items-center space-x-2">
+          <Calendar className="h-4 w-4 text-muted-foreground" />
+          <span>{format(parseISO(bill.due_date), 'MMM dd, yyyy')}</span>
+        </div>
+      </div>
+
+      {bill.notes && (
+        <p className="text-xs text-muted-foreground bg-muted p-2 rounded">
+          {bill.notes}
+        </p>
+      )}
+
+      <div className="flex space-x-2 pt-2">
+        <Button 
+          size="sm" 
+          variant="outline" 
+          onClick={() => editBill(bill)}
+          className="flex-1"
+        >
+          <Edit className="h-4 w-4 mr-1" />
+          Edit
+        </Button>
+        <Button 
+          size="sm" 
+          variant="destructive" 
+          onClick={() => deleteBill(bill.id)}
+          className="flex-1"
+        >
+          <Trash2 className="h-4 w-4 mr-1" />
+          Delete
+        </Button>
+      </div>
+    </Card>
+  );
+
   if (loading) {
     return (
       <div className="min-h-screen bg-background">
@@ -213,7 +318,7 @@ const Bills = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background pb-20 md:pb-0">
       <Navigation />
 
       <main className="container mx-auto px-4 py-6 sm:py-8">
@@ -280,11 +385,80 @@ const Bills = () => {
                     />
                   </div>
 
-                  <div className="flex space-x-2">
+                  <div className="space-y-2">
+                    <Label htmlFor="due_date">Due Date *</Label>
+                    <Input
+                      id="due_date"
+                      type="date"
+                      value={formData.due_date}
+                      onChange={(e) => setFormData({ ...formData, due_date: e.target.value })}
+                      required
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="category">Category</Label>
+                    <Select 
+                      value={formData.category} 
+                      onValueChange={(value) => setFormData({ ...formData, category: value })}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select category" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {categories.map((category) => (
+                          <SelectItem key={category} value={category}>
+                            {category.charAt(0).toUpperCase() + category.slice(1).replace('_', ' ')}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="status">Status</Label>
+                    <Select 
+                      value={formData.status} 
+                      onValueChange={(value: 'unpaid' | 'paid' | 'overdue') => setFormData({ ...formData, status: value })}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select status" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="unpaid">Unpaid</SelectItem>
+                        <SelectItem value="paid">Paid</SelectItem>
+                        <SelectItem value="overdue">Overdue</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="notes">Notes (Optional)</Label>
+                    <Textarea
+                      id="notes"
+                      value={formData.notes}
+                      onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                      placeholder="Add any additional notes..."
+                      rows={3}
+                    />
+                  </div>
+
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      id="recurring"
+                      checked={formData.recurring}
+                      onCheckedChange={(checked) => setFormData({ ...formData, recurring: checked === true })}
+                    />
+                    <Label htmlFor="recurring" className="text-sm">
+                      This is a recurring bill
+                    </Label>
+                  </div>
+
+                  <div className="flex space-x-2 pt-4">
                     <Button type="submit" className="flex-1">
                       {editingBill ? 'Update Bill' : 'Add Bill'}
                     </Button>
-                    <Button type="button" variant="outline" onClick={resetForm}>
+                    <Button type="button" variant="outline" onClick={resetForm} className="flex-1">
                       Cancel
                     </Button>
                   </div>
@@ -304,43 +478,67 @@ const Bills = () => {
                   <p className="text-muted-foreground">No bills found. Add your first bill to get started!</p>
                 </div>
               ) : (
-                <div className="overflow-x-auto">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Name</TableHead>
-                        <TableHead>Amount</TableHead>
-                        <TableHead>Due Date</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead>Actions</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
+                <>
+                  {/* Mobile Cards View */}
+                  {isMobile ? (
+                    <div className="space-y-4">
                       {bills.map((bill) => (
-                        <TableRow key={bill.id}>
-                          <TableCell className="font-medium">{bill.name}</TableCell>
-                          <TableCell>₹{bill.amount.toFixed(2)}</TableCell>
-                          <TableCell>{format(parseISO(bill.due_date), 'MMM dd, yyyy')}</TableCell>
-                          <TableCell>
-                            <Badge variant={bill.status === 'paid' ? 'default' : 'destructive'}>
-                              {bill.status}
-                            </Badge>
-                          </TableCell>
-                          <TableCell>
-                            <div className="flex space-x-2">
-                              <Button size="sm" variant="outline">
-                                Edit
-                              </Button>
-                              <Button size="sm" variant="destructive">
-                                Delete
-                              </Button>
-                            </div>
-                          </TableCell>
-                        </TableRow>
+                        <BillCard key={bill.id} bill={bill} />
                       ))}
-                    </TableBody>
-                  </Table>
-                </div>
+                    </div>
+                  ) : (
+                    /* Desktop Table View */
+                    <div className="overflow-x-auto">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Name</TableHead>
+                            <TableHead>Amount</TableHead>
+                            <TableHead>Due Date</TableHead>
+                            <TableHead>Category</TableHead>
+                            <TableHead>Status</TableHead>
+                            <TableHead>Actions</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {bills.map((bill) => (
+                            <TableRow key={bill.id}>
+                              <TableCell className="font-medium">{bill.name}</TableCell>
+                              <TableCell>₹{bill.amount.toFixed(2)}</TableCell>
+                              <TableCell>{format(parseISO(bill.due_date), 'MMM dd, yyyy')}</TableCell>
+                              <TableCell className="capitalize">{bill.category}</TableCell>
+                              <TableCell>
+                                <Badge variant={getBillStatusColor(bill.status)}>
+                                  {bill.status}
+                                </Badge>
+                              </TableCell>
+                              <TableCell>
+                                <div className="flex space-x-2">
+                                  <Button 
+                                    size="sm" 
+                                    variant="outline"
+                                    onClick={() => editBill(bill)}
+                                  >
+                                    <Edit className="h-4 w-4 mr-1" />
+                                    Edit
+                                  </Button>
+                                  <Button 
+                                    size="sm" 
+                                    variant="destructive"
+                                    onClick={() => deleteBill(bill.id)}
+                                  >
+                                    <Trash2 className="h-4 w-4 mr-1" />
+                                    Delete
+                                  </Button>
+                                </div>
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  )}
+                </>
               )}
             </CardContent>
           </Card>

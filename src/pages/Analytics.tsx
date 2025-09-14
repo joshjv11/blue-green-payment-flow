@@ -103,7 +103,7 @@ const Analytics = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background">
+      <div className="min-h-screen bg-background pb-20 md:pb-0">
         <Navigation />
         <div className="container mx-auto px-4 py-8">
           <div className="animate-pulse space-y-6">
@@ -120,7 +120,7 @@ const Analytics = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background pb-20 md:pb-0">
       <Navigation />
       
       <div className="container mx-auto px-4 py-8">

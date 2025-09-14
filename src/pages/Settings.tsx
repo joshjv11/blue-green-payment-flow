@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useToast } from '@/hooks/use-toast';
 import { Bell, Settings as SettingsIcon, Save, Mail, Download, Crown, Zap } from 'lucide-react';
 import ExportImport from '@/components/ExportImport';
+import { Navigation } from '@/components/Navigation';
 import FreemiumLimitCard from '@/components/FreemiumLimitCard';
 import UpgradeModal from '@/components/UpgradeModal';
 
@@ -144,7 +145,10 @@ const SettingsPage = () => {
   };
 
   return (
-    <div className="container mx-auto px-4 py-6 sm:py-8 max-w-2xl">
+    <div className="min-h-screen bg-background pb-20 md:pb-0">
+      <Navigation />
+      
+      <div className="container mx-auto px-4 py-6 sm:py-8 max-w-2xl">
       <div className="flex items-center gap-3 mb-6 sm:mb-8">
         <SettingsIcon className="h-6 w-6 sm:h-8 sm:w-8 text-primary" />
         <h1 className="text-2xl sm:text-3xl font-bold">Settings</h1>
@@ -339,6 +343,7 @@ const SettingsPage = () => {
           <Button onClick={resetSettings} variant="outline" className="h-10">
             Reset to Default
           </Button>
+        </div>
         </div>
       </div>
 
