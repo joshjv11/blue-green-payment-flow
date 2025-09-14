@@ -300,14 +300,24 @@ const Dashboard = () => {
       {/* Main Content */}
       <main className="container mx-auto px-4 py-6 sm:py-8">
         <div className="max-w-6xl mx-auto space-y-6 sm:space-y-8">
-          {/* Welcome Section */}
-          <div className="text-center">
-            <h1 className="text-2xl sm:text-3xl font-bold text-foreground mb-2">
-              Welcome to your Dashboard
-            </h1>
-            <p className="text-sm sm:text-base text-muted-foreground">
-              Manage your bills, track payments, and stay on top of your finances.
-            </p>
+          {/* Welcome Section with Plan Status */}
+          <div className="space-y-4">
+            <div className="text-center">
+              <h1 className="text-2xl sm:text-3xl font-bold text-foreground mb-2">
+                Welcome to your Dashboard
+              </h1>
+              <p className="text-sm sm:text-base text-muted-foreground">
+                Manage your bills, track payments, and stay on top of your finances.
+              </p>
+            </div>
+            
+            {/* Plan Status Display */}
+            <div className="flex justify-center">
+              <PlanStatusCard 
+                compact={true}
+                onUpgrade={() => setShowUpgradeModal(true)}
+              />
+            </div>
           </div>
 
           {/* Bill Statistics */}
@@ -418,10 +428,15 @@ const Dashboard = () => {
             </CardHeader>
             <CardContent className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
               <Button 
-                onClick={() => navigate('/bills')}
+                onClick={() => {
+                  if (!canAddBill(bills.length)) {
+                    setShowUpgradeModal(true);
+                  } else {
+                    navigate('/bills');
+                  }
+                }}
                 className="h-auto p-3 sm:p-4 justify-start min-h-[48px]"
                 variant="outline"
-                disabled={!canAddBill(bills.length)}
               >
                 <div className="flex items-center space-x-3">
                   <Plus className="h-5 w-5 sm:h-6 sm:w-6 text-primary flex-shrink-0" />
@@ -464,8 +479,18 @@ const Dashboard = () => {
                 <div className="flex items-center space-x-3">
                   <BarChart3 className="h-5 w-5 sm:h-6 sm:w-6 text-primary flex-shrink-0" />
                   <div className="text-left">
-                    <div className="font-medium text-sm sm:text-base">View Analytics</div>
-                    <div className="text-xs sm:text-sm text-muted-foreground">Financial insights and reports</div>
+                    <div className="font-medium text-sm sm:text-base flex items-center gap-2">
+                      View Analytics
+                      {plan === 'free' && (
+                        <Crown className="h-4 w-4 text-yellow-500" />
+                      )}
+                    </div>
+                    <div className="text-xs sm:text-sm text-muted-foreground">
+                      {plan === 'pro' 
+                        ? 'Financial insights and reports'
+                        : 'Basic analytics • Pro for advanced'
+                      }
+                    </div>
                   </div>
                 </div>
               </Button>
@@ -497,6 +522,23 @@ const Dashboard = () => {
                   </div>
                 </div>
               </Button>
+              
+              {/* Always show upgrade option for free users */}
+              {plan === 'free' && (
+                <UpgradeTrigger 
+                  className="h-auto p-3 sm:p-4 justify-start min-h-[48px] sm:col-span-2"
+                  variant="default"
+                  trigger="general"
+                >
+                  <div className="flex items-center space-x-3">
+                    <Crown className="h-5 w-5 sm:h-6 sm:w-6 text-white flex-shrink-0" />
+                    <div className="text-left flex-1">
+                      <div className="font-medium text-sm sm:text-base text-white">Upgrade to Pro</div>
+                      <div className="text-xs sm:text-sm text-white/80">₹99/month • Unlimited bills & AI coaching</div>
+                    </div>
+                  </div>
+                </UpgradeTrigger>
+              )}
             </CardContent>
           </Card>
 

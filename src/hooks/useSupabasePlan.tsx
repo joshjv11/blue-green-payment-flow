@@ -38,60 +38,53 @@ export const useSupabasePlan = () => {
 
     try {
       setLoading(true);
+      
+      // First try to get existing plan
       const { data, error } = await supabase
         .from('user_plans')
         .select('*')
         .eq('user_id', user.id)
         .maybeSingle();
 
-      if (error) {
-        console.error('Error fetching user plan:', error);
-        // If there's an error, create a default plan
-        const { data: newPlan, error: createError } = await supabase
-          .from('user_plans')
-          .insert({
-            user_id: user.id,
-            plan: 'free',
-            ai_queries_used: 0,
-            ai_queries_limit: 3,
-            ai_queries_reset_date: new Date().toISOString().split('T')[0]
-          })
-          .select()
-          .maybeSingle();
-
-        if (createError) {
-          console.error('Error creating user plan:', createError);
-          // If we can't create, use default values
-          setUserPlan(null);
-        } else {
-          setUserPlan(newPlan as SupabaseUserPlan);
-        }
-      } else if (!data) {
-        // No plan exists, create default free plan
-        const { data: newPlan, error: createError } = await supabase
-          .from('user_plans')
-          .insert({
-            user_id: user.id,
-            plan: 'free',
-            ai_queries_used: 0,
-            ai_queries_limit: 3,
-            ai_queries_reset_date: new Date().toISOString().split('T')[0]
-          })
-          .select()
-          .maybeSingle();
-
-        if (createError) {
-          console.error('Error creating user plan:', createError);
-          setUserPlan(null);
-        } else {
-          setUserPlan(newPlan as SupabaseUserPlan);
-        }
-      } else {
+      if (data) {
         setUserPlan(data as SupabaseUserPlan);
+        return;
+      }
+
+      // If no plan exists or there's an error, try to create one using the security definer function
+      if (!data || error) {
+        console.log('No user plan found, attempting to create one');
+        
+        try {
+          // Use the security definer function to create the plan
+          const { error: functionError } = await supabase.rpc('create_default_user_plan', {
+            _user_id: user.id
+          });
+
+          if (functionError) {
+            console.error('Error calling create_default_user_plan:', functionError);
+          }
+
+          // Try to fetch the plan again
+          const { data: newData, error: fetchError } = await supabase
+            .from('user_plans')
+            .select('*')
+            .eq('user_id', user.id)
+            .maybeSingle();
+
+          if (newData) {
+            setUserPlan(newData as SupabaseUserPlan);
+          } else {
+            console.warn('Could not create or fetch user plan, using defaults');
+            setUserPlan(null);
+          }
+        } catch (createError) {
+          console.error('Error creating user plan:', createError);
+          setUserPlan(null);
+        }
       }
     } catch (error: any) {
       console.error('Error in fetchUserPlan:', error);
-      // Set to null but don't show error toast - app should still work
       setUserPlan(null);
     } finally {
       setLoading(false);

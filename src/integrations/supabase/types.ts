@@ -381,6 +381,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      create_default_user_plan: {
+        Args: { _user_id: string }
+        Returns: undefined
+      }
       has_team_role: {
         Args: {
           _required_role: Database["public"]["Enums"]["user_role"]
