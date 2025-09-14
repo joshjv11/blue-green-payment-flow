@@ -22,7 +22,7 @@ import { Navigation } from '@/components/Navigation';
 import { usePaymentVerification } from '@/hooks/usePaymentVerification';
 import FreemiumLimitCard from '@/components/FreemiumLimitCard';
 import AIQueryCounter from '@/components/AIQueryCounter';
-import { AIAssistant } from '@/components/AIAssistant';
+import EnhancedAIAssistantV2 from '@/components/EnhancedAIAssistantV2';
 
 interface Bill {
   id: string;
@@ -680,7 +680,7 @@ const Dashboard = () => {
         </div>
       </main>
 
-      <AIAssistant 
+      <EnhancedAIAssistantV2 
         bills={bills}
         context="dashboard - managing bills and getting financial insights"
       />

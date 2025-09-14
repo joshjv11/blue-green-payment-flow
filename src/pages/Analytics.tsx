@@ -13,6 +13,7 @@ import { format, parseISO, startOfMonth, endOfMonth, differenceInDays, isBefore,
 import UpgradeModal from '@/components/UpgradeModal';
 import FreemiumLimitCard from '@/components/FreemiumLimitCard';
 import EnhancedAIAssistantV2 from '@/components/EnhancedAIAssistantV2';
+import AdvancedAnalytics from '@/components/AdvancedAnalytics';
 
 interface Bill {
   id: string;
@@ -216,108 +217,8 @@ const Analytics = () => {
             </CardContent>
           </Card>
 
-          {/* Advanced Analytics Section - Pro Only */}
-          {hasAdvancedAnalytics ? (
-            <div className="space-y-6">
-              <div className="flex items-center gap-2">
-                <Crown className="h-5 w-5 text-yellow-500" />
-                <h2 className="text-xl font-semibold">Advanced Analytics</h2>
-                <Badge className="bg-gradient-to-r from-purple-500 to-purple-600 text-white">Pro</Badge>
-              </div>
-
-              {/* Monthly Spending Trend */}
-              <Card>
-                <CardHeader>
-                  <CardTitle>Monthly Spending Trend</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    {Object.entries(monthlySpending).map(([month, amount]) => (
-                      <div key={month} className="flex items-center justify-between">
-                        <span className="text-sm font-medium">{format(parseISO(month + '-01'), 'MMM yyyy')}</span>
-                        <div className="flex items-center gap-2">
-                          <div className="w-32 bg-muted rounded-full h-2">
-                            <div 
-                              className="h-2 bg-primary rounded-full" 
-                              style={{ width: `${(amount / Math.max(...Object.values(monthlySpending))) * 100}%` }}
-                            />
-                          </div>
-                          <span className="text-sm font-mono">₹{amount}</span>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Category Breakdown */}
-              <Card>
-                <CardHeader>
-                  <CardTitle>Spending by Category</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    {Object.entries(categoryBreakdown).map(([category, amount]) => (
-                      <div key={category} className="flex items-center justify-between">
-                        <span className="text-sm font-medium capitalize">{category.replace('_', ' ')}</span>
-                        <div className="flex items-center gap-2">
-                          <div className="w-32 bg-muted rounded-full h-2">
-                            <div 
-                              className="h-2 bg-blue-500 rounded-full" 
-                              style={{ width: `${(amount / totalAmount) * 100}%` }}
-                            />
-                          </div>
-                          <span className="text-sm font-mono">₹{amount}</span>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Payment Performance */}
-              <Card>
-                <CardHeader>
-                  <CardTitle>Payment Performance</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="text-center p-4 bg-green-50 dark:bg-green-900/20 rounded-lg">
-                      <div className="text-2xl font-bold text-green-600">{paymentTrends.onTimePayments}</div>
-                      <div className="text-sm text-muted-foreground">On-time Payments</div>
-                    </div>
-                    <div className="text-center p-4 bg-red-50 dark:bg-red-900/20 rounded-lg">
-                      <div className="text-2xl font-bold text-red-600">{paymentTrends.latePayments}</div>
-                      <div className="text-sm text-muted-foreground">Late Payments</div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-          ) : (
-            // Locked Advanced Analytics
-            <Card className="bg-gradient-to-br from-muted/50 to-muted/20 border-dashed">
-              <CardContent className="p-8 text-center">
-                <Lock className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-                <h3 className="text-xl font-semibold mb-2">Advanced Analytics</h3>
-                <p className="text-muted-foreground mb-6 max-w-2xl mx-auto">
-                  Unlock detailed spending trends, category breakdowns, payment performance insights, 
-                  and personalized recommendations with Pro plan.
-                </p>
-                <div className="flex flex-wrap justify-center gap-2 mb-6">
-                  <Badge variant="secondary">Monthly Trends</Badge>
-                  <Badge variant="secondary">Category Analysis</Badge>
-                  <Badge variant="secondary">Payment Performance</Badge>
-                  <Badge variant="secondary">Financial Forecasting</Badge>
-                  <Badge variant="secondary">Custom Reports</Badge>
-                </div>
-                <Button onClick={() => setShowUpgradeModal(true)} size="lg">
-                  <Crown className="h-4 w-4 mr-2" />
-                  Upgrade to Pro - ₹99/month
-                </Button>
-              </CardContent>
-            </Card>
-          )}
+          {/* Advanced Analytics Section */}
+          <AdvancedAnalytics />
         </div>
       </div>
 

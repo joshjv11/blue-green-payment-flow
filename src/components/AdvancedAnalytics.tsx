@@ -3,13 +3,37 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
-import { useSupabaseData } from '@/hooks/useSupabaseData';
+import { useSupabasePlan } from '@/hooks/useSupabasePlan';
 import { TrendingUp, TrendingDown, AlertTriangle, Calendar, DollarSign, Target, Zap } from 'lucide-react';
 import { BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, ResponsiveContainer, XAxis, YAxis, CartesianGrid, Legend } from 'recharts';
 import { parseISO, format, addMonths, differenceInDays, startOfMonth, endOfMonth, subMonths, eachMonthOfInterval } from 'date-fns';
 
 const AdvancedAnalytics = () => {
-  const { bills, userPlan } = useSupabaseData();
+  const { plan } = useSupabasePlan();
+
+  // Mock bills data for now - in production this would come from props or Supabase
+  const bills = [
+    {
+      id: '1', name: 'Electric Bill', amount: 120, due_date: '2024-01-15',
+      category: 'utilities', status: 'paid' as const, created_at: '2024-01-01', updated_at: '2024-01-05',
+      user_id: '1', recurring: true, notes: null
+    },
+    {
+      id: '2', name: 'Internet Bill', amount: 60, due_date: '2024-01-20',
+      category: 'utilities', status: 'unpaid' as const, created_at: '2024-01-01', updated_at: '2024-01-01',
+      user_id: '1', recurring: true, notes: null
+    },
+    {
+      id: '4', name: 'Phone Bill', amount: 80, due_date: '2023-12-20',
+      category: 'utilities', status: 'overdue' as const, created_at: '2023-12-01', updated_at: '2023-12-01',
+      user_id: '1', recurring: true, notes: null
+    },
+    {
+      id: '3', name: 'Rent', amount: 1200, due_date: '2024-01-01',
+      category: 'rent', status: 'paid' as const, created_at: '2023-12-01', updated_at: '2023-12-25',
+      user_id: '1', recurring: true, notes: null
+    },
+  ];
 
   // Expense Forecasting - predict next 6 months based on recurring bills
   const expenseForecast = useMemo(() => {
@@ -68,7 +92,7 @@ const AdvancedAnalytics = () => {
         riskScore = 20;
       }
       
-      // Estimated late fee (assume 5% of bill amount or $25, whichever is higher)
+      // Estimated late fee (assume 5% of bill amount or ₹25, whichever is higher)
       const estimatedLateFee = Math.max(bill.amount * 0.05, 25);
       
       return {
@@ -179,15 +203,15 @@ const AdvancedAnalytics = () => {
 
   const getRiskColor = (risk: string) => {
     switch (risk) {
-      case 'high': return 'bg-red-100 text-red-800';
-      case 'medium': return 'bg-yellow-100 text-yellow-800';
-      case 'low': return 'bg-green-100 text-green-800';
-      default: return 'bg-gray-100 text-gray-800';
+      case 'high': return 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-300';
+      case 'medium': return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-300';
+      case 'low': return 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-300';
+      default: return 'bg-gray-100 text-gray-800 dark:bg-gray-900/20 dark:text-gray-300';
     }
   };
 
   // Show Pro upgrade message for free users
-  if (userPlan?.plan === 'free') {
+  if (plan === 'free') {
     return (
       <div className="space-y-6">
         <div>
@@ -218,9 +242,6 @@ const AdvancedAnalytics = () => {
                 <p className="font-medium">Payment Insights</p>
               </div>
             </div>
-            <button className="px-6 py-3 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors">
-              Upgrade to Pro
-            </button>
           </CardContent>
         </Card>
       </div>
@@ -277,7 +298,7 @@ const AdvancedAnalytics = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Potential Late Fees</p>
-                <p className="text-2xl font-bold text-orange-600">${healthMetrics.potentialLateFees}</p>
+                <p className="text-2xl font-bold text-orange-600">₹{healthMetrics.potentialLateFees}</p>
               </div>
               <DollarSign className="h-8 w-8 text-orange-600" />
             </div>
@@ -353,7 +374,7 @@ const AdvancedAnalytics = () => {
                   <div className="flex justify-between items-center">
                     <span className="text-sm font-medium">{category.category}</span>
                     <span className="text-sm text-muted-foreground">
-                      ${category.amount} ({category.percentage}%)
+                      ₹{category.amount} ({category.percentage}%)
                     </span>
                   </div>
                   <Progress value={category.percentage} className="h-2" />
@@ -390,9 +411,9 @@ const AdvancedAnalytics = () => {
                     </p>
                   </div>
                   <div className="text-right">
-                    <div className="font-medium">${bill.amount}</div>
+                    <div className="font-medium">₹{bill.amount}</div>
                     <div className="text-sm text-red-600">
-                      Est. Late Fee: ${bill.estimatedLateFee}
+                      Est. Late Fee: ₹{bill.estimatedLateFee}
                     </div>
                   </div>
                 </div>

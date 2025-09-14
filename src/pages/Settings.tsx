@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
 import { useAuth } from '@/hooks/useAuth';
+import { useSupabasePlan } from '@/hooks/useSupabasePlan';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
@@ -8,8 +9,10 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import { Bell, Settings as SettingsIcon, Save, Mail, Download } from 'lucide-react';
+import { Bell, Settings as SettingsIcon, Save, Mail, Download, Crown, Zap } from 'lucide-react';
 import ExportImport from '@/components/ExportImport';
+import FreemiumLimitCard from '@/components/FreemiumLimitCard';
+import UpgradeModal from '@/components/UpgradeModal';
 
 interface UserSettings {
   defaultReminderDays: number;
@@ -36,7 +39,9 @@ interface Bill {
 const SettingsPage = () => {
   const { toast } = useToast();
   const { user } = useAuth();
+  const { plan, hasEmailReminders, aiQueriesUsed, aiQueriesLimit } = useSupabasePlan();
   const [localBills, setLocalBills] = useLocalStorage<Bill[]>(`bills_${user?.id}`, []);
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [settings, setSettings] = useLocalStorage<UserSettings>('userSettings', {
     defaultReminderDays: 3,
     notificationsEnabled: false,
@@ -146,6 +151,13 @@ const SettingsPage = () => {
       </div>
 
       <div className="space-y-6">
+        {/* Freemium Limit Card */}
+        <FreemiumLimitCard
+          type="ai"
+          currentCount={aiQueriesUsed}
+          onUpgrade={() => setShowUpgradeModal(true)}
+        />
+
         {/* Reminder Settings */}
         <Card>
           <CardHeader>
@@ -193,17 +205,30 @@ const SettingsPage = () => {
                 <p className="text-sm text-muted-foreground">
                   Get email notifications for upcoming and overdue bills
                 </p>
+                {!hasEmailReminders && (
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <Crown className="h-4 w-4 text-yellow-500" />
+                    <span>Pro feature</span>
+                  </div>
+                )}
               </div>
               <Switch
-                checked={tempSettings.emailRemindersEnabled}
-                onCheckedChange={(enabled) => setTempSettings(prev => ({
-                  ...prev,
-                  emailRemindersEnabled: enabled
-                }))}
+                checked={hasEmailReminders && tempSettings.emailRemindersEnabled}
+                onCheckedChange={(enabled) => {
+                  if (!hasEmailReminders) {
+                    setShowUpgradeModal(true);
+                    return;
+                  }
+                  setTempSettings(prev => ({
+                    ...prev,
+                    emailRemindersEnabled: enabled
+                  }));
+                }}
+                disabled={!hasEmailReminders}
               />
             </div>
             
-            {tempSettings.emailRemindersEnabled && (
+            {hasEmailReminders && tempSettings.emailRemindersEnabled && (
               <div className="space-y-2">
                 <Label htmlFor="reminder-email">Email address for reminders</Label>
                 <Input
@@ -216,15 +241,37 @@ const SettingsPage = () => {
                     reminderEmail: e.target.value
                   }))}
                 />
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3">
                   <div className="flex items-start gap-2">
                     <Mail className="h-4 w-4 text-blue-600 mt-0.5" />
                     <div className="text-sm">
-                      <p className="text-blue-800 font-medium">Demo Mode</p>
-                      <p className="text-blue-700">
-                        Currently sending demo emails. <strong>Upgrade to connect real email reminders</strong> with your preferred email service.
+                      <p className="text-blue-800 dark:text-blue-200 font-medium">Pro Feature Active</p>
+                      <p className="text-blue-700 dark:text-blue-300">
+                        Real email reminders are enabled for your Pro account.
                       </p>
                     </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {!hasEmailReminders && (
+              <div className="bg-gradient-to-r from-primary/5 to-primary/10 border border-primary/20 rounded-lg p-4">
+                <div className="flex items-start gap-3">
+                  <Crown className="h-5 w-5 text-primary mt-0.5" />
+                  <div className="flex-1">
+                    <p className="font-medium text-foreground">Unlock Email Reminders</p>
+                    <p className="text-sm text-muted-foreground mb-3">
+                      Never miss a bill payment with automated email notifications.
+                    </p>
+                    <Button 
+                      size="sm" 
+                      onClick={() => setShowUpgradeModal(true)}
+                      className="h-8"
+                    >
+                      <Zap className="h-3 w-3 mr-1" />
+                      Upgrade to Pro
+                    </Button>
                   </div>
                 </div>
               </div>
@@ -294,6 +341,16 @@ const SettingsPage = () => {
           </Button>
         </div>
       </div>
+
+      {/* Upgrade Modal */}
+      <UpgradeModal
+        open={showUpgradeModal}
+        onOpenChange={setShowUpgradeModal}
+        currentBillCount={localBills.length}
+        aiQueriesUsed={aiQueriesUsed}
+        aiQueriesLimit={aiQueriesLimit}
+        trigger="general"
+      />
     </div>
   );
 };
