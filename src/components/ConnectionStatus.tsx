@@ -152,7 +152,7 @@ const ConnectionStatus = () => {
   // Only show connection status if there are issues or during sync
   if (connectionState === 'connected' && !syncing) {
     return (
-      <div className="fixed top-4 right-4 z-50">
+      <div className="fixed top-4 right-4 z-[45]">
         <Badge className={`flex items-center gap-2 ${getStatusColor()}`}>
           {getStatusIcon()}
           Cloud Connected
@@ -162,7 +162,7 @@ const ConnectionStatus = () => {
   }
 
   return (
-    <div className="fixed top-4 right-4 z-50">
+    <div className="fixed top-4 right-4 z-[45]">
       <Card className="w-80 shadow-lg">
         <CardContent className="p-4">
           <div className="flex items-center justify-between mb-3">

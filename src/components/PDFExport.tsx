@@ -11,6 +11,7 @@ import { useTeams } from '@/hooks/useTeams';
 import { useToast } from '@/hooks/use-toast';
 import { RefreshCw, FileText, Download, BarChart3, DollarSign, Calendar, Users } from 'lucide-react';
 import { format, parseISO, startOfMonth, endOfMonth, subMonths } from 'date-fns';
+import { formatINRCompact } from '@/utils/currency';
 
 interface PDFExportProps {
   bills?: any[];
@@ -293,7 +294,7 @@ const PDFExport = ({ bills, teamId }: PDFExportProps) => {
             </div>
             <div class="summary-card">
               <h3>Total Amount</h3>
-              <div class="value">$${totalAmount.toFixed(2)}</div>
+              <div class="value">{formatINRCompact(totalAmount)}</div>
             </div>
             <div class="summary-card">
               <h3>Paid Bills</h3>
@@ -321,7 +322,7 @@ const PDFExport = ({ bills, teamId }: PDFExportProps) => {
                     <span>${category.charAt(0).toUpperCase() + category.slice(1)}</span>
                     <div style="display: flex; align-items: center; flex: 1;">
                       <div class="chart-bar" style="width: ${percentage}%;"></div>
-                      <span style="margin-left: 10px;">$${numAmount.toFixed(2)}</span>
+                      <span style="margin-left: 10px;">{formatINRCompact(numAmount)}</span>
                     </div>
                   </div>
                 `;
@@ -339,7 +340,7 @@ const PDFExport = ({ bills, teamId }: PDFExportProps) => {
                     <span>${format(new Date(month + '-01'), 'MMM yyyy')}</span>
                     <div style="display: flex; align-items: center; flex: 1;">
                       <div class="chart-bar" style="width: ${percentage}%;"></div>
-                      <span style="margin-left: 10px;">$${numAmount.toFixed(2)}</span>
+                      <span style="margin-left: 10px;">{formatINRCompact(numAmount)}</span>
                     </div>
                   </div>
                 `;
@@ -367,7 +368,7 @@ const PDFExport = ({ bills, teamId }: PDFExportProps) => {
               ${bills.map(bill => `
                 <tr>
                   <td>${bill.name}</td>
-                  <td>$${Number(bill.amount).toFixed(2)}</td>
+                  <td>{formatINRCompact(Number(bill.amount))}</td>
                   <td>${format(parseISO(bill.due_date), 'MMM dd, yyyy')}</td>
                   <td>${bill.category.charAt(0).toUpperCase() + bill.category.slice(1)}</td>
                   <td>

@@ -26,6 +26,7 @@ import PlanStatusCard from '@/components/PlanStatusCard';
 import UpgradeTrigger from '@/components/UpgradeTrigger';
 import { useIsMobile } from '@/hooks/use-mobile';
 import BillReminderManager from '@/components/BillReminderManager';
+import { formatINRCompact } from '@/utils/currency';
 
 interface Bill {
   id: string;
@@ -362,7 +363,7 @@ const Bills = () => {
       <div className="flex items-center justify-between text-sm">
         <div className="flex items-center space-x-2">
           <DollarSign className="h-4 w-4 text-muted-foreground" />
-          <span className="font-medium">₹{bill.amount.toFixed(2)}</span>
+          <span className="font-medium">{formatINRCompact(bill.amount)}</span>
         </div>
         <div className="flex items-center space-x-2">
           <Calendar className="h-4 w-4 text-muted-foreground" />
@@ -599,7 +600,7 @@ const Bills = () => {
                           {bills.map((bill) => (
                             <TableRow key={bill.id}>
                               <TableCell className="font-medium">{bill.name}</TableCell>
-                              <TableCell>₹{bill.amount.toFixed(2)}</TableCell>
+                              <TableCell>{formatINRCompact(bill.amount)}</TableCell>
                               <TableCell>{format(parseISO(bill.due_date), 'MMM dd, yyyy')}</TableCell>
                               <TableCell className="capitalize">{bill.category}</TableCell>
                               <TableCell>

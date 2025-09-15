@@ -30,7 +30,7 @@ const DebugInfo = ({ className }: DebugInfoProps) => {
 
   if (!isVisible) {
     return (
-      <div className={`fixed bottom-20 right-4 z-40 lg:bottom-4 ${className}`}>
+      <div className={`fixed bottom-20 right-4 z-[35] lg:bottom-4 ${className}`}>
         <Button
           onClick={() => setIsVisible(true)}
           size="sm"
@@ -44,7 +44,7 @@ const DebugInfo = ({ className }: DebugInfoProps) => {
   }
 
   return (
-    <div className={`fixed bottom-20 right-4 z-40 w-80 max-w-[90vw] lg:bottom-4 ${className}`}>
+    <div className={`fixed bottom-20 right-4 z-[35] w-80 max-w-[90vw] lg:bottom-4 ${className}`}>
       <Card className="shadow-lg">
         <CardHeader className="pb-2">
           <div className="flex items-center justify-between">

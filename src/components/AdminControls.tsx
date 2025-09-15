@@ -8,6 +8,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useSupabaseData } from '@/hooks/useSupabaseData';
+import { formatINRCompact } from '@/utils/currency';
 import { useTeams } from '@/hooks/useTeams';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -362,7 +363,7 @@ const AdminControls = () => {
                 </div>
                 <div className="flex justify-between">
                   <span className="text-sm text-muted-foreground">Total Amount</span>
-                  <span className="font-medium">${(stats?.totalAmount || 0).toFixed(2)}</span>
+                  <span className="font-medium">{formatINRCompact(stats?.totalAmount || 0)}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-sm text-muted-foreground">Overdue</span>
@@ -418,7 +419,7 @@ const AdminControls = () => {
                       </div>
                       <div className="flex items-center gap-2">
                         <DollarSign className="h-4 w-4 text-muted-foreground" />
-                        <span>${teamStats[selectedTeam].totalAmount.toFixed(2)}</span>
+                        <span>{formatINRCompact(teamStats[selectedTeam].totalAmount)}</span>
                       </div>
                       <div className="flex items-center gap-2">
                         <Calendar className="h-4 w-4 text-red-500" />
@@ -467,7 +468,7 @@ const AdminControls = () => {
                             </div>
                           </TableCell>
                           <TableCell>{activity.bill_count}</TableCell>
-                          <TableCell>${activity.total_spent.toFixed(2)}</TableCell>
+                          <TableCell>{formatINRCompact(activity.total_spent)}</TableCell>
                           <TableCell>
                             <Badge variant={activity.bill_count > 0 ? 'default' : 'secondary'}>
                               {activity.bill_count > 0 ? 'Active' : 'Inactive'}

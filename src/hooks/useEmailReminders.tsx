@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { useLocalStorage } from './useLocalStorage';
 import emailjs from '@emailjs/browser';
 import { useToast } from '@/hooks/use-toast';
+import { formatINRCompact } from '@/utils/currency';
 
 interface Bill {
   id: string;
@@ -49,7 +50,7 @@ export const useEmailReminders = () => {
         subject: subject,
         message: message,
         bills_list: billsData.map(bill => 
-          `• ${bill.name} - $${bill.amount.toFixed(2)} (Due: ${new Date(bill.due_date).toLocaleDateString()})`
+          `• ${bill.name} - ${formatINRCompact(bill.amount)} (Due: ${new Date(bill.due_date).toLocaleDateString('en-IN')})`
         ).join('\n'),
         app_name: 'InvoiceFlow',
         demo_notice: 'This is a demo email. Upgrade to connect real email reminders.'

@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { useAuth } from '@/hooks/useAuth';
 import { useSupabasePlan } from '@/hooks/useSupabasePlan';
+import { formatINR, formatINRCompact } from '@/utils/currency';
 import { usePaymentVerification } from '@/hooks/usePaymentVerification';
 import { useToast } from '@/hooks/use-toast';
 import { Navigation } from '@/components/Navigation';
@@ -165,7 +166,7 @@ const Analytics = () => {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm font-medium text-muted-foreground">Total Amount</p>
-                    <p className="text-2xl font-bold">₹{totalAmount.toFixed(2)}</p>
+                    <p className="text-2xl font-bold">{formatINR(totalAmount)}</p>
                   </div>
                   <DollarSign className="h-8 w-8 text-green-600" />
                 </div>
@@ -177,7 +178,7 @@ const Analytics = () => {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm font-medium text-muted-foreground">Paid Amount</p>
-                    <p className="text-2xl font-bold text-green-600">₹{paidAmount.toFixed(2)}</p>
+                    <p className="text-2xl font-bold text-green-600">{formatINR(paidAmount)}</p>
                   </div>
                   <TrendingUp className="h-8 w-8 text-green-600" />
                 </div>
@@ -189,7 +190,7 @@ const Analytics = () => {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm font-medium text-muted-foreground">Pending Amount</p>
-                    <p className="text-2xl font-bold text-red-600">₹{unpaidAmount.toFixed(2)}</p>
+                    <p className="text-2xl font-bold text-red-600">{formatINR(unpaidAmount)}</p>
                   </div>
                   <AlertCircle className="h-8 w-8 text-red-600" />
                 </div>

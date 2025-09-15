@@ -87,7 +87,7 @@ export const Navigation = ({ showBackButton = true, className }: NavigationProps
         </div>
 
         {/* Bottom navigation for mobile */}
-        <div className="md:hidden fixed bottom-0 left-0 right-0 bg-background border-t z-50">
+        <div className="md:hidden fixed bottom-0 left-0 right-0 bg-background border-t z-[55] touch-manipulation">
           <div className="grid grid-cols-4 gap-1 p-2">
             {navigationItems.map((item) => {
               const isActive = location.pathname === item.path;

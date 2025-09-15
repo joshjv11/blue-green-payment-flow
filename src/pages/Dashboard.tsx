@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
+import { formatINRCompact } from '@/utils/currency';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -405,7 +406,7 @@ const Dashboard = () => {
                     <div className="flex-1 min-w-0">
                       <div className="font-medium text-foreground truncate">{bill.name}</div>
                       <div className="text-sm text-muted-foreground">
-                        ${bill.amount.toFixed(2)} • {bill.category.charAt(0).toUpperCase() + bill.category.slice(1)}
+                        {formatINRCompact(bill.amount)} • {bill.category.charAt(0).toUpperCase() + bill.category.slice(1)}
                       </div>
                     </div>
                     <Button 
@@ -579,7 +580,7 @@ const Dashboard = () => {
                         {bills.slice(0, 5).map((bill) => (
                           <TableRow key={bill.id}>
                             <TableCell className="font-medium text-xs sm:text-sm">{bill.name}</TableCell>
-                            <TableCell className="text-xs sm:text-sm">${bill.amount.toFixed(2)}</TableCell>
+                            <TableCell className="text-xs sm:text-sm">{formatINRCompact(bill.amount)}</TableCell>
                             <TableCell className="text-xs sm:text-sm">{format(parseISO(bill.due_date), 'MMM dd, yyyy')}</TableCell>
                             <TableCell>
                               <Badge className={`${getBillStatusColor(bill)} text-xs`}>

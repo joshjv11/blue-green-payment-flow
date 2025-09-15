@@ -40,10 +40,14 @@ const handler = async (req: Request): Promise<Response> => {
     );
 
     // Initialize Resend
-    const resend = new Resend(Deno.env.get('RESEND_API_KEY'));
-    if (!resend) {
+    const resendApiKey = Deno.env.get('RESEND_API_KEY');
+    if (!resendApiKey) {
+      console.error('❌ RESEND_API_KEY environment variable not configured');
       throw new Error('RESEND_API_KEY not configured');
     }
+    
+    console.log('🔑 RESEND_API_KEY found, initializing Resend client...');
+    const resend = new Resend(resendApiKey);
 
     const today = new Date();
     const tomorrow = new Date(today);
@@ -221,15 +225,27 @@ const handler = async (req: Request): Promise<Response> => {
         });
 
         if (emailError) {
-          console.error(`❌ Failed to send email to ${profile.email}:`, emailError);
+          console.error(`❌ Failed to send email to ${profile.email}:`, {
+            error: emailError,
+            errorMessage: emailError.message || 'Unknown error',
+            errorName: emailError.name || 'EmailError',
+            recipientEmail: profile.email,
+            subjectLine: subject
+          });
           emailsFailed++;
         } else {
-          console.log(`✅ Reminder sent successfully to ${profile.email}`);
+          console.log(`✅ Reminder sent successfully to ${profile.email} - Subject: ${subject}`);
           emailsSent++;
         }
 
       } catch (error) {
-        console.error(`❌ Error processing user ${userId}:`, error);
+        console.error(`❌ Error processing user ${userId}:`, {
+          userId,
+          userEmail: profile?.email || 'unknown',
+          error: error.message,
+          errorName: error.name,
+          billsCount: userBills.length
+        });
         emailsFailed++;
       }
     }
@@ -251,11 +267,17 @@ const handler = async (req: Request): Promise<Response> => {
     );
 
   } catch (error: any) {
-    console.error('❌ Bill reminder function error:', error);
+    console.error('❌ Bill reminder function error:', {
+      error: error.message || error,
+      errorName: error.name || 'UnknownError',
+      stack: error.stack || 'No stack trace',
+      timestamp: new Date().toISOString()
+    });
     return new Response(
       JSON.stringify({
-        error: error.message,
-        details: 'Failed to process bill reminders'
+        error: error.message || 'Unknown error occurred',
+        details: 'Failed to process bill reminders',
+        timestamp: new Date().toISOString()
       }),
       {
         status: 500,
