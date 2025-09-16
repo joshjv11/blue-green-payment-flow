@@ -10,6 +10,7 @@ interface AuthContextType {
   signUp: (email: string, password: string, fullName?: string, company?: string) => Promise<void>;
   signIn: (email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
+  resetPassword: (email: string) => Promise<void>;
   updateProfile: (fullName: string, company?: string) => Promise<void>;
 }
 
@@ -238,6 +239,46 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
+  const resetPassword = async (email: string) => {
+    try {
+      console.log('🔐 Sending password reset email to:', email);
+
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/auth?mode=reset`,
+      });
+
+      if (error) {
+        console.error('❌ Password reset error:', error);
+        throw error;
+      }
+
+      console.log('✅ Password reset email sent');
+      toast({
+        title: "Password reset email sent!",
+        description: "Check your email for a link to reset your password.",
+      });
+    } catch (error: any) {
+      console.error('❌ Password reset failed:', error);
+      
+      let errorMessage = 'Failed to send password reset email. Please try again.';
+      
+      if (error.message?.includes('User not found')) {
+        errorMessage = 'No account found with this email address.';
+      } else if (error.message?.includes('Invalid email')) {
+        errorMessage = 'Please enter a valid email address.';
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
+      toast({
+        title: "Error sending reset email",
+        description: errorMessage,
+        variant: "destructive",
+      });
+      throw error;
+    }
+  };
+
   const updateProfile = async (fullName: string, company?: string) => {
     try {
       if (!user) {
@@ -286,6 +327,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     signUp,
     signIn,
     signOut,
+    resetPassword,
     updateProfile,
   };
 

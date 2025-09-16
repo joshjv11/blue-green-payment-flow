@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuth } from '@/hooks/useAuth';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Mail } from 'lucide-react';
 
 const signInSchema = z.object({
   email: z.string().email('Please enter a valid email address'),
@@ -35,7 +35,8 @@ interface AuthFormProps {
 
 const AuthForm = ({ onSuccess }: AuthFormProps) => {
   const [activeTab, setActiveTab] = useState('signin');
-  const { signIn, signUp, loading } = useAuth();
+  const [resetPasswordLoading, setResetPasswordLoading] = useState(false);
+  const { signIn, signUp, resetPassword, loading } = useAuth();
 
   const signInForm = useForm<SignInFormData>({
     resolver: zodResolver(signInSchema),
@@ -71,6 +72,23 @@ const AuthForm = ({ onSuccess }: AuthFormProps) => {
       onSuccess?.();
     } catch (error) {
       // Error handling is done in the useAuth hook
+    }
+  };
+
+  const handleForgotPassword = async () => {
+    const email = signInForm.getValues('email');
+    if (!email) {
+      signInForm.setError('email', { message: 'Please enter your email address' });
+      return;
+    }
+
+    setResetPasswordLoading(true);
+    try {
+      await resetPassword(email);
+    } catch (error) {
+      // Error handling is done in the useAuth hook
+    } finally {
+      setResetPasswordLoading(false);
     }
   };
 
@@ -130,6 +148,28 @@ const AuthForm = ({ onSuccess }: AuthFormProps) => {
                     'Sign In'
                   )}
                 </Button>
+
+                <div className="text-center">
+                  <Button
+                    type="button"
+                    variant="link"
+                    className="text-sm text-muted-foreground hover:text-primary p-0 h-auto"
+                    onClick={handleForgotPassword}
+                    disabled={resetPasswordLoading}
+                  >
+                    {resetPasswordLoading ? (
+                      <>
+                        <Loader2 className="mr-1 h-3 w-3 animate-spin" />
+                        Sending reset email...
+                      </>
+                    ) : (
+                      <>
+                        <Mail className="mr-1 h-3 w-3" />
+                        Forgot your password?
+                      </>
+                    )}
+                  </Button>
+                </div>
               </form>
             </TabsContent>
 

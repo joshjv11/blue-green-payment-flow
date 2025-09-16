@@ -33,11 +33,11 @@ const handler = async (req: Request): Promise<Response> => {
       console.log('ℹ️ Extensions might already be enabled:', extensionError.message);
     }
 
-    // Schedule the bill reminder cron job to run daily at 9 AM
+    // Schedule the bill reminder cron job to run daily at 9 AM IST (3:30 AM UTC)
     const cronQuery = `
       SELECT cron.schedule(
         'send-daily-bill-reminders',
-        '0 9 * * *',
+        '30 3 * * *',
         $$
         SELECT
           net.http_post(
