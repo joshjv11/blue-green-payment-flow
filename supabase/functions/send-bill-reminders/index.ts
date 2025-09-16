@@ -250,7 +250,24 @@ const handler = async (req: Request): Promise<Response> => {
       }
     }
 
-    console.log(`📤 Email summary: ${emailsSent} sent, ${emailsFailed} failed`);
+    console.log(`📱 SMS summary: ${smsSent} sent, ${smsFailed} failed`);
+
+    // Also trigger SMS notifications
+    try {
+      console.log('📱 Triggering SMS notifications...');
+      const smsResponse = await supabase.functions.invoke('send-sms-notifications', {
+        body: { scheduled: true, time: new Date().toISOString() }
+      });
+      
+      if (smsResponse.error) {
+        console.error('⚠️ SMS notification error:', smsResponse.error);
+      } else {
+        console.log('✅ SMS notifications triggered successfully');
+      }
+    } catch (smsError) {
+      console.error('❌ Failed to trigger SMS notifications:', smsError);
+      // Don't fail the whole process if SMS fails
+    }
 
     return new Response(
       JSON.stringify({

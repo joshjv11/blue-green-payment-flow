@@ -12,3 +12,6 @@ verify_jwt = false
 
 [functions.schedule-bill-reminders]
 verify_jwt = false
+
+[functions.send-sms-notifications]
+verify_jwt = false

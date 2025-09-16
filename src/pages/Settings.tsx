@@ -14,6 +14,7 @@ import ExportImport from '@/components/ExportImport';
 import { Navigation } from '@/components/Navigation';
 import FreemiumLimitCard from '@/components/FreemiumLimitCard';
 import UpgradeModal from '@/components/UpgradeModal';
+import SMSNotificationSettings from '@/components/SMSNotificationSettings';
 
 interface UserSettings {
   defaultReminderDays: number;
@@ -282,6 +283,9 @@ const SettingsPage = () => {
             )}
           </CardContent>
         </Card>
+
+        {/* SMS Notification Settings */}
+        <SMSNotificationSettings />
 
         {/* Notification Settings */}
         <Card>

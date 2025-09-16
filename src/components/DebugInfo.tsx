@@ -12,14 +12,40 @@ interface DebugInfoProps {
 
 const DebugInfo = ({ className }: DebugInfoProps) => {
   const [isVisible, setIsVisible] = useState(false);
-  const { user, session, loading: authLoading } = useAuth();
-  const { 
-    plan, 
-    aiQueriesUsed, 
-    aiQueriesLimit, 
-    loading: planLoading,
-    fetchUserPlan 
-  } = useSupabasePlan();
+  
+  // Gracefully handle auth context not being available
+  let user = null;
+  let session = null;
+  let authLoading = true;
+  
+  try {
+    const auth = useAuth();
+    user = auth.user;
+    session = auth.session;
+    authLoading = auth.loading;
+  } catch (error) {
+    console.warn('DebugInfo: useAuth not available, running outside AuthProvider');
+    authLoading = false;
+  }
+  
+  // Gracefully handle plan context not being available
+  let plan = null;
+  let aiQueriesUsed = 0;
+  let aiQueriesLimit = 0;
+  let planLoading = true;
+  let fetchUserPlan = null;
+  
+  try {
+    const planData = useSupabasePlan();
+    plan = planData.plan;
+    aiQueriesUsed = planData.aiQueriesUsed;
+    aiQueriesLimit = planData.aiQueriesLimit;
+    planLoading = planData.loading;
+    fetchUserPlan = planData.fetchUserPlan;
+  } catch (error) {
+    console.warn('DebugInfo: useSupabasePlan not available');
+    planLoading = false;
+  }
 
   const handleRefresh = () => {
     console.log('🔄 Manual refresh triggered');
