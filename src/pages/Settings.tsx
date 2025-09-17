@@ -285,6 +285,9 @@ const SettingsPage = () => {
           </CardContent>
         </Card>
 
+        {/* Email Notification Settings */}
+        <EmailNotificationSettings />
+
         {/* SMS Notification Settings */}
         <SMSNotificationSettings />
 
