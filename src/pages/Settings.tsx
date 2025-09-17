@@ -15,6 +15,7 @@ import { Navigation } from '@/components/Navigation';
 import FreemiumLimitCard from '@/components/FreemiumLimitCard';
 import UpgradeModal from '@/components/UpgradeModal';
 import SMSNotificationSettings from '@/components/SMSNotificationSettings';
+import EmailNotificationSettings from '@/components/EmailNotificationSettings';
 
 interface UserSettings {
   defaultReminderDays: number;

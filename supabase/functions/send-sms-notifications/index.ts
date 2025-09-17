@@ -32,6 +32,70 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
+    // Check if this is a test request
+    const requestBody = req.method === 'POST' ? await req.json() : {};
+    const isTest = requestBody.test === true;
+    const testPhoneNumber = requestBody.phoneNumber;
+    
+    if (isTest) {
+      console.log('📱 Processing test SMS request...');
+      
+      // Initialize Twilio
+      const twilioAccountSid = Deno.env.get('TWILIO_ACCOUNT_SID');
+      const twilioAuthToken = Deno.env.get('TWILIO_AUTH_TOKEN');
+      const twilioPhoneNumber = Deno.env.get('TWILIO_PHONE_NUMBER');
+
+      if (!twilioAccountSid || !twilioAuthToken || !twilioPhoneNumber) {
+        console.error('❌ Twilio credentials not configured');
+        throw new Error('Twilio credentials not configured');
+      }
+
+      if (!testPhoneNumber) {
+        throw new Error('Phone number is required for test SMS');
+      }
+
+      // Send test SMS
+      const testMessage = '🧪 Test SMS from InvoiceFlow! Your SMS notifications are working correctly. This is a test message.';
+      
+      const twilioUrl = `https://api.twilio.com/2010-04-01/Accounts/${twilioAccountSid}/Messages.json`;
+      const twilioAuth = btoa(`${twilioAccountSid}:${twilioAuthToken}`);
+
+      const response = await fetch(twilioUrl, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Basic ${twilioAuth}`,
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: new URLSearchParams({
+          From: twilioPhoneNumber,
+          To: testPhoneNumber,
+          Body: testMessage,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.text();
+        console.error(`❌ Failed to send test SMS to ${testPhoneNumber}:`, {
+          status: response.status,
+          error: errorData,
+        });
+        throw new Error(`Failed to send test SMS: ${errorData}`);
+      }
+
+      const responseData = await response.json();
+      console.log(`✅ Test SMS sent successfully to ${testPhoneNumber} - SID: ${responseData.sid}`);
+
+      return new Response(
+        JSON.stringify({
+          success: true,
+          message: 'Test SMS sent successfully',
+          sid: responseData.sid,
+          to: testPhoneNumber
+        }),
+        { status: 200, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
+      );
+    }
+
     console.log('📱 Starting SMS notification process...');
 
     // Initialize Supabase client
