@@ -232,9 +232,11 @@ export type Database = {
           company: string | null
           created_at: string
           email: string
+          email_notifications_enabled: boolean | null
           full_name: string | null
           id: string
           phone_number: string | null
+          reminder_email: string | null
           sms_notifications_enabled: boolean | null
           updated_at: string
         }
@@ -243,9 +245,11 @@ export type Database = {
           company?: string | null
           created_at?: string
           email: string
+          email_notifications_enabled?: boolean | null
           full_name?: string | null
           id: string
           phone_number?: string | null
+          reminder_email?: string | null
           sms_notifications_enabled?: boolean | null
           updated_at?: string
         }
@@ -254,9 +258,11 @@ export type Database = {
           company?: string | null
           created_at?: string
           email?: string
+          email_notifications_enabled?: boolean | null
           full_name?: string | null
           id?: string
           phone_number?: string | null
+          reminder_email?: string | null
           sms_notifications_enabled?: boolean | null
           updated_at?: string
         }
