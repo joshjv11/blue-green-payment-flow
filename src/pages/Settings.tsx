@@ -14,7 +14,7 @@ import ExportImport from '@/components/ExportImport';
 import { Navigation } from '@/components/Navigation';
 import FreemiumLimitCard from '@/components/FreemiumLimitCard';
 import UpgradeModal from '@/components/UpgradeModal';
-import SMSNotificationSettings from '@/components/SMSNotificationSettings';
+
 import EmailNotificationSettings from '@/components/EmailNotificationSettings';
 
 interface UserSettings {
@@ -287,9 +287,6 @@ const SettingsPage = () => {
 
         {/* Email Notification Settings */}
         <EmailNotificationSettings />
-
-        {/* SMS Notification Settings */}
-        <SMSNotificationSettings />
 
         {/* Notification Settings */}
         <Card>

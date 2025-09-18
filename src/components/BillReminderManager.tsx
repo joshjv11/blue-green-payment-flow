@@ -2,21 +2,27 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { Mail, Clock, CheckCircle, AlertCircle } from 'lucide-react';
+import { useAuth } from '@/hooks/useAuth';
+import { Mail, Clock, CheckCircle, AlertCircle, TestTube, Calendar, Send, Loader2, Settings } from 'lucide-react';
 
 const BillReminderManager = () => {
+  const { user } = useAuth();
   const { toast } = useToast();
   const [isTestingSend, setIsTestingSend] = useState(false);
   const [isSettingUpSchedule, setIsSettingUpSchedule] = useState(false);
+  const [isTestingComprehensive, setIsTestingComprehensive] = useState(false);
+  const [testEmail, setTestEmail] = useState('');
 
   const testBillReminders = async () => {
     setIsTestingSend(true);
     try {
-      console.log('🧪 Testing bill reminder system...');
+      console.log('🧪 Testing enhanced bill reminder system...');
       
-      const { data, error } = await supabase.functions.invoke('send-bill-reminders', {
+      const { data, error } = await supabase.functions.invoke('send-bill-reminders-enhanced', {
         body: { test: true, manual: true }
       });
 
@@ -24,14 +30,14 @@ const BillReminderManager = () => {
 
       toast({
         title: "✅ Test Completed",
-        description: `Bill reminders processed: ${data?.billsProcessed || 0} bills, ${data?.emailsSent || 0} emails sent`,
+        description: `Enhanced bill reminders processed: ${data?.billsProcessed || 0} bills, ${data?.emailsSent || 0} emails sent`,
       });
 
     } catch (error: any) {
       console.error('❌ Test failed:', error);
       toast({
-        title: "Test Failed",
-        description: error.message || "Failed to test bill reminders",
+        title: "Test Failed", 
+        description: error.message || "Failed to test enhanced bill reminders",
         variant: "destructive",
       });
     } finally {
@@ -39,26 +45,66 @@ const BillReminderManager = () => {
     }
   };
 
+  const sendComprehensiveTestEmail = async () => {
+    if (!testEmail) {
+      toast({
+        title: "Email Required",
+        description: "Please enter an email address for the test",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsTestingComprehensive(true);
+    try {
+      console.log('📧 Sending comprehensive test email...');
+      
+      const { data, error } = await supabase.functions.invoke('send-comprehensive-test-email', {
+        body: { 
+          email: testEmail,
+          testType: 'manual_admin_test'
+        }
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "✅ Test Email Sent!",
+        description: `Comprehensive test email sent to ${testEmail} with sample bill data`,
+      });
+
+    } catch (error: any) {
+      console.error('❌ Test email failed:', error);
+      toast({
+        title: "Test Email Failed",
+        description: error.message || "Failed to send comprehensive test email",
+        variant: "destructive",
+      });
+    } finally {
+      setIsTestingComprehensive(false);
+    }
+  };
+
   const setupScheduledReminders = async () => {
     setIsSettingUpSchedule(true);
     try {
-      console.log('⏰ Setting up scheduled bill reminders...');
+      console.log('⏰ Setting up enhanced scheduled bill reminders...');
       
       const { data, error } = await supabase.functions.invoke('schedule-bill-reminders');
 
       if (error) throw error;
 
       toast({
-        title: "✅ Reminders Scheduled",
-        description: "Daily bill reminders are now active at 9 AM daily",
-        duration: 5000,
+        title: "✅ Enhanced Reminders Scheduled",
+        description: "Daily bill reminders are now active at 9:00 AM IST with professional formatting",
+        duration: 7000,
       });
 
     } catch (error: any) {
-      console.error('❌ Scheduling failed:', error);
+      console.error('❌ Enhanced scheduling failed:', error);
       toast({
         title: "Scheduling Failed",
-        description: error.message || "Failed to schedule bill reminders",
+        description: error.message || "Failed to schedule enhanced bill reminders", 
         variant: "destructive",
       });
     } finally {
@@ -67,89 +113,182 @@ const BillReminderManager = () => {
   };
 
   return (
-    <Card className="w-full max-w-2xl mx-auto">
+    <Card className="w-full max-w-4xl mx-auto">
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Mail className="h-5 w-5 text-primary" />
-          Bill Reminder System
+          Enhanced Email Bill Reminder System
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="space-y-3 p-4 bg-muted/50 rounded-lg">
+      <CardContent className="space-y-8">
+        {/* System Features Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="space-y-3 p-4 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200">
             <div className="flex items-center gap-2">
               <CheckCircle className="h-4 w-4 text-green-600" />
-              <h3 className="font-semibold">Automated Reminders</h3>
+              <h3 className="font-semibold text-green-800 dark:text-green-400">Professional Emails</h3>
             </div>
-            <p className="text-sm text-muted-foreground">
-              Users receive email reminders for bills due today and tomorrow, sent daily at 9 AM.
+            <p className="text-sm text-green-700 dark:text-green-300">
+              Beautiful HTML emails with INR formatting, bill details, and call-to-action buttons.
             </p>
             <Badge variant="secondary" className="bg-green-100 text-green-800">
-              <Clock className="h-3 w-3 mr-1" />
-              Daily at 9:00 AM
+              <Mail className="h-3 w-3 mr-1" />
+              HTML & Responsive
             </Badge>
           </div>
 
-          <div className="space-y-3 p-4 bg-muted/50 rounded-lg">
+          <div className="space-y-3 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200">
             <div className="flex items-center gap-2">
-              <AlertCircle className="h-4 w-4 text-blue-600" />
-              <h3 className="font-semibold">Smart Notifications</h3>
+              <Clock className="h-4 w-4 text-blue-600" />
+              <h3 className="font-semibold text-blue-800 dark:text-blue-400">Smart Scheduling</h3>
             </div>
-            <p className="text-sm text-muted-foreground">
-              Only sends reminders for unpaid and overdue bills, with beautiful formatted emails.
+            <p className="text-sm text-blue-700 dark:text-blue-300">
+              Automated daily reminders at 9:00 AM IST with retry mechanisms and error handling.
             </p>
             <Badge variant="secondary" className="bg-blue-100 text-blue-800">
-              Contextual & Smart
+              <Calendar className="h-3 w-3 mr-1" />
+              9:00 AM IST Daily
+            </Badge>
+          </div>
+
+          <div className="space-y-3 p-4 bg-purple-50 dark:bg-purple-900/20 rounded-lg border border-purple-200">
+            <div className="flex items-center gap-2">
+              <Settings className="h-4 w-4 text-purple-600" />
+              <h3 className="font-semibold text-purple-800 dark:text-purple-400">Advanced Features</h3>
+            </div>
+            <p className="text-sm text-purple-700 dark:text-purple-300">
+              User preferences, professional formatting, comprehensive logging, and delivery verification.
+            </p>
+            <Badge variant="secondary" className="bg-purple-100 text-purple-800">
+              Enterprise Grade
             </Badge>
           </div>
         </div>
 
-        <div className="space-y-4">
-          <div className="flex flex-col sm:flex-row gap-3">
-            <Button 
-              onClick={testBillReminders}
-              disabled={isTestingSend}
-              variant="outline"
-              className="flex-1"
-            >
-              {isTestingSend ? (
-                <>Testing...</>
-              ) : (
-                <>
-                  <Mail className="h-4 w-4 mr-2" />
-                  Test Reminders Now
-                </>
-              )}
-            </Button>
+        {/* Test Functions */}
+        <div className="space-y-6">
+          <div className="border-t pt-6">
+            <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+              <TestTube className="h-5 w-5 text-blue-600" />
+              Testing & Verification
+            </h3>
+            
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Live System Test */}
+              <div className="space-y-4 p-4 bg-muted/50 rounded-lg">
+                <h4 className="font-medium">Live System Test</h4>
+                <p className="text-sm text-muted-foreground">
+                  Test the actual bill reminder system with your current bills and user data.
+                </p>
+                <Button 
+                  onClick={testBillReminders}
+                  disabled={isTestingSend}
+                  variant="outline"
+                  className="w-full"
+                >
+                  {isTestingSend ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Testing Live System...
+                    </>
+                  ) : (
+                    <>
+                      <Mail className="h-4 w-4 mr-2" />
+                      Test Live Bill Reminders
+                    </>
+                  )}
+                </Button>
+              </div>
 
-            <Button 
-              onClick={setupScheduledReminders}
-              disabled={isSettingUpSchedule}
-              className="flex-1"
-            >
-              {isSettingUpSchedule ? (
-                <>Setting up...</>
-              ) : (
-                <>
-                  <Clock className="h-4 w-4 mr-2" />
-                  Activate Daily Schedule
-                </>
-              )}
-            </Button>
+              {/* Comprehensive Test Email */}
+              <div className="space-y-4 p-4 bg-muted/50 rounded-lg">
+                <h4 className="font-medium">Comprehensive Test Email</h4>
+                <p className="text-sm text-muted-foreground">
+                  Send a sample email with mock bill data to verify formatting and delivery.
+                </p>
+                <div className="space-y-3">
+                  <div>
+                    <Label htmlFor="test-email">Test Email Address</Label>
+                    <Input
+                      id="test-email"
+                      type="email"
+                      placeholder="admin@company.com"
+                      value={testEmail}
+                      onChange={(e) => setTestEmail(e.target.value)}
+                    />
+                  </div>
+                  <Button 
+                    onClick={sendComprehensiveTestEmail}
+                    disabled={isTestingComprehensive}
+                    className="w-full"
+                  >
+                    {isTestingComprehensive ? (
+                      <>
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        Sending Test...
+                      </>
+                    ) : (
+                      <>
+                        <Send className="h-4 w-4 mr-2" />
+                        Send Test Email
+                      </>
+                    )}
+                  </Button>
+                </div>
+              </div>
+            </div>
           </div>
 
-          <div className="p-4 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 rounded-lg">
+          {/* Schedule Management */}
+          <div className="border-t pt-6">
+            <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+              <Calendar className="h-5 w-5 text-green-600" />
+              Schedule Management
+            </h3>
+            
+            <div className="space-y-4">
+              <Button 
+                onClick={setupScheduledReminders}
+                disabled={isSettingUpSchedule}
+                size="lg"
+                className="w-full"
+              >
+                {isSettingUpSchedule ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Setting Up Enhanced Schedule...
+                  </>
+                ) : (
+                  <>
+                    <Clock className="h-4 w-4 mr-2" />
+                    Activate Enhanced Daily Schedule (9:00 AM IST)
+                  </>
+                )}
+              </Button>
+            </div>
+          </div>
+        </div>
+
+        {/* Setup Instructions */}
+        <div className="border-t pt-6">
+          <div className="p-6 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 rounded-lg">
             <div className="flex items-start gap-3">
               <AlertCircle className="h-5 w-5 text-amber-600 mt-0.5 flex-shrink-0" />
-              <div className="space-y-2">
-                <h4 className="font-medium text-amber-800 dark:text-amber-400">Setup Required</h4>
-                <p className="text-sm text-amber-700 dark:text-amber-300">
-                  Make sure you have configured the RESEND_API_KEY in your Supabase Edge Functions settings.
-                  The system will send emails using your Resend account.
-                </p>
-                <p className="text-xs text-amber-600 dark:text-amber-400">
-                  💡 Tip: Test the system first to ensure everything works before activating daily reminders.
-                </p>
+              <div className="space-y-3">
+                <h4 className="font-medium text-amber-800 dark:text-amber-400">Enhanced Setup Requirements</h4>
+                <div className="text-sm text-amber-700 dark:text-amber-300 space-y-2">
+                  <p><strong>Required:</strong> Configure RESEND_API_KEY in Supabase Edge Functions settings</p>
+                  <p><strong>Features:</strong> Professional HTML emails, INR currency formatting, retry mechanisms</p>
+                  <p><strong>Scheduling:</strong> 9:00 AM IST daily (3:30 AM UTC) with IST timezone handling</p>
+                  <p><strong>Targeting:</strong> Only users with email_notifications_enabled = true receive emails</p>
+                </div>
+                <div className="flex flex-wrap gap-2 mt-3">
+                  <Badge variant="outline" className="text-amber-700">✅ Professional Design</Badge>
+                  <Badge variant="outline" className="text-amber-700">✅ INR Formatting</Badge>
+                  <Badge variant="outline" className="text-amber-700">✅ Retry Logic</Badge>
+                  <Badge variant="outline" className="text-amber-700">✅ IST Timezone</Badge>
+                  <Badge variant="outline" className="text-amber-700">✅ User Preferences</Badge>
+                </div>
               </div>
             </div>
           </div>

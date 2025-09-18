@@ -18,3 +18,9 @@ verify_jwt = false
 
 [functions.send-test-email]
 verify_jwt = false
+
+[functions.send-comprehensive-test-email]
+verify_jwt = false
+
+[functions.send-bill-reminders-enhanced]
+verify_jwt = false

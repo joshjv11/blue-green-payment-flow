@@ -13,85 +13,118 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
-    console.log('⏰ Setting up bill reminder cron job...');
+    console.log('⏰ Setting up enhanced bill reminder schedule for 9 AM IST...');
 
-    // Initialize Supabase client with service role for admin operations
+    // Initialize Supabase client with service role key for admin operations
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    // Enable required extensions for cron jobs
-    const { error: extensionError } = await supabase.rpc('sql', {
-      query: `
+    // Enable required extensions
+    console.log('🔧 Enabling pg_cron and pg_net extensions...');
+    
+    await supabase.rpc('exec', {
+      sql: `
         CREATE EXTENSION IF NOT EXISTS pg_cron;
         CREATE EXTENSION IF NOT EXISTS pg_net;
       `
     });
 
-    if (extensionError) {
-      console.log('ℹ️ Extensions might already be enabled:', extensionError.message);
-    }
-
-    // Schedule the bill reminder cron job to run daily at 9 AM IST (3:30 AM UTC)
-    const cronQuery = `
-      SELECT cron.schedule(
-        'send-daily-bill-reminders',
-        '30 3 * * *',
-        $$
-        SELECT
-          net.http_post(
-            url:='${Deno.env.get('SUPABASE_URL')}/functions/v1/send-bill-reminders',
-            headers:='{"Content-Type": "application/json", "Authorization": "Bearer ${Deno.env.get('SUPABASE_ANON_KEY')}"}'::jsonb,
-            body:='{"scheduled": true, "time": "' || now() || '"}'::jsonb
-          ) as request_id;
-        $$
-      );
-    `;
-
-    const { data: cronResult, error: cronError } = await supabase.rpc('sql', {
-      query: cronQuery
+    // Remove existing cron jobs to avoid duplicates
+    console.log('🗑️ Removing existing bill reminder cron jobs...');
+    
+    await supabase.rpc('exec', {
+      sql: `
+        SELECT cron.unschedule('send-daily-bill-reminders') 
+        WHERE EXISTS (
+          SELECT 1 FROM cron.job WHERE jobname = 'send-daily-bill-reminders'
+        );
+        
+        SELECT cron.unschedule('send-weekly-bill-summary')
+        WHERE EXISTS (
+          SELECT 1 FROM cron.job WHERE jobname = 'send-weekly-bill-summary'
+        );
+      `
     });
 
-    if (cronError) {
-      console.error('❌ Failed to schedule cron job:', cronError);
-      throw cronError;
+    // Schedule enhanced daily bill reminders at 9:00 AM IST (3:30 AM UTC)
+    // IST is UTC+5:30, so 9:00 AM IST = 3:30 AM UTC
+    console.log('📅 Scheduling enhanced daily bill reminders at 9:00 AM IST (3:30 AM UTC)...');
+    
+    const supabaseUrl = Deno.env.get('SUPABASE_URL');
+    const anonKey = Deno.env.get('SUPABASE_ANON_KEY');
+    
+    if (!supabaseUrl || !anonKey) {
+      throw new Error('Missing SUPABASE_URL or SUPABASE_ANON_KEY environment variables');
     }
 
-    console.log('✅ Bill reminder cron job scheduled successfully');
-
-    // Also set up a weekly summary job (Sundays at 6 PM)
-    const weeklyCronQuery = `
-      SELECT cron.schedule(
-        'send-weekly-bill-summary',
-        '0 18 * * 0',
-        $$
-        SELECT
-          net.http_post(
-            url:='${Deno.env.get('SUPABASE_URL')}/functions/v1/send-bill-reminders',
-            headers:='{"Content-Type": "application/json", "Authorization": "Bearer ${Deno.env.get('SUPABASE_ANON_KEY')}"}'::jsonb,
-            body:='{"scheduled": true, "type": "weekly_summary", "time": "' || now() || '"}'::jsonb
-          ) as request_id;
-        $$
-      );
-    `;
-
-    const { data: weeklyCronResult, error: weeklyCronError } = await supabase.rpc('sql', {
-      query: weeklyCronQuery
+    await supabase.rpc('exec', {
+      sql: `
+        SELECT cron.schedule(
+          'send-daily-bill-reminders-enhanced',
+          '30 3 * * *', -- 3:30 AM UTC = 9:00 AM IST
+          $$
+          SELECT
+            net.http_post(
+                url:='${supabaseUrl}/functions/v1/send-bill-reminders-enhanced',
+                headers:='{"Content-Type": "application/json", "Authorization": "Bearer ${anonKey}"}'::jsonb,
+                body:='{"scheduled": true, "ist_time": "09:00", "time": "' || now() || '"}'::jsonb
+            ) as request_id;
+          $$
+        );
+      `
     });
 
-    if (weeklyCronError) {
-      console.log('⚠️ Weekly summary job not scheduled:', weeklyCronError.message);
-    } else {
-      console.log('✅ Weekly bill summary cron job scheduled');
-    }
+    // Schedule comprehensive test emails (optional, for admin testing)
+    console.log('📧 Scheduling optional weekly comprehensive test...');
+    
+    await supabase.rpc('exec', {
+      sql: `
+        SELECT cron.schedule(
+          'weekly-bill-system-test',
+          '0 4 * * 0', -- 4:00 AM UTC every Sunday = 9:30 AM IST
+          $$
+          SELECT
+            net.http_post(
+                url:='${supabaseUrl}/functions/v1/send-comprehensive-test-email',
+                headers:='{"Content-Type": "application/json", "Authorization": "Bearer ${anonKey}"}'::jsonb,
+                body:='{"email": "admin@test.com", "testType": "weekly_system_check", "time": "' || now() || '"}'::jsonb
+            ) as request_id;
+          $$
+        );
+      `
+    });
+
+    console.log('✅ Enhanced bill reminder scheduling completed successfully!');
 
     return new Response(
       JSON.stringify({
-        message: 'Bill reminder cron jobs scheduled successfully',
-        dailyReminder: !!cronResult,
-        weeklySummary: !!weeklyCronResult,
-        scheduledAt: new Date().toISOString()
+        success: true,
+        message: 'Enhanced bill reminder system scheduled successfully',
+        schedule: {
+          daily_reminders: {
+            time_ist: '9:00 AM IST',
+            time_utc: '3:30 AM UTC',
+            cron: '30 3 * * *',
+            function: 'send-bill-reminders-enhanced',
+            job_name: 'send-daily-bill-reminders-enhanced'
+          },
+          weekly_test: {
+            time_ist: '9:30 AM IST (Sundays)',
+            time_utc: '4:00 AM UTC (Sundays)',
+            cron: '0 4 * * 0',
+            function: 'send-comprehensive-test-email',
+            job_name: 'weekly-bill-system-test'
+          }
+        },
+        setup_notes: [
+          'Daily bill reminders will be sent at 9:00 AM IST',
+          'Only users with email_notifications_enabled = true will receive emails',
+          'Bills due today and tomorrow will be included',
+          'Professional formatting with INR amounts and retry mechanisms',
+          'All emails include beautiful HTML design and call-to-action buttons'
+        ]
       }),
       {
         status: 200,
@@ -100,11 +133,24 @@ const handler = async (req: Request): Promise<Response> => {
     );
 
   } catch (error: any) {
-    console.error('❌ Cron scheduling error:', error);
+    console.error('❌ Enhanced scheduling error:', {
+      error: error.message || error,
+      errorName: error.name || 'UnknownError',
+      timestamp: new Date().toISOString()
+    });
+
     return new Response(
       JSON.stringify({
-        error: error.message,
-        details: 'Failed to schedule bill reminder cron jobs'
+        success: false,
+        error: error.message || 'Unknown error occurred',
+        details: 'Failed to schedule enhanced bill reminders',
+        troubleshooting: [
+          'Ensure SUPABASE_URL and SUPABASE_ANON_KEY are configured',
+          'Check that pg_cron extension is available in your Supabase instance',
+          'Verify service role key has sufficient permissions',
+          'Make sure the target edge functions exist and are deployed'
+        ],
+        timestamp: new Date().toISOString()
       }),
       {
         status: 500,
