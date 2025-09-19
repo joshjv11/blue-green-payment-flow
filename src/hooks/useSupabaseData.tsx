@@ -16,6 +16,9 @@ export interface Bill {
   notes?: string;
   created_at: string;
   updated_at: string;
+  priority?: 'low' | 'medium' | 'high';
+  reminder_days_before?: number;
+  auto_reminder_enabled?: boolean;
 }
 
 export interface Team {
@@ -93,7 +96,12 @@ export const useSupabaseData = () => {
 
       if (planError && planError.code !== 'PGRST116') throw planError;
 
-        setBills(billsData || []);
+        setBills(billsData?.map(bill => ({
+          ...bill,
+          priority: bill.priority as 'low' | 'medium' | 'high',
+          reminder_days_before: bill.reminder_days_before || 1,
+          auto_reminder_enabled: bill.auto_reminder_enabled !== false
+        })) || []);
         setTeams(teamsData || []);
         setUserPlan(planData as UserPlan);
 
@@ -185,8 +193,12 @@ export const useSupabaseData = () => {
     }
   };
 
-  // Add bill
-  const addBill = async (billData: Omit<Bill, 'id' | 'user_id' | 'created_at' | 'updated_at'>) => {
+  // Add bill with automatic reminder scheduling
+  const addBill = async (billData: Omit<Bill, 'id' | 'user_id' | 'created_at' | 'updated_at'> & {
+    priority?: 'low' | 'medium' | 'high';
+    reminder_days_before?: number;
+    auto_reminder_enabled?: boolean;
+  }) => {
     if (!user) return;
 
     try {
@@ -196,18 +208,63 @@ export const useSupabaseData = () => {
           ...billData,
           user_id: user.id,
           amount: parseFloat(billData.amount.toString()),
+          priority: billData.priority || 'medium',
+          reminder_days_before: billData.reminder_days_before || 1,
+          auto_reminder_enabled: billData.auto_reminder_enabled !== false,
         })
         .select()
         .single();
 
       if (error) throw error;
 
-      setBills(prev => [...prev, data]);
+      setBills(prev => [...prev, {
+        ...data,
+        priority: data.priority as 'low' | 'medium' | 'high',
+        reminder_days_before: data.reminder_days_before || 1,
+        auto_reminder_enabled: data.auto_reminder_enabled !== false
+      }]);
       
       toast({
         title: "Bill Added",
         description: "Bill has been saved to your account",
       });
+
+      // Automatically schedule reminder if enabled and due date exists
+      if (data.auto_reminder_enabled && data.due_date) {
+        try {
+          console.log('🔔 Scheduling automatic reminder for bill:', data.name);
+          
+          const { error: reminderError } = await supabase.functions.invoke('schedule-individual-reminder', {
+            body: {
+              bill_id: data.id,
+              reminder_days_before: data.reminder_days_before || 1,
+              priority: data.priority || 'medium'
+            }
+          });
+
+          if (reminderError) {
+            console.error('❌ Failed to schedule reminder:', reminderError);
+            toast({
+              title: "Reminder Scheduling Failed",
+              description: "Bill saved, but reminder scheduling failed. You can manually set it up later.",
+              variant: "destructive",
+            });
+          } else {
+            console.log('✅ Reminder scheduled successfully for bill:', data.name);
+            toast({
+              title: "Bill Added with Reminder",
+              description: `Bill saved and reminder scheduled for ${data.reminder_days_before} day(s) before due date`,
+            });
+          }
+        } catch (reminderError: any) {
+          console.error('❌ Reminder scheduling error:', reminderError);
+          toast({
+            title: "Reminder Setup Warning",
+            description: "Bill saved successfully, but automatic reminder setup failed",
+            variant: "destructive",
+          });
+        }
+      }
 
       return data;
     } catch (error: any) {
@@ -233,7 +290,12 @@ export const useSupabaseData = () => {
 
       if (error) throw error;
 
-      setBills(prev => prev.map(bill => bill.id === id ? data : bill));
+      setBills(prev => prev.map(bill => bill.id === id ? {
+        ...data,
+        priority: data.priority as 'low' | 'medium' | 'high',
+        reminder_days_before: data.reminder_days_before || 1,
+        auto_reminder_enabled: data.auto_reminder_enabled !== false
+      } : bill));
       
       return data;
     } catch (error: any) {
@@ -337,19 +399,32 @@ export const useSupabaseData = () => {
     }
   }, [user]);
 
-  return {
-    bills,
-    teams,
-    userPlan,
-    loading,
-    syncing,
-    fetchData,
-    syncLocalStorageData,
-    addBill,
-    updateBill,
-    deleteBill,
-    trackAIQuery,
-    canMakeAIQuery,
-    getAIQueriesRemaining,
-  };
+    // Create smart health check mechanism
+    const runHealthCheck = async () => {
+      try {
+        const { error } = await supabase.functions.invoke('reminder-health-check');
+        if (error) {
+          console.error('Health check failed:', error);
+        }
+      } catch (error) {
+        console.error('Health check error:', error);
+      }
+    };
+
+    return {
+      bills,
+      teams,
+      userPlan,
+      loading,
+      syncing,
+      fetchData,
+      syncLocalStorageData,
+      addBill,
+      updateBill,
+      deleteBill,
+      trackAIQuery,
+      canMakeAIQuery,
+      getAIQueriesRemaining,
+      runHealthCheck,
+    };
 };

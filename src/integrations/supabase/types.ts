@@ -83,16 +83,131 @@ export type Database = {
         }
         Relationships: []
       }
+      bill_reminder_jobs: {
+        Row: {
+          bill_reminder_id: string
+          created_at: string
+          cron_expression: string
+          error_message: string | null
+          executed_at: string | null
+          execution_date: string
+          id: string
+          job_name: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          bill_reminder_id: string
+          created_at?: string
+          cron_expression: string
+          error_message?: string | null
+          executed_at?: string | null
+          execution_date: string
+          id?: string
+          job_name: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          bill_reminder_id?: string
+          created_at?: string
+          cron_expression?: string
+          error_message?: string | null
+          executed_at?: string | null
+          execution_date?: string
+          id?: string
+          job_name?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bill_reminder_jobs_bill_reminder_id_fkey"
+            columns: ["bill_reminder_id"]
+            isOneToOne: false
+            referencedRelation: "bill_reminders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      bill_reminders: {
+        Row: {
+          bill_id: string
+          created_at: string
+          delivery_status: string | null
+          email_sent_at: string | null
+          error_message: string | null
+          id: string
+          max_retries: number
+          priority: string
+          reminder_date: string
+          reminder_days_before: number
+          resend_email_id: string | null
+          retry_count: number
+          scheduled_job_id: string | null
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          bill_id: string
+          created_at?: string
+          delivery_status?: string | null
+          email_sent_at?: string | null
+          error_message?: string | null
+          id?: string
+          max_retries?: number
+          priority?: string
+          reminder_date: string
+          reminder_days_before?: number
+          resend_email_id?: string | null
+          retry_count?: number
+          scheduled_job_id?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          bill_id?: string
+          created_at?: string
+          delivery_status?: string | null
+          email_sent_at?: string | null
+          error_message?: string | null
+          id?: string
+          max_retries?: number
+          priority?: string
+          reminder_date?: string
+          reminder_days_before?: number
+          resend_email_id?: string | null
+          retry_count?: number
+          scheduled_job_id?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bill_reminders_bill_id_fkey"
+            columns: ["bill_id"]
+            isOneToOne: false
+            referencedRelation: "bills"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       bills: {
         Row: {
           amount: number
+          auto_reminder_enabled: boolean | null
           category: string
           created_at: string
           due_date: string
           id: string
           name: string
           notes: string | null
+          priority: string | null
           recurring: boolean
+          reminder_days_before: number | null
           status: Database["public"]["Enums"]["bill_status"]
           team_id: string | null
           updated_at: string
@@ -100,13 +215,16 @@ export type Database = {
         }
         Insert: {
           amount: number
+          auto_reminder_enabled?: boolean | null
           category: string
           created_at?: string
           due_date: string
           id?: string
           name: string
           notes?: string | null
+          priority?: string | null
           recurring?: boolean
+          reminder_days_before?: number | null
           status?: Database["public"]["Enums"]["bill_status"]
           team_id?: string | null
           updated_at?: string
@@ -114,13 +232,16 @@ export type Database = {
         }
         Update: {
           amount?: number
+          auto_reminder_enabled?: boolean | null
           category?: string
           created_at?: string
           due_date?: string
           id?: string
           name?: string
           notes?: string | null
+          priority?: string | null
           recurring?: boolean
+          reminder_days_before?: number | null
           status?: Database["public"]["Enums"]["bill_status"]
           team_id?: string | null
           updated_at?: string

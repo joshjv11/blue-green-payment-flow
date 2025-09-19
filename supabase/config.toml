@@ -24,3 +24,12 @@ verify_jwt = false
 
 [functions.send-bill-reminders-enhanced]
 verify_jwt = false
+
+[functions.schedule-individual-reminder]
+verify_jwt = false
+
+[functions.send-individual-reminder]
+verify_jwt = false
+
+[functions.reminder-health-check]
+verify_jwt = false
