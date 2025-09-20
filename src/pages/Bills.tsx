@@ -13,7 +13,24 @@ import { useAuth } from '@/hooks/useAuth';
 import { supabase, isSupabaseConfigured } from '@/lib/supabase';
 import { useToast } from '@/hooks/use-toast';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
-import { Plus, Edit, Trash2, ArrowUpDown, LogOut, Calendar, DollarSign, AlertCircle, Crown } from 'lucide-react';
+import SmartBillForm from '@/components/SmartBillForm';
+import ReminderSettingsModal from '@/components/ReminderSettingsModal';
+import { generateGoogleCalendarUrl, downloadICSFile } from '@/utils/calendar';
+import { 
+  Plus, 
+  Edit, 
+  Trash2, 
+  ArrowUpDown, 
+  LogOut, 
+  Calendar, 
+  DollarSign, 
+  AlertCircle, 
+  Crown, 
+  Bell, 
+  CalendarPlus,
+  Download,
+  Clock
+} from 'lucide-react';
 import { format, parseISO, differenceInDays, isAfter, isBefore, addDays } from 'date-fns';
 import { useSupabasePlan } from '@/hooks/useSupabasePlan';
 import UpgradeModal from '@/components/UpgradeModal';
@@ -50,6 +67,8 @@ interface BillFormData {
   recurring: boolean;
   status: 'unpaid' | 'paid' | 'overdue';
   notes: string;
+  priority: 'low' | 'medium' | 'high';
+  reminder_days: number;
 }
 
 const initialFormData: BillFormData = {
@@ -60,6 +79,8 @@ const initialFormData: BillFormData = {
   recurring: false,
   status: 'unpaid',
   notes: '',
+  priority: 'medium',
+  reminder_days: 1,
 };
 
 const categories = [
@@ -84,6 +105,7 @@ const Bills = () => {
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
   const [localBills, setLocalBills] = useLocalStorage<Bill[]>(`bills_${user?.id}`, []);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  const [reminderModalBill, setReminderModalBill] = useState<Bill | null>(null);
   const isMobile = useIsMobile();
   
   const { plan, billLimit, canAddBill, loading: planLoading, aiQueriesUsed, aiQueriesLimit } = useSupabasePlan();
@@ -191,6 +213,9 @@ const Bills = () => {
         recurring: formData.recurring,
         status: formData.status,
         notes: formData.notes?.trim() || null,
+        priority: formData.priority || 'medium',
+        reminder_days_before: formData.reminder_days || 1,
+        auto_reminder_enabled: true, // Always enable auto-reminders for new bills
         created_at: editingBill ? editingBill.created_at : new Date().toISOString(),
         updated_at: new Date().toISOString(),
       };
@@ -216,9 +241,11 @@ const Bills = () => {
             }
           }
         } else {
-          const { error } = await supabase
+          const { data: insertedBill, error } = await supabase
             .from('bills')
-            .insert([billData]);
+            .insert([billData])
+            .select()
+            .single();
           
           if (error) {
             console.error('🔴 Bill creation error:', error);
@@ -230,6 +257,45 @@ const Bills = () => {
             } else {
               throw new Error(`Failed to create bill: ${error.message}`);
             }
+          }
+
+          // Auto-schedule reminder for new bills
+          if (insertedBill && billData.auto_reminder_enabled && billData.due_date) {
+            try {
+              console.log('🔔 Auto-scheduling reminder for new bill:', insertedBill.name);
+              
+              const { error: reminderError } = await supabase.functions.invoke('schedule-individual-reminder', {
+                body: {
+                  bill_id: insertedBill.id,
+                  reminder_days_before: billData.reminder_days_before || 1,
+                  priority: billData.priority || 'medium'
+                }
+              });
+
+              if (reminderError) {
+                console.error('❌ Failed to auto-schedule reminder:', reminderError);
+                // Don't throw error here - bill creation succeeded
+                toast({
+                  title: "Bill Added",
+                  description: "Bill saved, but reminder scheduling failed. You can set it up manually.",
+                  variant: "destructive",
+                });
+              } else {
+                console.log('✅ Auto-reminder scheduled successfully');
+                toast({
+                  title: "Bill Added with Reminder!",
+                  description: `${billData.name} saved and reminder scheduled for ${billData.reminder_days_before} day(s) before due date`,
+                });
+              }
+            } catch (reminderError: any) {
+              console.error('❌ Auto-reminder scheduling error:', reminderError);
+              // Don't throw error here - bill creation succeeded
+            }
+          } else if (!editingBill) {
+            toast({
+              title: "✅ Bill Added!",
+              description: `${billData.name} added to your bills list`,
+            });
           }
         }
       } else {
@@ -244,12 +310,13 @@ const Bills = () => {
         }
       }
 
-      toast({
-        title: editingBill ? "✅ Bill Updated!" : "✅ Bill Added!",
-        description: editingBill 
-          ? `${billData.name} has been updated successfully`
-          : `${billData.name} added to your bills list`,
-      });
+      // Only show success toast for edits (new bills handle their own toasts above)
+      if (editingBill) {
+        toast({
+          title: "✅ Bill Updated!",
+          description: `${billData.name} has been updated successfully`,
+        });
+      }
 
       console.log(`✅ Bill ${editingBill ? 'updated' : 'created'} successfully`);
 
@@ -287,6 +354,8 @@ const Bills = () => {
       recurring: bill.recurring,
       status: bill.status,
       notes: bill.notes || '',
+      priority: 'medium', // Default priority
+      reminder_days: 1, // Default reminder days
     });
     setEditingBill(bill);
     setIsDialogOpen(true);
@@ -348,57 +417,100 @@ const Bills = () => {
     }
   };
 
-  const BillCard = ({ bill }: { bill: Bill }) => (
-    <Card className="p-4 space-y-3">
-      <div className="flex items-start justify-between">
-        <div className="flex-1 min-w-0">
-          <h3 className="font-semibold text-foreground truncate">{bill.name}</h3>
-          <p className="text-sm text-muted-foreground capitalize">{bill.category}</p>
-        </div>
-        <Badge variant={getBillStatusColor(bill.status)} className="ml-2">
-          {bill.status}
-        </Badge>
-      </div>
-      
-      <div className="flex items-center justify-between text-sm">
-        <div className="flex items-center space-x-2">
-          <DollarSign className="h-4 w-4 text-muted-foreground" />
-          <span className="font-medium">{formatINRCompact(bill.amount)}</span>
-        </div>
-        <div className="flex items-center space-x-2">
-          <Calendar className="h-4 w-4 text-muted-foreground" />
-          <span>{format(parseISO(bill.due_date), 'MMM dd, yyyy')}</span>
-        </div>
-      </div>
+  const BillCard = ({ bill }: { bill: Bill }) => {
+    const dueDate = new Date(bill.due_date);
+    const today = new Date();
+    const daysUntilDue = Math.ceil((dueDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+    
+    const getUrgencyColor = () => {
+      if (daysUntilDue <= 0) return 'text-red-600 dark:text-red-400';
+      if (daysUntilDue <= 1) return 'text-orange-600 dark:text-orange-400';
+      if (daysUntilDue <= 7) return 'text-yellow-600 dark:text-yellow-400';
+      return 'text-blue-600 dark:text-blue-400';
+    };
 
-      {bill.notes && (
-        <p className="text-xs text-muted-foreground bg-muted p-2 rounded">
-          {bill.notes}
-        </p>
-      )}
+    return (
+      <Card className="p-4 space-y-3">
+        <div className="flex items-start justify-between">
+          <div className="flex-1 min-w-0">
+            <h3 className="font-semibold text-foreground truncate">{bill.name}</h3>
+            <p className="text-sm text-muted-foreground capitalize">{bill.category}</p>
+          </div>
+          <div className="flex flex-col items-end gap-1">
+            <Badge variant={getBillStatusColor(bill.status)} className="ml-2">
+              {bill.status}
+            </Badge>
+            {daysUntilDue <= 7 && (
+              <div className={`text-xs ${getUrgencyColor()} flex items-center gap-1`}>
+                <Clock className="h-3 w-3" />
+                {daysUntilDue <= 0 ? 'Overdue' : `${daysUntilDue}d left`}
+              </div>
+            )}
+          </div>
+        </div>
+        
+        <div className="flex items-center justify-between text-sm">
+          <div className="flex items-center space-x-2">
+            <DollarSign className="h-4 w-4 text-muted-foreground" />
+            <span className="font-medium">{formatINRCompact(bill.amount)}</span>
+          </div>
+          <div className="flex items-center space-x-2">
+            <Calendar className="h-4 w-4 text-muted-foreground" />
+            <span>{format(parseISO(bill.due_date), 'MMM dd, yyyy')}</span>
+          </div>
+        </div>
 
-      <div className="flex space-x-2 pt-2">
-        <Button 
-          size="sm" 
-          variant="outline" 
-          onClick={() => editBill(bill)}
-          className="flex-1"
-        >
-          <Edit className="h-4 w-4 mr-1" />
-          Edit
-        </Button>
-        <Button 
-          size="sm" 
-          variant="destructive" 
-          onClick={() => deleteBill(bill.id)}
-          className="flex-1"
-        >
-          <Trash2 className="h-4 w-4 mr-1" />
-          Delete
-        </Button>
-      </div>
-    </Card>
-  );
+        {bill.notes && (
+          <p className="text-xs text-muted-foreground bg-muted p-2 rounded">
+            {bill.notes}
+          </p>
+        )}
+
+        {/* Action Buttons */}
+        <div className="grid grid-cols-2 gap-2 pt-2">
+          <Button 
+            size="sm" 
+            variant="outline" 
+            onClick={() => editBill(bill)}
+            className="text-xs"
+          >
+            <Edit className="h-3 w-3 mr-1" />
+            Edit
+          </Button>
+          <Button 
+            size="sm" 
+            variant="outline"
+            onClick={() => setReminderModalBill(bill)}
+            className="text-xs"
+          >
+            <Bell className="h-3 w-3 mr-1" />
+            Remind
+          </Button>
+        </div>
+        
+        <div className="grid grid-cols-2 gap-2">
+          <Button 
+            size="sm" 
+            variant="outline"
+            onClick={() => window.open(generateGoogleCalendarUrl(bill), '_blank')}
+            className="text-xs"
+          >
+            <CalendarPlus className="h-3 w-3 mr-1" />
+            Calendar
+          </Button>
+          <Button 
+            size="sm" 
+            variant="destructive" 
+            onClick={() => deleteBill(bill.id)}
+            className="text-xs"
+          >
+            <Trash2 className="h-3 w-3 mr-1" />
+            Delete
+          </Button>
+        </div>
+      </Card>
+    );
+  };
 
   if (loading) {
     return (
@@ -450,116 +562,20 @@ const Bills = () => {
                   )}
                 </Button>
               </DialogTrigger>
-              <DialogContent className="max-w-md mx-4 sm:mx-auto">
-                <DialogHeader>
-                  <DialogTitle className="text-lg sm:text-xl">
-                    {editingBill ? 'Edit Bill' : 'Add New Bill'}
-                  </DialogTitle>
-                </DialogHeader>
-                <form onSubmit={handleSubmit} className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="name">Bill Name *</Label>
-                    <Input
-                      id="name"
-                      value={formData.name}
-                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                      placeholder="e.g., Electric Bill"
-                      required
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="amount">Amount *</Label>
-                    <Input
-                      id="amount"
-                      type="number"
-                      step="0.01"
-                      value={formData.amount}
-                      onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
-                      placeholder="0.00"
-                      required
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="due_date">Due Date *</Label>
-                    <Input
-                      id="due_date"
-                      type="date"
-                      value={formData.due_date}
-                      onChange={(e) => setFormData({ ...formData, due_date: e.target.value })}
-                      required
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="category">Category</Label>
-                    <Select 
-                      value={formData.category} 
-                      onValueChange={(value) => setFormData({ ...formData, category: value })}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select category" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {categories.map((category) => (
-                          <SelectItem key={category} value={category}>
-                            {category.charAt(0).toUpperCase() + category.slice(1).replace('_', ' ')}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="status">Status</Label>
-                    <Select 
-                      value={formData.status} 
-                      onValueChange={(value: 'unpaid' | 'paid' | 'overdue') => setFormData({ ...formData, status: value })}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select status" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="unpaid">Unpaid</SelectItem>
-                        <SelectItem value="paid">Paid</SelectItem>
-                        <SelectItem value="overdue">Overdue</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="notes">Notes (Optional)</Label>
-                    <Textarea
-                      id="notes"
-                      value={formData.notes}
-                      onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                      placeholder="Add any additional notes..."
-                      rows={3}
-                    />
-                  </div>
-
-                  <div className="flex items-center space-x-2">
-                    <Checkbox
-                      id="recurring"
-                      checked={formData.recurring}
-                      onCheckedChange={(checked) => setFormData({ ...formData, recurring: checked === true })}
-                    />
-                    <Label htmlFor="recurring" className="text-sm">
-                      This is a recurring bill
-                    </Label>
-                  </div>
-
-                  <div className="flex space-x-2 pt-4">
-                    <Button type="submit" className="flex-1">
-                      {editingBill ? 'Update Bill' : 'Add Bill'}
-                    </Button>
-                    <Button type="button" variant="outline" onClick={resetForm} className="flex-1">
-                      Cancel
-                    </Button>
-                  </div>
-                </form>
-              </DialogContent>
+                <DialogContent className="max-w-2xl mx-4 sm:mx-auto max-h-[90vh] overflow-y-auto">
+                  <DialogHeader>
+                    <DialogTitle className="text-lg sm:text-xl">
+                      {editingBill ? 'Edit Bill' : 'Add New Bill'}
+                    </DialogTitle>
+                  </DialogHeader>
+                  
+                  <SmartBillForm
+                    formData={formData}
+                    setFormData={setFormData}
+                    onSubmit={handleSubmit}
+                    editingBill={editingBill}
+                  />
+                </DialogContent>
             </Dialog>
           </div>
 
@@ -620,6 +636,22 @@ const Bills = () => {
                                   </Button>
                                   <Button 
                                     size="sm" 
+                                    variant="outline"
+                                    onClick={() => setReminderModalBill(bill)}
+                                  >
+                                    <Bell className="h-4 w-4 mr-1" />
+                                    Remind
+                                  </Button>
+                                  <Button 
+                                    size="sm" 
+                                    variant="outline"
+                                    onClick={() => window.open(generateGoogleCalendarUrl(bill), '_blank')}
+                                  >
+                                    <CalendarPlus className="h-4 w-4 mr-1" />
+                                    Calendar
+                                  </Button>
+                                  <Button 
+                                    size="sm" 
                                     variant="destructive"
                                     onClick={() => deleteBill(bill.id)}
                                   >
@@ -646,6 +678,18 @@ const Bills = () => {
             aiQueriesUsed={aiQueriesUsed}
             aiQueriesLimit={aiQueriesLimit}
             trigger="bills"
+          />
+
+          <ReminderSettingsModal
+            bill={reminderModalBill}
+            isOpen={!!reminderModalBill}
+            onClose={() => setReminderModalBill(null)}
+            onReminderScheduled={() => {
+              toast({
+                title: "Reminder Scheduled",
+                description: "Your bill reminder has been set up successfully",
+              });
+            }}
           />
 
           <FreemiumLimitCard

@@ -15,7 +15,8 @@ import { Navigation } from '@/components/Navigation';
 import FreemiumLimitCard from '@/components/FreemiumLimitCard';
 import UpgradeModal from '@/components/UpgradeModal';
 
-import EmailNotificationSettings from '@/components/EmailNotificationSettings';
+import UserReminderSettings from '@/components/UserReminderSettings';
+import ReminderDashboard from '@/components/ReminderDashboard';
 
 interface UserSettings {
   defaultReminderDays: number;
@@ -285,8 +286,11 @@ const SettingsPage = () => {
           </CardContent>
         </Card>
 
-        {/* Email Notification Settings */}
-        <EmailNotificationSettings />
+        {/* User Reminder Settings */}
+        <UserReminderSettings />
+
+        {/* Reminder Dashboard */}
+        <ReminderDashboard />
 
         {/* Notification Settings */}
         <Card>

@@ -277,7 +277,7 @@ const handler = async (req: Request): Promise<Response> => {
         console.log(`📧 Attempt ${attempt}/${reminder.max_retries} - Sending email to ${emailAddress}...`);
         
         const { data: emailData, error: sendError } = await resend.emails.send({
-          from: 'InvoiceFlow Bills <bills@resend.dev>',
+          from: 'InvoiceFlow <no-reply@invoiceflow.dev>',
           to: [emailAddress],
           subject: subject,
           html: htmlContent,

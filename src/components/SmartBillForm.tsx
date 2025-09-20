@@ -403,6 +403,26 @@ const SmartBillForm = ({ formData, setFormData, onSubmit, editingBill }: SmartBi
           </div>
         </div>
 
+        {/* Auto Reminder Toggle */}
+        <div className="flex items-center justify-between p-4 bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-950/30 dark:to-purple-950/30 rounded-lg border border-blue-200 dark:border-blue-800">
+          <div className="space-y-1">
+            <Label className="flex items-center gap-2 text-base font-semibold text-blue-700 dark:text-blue-300">
+              📅 Auto-Remind Me
+              <Badge variant="secondary" className="text-xs px-2 py-0.5">
+                Recommended
+              </Badge>
+            </Label>
+            <p className="text-sm text-blue-600 dark:text-blue-400">
+              Get email reminders {formData.reminder_days} day{formData.reminder_days !== 1 ? 's' : ''} before due date
+            </p>
+          </div>
+          <Switch
+            checked={true}
+            onCheckedChange={() => {}}
+            className="data-[state=checked]:bg-blue-600"
+          />
+        </div>
+
         {/* Recurring Bill Toggle */}
         <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
           <div className="space-y-1">
@@ -417,6 +437,23 @@ const SmartBillForm = ({ formData, setFormData, onSubmit, editingBill }: SmartBi
           <Switch
             checked={formData.recurring}
             onCheckedChange={(checked) => setFormData({ ...formData, recurring: checked })}
+          />
+        </div>
+
+        {/* Add to Calendar Toggle */}
+        <div className="flex items-center justify-between p-3 bg-green-50 dark:bg-green-950/30 rounded-lg border border-green-200 dark:border-green-800">
+          <div className="space-y-1">
+            <Label className="flex items-center gap-2 text-green-700 dark:text-green-300">
+              📅 Add to Google Calendar
+            </Label>
+            <p className="text-xs text-green-600 dark:text-green-400">
+              Create calendar event for this bill
+            </p>
+          </div>
+          <Switch
+            checked={true}
+            onCheckedChange={() => {}}
+            className="data-[state=checked]:bg-green-600"
           />
         </div>
 

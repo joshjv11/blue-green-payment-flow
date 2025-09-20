@@ -227,7 +227,7 @@ const handler = async (req: Request): Promise<Response> => {
     console.log(`📧 Sending comprehensive test email to ${email}...`);
     
     const emailResponse = await resend.emails.send({
-      from: "InvoiceFlow <bills@resend.dev>",
+      from: "InvoiceFlow <no-reply@invoiceflow.dev>",
       to: [email],
       subject: subject,
       html: htmlContent,
