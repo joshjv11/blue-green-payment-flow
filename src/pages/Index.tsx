@@ -1,14 +1,14 @@
 import Header from "@/components/Header";
-import Hero from "@/components/Hero";
-import Features from "@/components/Features";
+import EnhancedHero from "@/components/EnhancedHero";
+import EnhancedFeatures from "@/components/EnhancedFeatures";
 import CallToAction from "@/components/CallToAction";
 
 const Index = () => {
   return (
     <main className="min-h-screen">
       <Header />
-      <Hero />
-      <Features />
+      <EnhancedHero />
+      <EnhancedFeatures />
       <CallToAction />
     </main>
   );

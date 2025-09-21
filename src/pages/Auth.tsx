@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import AuthForm from '@/components/auth/AuthForm';
+import EnhancedAuthForm from '@/components/auth/EnhancedAuthForm';
 import { useAuth } from '@/hooks/useAuth';
 
 const Auth = () => {
@@ -76,13 +76,7 @@ const Auth = () => {
     );
   }
 
-  return (
-    <div className="min-h-screen bg-feature-gradient flex items-center justify-center p-4">
-      <div className="w-full max-w-md">
-        <AuthForm onSuccess={handleAuthSuccess} />
-      </div>
-    </div>
-  );
+  return <EnhancedAuthForm onSuccess={handleAuthSuccess} />;
 };
 
 export default Auth;

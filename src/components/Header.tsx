@@ -1,3 +1,4 @@
+import invoiceFlowLogo from '@/assets/invoiceflow-logo.png';
 import { Button } from "./ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
@@ -25,9 +26,11 @@ const Header = () => {
       <nav className="container mx-auto px-4 py-4 sm:py-6">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-2">
-            <div className="w-8 h-8 bg-white rounded-lg flex items-center justify-center">
-              <div className="w-4 h-4 bg-hero-gradient rounded-sm"></div>
-            </div>
+            <img 
+              src={invoiceFlowLogo} 
+              alt="InvoiceFlow" 
+              className="h-8 w-auto"
+            />
             <span className="text-lg sm:text-xl font-bold text-white">InvoiceFlow</span>
           </div>
           
@@ -55,9 +58,11 @@ const Header = () => {
               <SheetContent side="right" className="w-[300px] bg-background">
                 <div className="flex flex-col space-y-6 pt-6">
                   <div className="flex items-center space-x-2">
-                    <div className="w-8 h-8 bg-hero-gradient rounded-lg flex items-center justify-center">
-                      <div className="w-4 h-4 bg-white rounded-sm"></div>
-                    </div>
+                    <img 
+                      src={invoiceFlowLogo} 
+                      alt="InvoiceFlow" 
+                      className="h-8 w-auto"
+                    />
                     <span className="text-xl font-bold text-foreground">InvoiceFlow</span>
                   </div>
                   
