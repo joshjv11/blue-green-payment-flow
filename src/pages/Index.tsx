@@ -1,7 +1,7 @@
 import Header from "@/components/Header";
 import EnhancedHero from "@/components/EnhancedHero";
 import EnhancedFeatures from "@/components/EnhancedFeatures";
-import CallToAction from "@/components/CallToAction";
+import SetupCallCTA from "@/components/SetupCallCTA";
 
 const Index = () => {
   return (
@@ -9,7 +9,7 @@ const Index = () => {
       <Header />
       <EnhancedHero />
       <EnhancedFeatures />
-      <CallToAction />
+      <SetupCallCTA />
     </main>
   );
 };

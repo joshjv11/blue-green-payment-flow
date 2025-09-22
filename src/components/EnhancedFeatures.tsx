@@ -43,10 +43,10 @@ const EnhancedFeatures = () => {
   ];
 
   const stats = [
-    { value: "97%", label: "Faster Payment Collection" },
-    { value: "50%", label: "Reduction in Late Payments" }, 
-    { value: "10k+", label: "Happy Customers" },
-    { value: "$2M+", label: "Payments Processed" }
+    { value: "24/7", label: "Smart Monitoring" },
+    { value: "Auto", label: "Payment Tracking" }, 
+    { value: "AI", label: "Powered Reminders" },
+    { value: "Free", label: "14-Day Trial" }
   ];
 
   return (

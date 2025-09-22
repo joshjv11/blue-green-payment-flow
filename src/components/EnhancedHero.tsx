@@ -51,7 +51,7 @@ const EnhancedHero = () => {
           <div className="text-center lg:text-left space-y-8">
             <div className="space-y-4">
               <Badge className="bg-white/20 text-white border-white/30 backdrop-blur-sm">
-                🚀 Trusted by 10,000+ businesses
+                🚀 Streamline your invoicing process
               </Badge>
               
               <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-6 leading-tight">
@@ -91,24 +91,18 @@ const EnhancedHero = () => {
                 variant="outline" 
                 size="lg"
                 className="border-white/30 text-white hover:bg-white/10 text-lg px-8 h-14 font-semibold backdrop-blur-sm"
+                onClick={() => window.open('https://calendly.com/invoiceflow/setup', '_blank')}
               >
-                Watch Demo
+                Book 1:1 Setup Call
               </Button>
             </div>
 
             <div className="flex items-center justify-center lg:justify-start space-x-6 text-white/80 text-sm">
-              <div className="flex items-center space-x-1">
-                <span className="font-semibold">4.9/5</span>
-                <div className="flex space-x-1">
-                  {[...Array(5)].map((_, i) => (
-                    <Star key={i} className="h-4 w-4 fill-current text-yellow-400" />
-                  ))}
-                </div>
-              </div>
+              <div>✨ Free 14-day trial</div>
               <div>•</div>
-              <div>500+ reviews</div>
+              <div>🚀 No credit card required</div>
               <div>•</div>
-              <div>Free 14-day trial</div>
+              <div>⚡ Setup in 5 minutes</div>
             </div>
           </div>
           
