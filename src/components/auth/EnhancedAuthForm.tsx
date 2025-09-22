@@ -9,8 +9,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useAuth } from '@/hooks/useAuth';
+import { useToast } from '@/hooks/use-toast';
 import { Loader2, Eye, EyeOff, AlertCircle } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase } from '@/lib/supabase';
 import invoiceFlowLogo from '@/assets/invoiceflow-logo.png';
 
 const signInSchema = z.object({
@@ -46,6 +47,7 @@ const EnhancedAuthForm = ({ onSuccess }: EnhancedAuthFormProps) => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [resetPasswordLoading, setResetPasswordLoading] = useState(false);
   const { signIn, signUp, resetPassword, loading } = useAuth();
+  const { toast } = useToast();
 
   const signInForm = useForm<SignInFormData>({
     resolver: zodResolver(signInSchema),
@@ -90,15 +92,37 @@ const EnhancedAuthForm = ({ onSuccess }: EnhancedAuthFormProps) => {
 
   const handleGoogleSignIn = async () => {
     try {
-      const { error } = await supabase.auth.signInWithOAuth({
+      console.log('🔐 Initiating Google OAuth flow...');
+      const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${window.location.origin}/dashboard`
+          redirectTo: `${window.location.origin}/dashboard`,
+          queryParams: {
+            access_type: 'offline',
+            prompt: 'consent',
+          }
         }
       });
-      if (error) throw error;
+      
+      if (error) {
+        console.error('❌ Google OAuth error:', error);
+        toast({
+          title: "Sign in failed",
+          description: error.message || "Failed to sign in with Google. Please try again.",
+          variant: "destructive"
+        });
+        return;
+      }
+      
+      console.log('✅ Google OAuth initiated successfully');
+      // OAuth will redirect, so no need to call onSuccess here
     } catch (error: any) {
-      console.error('Google sign in error:', error);
+      console.error('❌ Google sign in error:', error);
+      toast({
+        title: "Sign in failed", 
+        description: "An unexpected error occurred. Please try again.",
+        variant: "destructive"
+      });
     }
   };
 
