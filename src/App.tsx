@@ -9,6 +9,8 @@ import DebugInfo from '@/components/DebugInfo';
 import MobileOptimizer from '@/components/MobileOptimizer';
 import Index from './pages/Index';
 import Auth from './pages/Auth';
+import Terms from './pages/Terms';
+import Privacy from './pages/Privacy';
 import Dashboard from './pages/Dashboard';
 import Bills from './pages/Bills';
 import Analytics from './pages/Analytics';
@@ -27,9 +29,11 @@ const App = () => (
         <DebugInfo />
         <BrowserRouter>
           <MobileOptimizer />
-          <Routes>
+            {/* Routes to Pages */}
             <Route path="/" element={<Index />} />
             <Route path="/auth" element={<Auth />} />
+            <Route path="/terms" element={<Terms />} />
+            <Route path="/privacy" element={<Privacy />} />
             <Route 
               path="/dashboard" 
               element={

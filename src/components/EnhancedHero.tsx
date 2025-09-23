@@ -26,19 +26,11 @@ const EnhancedHero = () => {
     "Advanced analytics and insights"
   ];
 
-  const testimonials = [
-    {
-      name: "Sarah Johnson",
-      company: "TechStart Inc.",
-      text: "InvoiceFlow cut our payment delays by 60%. It's a game-changer!",
-      rating: 5
-    },
-    {
-      name: "Michael Chen",
-      company: "Design Studio Pro", 
-      text: "The automated reminders are perfect - professional but not pushy.",
-      rating: 5
-    }
+  const benefits = [
+    "Smart AI-powered invoice management",
+    "Automated payment reminders", 
+    "Real-time payment tracking",
+    "Professional follow-ups"
   ];
 
   return (
@@ -69,10 +61,10 @@ const EnhancedHero = () => {
 
             <div className="space-y-4">
               <ul className="space-y-3">
-                {features.map((feature, index) => (
+                {benefits.map((benefit, index) => (
                   <li key={index} className="flex items-center space-x-3 text-white/90">
                     <CheckCircle className="h-5 w-5 text-accent-foreground flex-shrink-0" />
-                    <span>{feature}</span>
+                    <span>{benefit}</span>
                   </li>
                 ))}
               </ul>
@@ -116,33 +108,26 @@ const EnhancedHero = () => {
               <div className="absolute inset-0 bg-gradient-to-t from-primary/20 to-transparent" />
             </div>
             
-            {/* Floating testimonials */}
+            {/* Floating benefits */}
             <div className="hidden lg:block absolute -right-4 top-1/4 space-y-4">
-              {testimonials.map((testimonial, index) => (
-                <Card key={index} className="w-80 shadow-medium border-0 backdrop-blur-sm bg-white/95">
-                  <CardContent className="p-4">
-                    <div className="flex items-start space-x-3">
-                      <div className="w-12 h-12 bg-hero-gradient rounded-full flex items-center justify-center text-white font-semibold">
-                        {testimonial.name.charAt(0)}
-                      </div>
-                      <div className="flex-1">
-                        <div className="flex items-center space-x-2 mb-2">
-                          <div className="flex space-x-1">
-                            {[...Array(testimonial.rating)].map((_, i) => (
-                              <Star key={i} className="h-3 w-3 fill-current text-yellow-400" />
-                            ))}
-                          </div>
-                        </div>
-                        <p className="text-sm text-muted-foreground mb-2">"{testimonial.text}"</p>
-                        <div className="text-xs">
-                          <div className="font-semibold text-foreground">{testimonial.name}</div>
-                          <div className="text-muted-foreground">{testimonial.company}</div>
-                        </div>
-                      </div>
+              <Card className="w-80 shadow-medium border-0 backdrop-blur-sm bg-white/95">
+                <CardContent className="p-6">
+                  <div className="text-center space-y-4">
+                    <div className="w-16 h-16 bg-hero-gradient rounded-full flex items-center justify-center text-white font-bold text-xl mx-auto">
+                      ⚡
                     </div>
-                  </CardContent>
-                </Card>
-              ))}
+                    <div>
+                      <h3 className="font-semibold text-foreground mb-2">Early Access Beta</h3>
+                      <p className="text-sm text-muted-foreground">
+                        Join exclusive beta program with priority support and feature influence
+                      </p>
+                    </div>
+                    <Badge className="bg-orange-100 text-orange-800 border-orange-200">
+                      Limited Spots Available
+                    </Badge>
+                  </div>
+                </CardContent>
+              </Card>
             </div>
           </div>
         </div>

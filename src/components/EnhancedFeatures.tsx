@@ -122,7 +122,7 @@ const EnhancedFeatures = () => {
               Ready to transform your payment collection?
             </h3>
             <p className="text-lg text-white/90 mb-6 max-w-2xl mx-auto">
-              Join thousands of businesses already using InvoiceFlow to get paid faster and manage cash flow better.
+              Join early beta users who are shaping the future of invoice management.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <button className="bg-white text-primary hover:bg-white/90 px-8 py-3 rounded-lg font-semibold transition-all duration-300 shadow-medium">
