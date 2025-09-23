@@ -93,13 +93,19 @@ const EnhancedAuthForm = ({ onSuccess }: EnhancedAuthFormProps) => {
   const handleGoogleSignIn = async () => {
     try {
       console.log('🔐 Initiating Google OAuth flow...');
+      
+      // Get the current origin for redirect
+      const currentUrl = window.location.origin;
+      console.log('📍 Current origin:', currentUrl);
+      
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${window.location.origin}/dashboard`,
+          redirectTo: `${currentUrl}/auth?mode=callback`,
+          scopes: 'email profile',
           queryParams: {
             access_type: 'offline',
-            prompt: 'consent',
+            prompt: 'select_account',
           }
         }
       });
@@ -107,20 +113,22 @@ const EnhancedAuthForm = ({ onSuccess }: EnhancedAuthFormProps) => {
       if (error) {
         console.error('❌ Google OAuth error:', error);
         toast({
-          title: "Sign in failed",
-          description: error.message || "Failed to sign in with Google. Please try again.",
+          title: "Google Sign-In Error",
+          description: error.message || "Please check your Google OAuth configuration in Supabase dashboard.",
           variant: "destructive"
         });
         return;
       }
       
-      console.log('✅ Google OAuth initiated successfully');
-      // OAuth will redirect, so no need to call onSuccess here
+      if (data?.url) {
+        console.log('✅ Redirecting to Google OAuth:', data.url);
+        // Let the OAuth flow handle the redirect
+      }
     } catch (error: any) {
       console.error('❌ Google sign in error:', error);
       toast({
-        title: "Sign in failed", 
-        description: "An unexpected error occurred. Please try again.",
+        title: "Authentication Error", 
+        description: "Google Sign-In is not properly configured. Please contact support.",
         variant: "destructive"
       });
     }

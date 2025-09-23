@@ -10,6 +10,13 @@ const Auth = () => {
   const mode = searchParams.get('mode');
 
   useEffect(() => {
+    // Handle OAuth callback
+    if (mode === 'callback') {
+      console.log('🔄 Handling OAuth callback...');
+      // Let the auth state change handler redirect to dashboard
+      return;
+    }
+    
     // Handle password reset mode
     if (mode === 'reset') {
       // Allow users to proceed with password reset even if authenticated
