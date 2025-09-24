@@ -39,34 +39,53 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         switch (event) {
           case 'SIGNED_IN':
             console.log('✅ User signed in successfully');
-            // Create profile if this is a new signup (user_metadata exists)
-            if (session?.user?.user_metadata?.full_name && session?.user?.created_at) {
-              const userCreatedAt = new Date(session.user.created_at);
-              const now = new Date();
-              const timeDiff = now.getTime() - userCreatedAt.getTime();
-              
-              // If user was created within the last 5 minutes, likely a new signup
-              if (timeDiff < 5 * 60 * 1000) {
+            
+            // Check if profile exists, create if new user
+            try {
+              const { data: existingProfile } = await supabase
+                .from('profiles')
+                .select('id')
+                .eq('id', session.user.id)
+                .single();
+
+              if (!existingProfile) {
                 console.log('👤 Creating profile for new user:', session.user.email);
-                try {
-                  const { error: profileError } = await supabase
-                    .from('profiles')
-                    .insert({
-                      id: session.user.id,
-                      email: session.user.email!,
-                      full_name: session.user.user_metadata?.full_name || null,
-                      company: session.user.user_metadata?.company || null,
-                    });
+                const { error: profileError } = await supabase
+                  .from('profiles')
+                  .insert({
+                    id: session.user.id,
+                    email: session.user.email!,
+                    full_name: session.user.user_metadata?.full_name || session.user.user_metadata?.name || null,
+                    company: session.user.user_metadata?.company || null,
+                    avatar_url: session.user.user_metadata?.avatar_url || session.user.user_metadata?.picture || null,
+                  });
+                
+                if (profileError) {
+                  console.warn('⚠️ Profile creation error:', profileError);
+                } else {
+                  console.log('✅ Profile created successfully');
                   
-                  if (profileError) {
-                    console.warn('⚠️ Profile creation error (might already exist):', profileError);
-                  } else {
-                    console.log('✅ Profile created successfully');
+                  // Add sample data for new users
+                  try {
+                    console.log('📊 Adding sample data for new user');
+                    const { error: seedError } = await supabase.rpc('add_sample_data_for_user', {
+                      target_user_id: session.user.id
+                    });
+                    
+                    if (seedError) {
+                      console.error('❌ Error adding sample data:', seedError);
+                    } else {
+                      console.log('✅ Sample data added successfully');
+                    }
+                  } catch (seedError) {
+                    console.error('❌ Error calling sample data function:', seedError);
                   }
-                } catch (error) {
-                  console.error('❌ Error creating profile:', error);
                 }
+              } else {
+                console.log('👤 Existing user, profile already exists');
               }
+            } catch (error) {
+              console.error('❌ Error handling profile:', error);
             }
             break;
             
