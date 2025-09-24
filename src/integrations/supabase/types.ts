@@ -660,6 +660,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      add_sample_data_for_user: {
+        Args: { target_user_id: string }
+        Returns: undefined
+      }
       can_manage_team_members: {
         Args: { target_team_id: string }
         Returns: boolean
