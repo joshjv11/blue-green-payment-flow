@@ -257,6 +257,83 @@ export type Database = {
           },
         ]
       }
+      customers: {
+        Row: {
+          created_at: string
+          email: string
+          id: string
+          name: string
+          phone: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          id?: string
+          name: string
+          phone?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          id?: string
+          name?: string
+          phone?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      invoices: {
+        Row: {
+          amount: number
+          created_at: string
+          customer_id: string
+          description: string | null
+          due_date: string
+          id: string
+          invoice_number: string | null
+          status: Database["public"]["Enums"]["invoice_status"]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          customer_id: string
+          description?: string | null
+          due_date: string
+          id?: string
+          invoice_number?: string | null
+          status?: Database["public"]["Enums"]["invoice_status"]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          customer_id?: string
+          description?: string | null
+          due_date?: string
+          id?: string
+          invoice_number?: string | null
+          status?: Database["public"]["Enums"]["invoice_status"]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invoices_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       payment_access_log: {
         Row: {
           accessed_at: string | null
@@ -618,6 +695,7 @@ export type Database = {
     }
     Enums: {
       bill_status: "unpaid" | "paid" | "overdue"
+      invoice_status: "pending" | "paid" | "overdue"
       user_role: "owner" | "admin" | "member" | "viewer"
     }
     CompositeTypes: {
@@ -747,6 +825,7 @@ export const Constants = {
   public: {
     Enums: {
       bill_status: ["unpaid", "paid", "overdue"],
+      invoice_status: ["pending", "paid", "overdue"],
       user_role: ["owner", "admin", "member", "viewer"],
     },
   },
