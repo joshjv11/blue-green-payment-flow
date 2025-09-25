@@ -11,6 +11,7 @@ interface AuthContextType {
   signIn: (email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
   resetPassword: (email: string) => Promise<void>;
+  signInWithMagicLink: (email: string) => Promise<void>;
   updateProfile: (fullName: string, company?: string) => Promise<void>;
 }
 
@@ -298,6 +299,47 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
+  const signInWithMagicLink = async (email: string) => {
+    try {
+      console.log('🔐 Sending magic link to:', email);
+
+      const { error } = await supabase.auth.signInWithOtp({
+        email,
+        options: {
+          emailRedirectTo: `${window.location.origin}/auth/callback`
+        }
+      });
+
+      if (error) {
+        console.error('❌ Magic link error:', error);
+        throw error;
+      }
+
+      console.log('✅ Magic link sent');
+      toast({
+        title: "Magic link sent!",
+        description: "Check your email and click the link to sign in instantly.",
+      });
+    } catch (error: any) {
+      console.error('❌ Magic link failed:', error);
+      
+      let errorMessage = 'Failed to send magic link. Please try again.';
+      
+      if (error.message?.includes('Invalid email')) {
+        errorMessage = 'Please enter a valid email address.';
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
+      toast({
+        title: "Error sending magic link",
+        description: errorMessage,
+        variant: "destructive",
+      });
+      throw error;
+    }
+  };
+
   const updateProfile = async (fullName: string, company?: string) => {
     try {
       if (!user) {
@@ -347,6 +389,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     signIn,
     signOut,
     resetPassword,
+    signInWithMagicLink,
     updateProfile,
   };
 

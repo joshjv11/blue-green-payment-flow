@@ -10,7 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Eye, EyeOff, AlertCircle } from 'lucide-react';
+import { Loader2, Eye, EyeOff, AlertCircle, Mail } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import invoiceFlowLogo from '@/assets/invoiceflow-logo.png';
 
@@ -46,7 +46,8 @@ const EnhancedAuthForm = ({ onSuccess }: EnhancedAuthFormProps) => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [resetPasswordLoading, setResetPasswordLoading] = useState(false);
-  const { signIn, signUp, resetPassword, loading } = useAuth();
+  const [magicLinkLoading, setMagicLinkLoading] = useState(false);
+  const { signIn, signUp, resetPassword, signInWithMagicLink, loading } = useAuth();
   const { toast } = useToast();
 
   const signInForm = useForm<SignInFormData>({
@@ -146,6 +147,17 @@ const EnhancedAuthForm = ({ onSuccess }: EnhancedAuthFormProps) => {
     }
   };
 
+  const handleMagicLink = async (email: string) => {
+    setMagicLinkLoading(true);
+    try {
+      await signInWithMagicLink(email);
+    } catch (error: any) {
+      console.error('Magic link error:', error);
+    } finally {
+      setMagicLinkLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-auth-gradient flex items-center justify-center p-4">
       <div className="w-full max-w-md">
@@ -217,9 +229,12 @@ const EnhancedAuthForm = ({ onSuccess }: EnhancedAuthFormProps) => {
             </div>
 
             <Tabs value={activeTab} onValueChange={setActiveTab}>
-              <TabsList className="grid w-full grid-cols-2 bg-muted/50">
+              <TabsList className="grid w-full grid-cols-3 bg-muted/50">
                 <TabsTrigger value="signin" className="data-[state=active]:bg-background">
                   Sign In
+                </TabsTrigger>
+                <TabsTrigger value="magiclink" className="data-[state=active]:bg-background">
+                  Magic Link
                 </TabsTrigger>
                 <TabsTrigger value="signup" className="data-[state=active]:bg-background">
                   Sign Up
@@ -325,6 +340,56 @@ const EnhancedAuthForm = ({ onSuccess }: EnhancedAuthFormProps) => {
                     )}
                   </Button>
                 </form>
+              </TabsContent>
+
+              <TabsContent value="magiclink" className="space-y-4 mt-6">
+                <div className="text-center space-y-4">
+                  <div className="space-y-2">
+                    <h3 className="text-lg font-semibold">Sign in with Magic Link</h3>
+                    <p className="text-sm text-muted-foreground">
+                      Enter your email and we'll send you a secure link to sign in instantly
+                    </p>
+                  </div>
+                  
+                  <form onSubmit={signInForm.handleSubmit((data) => handleMagicLink(data.email))} className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="magiclink-email" className="text-sm font-medium">
+                        Email Address
+                      </Label>
+                      <Input
+                        id="magiclink-email"
+                        type="email"
+                        placeholder="Enter your email"
+                        className="h-11 transition-all duration-300 focus:ring-2 focus:ring-primary/20"
+                        {...signInForm.register('email')}
+                      />
+                      {signInForm.formState.errors.email && (
+                        <div className="flex items-center space-x-1 text-destructive text-sm">
+                          <AlertCircle className="h-4 w-4" />
+                          <span>{signInForm.formState.errors.email.message}</span>
+                        </div>
+                      )}
+                    </div>
+
+                    <Button 
+                      type="submit" 
+                      className="w-full h-11 bg-primary hover:bg-primary-hover text-primary-foreground font-medium transition-all duration-300"
+                      disabled={magicLinkLoading}
+                    >
+                      {magicLinkLoading ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Sending Magic Link...
+                        </>
+                      ) : (
+                        <>
+                          <Mail className="mr-2 h-4 w-4" />
+                          Send Magic Link
+                        </>
+                      )}
+                    </Button>
+                  </form>
+                </div>
               </TabsContent>
 
               <TabsContent value="signup" className="space-y-4 mt-6">
