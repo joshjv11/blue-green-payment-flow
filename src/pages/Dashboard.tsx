@@ -26,6 +26,8 @@ import EnhancedAIAssistantV2 from '@/components/EnhancedAIAssistantV2';
 import PlanStatusCard from '@/components/PlanStatusCard';
 import UpgradeTrigger from '@/components/UpgradeTrigger';
 import UpgradeModal from '@/components/UpgradeModal';
+import AddPasskeyBanner from '@/components/auth/AddPasskeyBanner';
+import { useAnalytics } from '@/hooks/useAnalytics';
 
 interface Bill {
   id: string;
@@ -45,6 +47,7 @@ const Dashboard = () => {
   const { user, signOut, updateProfile } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { track } = useAnalytics();
   const { plan, aiQueriesUsed, aiQueriesLimit, loading: planLoading } = useSupabasePlan();
   const [profile, setProfile] = useState<any>(null);
   const [isEditing, setIsEditing] = useState(false);
@@ -56,6 +59,7 @@ const Dashboard = () => {
   const [localBills, setLocalBills] = useLocalStorage<Bill[]>(`bills_${user?.id}`, []);
   const [showExportImport, setShowExportImport] = useState(false);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  const [showPasskeyBanner, setShowPasskeyBanner] = useState(false);
   const { billLimit, canAddBill, canMakeAIQuery, getAIQueriesRemaining } = useSupabasePlan();
   
   // Initialize notifications, email reminders, and payment verification
@@ -67,8 +71,21 @@ const Dashboard = () => {
     if (user) {
       fetchProfile();
       fetchBills();
+      
+      // Check if we should show the passkey banner
+      const checkPasskeySupport = async () => {
+        if (window.PublicKeyCredential && 
+            await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable() &&
+            !localStorage.getItem('invoiceflow_has_passkey') &&
+            !localStorage.getItem('invoiceflow_passkey_banner_dismissed')) {
+          setShowPasskeyBanner(true);
+        }
+      };
+
+      checkPasskeySupport();
+      track('dashboard_viewed', { user_id: user?.id });
     }
-  }, [user]);
+  }, [user, track]);
 
   const fetchProfile = async () => {
     try {
@@ -267,6 +284,11 @@ const Dashboard = () => {
     return 'bg-blue-100 text-blue-800 border-blue-200';
   };
 
+  const handlePasskeyBannerDismiss = () => {
+    setShowPasskeyBanner(false);
+    localStorage.setItem('invoiceflow_passkey_banner_dismissed', 'true');
+  };
+
   return (
     <div className="min-h-screen bg-background pb-20 md:pb-0">
       {/* Header */}
@@ -303,6 +325,13 @@ const Dashboard = () => {
         <div className="max-w-6xl mx-auto space-y-6 sm:space-y-8">
           {/* Welcome Section with Plan Status */}
           <div className="space-y-4">
+            {/* Passkey Banner */}
+            {showPasskeyBanner && (
+              <div className="flex justify-center">
+                <AddPasskeyBanner onDismiss={handlePasskeyBannerDismiss} className="max-w-md" />
+              </div>
+            )}
+            
             <div className="text-center">
               <h1 className="text-2xl sm:text-3xl font-bold text-foreground mb-2">
                 Welcome to your Dashboard

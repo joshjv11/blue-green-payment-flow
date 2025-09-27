@@ -1,6 +1,8 @@
 import { useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import EnhancedAuthForm from '@/components/auth/EnhancedAuthForm';
+import AuthV2Form from '@/components/auth/AuthV2Form';
+import AuthCallbackHandler from '@/components/auth/AuthCallbackHandler';
 import { useAuth } from '@/hooks/useAuth';
 
 const Auth = () => {
@@ -8,12 +10,15 @@ const Auth = () => {
   const [searchParams] = useSearchParams();
   const { user, loading } = useAuth();
   const mode = searchParams.get('mode');
+  
+  // Feature flag for Auth V2
+  const AUTH_V2 = true; // Set to false to use legacy auth
 
   useEffect(() => {
-    // Handle OAuth callback
+    // Handle auth callback with Auth V2 handler
     if (mode === 'callback') {
-      console.log('🔄 Handling OAuth callback...');
-      // Let the auth state change handler redirect to dashboard
+      console.log('🔄 Handling auth callback...');
+      // Auth V2 uses dedicated callback handler
       return;
     }
     
@@ -45,6 +50,11 @@ const Auth = () => {
         </div>
       </div>
     );
+  }
+
+  // Handle callback mode with dedicated handler
+  if (mode === 'callback') {
+    return <AuthCallbackHandler />;
   }
 
   // Don't render auth form if user is already authenticated (unless in password reset mode)
@@ -83,7 +93,12 @@ const Auth = () => {
     );
   }
 
-  return <EnhancedAuthForm onSuccess={handleAuthSuccess} />;
+  // Use Auth V2 or fallback to legacy
+  return AUTH_V2 ? (
+    <AuthV2Form onSuccess={handleAuthSuccess} />
+  ) : (
+    <EnhancedAuthForm onSuccess={handleAuthSuccess} />
+  );
 };
 
 export default Auth;

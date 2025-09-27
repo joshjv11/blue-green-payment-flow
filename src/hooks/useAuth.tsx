@@ -303,10 +303,17 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     try {
       console.log('🔐 Sending magic link to:', email);
 
+      // Get the next URL from current search params
+      const urlParams = new URLSearchParams(window.location.search);
+      const nextUrl = urlParams.get('next') || '/dashboard';
+      
+      const redirectTo = `${window.location.origin}/auth/callback?next=${encodeURIComponent(nextUrl)}`;
+
       const { error } = await supabase.auth.signInWithOtp({
         email,
         options: {
-          emailRedirectTo: `${window.location.origin}/auth/callback`
+          emailRedirectTo: redirectTo,
+          shouldCreateUser: true,
         }
       });
 
