@@ -54,11 +54,11 @@ export default function SimpleAuthForm({ onSuccess }: SimpleAuthFormProps) {
     try {
       await signUp(data.email, data.password);
       toast({
-        title: 'Welcome!',
-        description: 'Redirecting you to your dashboard…',
+        title: 'Check your email',
+        description: 'We sent you a confirmation link. Please verify your email before signing in.',
       });
-      onSuccess?.();
-      navigate('/dashboard');
+      // Switch to sign-in mode after successful signup
+      setMode('signin');
     } catch (error: any) {
       toast({
         title: 'Sign up failed',
