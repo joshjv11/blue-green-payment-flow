@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import GoogleAuthForm from '@/components/auth/GoogleAuthForm';
+import SimpleAuthForm from '@/components/auth/SimpleAuthForm';
 import AuthCallbackHandler from '@/components/auth/AuthCallbackHandler';
 import { useAuth } from '@/hooks/useAuth';
 
@@ -89,8 +89,8 @@ const Auth = () => {
     );
   }
 
-  // Use Google Auth Form
-  return <GoogleAuthForm onSuccess={handleAuthSuccess} />;
+  // Use Simple Email/Password Auth Form
+  return <SimpleAuthForm onSuccess={handleAuthSuccess} />;
 };
 
 export default Auth;
