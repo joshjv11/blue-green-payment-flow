@@ -52,19 +52,26 @@ export default function SimpleAuthForm({ onSuccess }: SimpleAuthFormProps) {
   const handleSignUp = async (data: SignUpFormData) => {
     setIsLoading(true);
     try {
-      await signUp(data.email, data.password);
-      toast({
-        title: 'Check your email',
-        description: 'We sent you a confirmation link. Please verify your email before signing in.',
-      });
-      // Switch to sign-in mode after successful signup
-      setMode('signin');
+      const result = await signUp(data.email, data.password);
+      
+      if (result.requiresEmailConfirmation) {
+        // Email confirmation is enabled
+        toast({
+          title: 'Check your email',
+          description: 'We sent you a confirmation link. Please verify your email before signing in.',
+        });
+        setMode('signin');
+      } else {
+        // Email confirmation is disabled - user is auto-logged in
+        toast({
+          title: 'Welcome to InvoiceFlow!',
+          description: 'Your account has been created successfully.',
+        });
+        onSuccess?.();
+        navigate('/dashboard');
+      }
     } catch (error: any) {
-      toast({
-        title: 'Sign up failed',
-        description: error.message || 'Invalid email or password',
-        variant: 'destructive',
-      });
+      // Error handling is done in useAuth hook
     } finally {
       setIsLoading(false);
     }
@@ -74,18 +81,10 @@ export default function SimpleAuthForm({ onSuccess }: SimpleAuthFormProps) {
     setIsLoading(true);
     try {
       await signIn(data.email, data.password);
-      toast({
-        title: 'Welcome back!',
-        description: 'Redirecting you to your dashboard…',
-      });
       onSuccess?.();
       navigate('/dashboard');
     } catch (error: any) {
-      toast({
-        title: 'Sign in failed',
-        description: 'Incorrect email or password',
-        variant: 'destructive',
-      });
+      // Error handling with specific messages is done in useAuth hook
     } finally {
       setIsLoading(false);
     }

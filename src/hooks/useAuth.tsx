@@ -7,7 +7,7 @@ interface AuthContextType {
   user: User | null;
   session: Session | null;
   loading: boolean;
-  signUp: (email: string, password: string, fullName?: string, company?: string) => Promise<void>;
+  signUp: (email: string, password: string, fullName?: string, company?: string) => Promise<{ session: Session | null; requiresEmailConfirmation: boolean }>;
   signIn: (email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
   resetPassword: (email: string) => Promise<void>;
@@ -150,19 +150,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       }
 
       console.log('✅ Signup successful for:', data.user?.email);
+      console.log('📧 Email confirmation required:', !data.session);
       
-      // Check if email confirmation is required
-      if (data.user && !data.session) {
-        toast({
-          title: "Account created successfully!",
-          description: "Please check your email to verify your account before signing in.",
-        });
-      } else {
-        toast({
-          title: "Account created and signed in!",
-          description: "Welcome to InvoiceFlow!",
-        });
-      }
+      // Return session and confirmation status for the caller to handle
+      return {
+        session: data.session,
+        requiresEmailConfirmation: !data.session
+      };
     } catch (error: any) {
       console.error('❌ Signup failed:', error);
       
