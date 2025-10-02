@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Shield, CreditCard, Users, TrendingUp } from 'lucide-react';
 import PaymentVerificationDashboard from '@/components/PaymentVerificationDashboard';
 import { Navigation } from '@/components/Navigation';
@@ -10,6 +12,7 @@ import { supabase } from '@/integrations/supabase/client';
 
 const Admin = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [isAdmin, setIsAdmin] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   
@@ -131,12 +134,15 @@ const Admin = () => {
               </CardHeader>
               <CardContent>
                 <div className="flex items-center justify-center min-h-[200px]">
-                  <div className="text-center">
+                  <div className="text-center space-y-4">
                     <Users className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
                     <h3 className="text-lg font-semibold mb-2">User Management</h3>
                     <p className="text-muted-foreground">
-                      User management features coming soon
+                      View and manage all users, track onboarding, and monitor activity
                     </p>
+                    <Button onClick={() => navigate('/admin/users')} className="mt-4">
+                      Open User Management Dashboard
+                    </Button>
                   </div>
                 </div>
               </CardContent>

@@ -433,6 +433,7 @@ export type Database = {
           email_notifications_enabled: boolean | null
           full_name: string | null
           id: string
+          is_active: boolean | null
           phone_number: string | null
           reminder_email: string | null
           sms_notifications_enabled: boolean | null
@@ -446,6 +447,7 @@ export type Database = {
           email_notifications_enabled?: boolean | null
           full_name?: string | null
           id: string
+          is_active?: boolean | null
           phone_number?: string | null
           reminder_email?: string | null
           sms_notifications_enabled?: boolean | null
@@ -459,6 +461,7 @@ export type Database = {
           email_notifications_enabled?: boolean | null
           full_name?: string | null
           id?: string
+          is_active?: boolean | null
           phone_number?: string | null
           reminder_email?: string | null
           sms_notifications_enabled?: boolean | null
@@ -676,6 +679,16 @@ export type Database = {
         Args: { _user_id: string }
         Returns: undefined
       }
+      get_user_stats: {
+        Args: { target_user_id: string }
+        Returns: {
+          bill_count: number
+          email_confirmed_at: string
+          invoice_count: number
+          last_sign_in_at: string
+          user_id: string
+        }[]
+      }
       has_team_role: {
         Args: {
           _required_role: Database["public"]["Enums"]["user_role"]
@@ -695,6 +708,10 @@ export type Database = {
       require_payment_access_verification: {
         Args: Record<PropertyKey, never>
         Returns: boolean
+      }
+      set_user_active_status: {
+        Args: { active_status: boolean; target_user_id: string }
+        Returns: undefined
       }
     }
     Enums: {

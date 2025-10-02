@@ -16,6 +16,7 @@ import Bills from './pages/Bills';
 import Analytics from './pages/Analytics';
 import Settings from './pages/Settings';
 import Admin from './pages/Admin';
+import AdminUsers from './pages/AdminUsers';
 import NotFound from './pages/NotFound';
 
 const queryClient = new QueryClient();
@@ -71,6 +72,14 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <Admin />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/admin/users" 
+              element={
+                <ProtectedRoute>
+                  <AdminUsers />
                 </ProtectedRoute>
               } 
             />
