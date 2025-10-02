@@ -142,6 +142,9 @@ const AuthV2Form = ({ onSuccess }: AuthV2FormProps) => {
   const handleMagicLink = async (data: EmailFormData) => {
     setMagicLinkLoading(true);
     try {
+      // Store email in localStorage for callback verification
+      localStorage.setItem('login_email', data.email);
+      
       const redirectTo = new URLSearchParams(window.location.search).get('next') || '/dashboard';
       
       await signInWithMagicLink(data.email);
@@ -149,7 +152,7 @@ const AuthV2Form = ({ onSuccess }: AuthV2FormProps) => {
       
       toast({
         title: "Magic link sent!",
-        description: "Check your email and click the link to sign in instantly.",
+        description: "Check your email—click the link to finish sign-in.",
       });
     } catch (error: any) {
       track('auth_error', { kind: 'magiclink_failed', error: error.message });

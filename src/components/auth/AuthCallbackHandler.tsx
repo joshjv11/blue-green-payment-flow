@@ -20,12 +20,12 @@ const AuthCallbackHandler = () => {
       try {
         console.log('🔄 Processing auth callback...');
         
+        const url = new URL(window.location.href);
+        const next = searchParams.get('next') || '/dashboard';
+        
         // Get the access token and other params from the URL
-        const accessToken = searchParams.get('access_token');
-        const refreshToken = searchParams.get('refresh_token');
         const error = searchParams.get('error');
         const errorDescription = searchParams.get('error_description');
-        const tokenHash = window.location.hash;
 
         // Handle errors first
         if (error) {
@@ -36,49 +36,11 @@ const AuthCallbackHandler = () => {
           return;
         }
 
-        // Handle magic link callback
-        if (accessToken && refreshToken) {
-          console.log('✅ Magic link tokens found, setting session...');
-          
-          const { data, error: sessionError } = await supabase.auth.setSession({
-            access_token: accessToken,
-            refresh_token: refreshToken,
-          });
-
-          if (sessionError) {
-            console.error('❌ Session error:', sessionError);
-            setStatus('error');
-            setErrorMessage(sessionError.message);
-            track('auth_error', { kind: 'session_error', error: sessionError.message });
-            return;
-          }
-
-          if (data.session) {
-            console.log('✅ Magic link session established');
-            setStatus('success');
-            track('auth_magiclink_consumed', { success: true });
-            
-            // Get the next URL from the original state or default to dashboard
-            const nextUrl = searchParams.get('next') || '/dashboard';
-            
-            toast({
-              title: "You're in—welcome back!",
-              description: "Successfully signed in with magic link",
-            });
-
-            // Redirect after a brief success state
-            setTimeout(() => {
-              navigate(nextUrl, { replace: true });
-            }, 1500);
-            return;
-          }
-        }
-
-        // Handle hash-based tokens (some OAuth flows)
+        // Branch 1: Handle hash-based tokens (#access_token + refresh_token)
+        const tokenHash = window.location.hash;
         if (tokenHash && tokenHash.includes('access_token')) {
-          console.log('🔄 Found auth tokens in hash, processing...');
+          console.log('🔄 Branch: Hash-based tokens');
           
-          // Parse tokens from hash
           const hashParams = new URLSearchParams(tokenHash.substring(1));
           const hashAccessToken = hashParams.get('access_token');
           const hashRefreshToken = hashParams.get('refresh_token');
@@ -102,18 +64,135 @@ const AuthCallbackHandler = () => {
               setStatus('success');
               track('auth_callback_success', { method: 'hash' });
               
-              const nextUrl = searchParams.get('next') || '/dashboard';
-              
               toast({
                 title: "You're in—welcome back!",
                 description: "Authentication completed successfully",
               });
 
               setTimeout(() => {
-                navigate(nextUrl, { replace: true });
+                navigate(next, { replace: true });
               }, 1500);
               return;
             }
+          }
+        }
+
+        // Branch 2: Handle code flow (?code=...)
+        const code = searchParams.get('code');
+        if (code) {
+          console.log('🔄 Branch: Code flow');
+          
+          const { data, error: codeError } = await supabase.auth.exchangeCodeForSession(code);
+          
+          if (codeError) {
+            console.error('❌ Code exchange error:', codeError);
+            setStatus('error');
+            setErrorMessage(codeError.message);
+            track('auth_error', { kind: 'code_exchange_error', error: codeError.message });
+            return;
+          }
+
+          if (data.session) {
+            console.log('✅ Code-based session established');
+            setStatus('success');
+            track('auth_callback_success', { method: 'code' });
+            
+            toast({
+              title: "You're in—welcome back!",
+              description: "Successfully signed in",
+            });
+
+            setTimeout(() => {
+              navigate(next, { replace: true });
+            }, 1500);
+            return;
+          }
+        }
+
+        // Branch 3: Handle magic link fallback (?type=magiclink&token_hash=...)
+        const type = searchParams.get('type');
+        const tokenHashParam = searchParams.get('token_hash');
+        
+        if (type === 'magiclink' && tokenHashParam) {
+          console.log('🔄 Branch: Magic link token_hash');
+          
+          const email = localStorage.getItem('login_email');
+          
+          if (!email) {
+            console.warn('⚠️ No email found in localStorage for magic link verification');
+            setStatus('error');
+            setErrorMessage('Please enter your email to finish sign-in');
+            return;
+          }
+
+          const { data, error: verifyError } = await supabase.auth.verifyOtp({
+            type: 'magiclink',
+            token_hash: tokenHashParam,
+            email,
+          });
+
+          if (verifyError) {
+            console.error('❌ Magic link verification error:', verifyError);
+            setStatus('error');
+            setErrorMessage(verifyError.message);
+            track('auth_error', { kind: 'magiclink_verify_error', error: verifyError.message });
+            return;
+          }
+
+          if (data.session) {
+            console.log('✅ Magic link session established');
+            setStatus('success');
+            track('auth_magiclink_consumed', { success: true });
+            
+            // Clear stored email
+            localStorage.removeItem('login_email');
+            
+            toast({
+              title: "You're in—welcome back!",
+              description: "Successfully signed in with magic link",
+            });
+
+            setTimeout(() => {
+              navigate(next, { replace: true });
+            }, 1500);
+            return;
+          }
+        }
+
+        // Branch 4: Handle query param tokens (legacy support)
+        const accessToken = searchParams.get('access_token');
+        const refreshToken = searchParams.get('refresh_token');
+        
+        if (accessToken && refreshToken) {
+          console.log('🔄 Branch: Query param tokens');
+          
+          const { data, error: sessionError } = await supabase.auth.setSession({
+            access_token: accessToken,
+            refresh_token: refreshToken,
+          });
+
+          if (sessionError) {
+            console.error('❌ Session error:', sessionError);
+            setStatus('error');
+            setErrorMessage(sessionError.message);
+            track('auth_error', { kind: 'session_error', error: sessionError.message });
+            return;
+          }
+
+          if (data.session) {
+            console.log('✅ Query param session established');
+            setStatus('success');
+            track('auth_callback_success', { method: 'query_params' });
+            
+            toast({
+              title: "You're in—welcome back!",
+              description: "Successfully signed in",
+            });
+
+            setTimeout(() => {
+              navigate(next, { replace: true });
+            }, 1500);
+            return;
           }
         }
 
@@ -138,13 +217,35 @@ const AuthCallbackHandler = () => {
     navigate('/auth', { replace: true });
   };
 
-  const handleResendMagicLink = () => {
-    // Could implement auto-resend logic here if we stored the email
-    navigate('/auth?tab=magiclink', { replace: true });
-    toast({
-      title: "Ready to resend",
-      description: "Enter your email to get a fresh magic link",
-    });
+  const handleResendMagicLink = async () => {
+    const email = localStorage.getItem('login_email');
+    
+    if (email) {
+      try {
+        const redirectTo = `${window.location.origin}/auth/callback`;
+        await supabase.auth.signInWithOtp({
+          email,
+          options: { emailRedirectTo: redirectTo }
+        });
+        
+        toast({
+          title: "Magic link sent!",
+          description: "Check your email—click the link to finish sign-in.",
+        });
+      } catch (error: any) {
+        toast({
+          title: "Failed to resend",
+          description: error.message,
+          variant: "destructive",
+        });
+      }
+    } else {
+      navigate('/auth?tab=magiclink', { replace: true });
+      toast({
+        title: "Ready to resend",
+        description: "Enter your email to get a fresh magic link",
+      });
+    }
   };
 
   return (
