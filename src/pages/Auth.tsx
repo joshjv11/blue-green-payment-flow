@@ -1,7 +1,6 @@
 import { useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import EnhancedAuthForm from '@/components/auth/EnhancedAuthForm';
-import AuthV2Form from '@/components/auth/AuthV2Form';
+import GoogleAuthForm from '@/components/auth/GoogleAuthForm';
 import AuthCallbackHandler from '@/components/auth/AuthCallbackHandler';
 import { useAuth } from '@/hooks/useAuth';
 
@@ -10,9 +9,6 @@ const Auth = () => {
   const [searchParams] = useSearchParams();
   const { user, loading } = useAuth();
   const mode = searchParams.get('mode');
-  
-  // Feature flag for Auth V2
-  const AUTH_V2 = true; // Set to false to use legacy auth
 
   useEffect(() => {
     // Handle auth callback with Auth V2 handler
@@ -93,12 +89,8 @@ const Auth = () => {
     );
   }
 
-  // Use Auth V2 or fallback to legacy
-  return AUTH_V2 ? (
-    <AuthV2Form onSuccess={handleAuthSuccess} />
-  ) : (
-    <EnhancedAuthForm onSuccess={handleAuthSuccess} />
-  );
+  // Use Google Auth Form
+  return <GoogleAuthForm onSuccess={handleAuthSuccess} />;
 };
 
 export default Auth;
