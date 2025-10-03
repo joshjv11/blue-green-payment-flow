@@ -1,0 +1,17 @@
+{
+  "name": "migration-scripts",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "storage-sync": "ts-node storage-sync.ts"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.57.4",
+    "dotenv": "^16.4.5"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.3.3"
+  }
+}

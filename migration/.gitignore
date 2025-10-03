@@ -1,0 +1,25 @@
+# Environment files
+.env.old
+.env.new
+.env
+
+# Exports
+exports/
+logs/
+
+# Migration report
+MIGRATION_REPORT.md
+
+# Node modules
+node_modules/
+scripts/node_modules/
+scripts/auth/node_modules/
+
+# TypeScript build
+*.js
+*.js.map
+!scripts/**/*.sh
+
+# Temp files
+*.tmp
+*.bak
