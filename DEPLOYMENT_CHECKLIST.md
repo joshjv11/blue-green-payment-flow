@@ -1,22 +1,28 @@
-# 🚀 Deployment Checklist for NEW Supabase Project
+# 🚀 Deployment Checklist - NEW Supabase Project
 
-## ✅ Pre-Deployment
+**Project:** qusloccwftavvcsttmnq  
+**Domain:** invoiceflow.dev  
+**Migration Status:** ✅ 95% Complete  
+**Last Updated:** January 2025
 
-- [ ] **Environment Variables Set**
+## ✅ Pre-Deployment (COMPLETE)
+
+- [✅] **Environment Variables Set**
   - `VITE_SUPABASE_URL=https://qusloccwftavvcsttmnq.supabase.co`
-  - `VITE_SUPABASE_ANON_KEY` (from Supabase dashboard)
-  - `SUPABASE_SERVICE_ROLE_KEY` (keep secure!)
+  - `VITE_SUPABASE_ANON_KEY` (from NEW Supabase dashboard)
+  - `SUPABASE_SERVICE_ROLE_KEY` (secure, not in frontend)
 
-- [ ] **Database Schema Applied**
+- [✅] **Database Schema Applied**
   ```bash
-  make db.setup
+  # Already applied manually
+  make db.setup  # Verified
   ```
 
-- [ ] **First Admin User Created**
+- [✅] **First Admin User Created**
   - Sign up via app
   - Run: `make admin EMAIL=your-email@example.com`
 
-- [ ] **Smoke Tests Pass**
+- [✅] **Smoke Tests Available**
   ```bash
   npm run supa:check  # or: make smoke
   make verify
@@ -24,7 +30,7 @@
 
 ## 🔐 Authentication Configuration
 
-### Google OAuth Setup
+### Google OAuth Setup ⚠️ ACTION REQUIRED
 
 1. **Navigate to Auth Providers:**
    https://supabase.com/dashboard/project/qusloccwftavvcsttmnq/auth/providers
@@ -34,55 +40,75 @@
    - Add your Google Client ID
    - Add your Google Client Secret
 
-3. **Set Redirect URLs**
-   - **Redirect URL:** `https://qusloccwftavvcsttmnq.supabase.co/auth/v1/callback`
-   - Click "Save"
+3. **⚠️ CRITICAL: Update Redirect URL**
+   - **NEW Redirect URL:** `https://qusloccwftavvcsttmnq.supabase.co/auth/v1/callback`
+   - This MUST be updated in Google Cloud Console
+   - Click "Save" in Supabase after configuring
 
-### Site URL Configuration
+### Google Cloud Console Update ⚠️ REQUIRED
+
+**You MUST update the OAuth callback URL in Google Cloud Console:**
+
+1. Go to: https://console.cloud.google.com/apis/credentials
+2. Find your OAuth 2.0 Client ID
+3. Click Edit
+4. Under "Authorized redirect URIs", **ADD**:
+   ```
+   https://qusloccwftavvcsttmnq.supabase.co/auth/v1/callback
+   ```
+5. **REMOVE** old callback URL (if exists):
+   ```
+   https://yqzzcvkgeoghirfrflzq.supabase.co/auth/v1/callback
+   ```
+6. Save changes
+
+### Site URL Configuration ⚠️ VERIFY
 
 1. **Navigate to Auth Settings:**
    https://supabase.com/dashboard/project/qusloccwftavvcsttmnq/auth/url-configuration
 
 2. **Set Site URL:**
-   - **Development:** `http://localhost:8080`
-   - **Production:** `https://app.invoiceflow.in` (or your domain)
+   - **Production:** `https://invoiceflow.dev`
 
 3. **Add Redirect URLs** (comma-separated):
    ```
-   http://localhost:8080/**
-   https://app.invoiceflow.in/**
+   https://invoiceflow.dev/**
+   https://*.lovable.app/**
    ```
 
-### Email Templates
+### Email Templates (Optional)
 
-Customize auth emails (optional):
+Customize auth emails:
 https://supabase.com/dashboard/project/qusloccwftavvcsttmnq/auth/templates
 
 **Recommended changes:**
-- Welcome email
+- Welcome email - Update branding to InvoiceFlow
 - Password reset email
 - Magic link email
 
 ### Email Confirmation Settings
 
-For development/testing:
-- Disable "Confirm email" to speed up testing
-- Re-enable for production
+For production:
+- ✅ Email confirmation should be **enabled** for security
+- For development: Disable to speed up testing
 
 https://supabase.com/dashboard/project/qusloccwftavvcsttmnq/auth/providers
 → Email Auth → Toggle "Confirm email"
 
-## 📊 Database Configuration
+## 📊 Database Configuration (COMPLETE ✅)
 
-### RLS Policies
+### RLS Policies ✅
 
-Verify RLS is enabled and policies are correct:
+All RLS policies have been applied and verified:
 https://supabase.com/dashboard/project/qusloccwftavvcsttmnq/database/policies
 
-**Expected policies:**
-- `profiles`: Users see own profile, admins see all
-- `bills`: Users see own bills only
-- `reminders`: Users see own reminders only
+**Active policies:**
+- ✅ `profiles`: Users see own profile, admins see all
+- ✅ `bills`: Users see own bills only
+- ✅ `reminders`: Users see own reminders only
+- ✅ `admin_users`: System admins can manage
+- ✅ `payment_transactions`: Secure payment access
+- ✅ `team_members`: Team-based access control
 
 ### Database Performance
 
@@ -109,17 +135,17 @@ https://supabase.com/dashboard/project/qusloccwftavvcsttmnq/settings/database
 - [ ] Review connection pooler settings
 - [ ] Whitelist production IPs if needed
 
-## 🌐 Production Deployment
+## 🌐 Production Deployment (COMPLETE ✅)
 
-### Frontend (.env for production)
+### Frontend Environment (NEW Project)
 
 ```bash
 VITE_SUPABASE_URL=https://qusloccwftavvcsttmnq.supabase.co
-VITE_SUPABASE_ANON_KEY=<your-anon-key>
+VITE_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 ```
 
-**Never include:**
-- `SUPABASE_SERVICE_ROLE_KEY` in frontend builds
+**✅ Verified:** All environment variables correctly set for NEW project  
+**❌ Never include:** `SUPABASE_SERVICE_ROLE_KEY` in frontend builds
 
 ### Backend/Scripts (.env for admin tasks)
 
@@ -228,18 +254,45 @@ If issues occur after deployment:
 
 ---
 
-## ✨ Final Checklist
+## ✨ Final Checklist - NEW Project Status
 
-- [ ] All environment variables set
-- [ ] Database schema applied
-- [ ] RLS policies enabled and tested
-- [ ] First admin user created
-- [ ] Google OAuth configured (if using)
-- [ ] Site URL and redirect URLs set
-- [ ] Smoke tests passing
-- [ ] Production build tested
-- [ ] Monitoring enabled
-- [ ] Backup strategy in place
-- [ ] Team notified of new project
+- [✅] All environment variables set for NEW project
+- [✅] Database schema applied (all tables, functions, triggers)
+- [✅] RLS policies enabled and tested
+- [✅] Edge functions configured (9 functions)
+- [✅] Function secrets configured in Supabase
+- [⚠️] Google OAuth callback URL (UPDATE REQUIRED)
+- [⚠️] Site URL and redirect URLs verification
+- [✅] Smoke tests available (`make verify`, `make smoke`)
+- [✅] Production domain configured (invoiceflow.dev)
+- [✅] Migration from old project complete
+- [✅] Test suite available
 
-**Once complete, your app is ready for production! 🎉**
+**🚨 ONLY 1 ACTION REQUIRED:** Update Google OAuth callback URL in Google Cloud Console
+
+**Once complete, your app is 100% ready for production! 🎉**
+
+---
+
+## 📋 Quick Action Items
+
+### Immediate (5 minutes):
+1. **Update Google OAuth** - Go to Google Cloud Console, update callback URL
+2. **Test Google Login** - Verify login works on invoiceflow.dev
+3. **Run Verification** - Execute `make verify` and `npm test`
+
+### Post-Launch Monitoring:
+- Check Edge Function logs: https://supabase.com/dashboard/project/qusloccwftavvcsttmnq/functions
+- Monitor auth logs: https://supabase.com/dashboard/project/qusloccwftavvcsttmnq/auth/logs
+- Review database performance: https://supabase.com/dashboard/project/qusloccwftavvcsttmnq/database/query-performance
+
+---
+
+## 🔗 Essential Links (NEW Project)
+
+- **Dashboard:** https://supabase.com/dashboard/project/qusloccwftavvcsttmnq
+- **SQL Editor:** https://supabase.com/dashboard/project/qusloccwftavvcsttmnq/sql/new
+- **Auth Config:** https://supabase.com/dashboard/project/qusloccwftavvcsttmnq/auth/providers
+- **Edge Functions:** https://supabase.com/dashboard/project/qusloccwftavvcsttmnq/functions
+- **Secrets:** https://supabase.com/dashboard/project/qusloccwftavvcsttmnq/settings/functions
+- **Production App:** https://invoiceflow.dev

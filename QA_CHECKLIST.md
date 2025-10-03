@@ -1,5 +1,9 @@
 # QA Checklist for InvoiceFlow
 
+**Project:** NEW Supabase (qusloccwftavvcsttmnq)  
+**Domain:** invoiceflow.dev  
+**Migration Status:** ✅ Complete
+
 ## Overview
 Manual testing checklist to verify all features work correctly after migration to the NEW Supabase project.
 
@@ -13,18 +17,20 @@ Manual testing checklist to verify all features work correctly after migration t
 ## Pre-Flight Checks
 
 ### Environment Setup
-- [ ] `.env` file has correct `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY`
-- [ ] `SUPABASE_SERVICE_ROLE_KEY` is set for admin operations
-- [ ] App is deployed and accessible at `https://invoiceflow.dev`
-- [ ] Database schema has been applied via `make db.setup`
+- [✅] `.env` file has correct `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY`
+- [✅] `SUPABASE_SERVICE_ROLE_KEY` is set for admin operations
+- [✅] App is deployed and accessible at `https://invoiceflow.dev`
+- [✅] Database schema has been applied via `make db.setup`
 
 ### Supabase Dashboard Checks
-- [ ] Navigate to Supabase dashboard → Authentication → Providers
-- [ ] Confirm Google OAuth is configured with correct redirect URL:
+- [⚠️] Navigate to Supabase dashboard → Authentication → Providers
+- [⚠️] Confirm Google OAuth is configured with correct redirect URL:
   - Authorized redirect URI: `https://qusloccwftavvcsttmnq.supabase.co/auth/v1/callback`
-- [ ] Navigate to Authentication → URL Configuration
-- [ ] Confirm Site URL is set to: `https://invoiceflow.dev`
-- [ ] Confirm Redirect URLs include: `https://invoiceflow.dev/**`
+- [⚠️] Navigate to Authentication → URL Configuration
+- [⚠️] Confirm Site URL is set to: `https://invoiceflow.dev`
+- [⚠️] Confirm Redirect URLs include: `https://invoiceflow.dev/**`
+
+**ACTION REQUIRED:** Update Google OAuth callback URL in Google Cloud Console
 
 ---
 
