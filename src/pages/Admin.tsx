@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Shield, CreditCard, Users, TrendingUp } from 'lucide-react';
+import { Shield, CreditCard, Users, TrendingUp, Database } from 'lucide-react';
 import PaymentVerificationDashboard from '@/components/PaymentVerificationDashboard';
 import { Navigation } from '@/components/Navigation';
 import { useAuth } from '@/hooks/useAuth';
@@ -140,9 +140,16 @@ const Admin = () => {
                     <p className="text-muted-foreground">
                       View and manage all users, track onboarding, and monitor activity
                     </p>
-                    <Button onClick={() => navigate('/admin/users')} className="mt-4">
-                      Open User Management Dashboard
-                    </Button>
+                    <div className="flex gap-3 justify-center mt-4">
+                      <Button onClick={() => navigate('/admin/users')}>
+                        <Users className="mr-2 h-4 w-4" />
+                        Manage Users
+                      </Button>
+                      <Button variant="outline" onClick={() => navigate('/admin/db-health')}>
+                        <Database className="mr-2 h-4 w-4" />
+                        DB Health
+                      </Button>
+                    </div>
                   </div>
                 </div>
               </CardContent>

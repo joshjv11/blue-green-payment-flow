@@ -17,6 +17,7 @@ import Analytics from './pages/Analytics';
 import Settings from './pages/Settings';
 import Admin from './pages/Admin';
 import AdminUsers from './pages/AdminUsers';
+import AdminDbHealth from './pages/AdminDbHealth';
 import NotFound from './pages/NotFound';
 
 const queryClient = new QueryClient();
@@ -80,6 +81,14 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <AdminUsers />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/admin/db-health" 
+              element={
+                <ProtectedRoute>
+                  <AdminDbHealth />
                 </ProtectedRoute>
               } 
             />
