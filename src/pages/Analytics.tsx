@@ -4,7 +4,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { useAuth } from '@/hooks/useAuth';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase, isSupabaseConfigured } from '@/lib/supabase';
 import { useSupabasePlan } from '@/hooks/useSupabasePlan';
 import { formatINR, formatINRCompact } from '@/utils/currency';
 import { usePaymentVerification } from '@/hooks/usePaymentVerification';
@@ -52,6 +52,12 @@ const Analytics = () => {
     try {
       setLoading(true);
       
+      if (!isSupabaseConfigured || !supabase) {
+        console.warn('⚠️ Supabase not configured');
+        setBills([]);
+        return;
+      }
+      
       // Fetch real bills from Supabase
       const { data, error } = await supabase
         .from('bills')
@@ -60,8 +66,20 @@ const Analytics = () => {
         .order('due_date', { ascending: false });
 
       if (error) {
-        console.error('Error fetching bills:', error);
-        throw error;
+        console.error('🔴 Analytics fetch error:', error);
+        
+        // Handle specific Supabase errors
+        if (error.code === 'PGRST116') {
+          console.log('ℹ️ No bills found yet');
+          setBills([]);
+          return;
+        } else if (error.code === '42501') {
+          throw new Error('Permission denied. Please log in again.');
+        } else if (error.message?.includes('network')) {
+          throw new Error('Network error. Please check your connection.');
+        } else {
+          throw new Error(`Database error: ${error.message}`);
+        }
       }
 
       setBills(data || []);
