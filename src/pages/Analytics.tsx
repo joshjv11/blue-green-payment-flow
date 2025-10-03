@@ -4,6 +4,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { useAuth } from '@/hooks/useAuth';
+import { supabase } from '@/integrations/supabase/client';
 import { useSupabasePlan } from '@/hooks/useSupabasePlan';
 import { formatINR, formatINRCompact } from '@/utils/currency';
 import { usePaymentVerification } from '@/hooks/usePaymentVerification';
@@ -18,12 +19,16 @@ import AdvancedAnalytics from '@/components/AdvancedAnalytics';
 
 interface Bill {
   id: string;
+  user_id: string;
   name: string;
   amount: number;
   due_date: string;
   category: string;
+  recurring: boolean;
   status: 'unpaid' | 'paid' | 'overdue';
+  notes: string | null;
   created_at: string;
+  updated_at: string;
 }
 
 const Analytics = () => {
@@ -46,36 +51,37 @@ const Analytics = () => {
   const fetchBills = async () => {
     try {
       setLoading(true);
-      // Mock data for demonstration - in production this would fetch from Supabase
-      const mockBills: Bill[] = [
-        {
-          id: '1', name: 'Electric Bill', amount: 120, due_date: '2024-01-15',
-          category: 'utilities', status: 'paid', created_at: '2024-01-01'
-        },
-        {
-          id: '2', name: 'Internet Bill', amount: 60, due_date: '2024-01-20',
-          category: 'utilities', status: 'unpaid', created_at: '2024-01-01'
-        },
-        {
-          id: '3', name: 'Rent', amount: 1200, due_date: '2024-01-01',
-          category: 'rent', status: 'paid', created_at: '2023-12-01'
-        },
-      ];
-      setBills(mockBills);
-    } catch (error) {
-      console.error('Error fetching bills:', error);
+      
+      // Fetch real bills from Supabase
+      const { data, error } = await supabase
+        .from('bills')
+        .select('*')
+        .eq('user_id', user!.id)
+        .order('due_date', { ascending: false });
+
+      if (error) {
+        console.error('Error fetching bills:', error);
+        throw error;
+      }
+
+      setBills(data || []);
+      console.log(`✅ Analytics: Loaded ${data?.length || 0} bills`);
+    } catch (error: any) {
+      console.error('❌ Error fetching bills for analytics:', error);
       toast({
-        title: "Error",
-        description: "Failed to fetch analytics data",
+        title: "Failed to load analytics",
+        description: error.message || "Could not fetch your bills data. Please try again.",
         variant: "destructive",
       });
+      // Set empty array on error so UI shows "No bills yet"
+      setBills([]);
     } finally {
       setLoading(false);
     }
   };
 
   // Calculate basic analytics (available to all users)
-  const totalAmount = bills.reduce((sum, bill) => sum + bill.amount, 0);
+  const totalAmount = bills.length > 0 ? bills.reduce((sum, bill) => sum + bill.amount, 0) : 0;
   const paidAmount = bills.filter(bill => bill.status === 'paid').reduce((sum, bill) => sum + bill.amount, 0);
   const unpaidAmount = bills.filter(bill => bill.status !== 'paid').reduce((sum, bill) => sum + bill.amount, 0);
   const overdueBills = bills.filter(bill => bill.status === 'overdue').length;
@@ -148,18 +154,32 @@ const Analytics = () => {
           />
 
           {/* Basic Statistics - Available to All Users */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <Card>
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-muted-foreground">Total Bills</p>
-                    <p className="text-2xl font-bold">{bills.length}</p>
-                  </div>
-                  <BarChart3 className="h-8 w-8 text-blue-600" />
-                </div>
+          {bills.length === 0 ? (
+            <Card className="col-span-full">
+              <CardContent className="p-12 text-center">
+                <BarChart3 className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+                <h3 className="text-lg font-semibold mb-2">No Bills Yet</h3>
+                <p className="text-muted-foreground mb-4">
+                  Start by adding your first bill to see analytics and insights
+                </p>
+                <Button onClick={() => window.location.href = '/bills'}>
+                  Add Your First Bill
+                </Button>
               </CardContent>
             </Card>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              <Card>
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-muted-foreground">Total Bills</p>
+                      <p className="text-2xl font-bold">{bills.length}</p>
+                    </div>
+                    <BarChart3 className="h-8 w-8 text-blue-600" />
+                  </div>
+                </CardContent>
+              </Card>
 
             <Card>
               <CardContent className="p-6">
@@ -196,9 +216,11 @@ const Analytics = () => {
                 </div>
               </CardContent>
             </Card>
-          </div>
+            </div>
+          )}
 
-          {/* Payment Progress */}
+          {/* Payment Progress - Only show if there are bills */}
+          {bills.length > 0 && (
           <Card>
             <CardHeader>
               <CardTitle>Payment Progress</CardTitle>
@@ -217,9 +239,10 @@ const Analytics = () => {
               </div>
             </CardContent>
           </Card>
+          )}
 
-          {/* Advanced Analytics Section */}
-          <AdvancedAnalytics />
+          {/* Advanced Analytics Section - Pass real bills data */}
+          {bills.length > 0 && <AdvancedAnalytics bills={bills} />}
         </div>
       </div>
 

@@ -8,32 +8,27 @@ import { TrendingUp, TrendingDown, AlertTriangle, Calendar, DollarSign, Target, 
 import { BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, ResponsiveContainer, XAxis, YAxis, CartesianGrid, Legend } from 'recharts';
 import { parseISO, format, addMonths, differenceInDays, startOfMonth, endOfMonth, subMonths, eachMonthOfInterval } from 'date-fns';
 
-const AdvancedAnalytics = () => {
-  const { plan } = useSupabasePlan();
+interface Bill {
+  id: string;
+  user_id: string;
+  name: string;
+  amount: number;
+  due_date: string;
+  category: string;
+  recurring: boolean;
+  status: 'unpaid' | 'paid' | 'overdue';
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+}
 
-  // Mock bills data for now - in production this would come from props or Supabase
-  const bills = [
-    {
-      id: '1', name: 'Electric Bill', amount: 120, due_date: '2024-01-15',
-      category: 'utilities', status: 'paid' as const, created_at: '2024-01-01', updated_at: '2024-01-05',
-      user_id: '1', recurring: true, notes: null
-    },
-    {
-      id: '2', name: 'Internet Bill', amount: 60, due_date: '2024-01-20',
-      category: 'utilities', status: 'unpaid' as const, created_at: '2024-01-01', updated_at: '2024-01-01',
-      user_id: '1', recurring: true, notes: null
-    },
-    {
-      id: '4', name: 'Phone Bill', amount: 80, due_date: '2023-12-20',
-      category: 'utilities', status: 'overdue' as const, created_at: '2023-12-01', updated_at: '2023-12-01',
-      user_id: '1', recurring: true, notes: null
-    },
-    {
-      id: '3', name: 'Rent', amount: 1200, due_date: '2024-01-01',
-      category: 'rent', status: 'paid' as const, created_at: '2023-12-01', updated_at: '2023-12-25',
-      user_id: '1', recurring: true, notes: null
-    },
-  ];
+interface AdvancedAnalyticsProps {
+  bills: Bill[];
+}
+
+const AdvancedAnalytics = ({ bills }: AdvancedAnalyticsProps) => {
+  const { plan } = useSupabasePlan();
+  // Bills are now passed as props - no more mock data!
 
   // Expense Forecasting - predict next 6 months based on recurring bills
   const expenseForecast = useMemo(() => {

@@ -4,6 +4,119 @@
 **Domain:** invoiceflow.dev  
 **Migration Status:** ✅ Complete
 
+## 🚀 CORE DASHBOARD FLOWS (HIGH PRIORITY)
+
+### 1. Add Bill Flow ✅
+- [ ] Navigate to Bills page (`/bills`)
+- [ ] Click "Add Bill" button - form modal opens
+- [ ] Fill in bill details:
+  - Name: "Test Electric Bill"
+  - Amount: 1500
+  - Due Date: (7 days from now)
+  - Category: utilities
+  - Priority: high
+  - Reminder: 1 day before
+- [ ] Submit form
+- [ ] **Expected Results:**
+  - ✅ Bill saves successfully to database
+  - ✅ Dashboard refreshes automatically
+  - ✅ New bill appears in bills list with correct data
+  - ✅ Toast notification shows success
+  - ✅ Auto-reminder created in `bill_reminders` table
+- [ ] **Error Handling:**
+  - Try submitting with missing name → shows "Missing Bill Name" error
+  - Try invalid amount → shows "Invalid Amount" error
+  - Try missing due date → shows "Missing Due Date" error
+  - Try exceeding bill limit (free users) → shows upgrade modal
+
+### 2. Analytics Dashboard ✅
+- [ ] Navigate to Analytics page (`/analytics`)
+- [ ] **With No Bills:**
+  - ✅ Shows "No bills yet" empty state
+  - ✅ Displays "Add Your First Bill" button
+  - ✅ No broken charts or calculations
+- [ ] **With Bills:**
+  - Create 4 test bills (2 paid, 1 unpaid, 1 overdue)
+  - Reload Analytics page
+  - ✅ Basic stats show correct totals (Total, Paid, Unpaid, Overdue)
+  - ✅ Payment progress bar calculates correctly
+  - ✅ All data comes from real Supabase bills (no mock data)
+  - ✅ Charts render without errors
+- [ ] **Pro Features:**
+  - Upgrade account to Pro (via admin)
+  - ✅ Advanced Analytics section becomes visible
+  - ✅ Expense forecast shows real data
+  - ✅ Category breakdown displays actual spending
+
+### 3. Admin God Mode ✅
+- [ ] Admin logs in (must be in `admin_users` table with status='approved')
+- [ ] Navigate to `/admin`
+- [ ] Click "Plans" tab
+- [ ] **Expected:**
+  - ✅ Admin Plan Manager component loads
+  - ✅ Shows list of all user plans
+  - ✅ Displays Free vs Pro counts
+- [ ] **Upgrade User:**
+  - Search for a user by email
+  - Click "Change Plan" button
+  - Select "Pro Plan"
+  - Click "Update Plan"
+  - ✅ User immediately upgraded to Pro
+  - ✅ AI queries limit becomes unlimited (999999)
+  - ✅ User can now access advanced features
+- [ ] **Downgrade User:**
+  - Find a Pro user
+  - Change plan to "Free"
+  - ✅ User downgraded to Free
+  - ✅ AI queries limit reset to 3
+  - ✅ Advanced features restricted
+- [ ] **Security:**
+  - Sign in as non-admin user
+  - Try to access `/admin` → Access Denied
+  - Try to modify other user's plan via console → RLS blocks
+
+### 4. Error Handling & Loading States ✅
+- [ ] **Loading States:**
+  - Navigate to Bills page
+  - ✅ Loading spinner shows while fetching
+  - ✅ No blank screens during load
+- [ ] **Error States:**
+  - Disconnect internet
+  - Try to add a bill
+  - ✅ Shows network error message
+  - ✅ Doesn't crash or hang
+  - Reconnect internet
+  - ✅ App recovers gracefully
+- [ ] **Empty States:**
+  - Delete all bills (as new user)
+  - ✅ Bills page shows helpful empty state
+  - ✅ Analytics shows "No bills yet" message
+  - ✅ No console errors
+
+### 5. End-to-End Tests ✅
+```bash
+npm test
+```
+- [ ] Run test suite
+- [ ] **Expected Results:**
+  - ✅ `bills-flow.test.ts` - All tests pass
+    - Create bill with RLS
+    - Update bill status
+    - Delete bill
+    - Validate permissions
+  - ✅ `analytics-flow.test.ts` - All tests pass
+    - Empty state handling
+    - Calculations with real data
+    - Category grouping
+    - Payment progress
+  - ✅ `admin-plan.test.ts` - All tests pass
+    - Default plan creation
+    - Admin upgrade/downgrade
+    - RLS permission checks
+  - ✅ All existing tests continue to pass
+
+---
+
 ## Overview
 Manual testing checklist to verify all features work correctly after migration to the NEW Supabase project.
 

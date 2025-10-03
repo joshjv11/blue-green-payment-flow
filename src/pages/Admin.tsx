@@ -4,8 +4,9 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Shield, CreditCard, Users, TrendingUp, Database } from 'lucide-react';
+import { Shield, CreditCard, Users, TrendingUp, Database, Crown } from 'lucide-react';
 import PaymentVerificationDashboard from '@/components/PaymentVerificationDashboard';
+import AdminPlanManager from '@/components/AdminPlanManager';
 import { Navigation } from '@/components/Navigation';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
@@ -104,10 +105,14 @@ const Admin = () => {
         </div>
 
         <Tabs defaultValue="payments" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="payments" className="flex items-center gap-2">
               <CreditCard className="h-4 w-4" />
               <span className="hidden sm:inline">Payments</span>
+            </TabsTrigger>
+            <TabsTrigger value="plans" className="flex items-center gap-2">
+              <Crown className="h-4 w-4" />
+              <span className="hidden sm:inline">Plans</span>
             </TabsTrigger>
             <TabsTrigger value="users" className="flex items-center gap-2">
               <Users className="h-4 w-4" />
@@ -125,6 +130,10 @@ const Admin = () => {
 
           <TabsContent value="payments" className="space-y-6">
             <PaymentVerificationDashboard />
+          </TabsContent>
+
+          <TabsContent value="plans" className="space-y-6">
+            <AdminPlanManager />
           </TabsContent>
 
           <TabsContent value="users" className="space-y-6">
