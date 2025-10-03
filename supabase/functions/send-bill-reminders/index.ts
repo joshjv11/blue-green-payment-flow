@@ -217,12 +217,17 @@ const handler = async (req: Request): Promise<Response> => {
           </div>
         `;
 
-        const { error: emailError } = await resend.emails.send({
-          from: 'InvoiceFlow <noreply@invoiceflow.app>',
-          to: [profile.email],
-          subject: subject,
-          html: htmlContent,
-        });
+    // Get FROM email from env or use default
+    const fromEmail = Deno.env.get('RESEND_FROM') || 'Invoices <noreply@invoiceflow.dev>';
+    
+    console.log(`📧 Sending email from: ${fromEmail} to: ${profile.email}`);
+
+    const { error: emailError } = await resend.emails.send({
+      from: fromEmail,
+      to: [profile.email],
+      subject: subject,
+      html: htmlContent,
+    });
 
         if (emailError) {
           console.error(`❌ Failed to send email to ${profile.email}:`, {
@@ -250,9 +255,9 @@ const handler = async (req: Request): Promise<Response> => {
       }
     }
 
-    console.log(`📱 SMS summary: ${smsSent} sent, ${smsFailed} failed`);
+    console.log(`📧 Email summary: ${emailsSent} sent, ${emailsFailed} failed`);
 
-    // Also trigger SMS notifications
+    // Also trigger SMS notifications if configured
     try {
       console.log('📱 Triggering SMS notifications...');
       const smsResponse = await supabase.functions.invoke('send-sms-notifications', {

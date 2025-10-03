@@ -276,8 +276,13 @@ const handler = async (req: Request): Promise<Response> => {
       try {
         console.log(`📧 Attempt ${attempt}/${reminder.max_retries} - Sending email to ${emailAddress}...`);
         
+        // Get FROM email from env or use default
+        const fromEmail = Deno.env.get('RESEND_FROM') || 'Invoices <noreply@invoiceflow.dev>';
+        
+        console.log(`📧 Attempt ${attempt} - Sending from: ${fromEmail} to: ${emailAddress}`);
+
         const { data: emailData, error: sendError } = await resend.emails.send({
-          from: 'InvoiceFlow <no-reply@invoiceflow.dev>',
+          from: fromEmail,
           to: [emailAddress],
           subject: subject,
           html: htmlContent,

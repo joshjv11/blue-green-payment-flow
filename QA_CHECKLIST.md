@@ -319,6 +319,49 @@ SELECT auth.uid(); -- Should return your user ID
 
 ---
 
+## 📧 Reminder System Tests
+
+### Auto Reminders
+- [ ] Create a new bill → verify auto-reminder row created in `bill_reminders` table
+- [ ] Check reminder date is calculated correctly (1 day before due date, or same day if due soon)
+- [ ] Verify reminder has status='pending'
+- [ ] Confirm reminder has correct priority based on bill priority
+
+### Manual Reminders
+- [ ] Open Bills page and find a bill
+- [ ] Click "Set Reminder" button (if exists in UI)
+- [ ] Verify reminder is created with custom days_before
+- [ ] Test RPC function directly: `SELECT schedule_manual_reminder('<bill-id>', 3);`
+
+### Cron Scheduling
+- [ ] Run setup-reminder-cron function to configure daily job
+- [ ] Verify cron job exists: `SELECT * FROM cron.job WHERE jobname = 'process-bill-reminders-daily';`
+- [ ] Manually trigger: Call `/functions/v1/process-due-reminders`
+- [ ] Check Edge Function logs for execution results
+
+### Email Delivery
+- [ ] Set RESEND_API_KEY and RESEND_FROM secrets in Supabase
+- [ ] Create a bill due today or tomorrow
+- [ ] Wait for auto-reminder OR manually trigger process-due-reminders
+- [ ] Verify email received in inbox
+- [ ] Check bill_reminders table: status should be 'sent'
+- [ ] Verify email_sent_at timestamp is set
+- [ ] Check delivery_status is 'delivered'
+
+### RLS & Security
+- [ ] Verify users can only see their own reminders
+- [ ] Test that one user cannot access another user's reminders
+- [ ] Confirm trigger creates reminders even with RLS enabled
+- [ ] Test manual reminder function respects user ownership
+
+### Logs & Debugging
+- [ ] Check Supabase Studio → Edge Functions → process-due-reminders → Logs
+- [ ] Check Supabase Studio → Edge Functions → send-individual-reminder → Logs
+- [ ] Look for structured console.log messages with bill_id, reminder_date, status
+- [ ] Verify error messages are logged when email fails
+
+---
+
 ## Resources
 
 - [Supabase Dashboard](https://supabase.com/dashboard/project/qusloccwftavvcsttmnq)

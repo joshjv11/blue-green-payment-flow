@@ -709,6 +709,10 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: boolean
       }
+      schedule_manual_reminder: {
+        Args: { p_bill_id: string; p_days_before?: number }
+        Returns: string
+      }
       set_user_active_status: {
         Args: { active_status: boolean; target_user_id: string }
         Returns: undefined

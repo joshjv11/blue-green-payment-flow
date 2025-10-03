@@ -53,10 +53,7 @@ describe('Reminders Tests', () => {
   });
 
   afterAll(async () => {
-    // Cleanup
-    if (testReminderId) {
-      await adminClient.from('reminders').delete().eq('id', testReminderId);
-    }
+    // Cleanup (reminders will cascade delete with bills)
     if (testBillId) {
       await adminClient.from('bills').delete().eq('id', testBillId);
     }
@@ -66,27 +63,64 @@ describe('Reminders Tests', () => {
     }
   });
 
-  it('should create a reminder for the bill', async () => {
+  it('should auto-create a reminder when bill is inserted', async () => {
+    // The trigger should have already created a reminder for testBillId
     const { data, error } = await client
-      .from('reminders')
+      .from('bill_reminders')
+      .select('*')
+      .eq('bill_id', testBillId);
+
+    expect(error).toBeNull();
+    expect(data).toBeTruthy();
+    expect(data!.length).toBeGreaterThan(0);
+    expect(data![0].bill_id).toBe(testBillId);
+    testReminderId = data![0].id;
+  });
+
+  it('should manually schedule a reminder using RPC', async () => {
+    // Create another bill for manual reminder testing
+    const { data: newBill } = await client
+      .from('bills')
       .insert({
         user_id: testUserId,
-        bill_id: testBillId,
-        reminder_date: '2025-12-30',
-        reminder_type: 'email',
+        name: 'Manual Reminder Test Bill',
+        amount: 75.00,
+        due_date: '2025-12-25',
+        category: 'utilities',
+        auto_reminder_enabled: false, // Disable auto reminder
       })
       .select()
       .single();
 
+    // Manually schedule reminder using RPC function
+    const { data: reminderId, error } = await client
+      .rpc('schedule_manual_reminder', {
+        p_bill_id: newBill!.id,
+        p_days_before: 2
+      });
+
     expect(error).toBeNull();
-    expect(data).toBeTruthy();
-    expect(data.bill_id).toBe(testBillId);
-    testReminderId = data.id;
+    expect(reminderId).toBeTruthy();
+
+    // Verify reminder was created
+    const { data: reminder } = await client
+      .from('bill_reminders')
+      .select('*')
+      .eq('id', reminderId)
+      .single();
+
+    expect(reminder).toBeTruthy();
+    expect(reminder!.bill_id).toBe(newBill!.id);
+    expect(reminder!.reminder_days_before).toBe(2);
+
+    // Cleanup
+    await adminClient.from('bill_reminders').delete().eq('id', reminderId);
+    await adminClient.from('bills').delete().eq('id', newBill!.id);
   });
 
   it('should retrieve only user own reminders', async () => {
     const { data, error } = await client
-      .from('reminders')
+      .from('bill_reminders')
       .select('*');
 
     expect(error).toBeNull();
@@ -98,7 +132,7 @@ describe('Reminders Tests', () => {
   });
 
   it('should cascade delete reminders when bill is deleted', async () => {
-    // Create a temp bill and reminder
+    // Create a temp bill (which will auto-create a reminder via trigger)
     const { data: tempBill } = await client
       .from('bills')
       .insert({
@@ -111,22 +145,24 @@ describe('Reminders Tests', () => {
       .select()
       .single();
 
+    // Wait a moment for trigger to complete
+    await new Promise(resolve => setTimeout(resolve, 500));
+
+    // Find the auto-created reminder
     const { data: tempReminder } = await client
-      .from('reminders')
-      .insert({
-        user_id: testUserId,
-        bill_id: tempBill!.id,
-        reminder_date: '2025-12-30',
-      })
-      .select()
+      .from('bill_reminders')
+      .select('*')
+      .eq('bill_id', tempBill!.id)
       .single();
+
+    expect(tempReminder).toBeTruthy();
 
     // Delete the bill
     await client.from('bills').delete().eq('id', tempBill!.id);
 
-    // Try to fetch the reminder
+    // Try to fetch the reminder - should be cascade deleted
     const { data, error } = await client
-      .from('reminders')
+      .from('bill_reminders')
       .select('*')
       .eq('id', tempReminder!.id);
 

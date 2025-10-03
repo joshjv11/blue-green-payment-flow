@@ -335,6 +335,141 @@ The old project (yqzzcvkgeoghirfrflzq) is no longer referenced anywhere in the c
 
 ---
 
+## 🔔 REMINDER SYSTEM UPDATE (Latest)
+
+### ✅ Auto-Reminder Trigger (COMPLETED)
+- **Trigger:** `trigger_auto_create_bill_reminder` on `bills` table
+- **Function:** `auto_create_bill_reminder()`
+- **Behavior:** Automatically creates a reminder 1 day before due date when a bill is inserted
+- **Unique Constraint:** Prevents duplicate reminders for same bill + date
+
+### ✅ Manual Reminder Function (COMPLETED)
+- **Function:** `schedule_manual_reminder(p_bill_id UUID, p_days_before INT)`
+- **Usage:** `SELECT schedule_manual_reminder('<bill-id>', 3);`
+- **Returns:** UUID of created/updated reminder
+- **Security:** SECURITY DEFINER with proper auth.uid() checks
+
+### ✅ Edge Functions Deployed
+
+#### NEW Functions:
+1. **`process-due-reminders`** (NEW)
+   - **Purpose:** Daily cron job to process all pending reminders
+   - **Schedule:** 9:00 AM IST (3:30 AM UTC) daily
+   - **Behavior:** 
+     - Finds all pending reminders where reminder_date <= today
+     - Invokes `send-individual-reminder` for each
+     - Handles user notification preferences
+     - Updates reminder status (sent/failed/cancelled)
+
+2. **`setup-reminder-cron`** (NEW)
+   - **Purpose:** One-time setup to configure pg_cron job
+   - **Usage:** Call once to setup daily reminder processing
+   - **Creates:** pg_cron job named 'process-bill-reminders-daily'
+
+#### Updated Functions:
+3. **`send-individual-reminder`** (UPDATED)
+   - **Config:** Now uses RESEND_API_KEY and RESEND_FROM env vars
+   - **Features:**
+     - Retry mechanism (up to 3 attempts)
+     - Beautiful HTML email templates
+     - Urgency-based styling (overdue/due-tomorrow/upcoming)
+     - INR currency formatting
+     - Call-to-action buttons
+     - Delivery tracking
+
+4. **`send-bill-reminders`** (UPDATED)
+   - **Config:** Now uses RESEND_API_KEY and RESEND_FROM env vars
+   - **Status:** Still functional (legacy bulk processing)
+
+### 🔐 Required Secrets (CRITICAL)
+
+**Status:** ⚠️ MUST BE SET IN SUPABASE
+
+1. **RESEND_API_KEY** (REQUIRED)
+   - Get from: https://resend.com/api-keys
+   - Used for: Sending reminder emails via Resend API
+   - **Status:** ⚠️ MUST BE ADDED TO SUPABASE SECRETS
+
+2. **RESEND_FROM** (REQUIRED)
+   - Format: `Invoices <noreply@invoiceflow.dev>`
+   - Must be: Verified domain in Resend account
+   - Domain setup: https://resend.com/domains
+   - **Status:** ⚠️ MUST BE ADDED TO SUPABASE SECRETS
+
+3. **Already Set:**
+   - SUPABASE_URL ✅
+   - SUPABASE_ANON_KEY ✅
+   - SUPABASE_SERVICE_ROLE_KEY ✅
+
+### 📋 Setup Instructions
+
+#### Step 1: Set Resend Secrets in Supabase
+```bash
+# In Supabase Studio:
+# Settings → Edge Functions → Secrets
+# Add:
+RESEND_API_KEY=re_xxx...
+RESEND_FROM=Invoices <noreply@invoiceflow.dev>
+```
+
+#### Step 2: Setup Daily Cron Job
+```bash
+# Call once to configure:
+curl -X POST \
+  https://qusloccwftavvcsttmnq.supabase.co/functions/v1/setup-reminder-cron \
+  -H "Authorization: Bearer <your-anon-key>"
+```
+
+#### Step 3: Test Reminder Flow
+```bash
+# 1. Create a test bill (due tomorrow)
+# 2. Check bill_reminders table - auto-reminder should exist
+# 3. Manually trigger processing:
+curl -X POST \
+  https://qusloccwftavvcsttmnq.supabase.co/functions/v1/process-due-reminders \
+  -H "Authorization: Bearer <your-anon-key>"
+# 4. Check email inbox
+# 5. Verify bill_reminders status = 'sent'
+```
+
+### ✅ Tests Updated
+- `tests/reminders.test.ts` now covers:
+  - Auto-reminder creation via trigger
+  - Manual reminder scheduling via RPC
+  - RLS policy enforcement
+  - Cascade deletion
+  - User isolation
+
+### 🔍 Debugging
+
+**Check Logs:**
+- Supabase Studio → Edge Functions → Logs
+- Look for functions: process-due-reminders, send-individual-reminder
+
+**Check Cron Job:**
+```sql
+SELECT * FROM cron.job WHERE jobname = 'process-bill-reminders-daily';
+```
+
+**Check Reminder Status:**
+```sql
+SELECT id, bill_id, reminder_date, status, email_sent_at, error_message
+FROM bill_reminders
+WHERE user_id = '<your-user-id>'
+ORDER BY reminder_date DESC
+LIMIT 10;
+```
+
+### 🚨 Manual Actions Required
+
+1. ⚠️ **SET RESEND_API_KEY** in Supabase Edge Function secrets
+2. ⚠️ **SET RESEND_FROM** in Supabase Edge Function secrets  
+3. ⚠️ **VERIFY DOMAIN** in Resend dashboard (invoiceflow.dev)
+4. ⚠️ **RUN setup-reminder-cron** once to enable daily processing
+5. ⚠️ **TEST** the flow end-to-end before production use
+
+---
+
 **Report Generated:** January 2025  
 **Engineer:** AI DevOps Assistant  
-**Status:** Ready for Production ✅
+**Status:** Ready for Production (Pending Reminder Secrets) ⚠️

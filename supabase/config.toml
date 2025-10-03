@@ -33,3 +33,9 @@ verify_jwt = false
 
 [functions.reminder-health-check]
 verify_jwt = false
+
+[functions.process-due-reminders]
+verify_jwt = false
+
+[functions.setup-reminder-cron]
+verify_jwt = false
