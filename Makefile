@@ -9,13 +9,15 @@ NEW_PROJECT_REF := qusloccwftavvcsttmnq
 NEW_DB_URL := postgresql://postgres:$(SUPABASE_SERVICE_ROLE_KEY)@db.$(NEW_PROJECT_REF).supabase.co:5432/postgres
 
 help:
-	@echo "Supabase NEW Project Setup"
+	@echo "Supabase NEW Project Setup & Testing"
 	@echo ""
 	@echo "Usage:"
 	@echo "  make db.setup         - Apply schema, RLS, functions, triggers to NEW project"
 	@echo "  make admin EMAIL=...  - Promote user to admin by email"
-	@echo "  make verify           - List all tables and row counts"
-	@echo "  make smoke            - Run connectivity smoke tests"
+	@echo "  make verify           - Run SQL verification + automated tests"
+	@echo "  make smoke            - Quick smoke test (connectivity + basic flow)"
+	@echo "  make test             - Run full automated test suite"
+	@echo "  make test.watch       - Run tests in watch mode"
 	@echo "  make import           - Import data from CSV files (if available)"
 	@echo "  make clean            - Clean temporary files"
 	@echo ""
@@ -24,7 +26,8 @@ help:
 	@echo "  2. make db.setup"
 	@echo "  3. Sign up via your app"
 	@echo "  4. make admin EMAIL=your-email@example.com"
-	@echo "  5. make smoke && make verify"
+	@echo "  5. make verify          (runs SQL checks + full test suite)"
+	@echo "  6. make smoke           (quick sanity check)"
 
 # Apply schema to NEW project
 db.setup:
@@ -51,35 +54,32 @@ admin:
 	@psql "$(NEW_DB_URL)" -v email='$(EMAIL)' -f scripts/bootstrap_admin.sql
 	@echo "✅ Admin promotion complete!"
 
-# Verify database setup
+# Verify database setup (SQL + Tests)
 verify:
-	@echo "🔍 Verifying database setup..."
-	@psql "$(NEW_DB_URL)" -c "\
-		SELECT \
-			schemaname, \
-			tablename, \
-			(SELECT count(*) FROM public.profiles) as profile_count, \
-			(SELECT count(*) FROM public.bills) as bill_count, \
-			(SELECT count(*) FROM public.reminders) as reminder_count \
-		FROM pg_tables \
-		WHERE schemaname = 'public' \
-		LIMIT 1;"
+	@echo "🔍 Running comprehensive verification..."
 	@echo ""
-	@echo "📊 All public tables:"
-	@psql "$(NEW_DB_URL)" -c "\
-		SELECT \
-			t.table_name, \
-			(xpath('/row/count/text()', query_to_xml(format('select count(*) as count from %I.%I', t.table_schema, t.table_name), false, true, '')))[1]::text::int AS row_count \
-		FROM information_schema.tables t \
-		WHERE t.table_schema = 'public' \
-		AND t.table_type = 'BASE TABLE' \
-		ORDER BY t.table_name;" 2>/dev/null || echo "Note: Advanced row counting requires superuser. Use Supabase dashboard for detailed stats."
+	@echo "📋 Part 1: SQL Health Check"
+	@psql "$(NEW_DB_URL)" -f scripts/verify.sql
+	@echo ""
+	@echo "🧪 Part 2: Automated Test Suite"
+	@npm test
+	@echo ""
 	@echo "✅ Verification complete!"
 
-# Run smoke tests
+# Run smoke tests (quick sanity check)
 smoke:
 	@echo "🧪 Running smoke tests..."
 	@npm run supa:check
+
+# Run full test suite
+test:
+	@echo "🧪 Running full test suite..."
+	@npm test
+
+# Run tests in watch mode
+test.watch:
+	@echo "🧪 Running tests in watch mode..."
+	@npm run test:watch
 
 # Import data from CSV (if available)
 import:
