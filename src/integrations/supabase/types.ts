@@ -83,6 +83,69 @@ export type Database = {
         }
         Relationships: []
       }
+      app_logs: {
+        Row: {
+          action: string | null
+          component: string | null
+          context: Json | null
+          created_at: string
+          error_message: string | null
+          error_name: string | null
+          event: string
+          id: string
+          ip: unknown | null
+          level: string
+          message: string | null
+          request_id: string | null
+          route: string | null
+          session_id: string | null
+          stack: string | null
+          status_code: number | null
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          action?: string | null
+          component?: string | null
+          context?: Json | null
+          created_at?: string
+          error_message?: string | null
+          error_name?: string | null
+          event: string
+          id?: string
+          ip?: unknown | null
+          level: string
+          message?: string | null
+          request_id?: string | null
+          route?: string | null
+          session_id?: string | null
+          stack?: string | null
+          status_code?: number | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          action?: string | null
+          component?: string | null
+          context?: Json | null
+          created_at?: string
+          error_message?: string | null
+          error_name?: string | null
+          event?: string
+          id?: string
+          ip?: unknown | null
+          level?: string
+          message?: string | null
+          request_id?: string | null
+          route?: string | null
+          session_id?: string | null
+          stack?: string | null
+          status_code?: number | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       bill_reminder_jobs: {
         Row: {
           bill_reminder_id: string
@@ -666,6 +729,25 @@ export type Database = {
       add_sample_data_for_user: {
         Args: { target_user_id: string }
         Returns: undefined
+      }
+      admin_get_logs: {
+        Args: { p_level?: string; p_limit?: number }
+        Returns: {
+          action: string
+          component: string
+          context: Json
+          created_at: string
+          error_message: string
+          error_name: string
+          event: string
+          id: string
+          level: string
+          message: string
+          route: string
+          stack: string
+          status_code: number
+          user_id: string
+        }[]
       }
       can_manage_team_members: {
         Args: { target_team_id: string }

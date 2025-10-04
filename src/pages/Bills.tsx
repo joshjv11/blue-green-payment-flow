@@ -44,6 +44,7 @@ import UpgradeTrigger from '@/components/UpgradeTrigger';
 import { useIsMobile } from '@/hooks/use-mobile';
 import BillReminderManager from '@/components/BillReminderManager';
 import { formatINRCompact } from '@/utils/currency';
+import { logError, logInfo } from '@/lib/logger';
 
 interface Bill {
   id: string;
@@ -331,9 +332,25 @@ const Bills = () => {
     } catch (error: any) {
       console.error('❌ Error in handleSubmit:', error);
       
+      // Log error for debugging
+      await logError(error, 'Bills', 'add_bill_submit', {
+        billName: formData.name,
+        amount: formData.amount,
+        priority: formData.priority,
+        editing: !!editingBill,
+      });
+      
+      // Show user-friendly error message
+      let errorMessage = error.message || "Something went wrong. Please try again.";
+      
+      // Check for priority constraint violation
+      if (error.message?.includes('bill_reminders_priority_check')) {
+        errorMessage = "Couldn't save. Please pick a valid priority (Low/Medium/High) and try again.";
+      }
+      
       toast({
         title: "Failed to Save Bill",
-        description: error.message || "Something went wrong. Please try again.",
+        description: errorMessage,
         variant: "destructive",
       });
     }

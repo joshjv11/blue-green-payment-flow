@@ -10,12 +10,13 @@ import { formatINR, formatINRCompact } from '@/utils/currency';
 import { usePaymentVerification } from '@/hooks/usePaymentVerification';
 import { useToast } from '@/hooks/use-toast';
 import { Navigation } from '@/components/Navigation';
+import AdvancedAnalytics from '@/components/AdvancedAnalytics';
+import { logError } from '@/lib/logger';
 import { BarChart3, TrendingUp, DollarSign, Calendar, Crown, Lock, AlertCircle } from 'lucide-react';
 import { format, parseISO, startOfMonth, endOfMonth, differenceInDays, isBefore, isAfter } from 'date-fns';
 import UpgradeModal from '@/components/UpgradeModal';
 import FreemiumLimitCard from '@/components/FreemiumLimitCard';
 import EnhancedAIAssistantV2 from '@/components/EnhancedAIAssistantV2';
-import AdvancedAnalytics from '@/components/AdvancedAnalytics';
 
 interface Bill {
   id: string;
@@ -86,6 +87,12 @@ const Analytics = () => {
       console.log(`✅ Analytics: Loaded ${data?.length || 0} bills`);
     } catch (error: any) {
       console.error('❌ Error fetching bills for analytics:', error);
+      
+      // Log error for debugging
+      await logError(error, 'Analytics', 'fetchBills', {
+        userId: user?.id,
+      });
+      
       toast({
         title: "Failed to load analytics",
         description: error.message || "Could not fetch your bills data. Please try again.",

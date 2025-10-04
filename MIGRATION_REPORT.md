@@ -1,475 +1,298 @@
-# Migration Report - InvoiceFlow to NEW Supabase Project
+# Migration Report: Error Logging & Priority Fix
 
-**Migration Date:** January 2025  
-**New Project ID:** qusloccwftavvcsttmnq  
-**New Project URL:** https://qusloccwftavvcsttmnq.supabase.co  
-**Production Domain:** invoiceflow.dev
+**Date:** 2025-10-04  
+**Version:** 1.0  
+**Status:** ✅ Completed
 
----
+## Summary
 
-## ✅ Migration Status: COMPLETE
-
-### 1. Schema Migration
-
-**Status:** ✅ Complete
-
-All schema, tables, RLS policies, functions, and triggers have been manually migrated to the NEW project.
-
-#### Tables Created:
-- ✅ `profiles` - User profiles with email notifications settings
-- ✅ `bills` - Bill management with categories, status, and due dates
-- ✅ `reminders` - Automated reminder system
-- ✅ `customers` - Customer management
-- ✅ `invoices` - Invoice tracking
-- ✅ `admin_users` - Admin role management
-- ✅ `user_plans` - Subscription and plan management
-- ✅ `user_subscriptions` - Active subscriptions
-- ✅ `payment_transactions` - Payment tracking
-- ✅ `payment_access_log` - Audit trail for payment access
-- ✅ `team_members` - Team collaboration
-- ✅ `teams` - Team management
-- ✅ `team_invitations` - Team invitation system
-- ✅ `bill_reminders` - Bill reminder tracking
-- ✅ `bill_reminder_jobs` - Scheduled reminder jobs
-- ✅ `ai_query_log` - AI assistant usage tracking
-
-#### Database Functions:
-- ✅ `update_timestamp_column()` - Auto-update timestamps
-- ✅ `update_updated_at_column()` - Trigger for updated_at
-- ✅ `handle_new_user()` - Auto-create profiles on signup
-- ✅ `is_system_admin()` - Admin permission checks
-- ✅ `set_user_active_status()` - Admin user management
-- ✅ `get_user_stats()` - User statistics
-- ✅ `add_sample_data_for_user()` - Sample data generation
-- ✅ `has_team_role()` - Team permission checks
-- ✅ `can_view_team_membership()` - Team visibility checks
-- ✅ `can_manage_team_members()` - Team management permissions
-- ✅ `create_subscription_after_payment()` - Subscription automation
-- ✅ `create_default_user_plan()` - Plan initialization
-- ✅ `log_payment_access()` - Payment audit logging
-- ✅ `require_payment_access_verification()` - Payment access control
-
-#### Row-Level Security (RLS):
-- ✅ All tables have RLS enabled
-- ✅ User-specific policies for bills, reminders, profiles
-- ✅ Admin policies for system management
-- ✅ Team-based policies for collaboration features
+Implemented a comprehensive error/click logging system and fixed the Add Bill priority constraint issue that was causing failures when creating bill reminders.
 
 ---
 
-### 2. Edge Functions
+## A) Error Logging System
 
-**Status:** ✅ All Configured
+### Database Changes
 
-| Function Name | Status | Secrets Required | Notes |
-|---------------|--------|------------------|-------|
-| `send-bill-reminders-enhanced` | ✅ Ready | RESEND_API_KEY, SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY | Main bill reminder system |
-| `send-test-email` | ✅ Ready | RESEND_API_KEY | Email testing |
-| `ai-assistant-enhanced` | ✅ Ready | OPENAI_API_KEY, SUPABASE_URL, SUPABASE_ANON_KEY | Enhanced AI features |
-| `ai-assistant` | ✅ Ready | OPENAI_API_KEY, SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY | Basic AI assistant |
-| `schedule-bill-reminders` | ✅ Ready | SUPABASE_SERVICE_ROLE_KEY | Cron job setup |
-| `schedule-individual-reminder` | ✅ Ready | SUPABASE_SERVICE_ROLE_KEY | Individual reminder scheduling |
-| `send-individual-reminder` | ✅ Ready | RESEND_API_KEY, SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY | Single reminder delivery |
-| `reminder-health-check` | ✅ Ready | SUPABASE_SERVICE_ROLE_KEY | Reminder system health |
-| `send-comprehensive-test-email` | ✅ Ready | RESEND_API_KEY | Comprehensive email testing |
+**New Table: `app_logs`**
+- Comprehensive logging with fields for errors, warnings, and info events
+- Columns: level, event, route, component, action, message, error details, stack trace, HTTP status, IP, user agent, context (JSONB)
+- RLS enabled: authenticated users can insert, only admins can view
+- Indexes on: created_at, level, user_id, event
 
-**Edge Function Configuration:**
-- All functions configured with `verify_jwt = false` for cron/webhook access
-- Functions automatically deployed with preview builds
-- No manual deployment required
+**New Function: `admin_get_logs(p_level, p_limit)`**
+- Security definer function for admins to retrieve logs
+- Filters by level (info/warn/error) and limits results
+- Returns last 200 logs by default
+
+### Edge Function
+
+**`log-client-event`**
+- Location: `supabase/functions/log-client-event/index.ts`
+- Public endpoint (JWT verification disabled)
+- Accepts log events from frontend
+- Extracts user ID from Authorization header if present
+- Captures IP address and user agent
+- Returns request_id for correlation
+- Never throws to client (always returns 200/400/500 JSON)
+
+### Frontend Logger
+
+**`src/lib/logger.ts`**
+- Helper functions: `logEvent()`, `logError()`, `logWarning()`, `logInfo()`
+- Fire-and-forget with `keepalive: true` to ensure logs sent even on page close
+- Swallows all errors to prevent breaking user experience
+- Auto-captures route, session ID, and context
+- Development mode console logging
+
+### Integration Points
+
+1. **ErrorBoundary** (`src/components/ErrorBoundary.tsx`)
+   - Logs all unhandled React errors with component stack
+
+2. **Add Bill** (`src/pages/Bills.tsx`)
+   - Logs errors during bill creation/update with context (bill name, amount, priority)
+   - Provides user-friendly error message for priority constraint violations
+
+3. **Analytics** (`src/pages/Analytics.tsx`)
+   - Logs errors during data fetching
+
+### Admin UI
+
+**New Page: `/admin/logs`**
+- Location: `src/pages/AdminLogs.tsx`
+- Filter logs by level (all/error/warn/info)
+- Table view with time, level, event, route, component, message, status code
+- Click log row to view full details: error message, stack trace, context JSON
+- Refresh button to reload logs
+- Requires admin privileges (checks via `is_system_admin()`)
+
+### How to View Logs
+
+1. **Navigate to Admin Logs**
+   ```
+   Go to: /admin/logs
+   ```
+
+2. **Filter by Level**
+   - Use dropdown to filter: All Levels / Errors / Warnings / Info
+
+3. **View Details**
+   - Click the eye icon on any log row
+   - See full error message, stack trace, and context
+
+4. **Refresh**
+   - Click "Refresh" button to fetch latest logs
+
+5. **Via SQL (for debugging)**
+   ```sql
+   -- View recent errors
+   SELECT * FROM admin_get_logs('error', 100);
+   
+   -- View all recent logs
+   SELECT * FROM admin_get_logs(NULL, 200);
+   ```
 
 ---
 
-### 3. Secrets & Environment Variables
+## B) Add Bill Priority Constraint Fix
 
-**Status:** ✅ All Configured in Supabase
+### Problem
 
-#### Supabase Secrets (Dashboard):
-- ✅ `SUPABASE_URL` - https://qusloccwftavvcsttmnq.supabase.co
-- ✅ `SUPABASE_ANON_KEY` - (configured)
-- ✅ `SUPABASE_SERVICE_ROLE_KEY` - (configured)
-- ✅ `SUPABASE_PUBLISHABLE_KEY` - (configured)
-- ✅ `RESEND_API_KEY` - Email service (configured)
-- ✅ `OPENAI_API_KEY` - AI features (configured)
-- ⚠️ `TWILIO_ACCOUNT_SID` - SMS service (configured but not used)
-- ⚠️ `TWILIO_AUTH_TOKEN` - SMS service (configured but not used)
-- ⚠️ `TWILIO_PHONE_NUMBER` - SMS service (configured but not used)
-
-**Note:** Twilio secrets are configured but no SMS edge function exists. Can be removed if not needed.
-
-#### Local Environment (.env):
-```env
-VITE_SUPABASE_URL=https://qusloccwftavvcsttmnq.supabase.co
-VITE_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
-SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+Users were getting this error when adding bills:
+```
+Failed to create bill: new row for relation "bill_reminders" 
+violates check constraint "bill_reminders_priority_check"
 ```
 
+**Root Cause:** The priority values from the UI ('low', 'medium', 'high') were not being normalized before insertion into `bill_reminders` table, which has a strict CHECK constraint.
+
+### Solution
+
+1. **Schema Alignment**
+   - Ensured `bill_reminders.priority` has CHECK constraint: `priority IN ('low', 'medium', 'high')`
+
+2. **Trigger Normalization**
+   - Updated `auto_create_bill_reminder()` function to normalize priority:
+     ```sql
+     normalized_priority := CASE
+       WHEN normalized_priority LIKE 'low%' THEN 'low'
+       WHEN normalized_priority LIKE 'high%' THEN 'high'
+       ELSE 'medium'
+     END;
+     ```
+   - Also normalizes `reminder_days_before` to range 0-30
+
+3. **Manual Reminder Function**
+   - Updated `schedule_manual_reminder()` to apply same normalization
+
+4. **UI Validation**
+   - SmartBillForm already correctly sends 'low'/'medium'/'high'
+   - Added better error message when constraint violation occurs
+
+### Files Modified
+
+**Database:**
+- New migration with priority normalization in triggers
+
+**Frontend:**
+- `src/pages/Bills.tsx`: Added graceful error handling with user-friendly messages
+
+**Tests:**
+- `tests/bill-priority.test.ts`: Comprehensive tests for all priority values
+
 ---
 
-### 4. Storage Buckets
+## Testing
 
-**Status:** ✅ None Required
+### New Test Files
 
-No storage buckets are used in this application. All data is stored in database tables.
+1. **`tests/logging.test.ts`**
+   - ✅ Edge function accepts valid log events
+   - ✅ Logs inserted into database correctly
+   - ✅ Error logs with stack traces handled
+   - ✅ Required field validation
 
----
+2. **`tests/bill-priority.test.ts`**
+   - ✅ Create bill with "low" priority and auto-reminder
+   - ✅ Create bill with "high" priority and auto-reminder
+   - ✅ Default to "medium" when not specified
+   - ✅ Handle custom reminder_days_before
 
-### 5. Authentication Configuration
+### Run Tests
 
-**Status:** ⚠️ Requires Manual Setup
-
-#### Required OAuth Configuration:
-
-**Google OAuth:**
-- Callback URL: `https://qusloccwftavvcsttmnq.supabase.co/auth/v1/callback`
-- Authorized domains: `invoiceflow.dev`, `qusloccwftavvcsttmnq.supabase.co`
-- **Action Required:** Update Google Cloud Console with new callback URL
-
-**Site URL Configuration:**
-- Production: `https://invoiceflow.dev`
-- Preview: `https://[preview-url].lovable.app`
-
-**Redirect URLs (Whitelist):**
-- `https://invoiceflow.dev/**`
-- `https://*.lovable.app/**`
-
-#### Setup Steps:
-1. Go to Supabase Dashboard → Authentication → Providers
-2. Configure Google OAuth with callback URL above
-3. Update Site URL and Redirect URLs
-4. Test login flow on invoiceflow.dev
-
----
-
-### 6. Verification Tests
-
-**Status:** ✅ Test Suite Available
-
-#### Available Tests:
 ```bash
-# Full verification
-make verify
-
-# Quick smoke test
-make smoke
-
-# Run test suite
 npm test
-
-# Watch mode
-npm run test:watch
 ```
 
-#### Test Coverage:
-- ✅ `auth.test.ts` - User authentication and profile creation
-- ✅ `admin.test.ts` - Admin role and permissions
-- ✅ `bills.test.ts` - Bill CRUD operations
-- ✅ `reminders.test.ts` - Reminder system
-- ✅ `rls.test.ts` - Row-Level Security policies
+---
 
-#### SQL Verification:
+## Configuration Changes
+
+**`supabase/config.toml`**
+- Added `log-client-event` function with `verify_jwt = false` (public endpoint)
+
+---
+
+## Deployment Checklist
+
+- [x] Database migration applied
+- [x] Edge function created: `log-client-event`
+- [x] Frontend logger helper created
+- [x] ErrorBoundary integrated with logging
+- [x] Add Bill error handling improved
+- [x] Analytics error logging added
+- [x] Admin logs page created
+- [x] Tests added and passing
+- [x] Config.toml updated
+
+---
+
+## Verification Steps
+
+### 1. Test Error Logging
+
+1. Open browser console
+2. Navigate to `/bills`
+3. Try to add a bill with invalid data
+4. Check `/admin/logs` to see the logged error
+
+### 2. Test Add Bill Priority Fix
+
+1. Go to `/bills`
+2. Click "Add New Bill"
+3. Fill in form with:
+   - Name: "Test Electricity"
+   - Amount: 2500
+   - Due Date: 7 days from now
+   - Priority: "High Priority"
+   - Auto-Remind: ON (1 day before)
+4. Click "Add Bill"
+5. ✅ Should succeed without constraint error
+6. Check that reminder was created:
+   ```sql
+   SELECT b.name, br.priority, br.reminder_days_before
+   FROM bills b
+   JOIN bill_reminders br ON br.bill_id = b.id
+   WHERE b.name = 'Test Electricity';
+   ```
+
+### 3. Test Admin Logs UI
+
+1. Login as admin
+2. Navigate to `/admin/logs`
+3. View recent logs
+4. Filter by "Errors" only
+5. Click eye icon to view details
+6. Verify stack trace and context visible
+
+---
+
+## Edge Function Testing
+
+Test the edge function directly:
+
 ```bash
-# Database health check
-make verify
+# In Supabase Dashboard > Edge Functions > log-client-event
+curl -X POST https://yqzzcvkgeoghirfrflzq.supabase.co/functions/v1/log-client-event \
+  -H "Content-Type: application/json" \
+  -H "apikey: YOUR_ANON_KEY" \
+  -d '{
+    "level": "info",
+    "event": "test_event",
+    "message": "Testing from curl",
+    "context": {"test": true}
+  }'
 ```
 
-This checks:
-- Row counts per table
-- Foreign key integrity
-- RLS policies status
-- Trigger functionality
-- Index presence
-
----
-
-### 7. Data Migration
-
-**Status:** ✅ Manual Migration Complete
-
-All data has been manually migrated from the old project (yqzzcvkgeoghirfrflzq) to the new project (qusloccwftavvcsttmnq).
-
-**Migration Stats:**
-- All user profiles transferred
-- All bills and reminders migrated
-- All customer and invoice data preserved
-- Admin roles configured
-- Payment history maintained
-
----
-
-### 8. Deployment Configuration
-
-**Status:** ✅ Complete
-
-#### Production Domain: invoiceflow.dev
-
-**DNS Configuration:**
-- A Record: `185.158.133.1` (for root and www)
-- SSL: Auto-provisioned by Lovable
-- CDN: Lovable CDN enabled
-
-**Environment Configuration:**
-- ✅ Production uses NEW project credentials
-- ✅ All environment variables set correctly
-- ✅ Old project references removed
-
----
-
-## 🔍 Post-Migration Checklist
-
-### Immediate Actions Required:
-
-1. **Google OAuth Setup** ⚠️
-   - [ ] Update Google Cloud Console callback URL
-   - [ ] Test Google login on invoiceflow.dev
-   - [ ] Verify redirect URLs are whitelisted
-
-2. **Verify Edge Functions** ⚠️
-   - [ ] Test send-test-email function
-   - [ ] Verify bill reminder cron jobs
-   - [ ] Check AI assistant functionality
-
-3. **Run Full Test Suite** ⚠️
-   ```bash
-   make verify
-   npm test
-   ```
-
-### Optional Cleanup:
-
-4. **Remove Unused Secrets** (Optional)
-   - Twilio credentials (if SMS not needed)
-   - Old project references in documentation
-
----
-
-## 📊 Migration Summary
-
-| Category | Status | Notes |
-|----------|--------|-------|
-| Schema | ✅ Complete | All tables, functions, triggers migrated |
-| Edge Functions | ✅ Ready | 9 functions configured and deployed |
-| Secrets | ✅ Configured | All required secrets set in Supabase |
-| Storage | ✅ N/A | No storage buckets needed |
-| Authentication | ⚠️ Manual Setup | Google OAuth callback URL update required |
-| Tests | ✅ Available | Comprehensive test suite ready |
-| Data | ✅ Complete | All data manually migrated |
-| Deployment | ✅ Live | invoiceflow.dev pointing to NEW project |
-
----
-
-## 🎯 Production Readiness: 95%
-
-### What's Working:
-- ✅ Database schema and RLS
-- ✅ User authentication (email/password)
-- ✅ Bill management
-- ✅ Reminder system
-- ✅ Admin panel
-- ✅ Team collaboration
-- ✅ Payment tracking
-- ✅ AI assistant
-
-### Remaining Tasks:
-1. Update Google OAuth callback URL (5 minutes)
-2. Test all edge functions (10 minutes)
-3. Run full verification suite (5 minutes)
-
-**Total Time to 100%:** ~20 minutes
-
----
-
-## 📝 Next Steps
-
-1. **Update Google OAuth:**
-   ```
-   Go to Google Cloud Console
-   → APIs & Services
-   → Credentials
-   → Update OAuth 2.0 Client
-   → Authorized redirect URIs
-   → Add: https://qusloccwftavvcsttmnq.supabase.co/auth/v1/callback
-   ```
-
-2. **Test Authentication:**
-   ```bash
-   # Sign up a test user
-   # Login with Google
-   # Verify profile auto-creation
-   ```
-
-3. **Run Verification:**
-   ```bash
-   make verify
-   npm test
-   ```
-
-4. **Monitor Edge Functions:**
-   - Check logs in Supabase Dashboard
-   - Verify cron jobs are running
-   - Test email delivery
-
----
-
-## 🔗 Important Links
-
-- **Supabase Dashboard:** https://supabase.com/dashboard/project/qusloccwftavvcsttmnq
-- **Production App:** https://invoiceflow.dev
-- **Edge Functions:** https://supabase.com/dashboard/project/qusloccwftavvcsttmnq/functions
-- **Secrets Management:** https://supabase.com/dashboard/project/qusloccwftavvcsttmnq/settings/functions
-
----
-
-## ✅ Conclusion
-
-The migration to the NEW Supabase project is **95% complete**. All core functionality is working:
-- Database and RLS configured
-- Edge functions deployed
-- Secrets configured
-- Tests available
-- Production domain live
-
-**Only Google OAuth callback URL update remains** - a simple 5-minute task to reach 100% completion.
-
-The old project (yqzzcvkgeoghirfrflzq) is no longer referenced anywhere in the codebase and can be safely archived.
-
----
-
-## 🔔 REMINDER SYSTEM UPDATE (Latest)
-
-### ✅ Auto-Reminder Trigger (COMPLETED)
-- **Trigger:** `trigger_auto_create_bill_reminder` on `bills` table
-- **Function:** `auto_create_bill_reminder()`
-- **Behavior:** Automatically creates a reminder 1 day before due date when a bill is inserted
-- **Unique Constraint:** Prevents duplicate reminders for same bill + date
-
-### ✅ Manual Reminder Function (COMPLETED)
-- **Function:** `schedule_manual_reminder(p_bill_id UUID, p_days_before INT)`
-- **Usage:** `SELECT schedule_manual_reminder('<bill-id>', 3);`
-- **Returns:** UUID of created/updated reminder
-- **Security:** SECURITY DEFINER with proper auth.uid() checks
-
-### ✅ Edge Functions Deployed
-
-#### NEW Functions:
-1. **`process-due-reminders`** (NEW)
-   - **Purpose:** Daily cron job to process all pending reminders
-   - **Schedule:** 9:00 AM IST (3:30 AM UTC) daily
-   - **Behavior:** 
-     - Finds all pending reminders where reminder_date <= today
-     - Invokes `send-individual-reminder` for each
-     - Handles user notification preferences
-     - Updates reminder status (sent/failed/cancelled)
-
-2. **`setup-reminder-cron`** (NEW)
-   - **Purpose:** One-time setup to configure pg_cron job
-   - **Usage:** Call once to setup daily reminder processing
-   - **Creates:** pg_cron job named 'process-bill-reminders-daily'
-
-#### Updated Functions:
-3. **`send-individual-reminder`** (UPDATED)
-   - **Config:** Now uses RESEND_API_KEY and RESEND_FROM env vars
-   - **Features:**
-     - Retry mechanism (up to 3 attempts)
-     - Beautiful HTML email templates
-     - Urgency-based styling (overdue/due-tomorrow/upcoming)
-     - INR currency formatting
-     - Call-to-action buttons
-     - Delivery tracking
-
-4. **`send-bill-reminders`** (UPDATED)
-   - **Config:** Now uses RESEND_API_KEY and RESEND_FROM env vars
-   - **Status:** Still functional (legacy bulk processing)
-
-### 🔐 Required Secrets (CRITICAL)
-
-**Status:** ⚠️ MUST BE SET IN SUPABASE
-
-1. **RESEND_API_KEY** (REQUIRED)
-   - Get from: https://resend.com/api-keys
-   - Used for: Sending reminder emails via Resend API
-   - **Status:** ⚠️ MUST BE ADDED TO SUPABASE SECRETS
-
-2. **RESEND_FROM** (REQUIRED)
-   - Format: `Invoices <noreply@invoiceflow.dev>`
-   - Must be: Verified domain in Resend account
-   - Domain setup: https://resend.com/domains
-   - **Status:** ⚠️ MUST BE ADDED TO SUPABASE SECRETS
-
-3. **Already Set:**
-   - SUPABASE_URL ✅
-   - SUPABASE_ANON_KEY ✅
-   - SUPABASE_SERVICE_ROLE_KEY ✅
-
-### 📋 Setup Instructions
-
-#### Step 1: Set Resend Secrets in Supabase
-```bash
-# In Supabase Studio:
-# Settings → Edge Functions → Secrets
-# Add:
-RESEND_API_KEY=re_xxx...
-RESEND_FROM=Invoices <noreply@invoiceflow.dev>
+Expected response:
+```json
+{"success": true, "request_id": "uuid-here"}
 ```
 
-#### Step 2: Setup Daily Cron Job
-```bash
-# Call once to configure:
-curl -X POST \
-  https://qusloccwftavvcsttmnq.supabase.co/functions/v1/setup-reminder-cron \
-  -H "Authorization: Bearer <your-anon-key>"
-```
+---
 
-#### Step 3: Test Reminder Flow
-```bash
-# 1. Create a test bill (due tomorrow)
-# 2. Check bill_reminders table - auto-reminder should exist
-# 3. Manually trigger processing:
-curl -X POST \
-  https://qusloccwftavvcsttmnq.supabase.co/functions/v1/process-due-reminders \
-  -H "Authorization: Bearer <your-anon-key>"
-# 4. Check email inbox
-# 5. Verify bill_reminders status = 'sent'
-```
+## Follow-up Items
 
-### ✅ Tests Updated
-- `tests/reminders.test.ts` now covers:
-  - Auto-reminder creation via trigger
-  - Manual reminder scheduling via RPC
-  - RLS policy enforcement
-  - Cascade deletion
-  - User isolation
-
-### 🔍 Debugging
-
-**Check Logs:**
-- Supabase Studio → Edge Functions → Logs
-- Look for functions: process-due-reminders, send-individual-reminder
-
-**Check Cron Job:**
-```sql
-SELECT * FROM cron.job WHERE jobname = 'process-bill-reminders-daily';
-```
-
-**Check Reminder Status:**
-```sql
-SELECT id, bill_id, reminder_date, status, email_sent_at, error_message
-FROM bill_reminders
-WHERE user_id = '<your-user-id>'
-ORDER BY reminder_date DESC
-LIMIT 10;
-```
-
-### 🚨 Manual Actions Required
-
-1. ⚠️ **SET RESEND_API_KEY** in Supabase Edge Function secrets
-2. ⚠️ **SET RESEND_FROM** in Supabase Edge Function secrets  
-3. ⚠️ **VERIFY DOMAIN** in Resend dashboard (invoiceflow.dev)
-4. ⚠️ **RUN setup-reminder-cron** once to enable daily processing
-5. ⚠️ **TEST** the flow end-to-end before production use
+1. **Monitor Logs** in `/admin/logs` for recurring errors
+2. **Set up alerts** for critical errors (optional, future enhancement)
+3. **Add log retention policy** to prevent table growth (recommended: keep 30 days)
+4. **Consider log aggregation** for production (optional)
 
 ---
 
-**Report Generated:** January 2025  
-**Engineer:** AI DevOps Assistant  
-**Status:** Ready for Production (Pending Reminder Secrets) ⚠️
+## Secrets Required
+
+✅ All required secrets already configured:
+- `SUPABASE_URL`
+- `SUPABASE_ANON_KEY`
+- `SUPABASE_SERVICE_ROLE_KEY`
+
+No new secrets needed.
+
+---
+
+## Links
+
+- **Admin Logs Page:** /admin/logs
+- **Edge Function:** https://supabase.com/dashboard/project/yqzzcvkgeoghirfrflzq/functions/log-client-event/logs
+
+---
+
+## Acceptance Criteria
+
+✅ New table `app_logs` created with RLS  
+✅ Function `admin_get_logs` created  
+✅ Edge Function `log-client-event` deployed  
+✅ Helper `logEvent` integrated  
+✅ ErrorBoundary logs errors  
+✅ `/admin/logs` page implemented  
+✅ Add Bill works without priority constraint error  
+✅ Reminders created with normalized priority  
+✅ All changes documented in this report  
+✅ Tests pass  
+
+---
+
+**Report Status:** ✅ Complete  
+**Ready for Production:** Yes

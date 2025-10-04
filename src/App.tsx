@@ -20,6 +20,7 @@ import Settings from './pages/Settings';
 import Admin from './pages/Admin';
 import AdminUsers from './pages/AdminUsers';
 import AdminDbHealth from './pages/AdminDbHealth';
+import AdminLogs from './pages/AdminLogs';
 import NotFound from './pages/NotFound';
 
 const queryClient = new QueryClient();
@@ -93,6 +94,14 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <AdminDbHealth />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/admin/logs" 
+              element={
+                <ProtectedRoute>
+                  <AdminLogs />
                 </ProtectedRoute>
               } 
             />

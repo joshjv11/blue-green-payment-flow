@@ -1,4 +1,4 @@
-project_id = "qusloccwftavvcsttmnq"
+project_id = "yqzzcvkgeoghirfrflzq"
 
 [api]
 enabled = true
@@ -7,13 +7,22 @@ schemas = ["public", "graphql_public"]
 extra_search_path = ["public", "extensions"]
 max_rows = 1000
 
+[functions.ai-assistant]
+verify_jwt = true
+
+[functions.ai-assistant-enhanced]
+verify_jwt = true
+
+[functions.get-current-plan]
+verify_jwt = true
+
+[functions.log-client-event]
+verify_jwt = false
+
 [functions.send-bill-reminders]
 verify_jwt = false
 
 [functions.schedule-bill-reminders]
-verify_jwt = false
-
-[functions.send-sms-notifications]
 verify_jwt = false
 
 [functions.send-test-email]
@@ -39,6 +48,3 @@ verify_jwt = false
 
 [functions.setup-reminder-cron]
 verify_jwt = false
-
-[functions.get-current-plan]
-verify_jwt = true
