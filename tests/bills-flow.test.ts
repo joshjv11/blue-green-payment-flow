@@ -71,8 +71,8 @@ describe('Add Bill Flow (E2E)', () => {
       category: 'utilities',
       status: 'unpaid',
       recurring: true,
-      priority: 'high',
       auto_reminder_enabled: true,
+      reminder_days_before: 1,
       notes: 'Test bill for E2E testing',
     };
 

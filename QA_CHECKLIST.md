@@ -1,3 +1,30 @@
+# Quality Assurance Checklist
+
+## Recent Updates (January 2025)
+
+### Landing Page
+- [ ] Blue→white gradient displays correctly
+- [ ] Reflective headline text has proper shine effect
+- [ ] Glassy auth card has blur and proper borders
+- [ ] No "Dashboard" button shown when logged out
+- [ ] "Dashboard" button visible when logged in
+- [ ] No ₹199 setup call CTA visible
+- [ ] Email auth buttons work correctly
+- [ ] Google auth button navigates to /auth
+
+### Bill Reminders (New Flow)
+- [ ] "Email Reminder" toggle visible in Add Bill modal
+- [ ] Days selector only shows when toggle is ON
+- [ ] Options: Same day, 1 day before, 2 days before, 7 days before
+- [ ] Bill saves successfully with reminder enabled
+- [ ] Bill saves successfully with reminder disabled
+- [ ] Reminder row created in bill_reminders table (when enabled)
+- [ ] No priority field visible anywhere in UI
+- [ ] Edit bill loads existing reminder settings correctly
+- [ ] No priority-related errors in console
+
+---
+
 # QA Checklist for InvoiceFlow
 
 **Project:** NEW Supabase (qusloccwftavvcsttmnq)  

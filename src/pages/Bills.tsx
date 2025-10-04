@@ -58,6 +58,8 @@ interface Bill {
   notes: string | null;
   created_at: string;
   updated_at: string;
+  auto_reminder_enabled?: boolean;
+  reminder_days_before?: number;
 }
 
 interface BillFormData {
@@ -68,7 +70,7 @@ interface BillFormData {
   recurring: boolean;
   status: 'unpaid' | 'paid' | 'overdue';
   notes: string;
-  priority: 'low' | 'medium' | 'high';
+  email_reminder: boolean;
   reminder_days: number;
 }
 
@@ -80,7 +82,7 @@ const initialFormData: BillFormData = {
   recurring: false,
   status: 'unpaid',
   notes: '',
-  priority: 'medium',
+  email_reminder: true,
   reminder_days: 1,
 };
 
@@ -214,9 +216,8 @@ const Bills = () => {
         recurring: formData.recurring,
         status: formData.status,
         notes: formData.notes?.trim() || null,
-        priority: formData.priority || 'medium',
         reminder_days_before: formData.reminder_days || 1,
-        auto_reminder_enabled: true, // Always enable auto-reminders for new bills
+        auto_reminder_enabled: formData.email_reminder,
         created_at: editingBill ? editingBill.created_at : new Date().toISOString(),
         updated_at: new Date().toISOString(),
       };
@@ -268,8 +269,7 @@ const Bills = () => {
               const { error: reminderError } = await supabase.functions.invoke('schedule-individual-reminder', {
                 body: {
                   bill_id: insertedBill.id,
-                  reminder_days_before: billData.reminder_days_before || 1,
-                  priority: billData.priority || 'medium'
+                  reminder_days_before: billData.reminder_days_before || 1
                 }
               });
 
@@ -336,17 +336,11 @@ const Bills = () => {
       await logError(error, 'Bills', 'add_bill_submit', {
         billName: formData.name,
         amount: formData.amount,
-        priority: formData.priority,
         editing: !!editingBill,
       });
       
       // Show user-friendly error message
-      let errorMessage = error.message || "Something went wrong. Please try again.";
-      
-      // Check for priority constraint violation
-      if (error.message?.includes('bill_reminders_priority_check')) {
-        errorMessage = "Couldn't save. Please pick a valid priority (Low/Medium/High) and try again.";
-      }
+      const errorMessage = error.message || "Something went wrong. Please try again.";
       
       toast({
         title: "Failed to Save Bill",
@@ -371,8 +365,8 @@ const Bills = () => {
       recurring: bill.recurring,
       status: bill.status,
       notes: bill.notes || '',
-      priority: 'medium', // Default priority
-      reminder_days: 1, // Default reminder days
+      email_reminder: bill.auto_reminder_enabled ?? true,
+      reminder_days: bill.reminder_days_before || 1,
     });
     setEditingBill(bill);
     setIsDialogOpen(true);

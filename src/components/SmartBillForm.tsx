@@ -33,7 +33,7 @@ interface BillFormData {
   recurring: boolean;
   status: 'unpaid' | 'paid' | 'overdue';
   notes: string;
-  priority: 'low' | 'medium' | 'high';
+  email_reminder: boolean;
   reminder_days: number;
 }
 
@@ -51,7 +51,6 @@ const billTemplates = [
     icon: Zap,
     suggestedAmount: 2500,
     dueDay: 15,
-    priority: 'high' as const,
     notes: 'Monthly electricity consumption'
   },
   {
@@ -60,7 +59,6 @@ const billTemplates = [
     icon: Smartphone,
     suggestedAmount: 1500,
     dueDay: 1,
-    priority: 'medium' as const,
     notes: 'Broadband internet service'
   },
   {
@@ -69,7 +67,6 @@ const billTemplates = [
     icon: Home,
     suggestedAmount: 25000,
     dueDay: 1,
-    priority: 'high' as const,
     notes: 'Monthly house rent payment'
   },
   {
@@ -78,7 +75,6 @@ const billTemplates = [
     icon: Shield,
     suggestedAmount: 5000,
     dueDay: 10,
-    priority: 'medium' as const,
     notes: 'Life insurance premium'
   },
   {
@@ -87,7 +83,6 @@ const billTemplates = [
     icon: CreditCard,
     suggestedAmount: 8000,
     dueDay: 20,
-    priority: 'high' as const,
     notes: 'Credit card minimum payment'
   }
 ];
@@ -178,9 +173,10 @@ const SmartBillForm = ({ formData, setFormData, onSubmit, editingBill }: SmartBi
       category: template.category,
       amount: template.suggestedAmount.toString(),
       due_date: suggestedDate,
-      priority: template.priority,
       notes: template.notes,
-      recurring: true
+      recurring: true,
+      email_reminder: true,
+      reminder_days: 1
     });
     
     toast({
@@ -350,77 +346,43 @@ const SmartBillForm = ({ formData, setFormData, onSubmit, editingBill }: SmartBi
           </Select>
         </div>
 
-        {/* Priority & Reminder Settings */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <Label>Priority Level</Label>
-            <Select 
-              value={formData.priority} 
-              onValueChange={(value: 'low' | 'medium' | 'high') => setFormData({ ...formData, priority: value })}
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="low">
-                  <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 bg-green-500 rounded-full" />
-                    Low Priority
-                  </div>
-                </SelectItem>
-                <SelectItem value="medium">
-                  <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 bg-yellow-500 rounded-full" />
-                    Medium Priority
-                  </div>
-                </SelectItem>
-                <SelectItem value="high">
-                  <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 bg-red-500 rounded-full" />
-                    High Priority
-                  </div>
-                </SelectItem>
-              </SelectContent>
-            </Select>
+        {/* Email Reminder Toggle */}
+        <div className="space-y-4">
+          <div className="flex items-center justify-between p-4 bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-950/30 dark:to-purple-950/30 rounded-lg border border-blue-200 dark:border-blue-800">
+            <div className="space-y-1">
+              <Label className="flex items-center gap-2 text-base font-semibold text-blue-700 dark:text-blue-300">
+                📧 Email Reminder
+              </Label>
+              <p className="text-sm text-blue-600 dark:text-blue-400">
+                Get notified before this bill is due
+              </p>
+            </div>
+            <Switch
+              checked={formData.email_reminder}
+              onCheckedChange={(checked) => setFormData({ ...formData, email_reminder: checked })}
+              className="data-[state=checked]:bg-blue-600"
+            />
           </div>
 
-          <div className="space-y-2">
-            <Label>Remind Me (days before)</Label>
-            <Select 
-              value={formData.reminder_days.toString()} 
-              onValueChange={(value) => setFormData({ ...formData, reminder_days: parseInt(value) })}
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="1">1 day before</SelectItem>
-                <SelectItem value="3">3 days before</SelectItem>
-                <SelectItem value="7">1 week before</SelectItem>
-                <SelectItem value="14">2 weeks before</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-
-        {/* Auto Reminder Toggle */}
-        <div className="flex items-center justify-between p-4 bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-950/30 dark:to-purple-950/30 rounded-lg border border-blue-200 dark:border-blue-800">
-          <div className="space-y-1">
-            <Label className="flex items-center gap-2 text-base font-semibold text-blue-700 dark:text-blue-300">
-              📅 Auto-Remind Me
-              <Badge variant="secondary" className="text-xs px-2 py-0.5">
-                Recommended
-              </Badge>
-            </Label>
-            <p className="text-sm text-blue-600 dark:text-blue-400">
-              Get email reminders {formData.reminder_days} day{formData.reminder_days !== 1 ? 's' : ''} before due date
-            </p>
-          </div>
-          <Switch
-            checked={true}
-            onCheckedChange={() => {}}
-            className="data-[state=checked]:bg-blue-600"
-          />
+          {formData.email_reminder && (
+            <div className="space-y-2 pl-4">
+              <Label>Remind me:</Label>
+              <Select 
+                value={formData.reminder_days.toString()} 
+                onValueChange={(value) => setFormData({ ...formData, reminder_days: parseInt(value) })}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="0">Same day</SelectItem>
+                  <SelectItem value="1">1 day before</SelectItem>
+                  <SelectItem value="2">2 days before</SelectItem>
+                  <SelectItem value="7">7 days before</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          )}
         </div>
 
         {/* Recurring Bill Toggle */}

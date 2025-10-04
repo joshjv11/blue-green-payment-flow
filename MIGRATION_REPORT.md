@@ -1,3 +1,49 @@
+# InvoiceFlow Migration & Deployment Report
+
+## Recent Changes (January 2025)
+
+### 1. Priority Field Removal & Reminder Simplification
+
+**Objective:** Simplify the bill reminder workflow by removing priority levels and replacing with explicit user control.
+
+**Changes:**
+- ✅ Removed priority selector from bill forms
+- ✅ Added "Email Reminder" toggle with days selector (Same day, 1 day before, 2 days before, 7 days before)
+- ✅ Updated database triggers to ignore priority field
+- ✅ Updated all tests to remove priority references
+- ✅ Priority column retained in DB for backward compatibility (not written/read)
+
+**Files Modified:**
+- `src/components/SmartBillForm.tsx` - New reminder UI
+- `src/pages/Bills.tsx` - Updated form data structure
+- `tests/bills-flow.test.ts` - Updated test assertions
+
+### 2. Landing Page Redesign
+
+**Objective:** Modern, grand design with blue→white gradient and simplified CTAs.
+
+**Changes:**
+- ✅ New full-bleed gradient: deep blue (top-left) → white (bottom-right)
+- ✅ Large reflective headline with CSS-only shine effect
+- ✅ Centered glassy auth card with blur and shadow
+- ✅ Removed "Go to Dashboard" button for non-authenticated users (kept for authenticated users)
+- ✅ Removed ₹199 setup call CTA
+- ✅ Removed live system test widget
+- ✅ Kept only Sign In / Email auth buttons
+
+**Files Modified:**
+- `src/pages/LandingPage.tsx` - Complete redesign
+- `src/index.css` - Added `.text-reflect` class
+- `src/components/AuthButtons.tsx` - New component (created)
+- `src/components/SetupCallCTA.tsx` - Deleted
+
+**Design Tokens Used:**
+- Gradient: `from-[hsl(199,89%,48%)] via-[hsl(199,89%,68%)] to-white`
+- Text reflect: Multi-layer text-shadow with white highlights
+- Glass card: `bg-white/10 backdrop-blur-lg` with `border-white/20`
+
+---
+
 # Migration Report: Error Logging & Priority Fix
 
 **Date:** 2025-10-04  
