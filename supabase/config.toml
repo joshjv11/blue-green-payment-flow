@@ -39,3 +39,6 @@ verify_jwt = false
 
 [functions.setup-reminder-cron]
 verify_jwt = false
+
+[functions.get-current-plan]
+verify_jwt = true

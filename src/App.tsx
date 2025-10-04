@@ -4,6 +4,8 @@ import { TooltipProvider } from '@/components/ui/tooltip';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from '@/hooks/useAuth';
+import { PlanProvider } from '@/contexts/PlanContext';
+import ErrorBoundary from '@/components/ErrorBoundary';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import DebugInfo from '@/components/DebugInfo';
 import MobileOptimizer from '@/components/MobileOptimizer';
@@ -23,15 +25,17 @@ import NotFound from './pages/NotFound';
 const queryClient = new QueryClient();
 
 const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <AuthProvider>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <DebugInfo />
-        <BrowserRouter>
-          <MobileOptimizer />
-          <Routes>
+  <ErrorBoundary>
+    <QueryClientProvider client={queryClient}>
+      <AuthProvider>
+        <PlanProvider>
+          <TooltipProvider>
+            <Toaster />
+            <Sonner />
+            <DebugInfo />
+            <BrowserRouter>
+              <MobileOptimizer />
+              <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/auth" element={<Auth />} />
             <Route path="/terms" element={<Terms />} />
@@ -96,8 +100,10 @@ const App = () => (
           </Routes>
         </BrowserRouter>
       </TooltipProvider>
-    </AuthProvider>
-  </QueryClientProvider>
+        </PlanProvider>
+      </AuthProvider>
+    </QueryClientProvider>
+  </ErrorBoundary>
 );
 
 export default App;

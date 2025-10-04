@@ -29,6 +29,11 @@ export const usePaymentVerification = () => {
           .eq('processed', false); // Only get unprocessed verified payments
 
         if (error) {
+          // Gracefully handle missing table (PGRST205)
+          if (error.code === 'PGRST205') {
+            console.warn('⚠️ payment_transactions table not found, skipping payment verification');
+            return;
+          }
           console.error('❌ Error checking payment status:', error);
           return;
         }
@@ -66,16 +71,22 @@ export const usePaymentVerification = () => {
         }
 
         // Get pending payments for UI feedback
-        const { data: pending } = await supabase
+        const { data: pending, error: pendingError } = await supabase
           .from('payment_transactions')
           .select('*')
           .eq('user_id', user.id)
           .eq('status', 'pending');
 
-        setPendingPayments(pending || []);
+        // Ignore if table doesn't exist
+        if (!pendingError || pendingError.code !== 'PGRST205') {
+          setPendingPayments(pending || []);
+        }
 
-      } catch (error) {
-        console.error('❌ Error checking payment status:', error);
+      } catch (error: any) {
+        // Silently handle payment table errors - it's optional functionality
+        if (error?.code !== 'PGRST205') {
+          console.error('❌ Error checking payment status:', error);
+        }
       }
     };
 
