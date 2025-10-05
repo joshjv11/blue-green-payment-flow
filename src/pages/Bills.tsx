@@ -45,6 +45,7 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import BillReminderManager from '@/components/BillReminderManager';
 import { formatINRCompact } from '@/utils/currency';
 import { logError, logInfo } from '@/lib/logger';
+import { useLoadingWatchdog } from '@/hooks/useLoadingWatchdog';
 
 interface Bill {
   id: string;
@@ -112,15 +113,20 @@ const Bills = () => {
   const isMobile = useIsMobile();
   
   const { plan, billLimit, canAddBill, loading: planLoading, aiQueriesUsed, aiQueriesLimit } = useSupabasePlan();
+
+  useLoadingWatchdog(loading, 'Loading your bills is taking longer than expected. Try refreshing the page.');
+  useLoadingWatchdog(planLoading, 'Checking your subscription status is taking a while.');
   
   // Initialize payment verification
   usePaymentVerification();
 
   useEffect(() => {
-    if (user) {
-      fetchBills();
+    if (!user || planLoading) {
+      return;
     }
-  }, [user]);
+
+    fetchBills();
+  }, [user, planLoading, plan]);
 
   const fetchBills = async () => {
     try {

@@ -32,6 +32,16 @@ const handler = async (req: Request): Promise<Response> => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  if (
+    req.method === 'GET' &&
+    new URL(req.url).searchParams.get('health') === '1'
+  ) {
+    return new Response(
+      JSON.stringify({ ok: true, ts: Date.now() }),
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
+    );
+  }
+
   try {
     // Check if this is a manual test request
     const requestBody = req.method === 'POST' ? await req.json() : {};

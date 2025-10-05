@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useState } from 'react';
 import { User, Session, AuthChangeEvent } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase';
+import { initAuthListener, subscribeToAuthEvents } from '@/lib/auth-listener';
 import { useToast } from '@/hooks/use-toast';
 
 interface AuthContextType {
@@ -25,23 +26,26 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   useEffect(() => {
     console.log('🔐 Auth: Initializing Supabase auth state management...');
-    
-    // Set up auth state listener FIRST to catch all events
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+
+    initAuthListener();
+
+    const unsubscribe = subscribeToAuthEvents(
       async (event: AuthChangeEvent, session: Session | null) => {
         console.log('🔐 Auth state changed:', event, session?.user?.email || 'No user');
-        
-        // Update state with session data from Supabase
+
         setSession(session);
         setUser(session?.user ?? null);
         setLoading(false);
-        
-        // Handle different auth events
+
         switch (event) {
           case 'SIGNED_IN':
             console.log('✅ User signed in successfully');
-            
-            // Check if profile exists, create if new user
+
+            if (!session) {
+              console.warn('Received SIGNED_IN event without session payload');
+              break;
+            }
+
             try {
               const { data: existingProfile } = await supabase
                 .from('profiles')
@@ -60,19 +64,18 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                     company: session.user.user_metadata?.company || null,
                     avatar_url: session.user.user_metadata?.avatar_url || session.user.user_metadata?.picture || null,
                   });
-                
+
                 if (profileError) {
                   console.warn('⚠️ Profile creation error:', profileError);
                 } else {
                   console.log('✅ Profile created successfully');
-                  
-                  // Add sample data for new users
+
                   try {
                     console.log('📊 Adding sample data for new user');
                     const { error: seedError } = await supabase.rpc('add_sample_data_for_user', {
                       target_user_id: session.user.id
                     });
-                    
+
                     if (seedError) {
                       console.error('❌ Error adding sample data:', seedError);
                     } else {
@@ -89,15 +92,17 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
               console.error('❌ Error handling profile:', error);
             }
             break;
-            
+
           case 'SIGNED_OUT':
             console.log('👋 User signed out');
             break;
-            
+
           case 'TOKEN_REFRESHED':
-            console.log('🔄 Token refreshed successfully');
+            if (session) {
+              console.log('🔄 Token refreshed successfully');
+            }
             break;
-            
+
           default:
             console.log('🔐 Auth event:', event);
         }
@@ -121,7 +126,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     // Cleanup subscription on unmount
     return () => {
       console.log('🔐 Cleaning up auth subscription');
-      subscription.unsubscribe();
+      unsubscribe();
     };
   }, []);
 

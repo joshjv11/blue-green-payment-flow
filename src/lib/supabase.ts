@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
+import { apiFetch } from '@/lib/api';
 
 // Supabase client configuration - NEW PROJECT
 const supabaseUrl = "https://qusloccwftavvcsttmnq.supabase.co";
@@ -7,14 +8,27 @@ const supabaseAnonKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYm
 // Check if Supabase is configured
 export const isSupabaseConfigured = !!(supabaseUrl && supabaseAnonKey);
 
+let client: ReturnType<typeof createClient> | null = null;
+
 // Create Supabase client with proper configuration
-export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
-  auth: {
-    storage: localStorage,
-    persistSession: true,
-    autoRefreshToken: true,
+export const supabase = (() => {
+  if (client) {
+    return client;
   }
-});
+
+  client = createClient(supabaseUrl, supabaseAnonKey, {
+    auth: {
+      storage: localStorage,
+      persistSession: true,
+      autoRefreshToken: true,
+    },
+    global: {
+      fetch: (input: RequestInfo | URL, init?: RequestInit) => apiFetch(input, init),
+    },
+  });
+
+  return client;
+})();
 
 export type Database = {
   public: {

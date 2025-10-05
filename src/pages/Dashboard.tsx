@@ -28,6 +28,7 @@ import UpgradeTrigger from '@/components/UpgradeTrigger';
 import UpgradeModal from '@/components/UpgradeModal';
 import AddPasskeyBanner from '@/components/auth/AddPasskeyBanner';
 import { useAnalytics } from '@/hooks/useAnalytics';
+import { useLoadingWatchdog } from '@/hooks/useLoadingWatchdog';
 
 interface Bill {
   id: string;
@@ -48,7 +49,17 @@ const Dashboard = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { track } = useAnalytics();
-  const { plan, aiQueriesUsed, aiQueriesLimit, loading: planLoading } = useSupabasePlan();
+  const planState = useSupabasePlan();
+  const {
+    plan,
+    aiQueriesUsed,
+    aiQueriesLimit,
+    loading: planLoading,
+    billLimit,
+    canAddBill,
+    canMakeAIQuery,
+    getAIQueriesRemaining,
+  } = planState;
   const [profile, setProfile] = useState<any>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [fullName, setFullName] = useState('');
@@ -60,7 +71,9 @@ const Dashboard = () => {
   const [showExportImport, setShowExportImport] = useState(false);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [showPasskeyBanner, setShowPasskeyBanner] = useState(false);
-  const { billLimit, canAddBill, canMakeAIQuery, getAIQueriesRemaining } = useSupabasePlan();
+
+  useLoadingWatchdog(billsLoading, 'Loading your recent bills is taking longer than expected.');
+  useLoadingWatchdog(planLoading, 'Refreshing your subscription status is taking longer than normal.');
   
   // Initialize notifications, email reminders, and payment verification
   useNotifications();
@@ -68,24 +81,26 @@ const Dashboard = () => {
   usePaymentVerification();
 
   useEffect(() => {
-    if (user) {
-      fetchProfile();
-      fetchBills();
-      
-      // Check if we should show the passkey banner
-      const checkPasskeySupport = async () => {
-        if (window.PublicKeyCredential && 
-            await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable() &&
-            !localStorage.getItem('invoiceflow_has_passkey') &&
-            !localStorage.getItem('invoiceflow_passkey_banner_dismissed')) {
-          setShowPasskeyBanner(true);
-        }
-      };
-
-      checkPasskeySupport();
-      track('dashboard_viewed', { user_id: user?.id });
+    if (!user || planLoading) {
+      return;
     }
-  }, [user, track]);
+
+    fetchProfile();
+    fetchBills();
+
+    // Check if we should show the passkey banner
+    const checkPasskeySupport = async () => {
+      if (window.PublicKeyCredential &&
+          await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable() &&
+          !localStorage.getItem('invoiceflow_has_passkey') &&
+          !localStorage.getItem('invoiceflow_passkey_banner_dismissed')) {
+        setShowPasskeyBanner(true);
+      }
+    };
+
+    checkPasskeySupport();
+    track('dashboard_viewed', { user_id: user?.id });
+  }, [user, track, planLoading, plan]);
 
   const fetchProfile = async () => {
     try {

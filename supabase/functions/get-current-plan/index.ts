@@ -11,6 +11,16 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  if (
+    req.method === 'GET' &&
+    new URL(req.url).searchParams.get('health') === '1'
+  ) {
+    return new Response(
+      JSON.stringify({ ok: true, ts: Date.now() }),
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
+    );
+  }
+
   try {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseKey = Deno.env.get('SUPABASE_ANON_KEY')!;

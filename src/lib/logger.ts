@@ -1,4 +1,5 @@
 import { supabase, isSupabaseConfigured } from '@/lib/supabase';
+import { apiFetch } from '@/lib/api';
 
 interface LogEventParams {
   level?: 'info' | 'warn' | 'error';
@@ -56,19 +57,20 @@ export const logEvent = async (params: LogEventParams): Promise<void> => {
     const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlxenpjdmtnZW9naGlyZnJmbHpxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc4NDQzNDUsImV4cCI6MjA3MzQyMDM0NX0.NiUzLQFPOwPMiTFKyxMS82hdrqWxE9JbLdIYo-zoJYo';
 
     // Send log to edge function (fire and forget with keepalive)
-    fetch(`${supabaseUrl}/functions/v1/log-client-event`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': token ? `Bearer ${token}` : '',
-        'apikey': supabaseAnonKey,
-      },
-      body: JSON.stringify(payload),
-      keepalive: true, // Ensure log is sent even if page is closed
-    }).catch((error) => {
+    try {
+      await apiFetch(`${supabaseUrl}/functions/v1/log-client-event`, {
+        method: 'POST',
+        headers: {
+          'Authorization': token ? `Bearer ${token}` : '',
+          'apikey': supabaseAnonKey,
+        },
+        body: JSON.stringify(payload),
+        keepalive: true, // Ensure log is sent even if page is closed
+      }, 5_000);
+    } catch (error: any) {
       // Swallow errors silently - logging should never break the app
-      console.debug('Failed to send log (non-critical):', error.message);
-    });
+      console.debug('Failed to send log (non-critical):', error.message || error);
+    }
 
     // Also log to console in development
     if (process.env.NODE_ENV === 'development') {

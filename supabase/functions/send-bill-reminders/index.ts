@@ -30,6 +30,16 @@ const handler = async (req: Request): Promise<Response> => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  if (
+    req.method === 'GET' &&
+    new URL(req.url).searchParams.get('health') === '1'
+  ) {
+    return new Response(
+      JSON.stringify({ ok: true, ts: Date.now() }),
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
+    );
+  }
+
   try {
     console.log('🔔 Starting bill reminder check...');
 
@@ -125,7 +135,7 @@ const handler = async (req: Request): Promise<Response> => {
 
         // Create email content
         let subject = '';
-        let greeting = `Hi ${displayName},`;
+        const greeting = `Hi ${displayName},`;
         let content = '';
 
         if (billsDueToday.length > 0 && billsDueTomorrow.length > 0) {

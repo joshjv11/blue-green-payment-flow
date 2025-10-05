@@ -17,6 +17,7 @@ import { format, parseISO, startOfMonth, endOfMonth, differenceInDays, isBefore,
 import UpgradeModal from '@/components/UpgradeModal';
 import FreemiumLimitCard from '@/components/FreemiumLimitCard';
 import EnhancedAIAssistantV2 from '@/components/EnhancedAIAssistantV2';
+import { useLoadingWatchdog } from '@/hooks/useLoadingWatchdog';
 
 interface Bill {
   id: string;
@@ -35,19 +36,24 @@ interface Bill {
 const Analytics = () => {
   const { user } = useAuth();
   const { toast } = useToast();
-  const { plan, hasAdvancedAnalytics, aiQueriesUsed, aiQueriesLimit } = useSupabasePlan();
+  const { plan, hasAdvancedAnalytics, aiQueriesUsed, aiQueriesLimit, loading: planLoading } = useSupabasePlan();
   const [bills, setBills] = useState<Bill[]>([]);
   const [loading, setLoading] = useState(true);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
-  
+
   // Initialize payment verification
   usePaymentVerification();
 
+  useLoadingWatchdog(loading, 'Loading analytics data is taking longer than expected.');
+  useLoadingWatchdog(planLoading, 'Verifying your analytics access is taking longer than normal.');
+
   useEffect(() => {
-    if (user) {
-      fetchBills();
+    if (!user || planLoading) {
+      return;
     }
-  }, [user]);
+
+    fetchBills();
+  }, [user, planLoading, plan]);
 
   const fetchBills = async () => {
     try {
