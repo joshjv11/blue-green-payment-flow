@@ -26,6 +26,18 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  // Health check endpoint
+  if (req.method === 'GET') {
+    return new Response(JSON.stringify({ 
+      status: 'healthy',
+      service: 'log-client-event',
+      timestamp: new Date().toISOString()
+    }), {
+      status: 200,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+    });
+  }
+
   const request_id = crypto.randomUUID();
   
   try {

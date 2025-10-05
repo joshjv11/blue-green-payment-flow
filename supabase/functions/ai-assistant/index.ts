@@ -12,6 +12,18 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  // Health check endpoint
+  if (req.method === 'GET') {
+    return new Response(JSON.stringify({ 
+      status: 'healthy',
+      service: 'ai-assistant',
+      timestamp: new Date().toISOString()
+    }), {
+      status: 200,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+    });
+  }
+
   try {
     const { message, bills, context } = await req.json();
     

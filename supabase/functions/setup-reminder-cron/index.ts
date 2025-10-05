@@ -16,6 +16,18 @@ const handler = async (req: Request): Promise<Response> => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  // Health check endpoint
+  if (req.method === 'GET') {
+    return new Response(JSON.stringify({ 
+      status: 'healthy',
+      service: 'setup-reminder-cron',
+      timestamp: new Date().toISOString()
+    }), {
+      status: 200,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+    });
+  }
+
   try {
     console.log('⚙️ Setting up reminder cron job...');
 
