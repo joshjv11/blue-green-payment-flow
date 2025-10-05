@@ -52,24 +52,70 @@ const handler = async (req: Request): Promise<Response> => {
     }
     const resend = new Resend(resendApiKey);
 
-    // Get reminder details with bill and profile data
+    // Fetch reminder details (2-query pattern for resilience)
     const { data: reminder, error: reminderError } = await supabase
       .from('bill_reminders')
-      .select(`
-        *,
-        bills (
-          id, name, amount, due_date, category, status, notes, priority
-        ),
-        profiles!bill_reminders_user_id_fkey (
-          email, full_name, reminder_email, email_notifications_enabled
-        )
-      `)
+      .select('*')
       .eq('id', reminder_id)
       .single();
 
     if (reminderError || !reminder) {
       console.error('❌ Reminder not found:', reminderError);
-      throw new Error(`Reminder not found: ${reminderError?.message}`);
+      return new Response(
+        JSON.stringify({
+          success: false,
+          reason: 'REMINDER_NOT_FOUND',
+          details: reminderError?.message || 'Reminder not found'
+        }),
+        {
+          status: 200,
+          headers: { 'Content-Type': 'application/json', ...corsHeaders }
+        }
+      );
+    }
+
+    // Fetch bill details
+    const { data: bill, error: billError } = await supabase
+      .from('bills')
+      .select('id, name, amount, due_date, category, status, notes, priority')
+      .eq('id', reminder.bill_id)
+      .single();
+
+    if (billError || !bill) {
+      console.error('❌ Bill not found:', billError);
+      return new Response(
+        JSON.stringify({
+          success: false,
+          reason: 'BILL_NOT_FOUND',
+          details: billError?.message || 'Bill not found'
+        }),
+        {
+          status: 200,
+          headers: { 'Content-Type': 'application/json', ...corsHeaders }
+        }
+      );
+    }
+
+    // Fetch profile separately
+    const { data: profile, error: profileError } = await supabase
+      .from('profiles')
+      .select('email, full_name, reminder_email, email_notifications_enabled')
+      .eq('id', reminder.user_id)
+      .single();
+
+    if (profileError || !profile) {
+      console.error('❌ Profile not found:', profileError);
+      return new Response(
+        JSON.stringify({
+          success: false,
+          reason: 'PROFILE_NOT_FOUND',
+          details: profileError?.message || 'User profile not found'
+        }),
+        {
+          status: 200,
+          headers: { 'Content-Type': 'application/json', ...corsHeaders }
+        }
+      );
     }
 
     // Check if reminder is already processed
@@ -77,7 +123,8 @@ const handler = async (req: Request): Promise<Response> => {
       console.log('⚠️ Reminder already sent, skipping');
       return new Response(
         JSON.stringify({
-          success: true,
+          success: false,
+          reason: 'ALREADY_SENT',
           message: 'Reminder already sent',
           reminder_id,
         }),
@@ -89,7 +136,7 @@ const handler = async (req: Request): Promise<Response> => {
     }
 
     // Check if user still has email notifications enabled
-    if (!reminder.profiles?.email_notifications_enabled) {
+    if (!profile.email_notifications_enabled) {
       console.log('⚠️ User has email notifications disabled, cancelling reminder');
       
       await supabase
@@ -103,7 +150,8 @@ const handler = async (req: Request): Promise<Response> => {
 
       return new Response(
         JSON.stringify({
-          success: true,
+          success: false,
+          reason: 'EMAIL_DISABLED_OR_MISSING',
           message: 'Reminder cancelled - user disabled email notifications',
           reminder_id,
         }),
@@ -114,17 +162,20 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    const bill = reminder.bills;
-    const profile = reminder.profiles;
-    
-    if (!bill || !profile) {
-      throw new Error('Bill or profile data missing');
-    }
-
     // Use reminder email if set, otherwise use primary email
     const emailAddress = profile.reminder_email || profile.email;
     if (!emailAddress) {
-      throw new Error('No email address found for user');
+      return new Response(
+        JSON.stringify({
+          success: false,
+          reason: 'EMAIL_DISABLED_OR_MISSING',
+          message: 'No email address found for user'
+        }),
+        {
+          status: 200,
+          headers: { 'Content-Type': 'application/json', ...corsHeaders }
+        }
+      );
     }
 
     const displayName = profile.full_name || emailAddress.split('@')[0];

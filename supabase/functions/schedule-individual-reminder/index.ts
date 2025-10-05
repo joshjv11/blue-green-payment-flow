@@ -45,25 +45,76 @@ const handler = async (req: Request): Promise<Response> => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    // Get bill details
+    // Fetch bill details (2-query pattern for resilience)
     const { data: bill, error: billError } = await supabase
       .from('bills')
-      .select('*, profiles!bills_user_id_fkey(email, full_name, email_notifications_enabled)')
+      .select('id, user_id, name, amount, due_date, status, category, notes, priority, reminder_days_before, auto_reminder_enabled')
       .eq('id', bill_id)
       .single();
 
     if (billError || !bill) {
       console.error('❌ Error fetching bill:', billError);
-      throw new Error(`Bill not found: ${billError?.message}`);
+      return new Response(
+        JSON.stringify({
+          success: false,
+          reason: 'BILL_NOT_FOUND',
+          details: billError?.message || 'Bill not found',
+          bill_id
+        }),
+        {
+          status: 200,
+          headers: { 'Content-Type': 'application/json', ...corsHeaders }
+        }
+      );
+    }
+
+    // Fetch profile separately
+    const { data: profile, error: profileError } = await supabase
+      .from('profiles')
+      .select('id, email, full_name, email_notifications_enabled, reminder_email')
+      .eq('id', bill.user_id)
+      .single();
+
+    if (profileError || !profile) {
+      console.error('❌ Error fetching profile:', profileError);
+      return new Response(
+        JSON.stringify({
+          success: false,
+          reason: 'PROFILE_NOT_FOUND',
+          details: profileError?.message || 'User profile not found',
+          bill_id
+        }),
+        {
+          status: 200,
+          headers: { 'Content-Type': 'application/json', ...corsHeaders }
+        }
+      );
     }
 
     // Check if user has email notifications enabled
-    if (!bill.profiles?.email_notifications_enabled) {
+    if (!profile.email_notifications_enabled) {
       console.log('⚠️ User has email notifications disabled, skipping reminder scheduling');
       return new Response(
         JSON.stringify({
-          success: true,
-          message: 'Reminder not scheduled - user has email notifications disabled',
+          success: false,
+          reason: 'EMAIL_DISABLED_OR_MISSING',
+          message: 'User has email notifications disabled',
+          bill_id,
+        }),
+        {
+          status: 200,
+          headers: { 'Content-Type': 'application/json', ...corsHeaders }
+        }
+      );
+    }
+
+    if (!profile.email) {
+      console.log('⚠️ User has no email address');
+      return new Response(
+        JSON.stringify({
+          success: false,
+          reason: 'EMAIL_DISABLED_OR_MISSING',
+          message: 'User has no email address',
           bill_id,
         }),
         {
@@ -146,7 +197,7 @@ const handler = async (req: Request): Promise<Response> => {
       reminder_id: reminder.id,
       bill_id,
       bill_name: bill.name,
-      user_email: bill.profiles?.email,
+      user_email: profile.email,
       reminder_date: reminderDate.toISOString().split('T')[0],
       due_date: bill.due_date,
       priority
@@ -224,7 +275,7 @@ const handler = async (req: Request): Promise<Response> => {
           id: reminder.id,
           bill_id,
           bill_name: bill.name,
-          user_email: bill.profiles?.email,
+          user_email: profile.email,
           reminder_date: reminderDate.toISOString().split('T')[0],
           reminder_time: reminderDateTime.toISOString(),
           due_date: bill.due_date,

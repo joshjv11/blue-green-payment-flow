@@ -82,12 +82,10 @@ const handler = async (req: Request): Promise<Response> => {
 
     console.log(`📅 IST Date Check - Today: ${todayStr}, Tomorrow: ${tomorrowStr}, Current IST: ${istNow.toISOString()}`);
 
-    // Fetch bills due today or tomorrow that are unpaid/overdue
+    // Fetch bills due today or tomorrow that are unpaid/overdue (2-query pattern)
     const { data: bills, error: billsError } = await supabase
       .from('bills')
-      .select(`
-        id, user_id, name, amount, due_date, category, status, notes
-      `)
+      .select('id, user_id, name, amount, due_date, category, status, notes')
       .in('status', ['unpaid', 'overdue'])
       .in('due_date', [todayStr, tomorrowStr]);
 

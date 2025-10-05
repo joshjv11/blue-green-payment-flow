@@ -43,25 +43,10 @@ const handler = async (req: Request): Promise<Response> => {
     const today = new Date().toISOString().split('T')[0];
     console.log(`📅 Processing reminders due on or before: ${today}`);
 
-    // Find all pending reminders that are due today or earlier
+    // Find all pending reminders that are due today or earlier (2-query pattern)
     const { data: dueReminders, error: fetchError } = await supabase
       .from('bill_reminders')
-      .select(`
-        id,
-        bill_id,
-        user_id,
-        reminder_date,
-        priority,
-        bills (
-          name,
-          amount,
-          due_date
-        ),
-        profiles!bill_reminders_user_id_fkey (
-          email,
-          email_notifications_enabled
-        )
-      `)
+      .select('id, bill_id, user_id, reminder_date, priority')
       .eq('status', 'pending')
       .lte('reminder_date', today)
       .order('priority', { ascending: false }) // High priority first
@@ -99,8 +84,15 @@ const handler = async (req: Request): Promise<Response> => {
     // Process each reminder
     for (const reminder of dueReminders) {
       try {
+        // Fetch profile to check email notifications
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('email_notifications_enabled, email')
+          .eq('id', reminder.user_id)
+          .single();
+
         // Check if user has email notifications enabled
-        if (!reminder.profiles?.email_notifications_enabled) {
+        if (!profile?.email_notifications_enabled) {
           console.log(`⚠️ Skipping reminder ${reminder.id} - user has notifications disabled`);
           
           // Mark as cancelled
@@ -117,7 +109,14 @@ const handler = async (req: Request): Promise<Response> => {
           continue;
         }
 
-        console.log(`📧 Processing reminder ${reminder.id} for bill: ${reminder.bills?.name}`);
+        // Fetch bill name for logging
+        const { data: bill } = await supabase
+          .from('bills')
+          .select('name')
+          .eq('id', reminder.bill_id)
+          .single();
+
+        console.log(`📧 Processing reminder ${reminder.id} for bill: ${bill?.name || 'Unknown'}`);
 
         // Invoke send-individual-reminder function
         const { data: sendResult, error: sendError } = await supabase.functions.invoke(
@@ -147,7 +146,6 @@ const handler = async (req: Request): Promise<Response> => {
           failed++;
           results.push({
             reminder_id: reminder.id,
-            bill_name: reminder.bills?.name,
             status: 'failed',
             error: sendError.message
           });
@@ -156,7 +154,6 @@ const handler = async (req: Request): Promise<Response> => {
           processed++;
           results.push({
             reminder_id: reminder.id,
-            bill_name: reminder.bills?.name,
             status: 'sent',
             result: sendResult
           });
