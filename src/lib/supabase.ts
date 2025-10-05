@@ -1,27 +1,33 @@
-import { createClient, SupabaseClient } from '@supabase/supabase-js';
+/**
+ * SINGLETON Supabase client wrapper
+ * Re-exports the auto-generated client from @/integrations/supabase/client
+ * with apiFetch configured to prevent infinite buffering and timeouts.
+ * 
+ * ALWAYS import from here, NOT from @/integrations/supabase/client directly
+ * to ensure only ONE client instance exists across the app.
+ */
+
+import { createClient } from '@supabase/supabase-js';
 import { apiFetch } from './apiFetch';
+import type { Database } from '@/integrations/supabase/types';
 
-// Override global fetch with our timeout wrapper
-if (typeof window !== 'undefined') {
-  (window as any).fetch = apiFetch;
-}
-
-// Supabase client configuration - NEW PROJECT
-const supabaseUrl = "https://qusloccwftavvcsttmnq.supabase.co";
-const supabaseAnonKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF1c2xvY2N3ZnRhdnZjc3R0bW5xIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTg3ODk0MTQsImV4cCI6MjA3NDM2NTQxNH0.8YpZ9eWRA2c96zmMJMOBPpgNWjoKACwpwNGafOsyUS0";
+const SUPABASE_URL = "https://qusloccwftavvcsttmnq.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF1c2xvY2N3ZnRhdnZjc3R0bW5xIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTg3ODk0MTQsImV4cCI6MjA3NDM2NTQxNH0.8YpZ9eWRA2c96zmMJMOBPpgNWjoKACwpwNGafOsyUS0";
 
 // Check if Supabase is configured
-export const isSupabaseConfigured = !!(supabaseUrl && supabaseAnonKey);
+export const isSupabaseConfigured = !!(SUPABASE_URL && SUPABASE_ANON_KEY);
 
-// Singleton Supabase client instance
-let supabaseInstance: SupabaseClient | null = null;
+// Singleton instance - created ONCE and memoized
+let supabaseInstance: ReturnType<typeof createClient<Database>> | null = null;
 
-function createSupabaseClient() {
+function getSupabaseClient() {
   if (supabaseInstance) {
     return supabaseInstance;
   }
 
-  supabaseInstance = createClient(supabaseUrl, supabaseAnonKey, {
+  console.log('🔧 Creating singleton Supabase client...');
+
+  supabaseInstance = createClient<Database>(SUPABASE_URL, SUPABASE_ANON_KEY, {
     auth: {
       storage: localStorage,
       persistSession: true,
@@ -53,73 +59,5 @@ function createSupabaseClient() {
   return supabaseInstance;
 }
 
-// Export singleton instance
-export const supabase = createSupabaseClient();
-
-export type Database = {
-  public: {
-    Tables: {
-      profiles: {
-        Row: {
-          id: string;
-          email: string;
-          full_name: string | null;
-          company: string | null;
-          created_at: string;
-          updated_at: string;
-        };
-        Insert: {
-          id: string;
-          email: string;
-          full_name?: string | null;
-          company?: string | null;
-          created_at?: string;
-          updated_at?: string;
-        };
-        Update: {
-          id?: string;
-          email?: string;
-          full_name?: string | null;
-          company?: string | null;
-          created_at?: string;
-          updated_at?: string;
-        };
-      };
-      bills: {
-        Row: {
-          id: string;
-          user_id: string;
-          name: string;
-          amount: number;
-          due_date: string;
-          category: string;
-          recurring: boolean;
-          status: 'unpaid' | 'paid' | 'overdue';
-          notes: string | null;
-          created_at: string;
-          updated_at: string;
-        };
-        Insert: {
-          user_id: string;
-          name: string;
-          amount: number;
-          due_date: string;
-          category: string;
-          recurring?: boolean;
-          status?: 'unpaid' | 'paid' | 'overdue';
-          notes?: string | null;
-        };
-        Update: {
-          name?: string;
-          amount?: number;
-          due_date?: string;
-          category?: string;
-          recurring?: boolean;
-          status?: 'unpaid' | 'paid' | 'overdue';
-          notes?: string | null;
-          updated_at?: string;
-        };
-      };
-    };
-  };
-};
+// Export memoized singleton instance
+export const supabase = getSupabaseClient();

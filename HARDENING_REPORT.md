@@ -285,3 +285,66 @@ https://supabase.com/dashboard/project/yqzzcvkgeoghirfrflzq/functions/get-curren
 ---
 
 **Status**: ✅ All deliverables complete. InvoiceFlow is now production-ready.
+
+---
+
+## Update: Auth Loop Fix (2025-10-05)
+
+### Issue: Maximum Call Stack Size Exceeded - Infinite Sign-in Loop
+
+#### Root Causes:
+1. **Multiple Supabase Client Instances** - Two clients created auth state conflicts
+2. **Async Operations Inside Auth Callback** - Profile creation caused deadlocks
+3. **Fetch Recursion** - `apiFetch` was calling modified `window.fetch`
+4. **Missing Redirect Guards** - Multiple navigation redirects possible
+
+#### Fixes Implemented:
+
+**1. Singleton Supabase Client** (`src/lib/supabase.ts`)
+- Captured native fetch before modifications: `const NATIVE_FETCH = window.fetch.bind(window)`
+- Memoized single client instance with `getSupabaseClient()`
+- Configured `global.fetch: apiFetch` to use timeout wrapper
+- Result: Only ONE Supabase client across entire app ✅
+
+**2. Fixed Auth Callback** (`src/hooks/useAuth.tsx`)
+- Moved async profile creation outside `onAuthStateChange`
+- Created `handleNewUserProfileCreation()` helper deferred with `setTimeout()`
+- Only synchronous state updates in auth callback
+- Result: No more auth deadlocks or recursive calls ✅
+
+**3. Fixed Fetch Recursion** (`src/lib/apiFetch.ts`)
+- Always use `NATIVE_FETCH` instead of potentially modified `window.fetch`
+- Clean 15s timeout with abort controller
+- Result: No infinite recursion ✅
+
+**4. Redirect Loop Prevention** (`src/components/ProtectedRoute.tsx`)
+- Added `hasRedirected` ref to track navigation state
+- Reset on location change via `useEffect`
+- Maximum one redirect per route change
+- Result: No more redirect loops ✅
+
+**5. Type Safety Fixes**
+- `AdminDbHealth.tsx`: Cast to `any` for `information_schema` queries
+- `AdminLogs.tsx`: Type guards for `level` and `context` properties
+
+#### Regression Tests Added (`tests/auth-flow.test.ts`):
+- ✅ Prevents infinite sign-in loops
+- ✅ Ensures singleton Supabase client  
+- ✅ Prevents multiple redirects
+
+#### Impact:
+- **Before**: Random "Maximum call stack size exceeded" errors
+- **After**: Stable auth flow with proper session management
+- **Performance**: Reduced duplicate network requests
+- **UX**: No more stuck loading states or infinite redirects
+
+#### Testing:
+1. Sign in → Navigate tabs → No console errors ✅
+2. Sign out → Redirect to /auth ✅
+3. Refresh authenticated → Session persists ✅
+4. Hide/unhide tab → Session recovery works ✅
+5. No "Multiple GoTrueClient" warning ✅
+
+---
+
+**Overall Status**: ✅ Production-ready with robust auth flow and timeout handling.

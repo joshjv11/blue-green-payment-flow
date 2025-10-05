@@ -26,12 +26,62 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   useEffect(() => {
     console.log('🔐 Auth: Initializing Supabase auth state management...');
     
+    // Helper function to handle profile creation (deferred to prevent auth deadlock)
+    const handleNewUserProfileCreation = async (user: User) => {
+      try {
+        const { data: existingProfile } = await supabase
+          .from('profiles')
+          .select('id')
+          .eq('id', user.id)
+          .single();
+
+        if (!existingProfile) {
+          console.log('👤 Creating profile for new user:', user.email);
+          const { error: profileError } = await supabase
+            .from('profiles')
+            .insert({
+              id: user.id,
+              email: user.email!,
+              full_name: user.user_metadata?.full_name || user.user_metadata?.name || null,
+              company: user.user_metadata?.company || null,
+              avatar_url: user.user_metadata?.avatar_url || user.user_metadata?.picture || null,
+            });
+          
+          if (profileError) {
+            console.warn('⚠️ Profile creation error:', profileError);
+          } else {
+            console.log('✅ Profile created successfully');
+            
+            // Add sample data for new users
+            try {
+              console.log('📊 Adding sample data for new user');
+              const { error: seedError } = await supabase.rpc('add_sample_data_for_user', {
+                target_user_id: user.id
+              });
+              
+              if (seedError) {
+                console.error('❌ Error adding sample data:', seedError);
+              } else {
+                console.log('✅ Sample data added successfully');
+              }
+            } catch (seedError) {
+              console.error('❌ Error calling sample data function:', seedError);
+            }
+          }
+        } else {
+          console.log('👤 Existing user, profile already exists');
+        }
+      } catch (error) {
+        console.error('❌ Error handling profile:', error);
+      }
+    };
+    
     // Set up auth state listener FIRST to catch all events
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event: AuthChangeEvent, session: Session | null) => {
+      (event: AuthChangeEvent, session: Session | null) => {
         console.log('🔐 Auth state changed:', event, session?.user?.email || 'No user');
         
-        // Update state with session data from Supabase
+        // CRITICAL: Only synchronous updates here to prevent infinite loops
         setSession(session);
         setUser(session?.user ?? null);
         setLoading(false);
@@ -41,52 +91,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           case 'SIGNED_IN':
             console.log('✅ User signed in successfully');
             
-            // Check if profile exists, create if new user
-            try {
-              const { data: existingProfile } = await supabase
-                .from('profiles')
-                .select('id')
-                .eq('id', session.user.id)
-                .single();
-
-              if (!existingProfile) {
-                console.log('👤 Creating profile for new user:', session.user.email);
-                const { error: profileError } = await supabase
-                  .from('profiles')
-                  .insert({
-                    id: session.user.id,
-                    email: session.user.email!,
-                    full_name: session.user.user_metadata?.full_name || session.user.user_metadata?.name || null,
-                    company: session.user.user_metadata?.company || null,
-                    avatar_url: session.user.user_metadata?.avatar_url || session.user.user_metadata?.picture || null,
-                  });
-                
-                if (profileError) {
-                  console.warn('⚠️ Profile creation error:', profileError);
-                } else {
-                  console.log('✅ Profile created successfully');
-                  
-                  // Add sample data for new users
-                  try {
-                    console.log('📊 Adding sample data for new user');
-                    const { error: seedError } = await supabase.rpc('add_sample_data_for_user', {
-                      target_user_id: session.user.id
-                    });
-                    
-                    if (seedError) {
-                      console.error('❌ Error adding sample data:', seedError);
-                    } else {
-                      console.log('✅ Sample data added successfully');
-                    }
-                  } catch (seedError) {
-                    console.error('❌ Error calling sample data function:', seedError);
-                  }
-                }
-              } else {
-                console.log('👤 Existing user, profile already exists');
-              }
-            } catch (error) {
-              console.error('❌ Error handling profile:', error);
+            // Defer async DB operations to prevent deadlock in auth callback
+            if (session?.user) {
+              setTimeout(() => {
+                handleNewUserProfileCreation(session.user);
+              }, 0);
             }
             break;
             

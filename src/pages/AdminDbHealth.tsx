@@ -24,8 +24,8 @@ const AdminDbHealth = () => {
   const fetchDbHealth = async () => {
     setLoading(true);
     try {
-      // Fetch tables from information_schema
-      const { data: tablesData, error: tablesError } = await supabase
+      // Fetch tables from information_schema (using any to bypass type restrictions)
+      const { data: tablesData, error: tablesError } = await (supabase as any)
         .from("information_schema.tables")
         .select("table_name")
         .eq("table_schema", "public");
@@ -44,7 +44,7 @@ const AdminDbHealth = () => {
 
       for (const tableName of tablesToCount) {
         try {
-          const { count, error } = await supabase
+          const { count, error } = await (supabase as any)
             .from(tableName)
             .select("*", { count: "exact", head: true });
 

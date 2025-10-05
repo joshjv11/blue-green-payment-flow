@@ -3,6 +3,9 @@
  * Prevents infinite buffering when tabs are hidden or requests hang
  */
 
+// Capture native fetch BEFORE any modifications to prevent recursion
+const NATIVE_FETCH = window.fetch.bind(window);
+
 const FETCH_TIMEOUT_MS = 15000; // 15 seconds
 const activeRequests = new Set<AbortController>();
 
@@ -39,7 +42,7 @@ export async function apiFetch(
   activeRequests.add(controller);
 
   try {
-    const response = await fetch(input, {
+    const response = await NATIVE_FETCH(input, {
       ...init,
       signal,
     });

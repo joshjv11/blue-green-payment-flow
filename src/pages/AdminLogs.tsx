@@ -77,7 +77,11 @@ const AdminLogs = () => {
         return;
       }
 
-      setLogs(data || []);
+      setLogs((data || []).map(log => ({
+        ...log,
+        level: (log.level as 'info' | 'warn' | 'error') || 'info',
+        context: (log.context || {}) as Record<string, any>
+      })));
       console.log(`✅ Fetched ${data?.length || 0} logs`);
     } catch (error: any) {
       console.error('Error fetching logs:', error);

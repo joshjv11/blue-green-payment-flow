@@ -1,5 +1,6 @@
 import { useAuth } from '@/hooks/useAuth';
-import { Navigate } from 'react-router-dom';
+import { Navigate, useLocation } from 'react-router-dom';
+import { useEffect, useRef } from 'react';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -8,6 +9,13 @@ interface ProtectedRouteProps {
 
 const ProtectedRoute = ({ children, redirectTo = '/auth' }: ProtectedRouteProps) => {
   const { user, loading } = useAuth();
+  const location = useLocation();
+  const hasRedirected = useRef(false);
+
+  // Prevent multiple redirects
+  useEffect(() => {
+    hasRedirected.current = false;
+  }, [location.pathname]);
 
   return (
     <div className="min-h-screen bg-background">
@@ -18,8 +26,11 @@ const ProtectedRoute = ({ children, redirectTo = '/auth' }: ProtectedRouteProps)
             <p className="text-sm text-muted-foreground">Loading...</p>
           </div>
         </div>
-      ) : !user ? (
-        <Navigate to="/auth" replace />
+      ) : !user && !hasRedirected.current ? (
+        <>
+          {(hasRedirected.current = true)}
+          <Navigate to={redirectTo} replace />
+        </>
       ) : (
         children
       )}
