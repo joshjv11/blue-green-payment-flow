@@ -288,7 +288,7 @@ const handler = async (req: Request): Promise<Response> => {
             <!-- Call to Action -->
             <div style="text-align: center; margin: 35px 0;">
               <p style="margin: 0 0 20px 0; color: #64748b; font-size: 16px;">Manage your bills easily:</p>
-              <a href="https://your-app.lovable.app/bills" 
+              <a href="${Deno.env.get('APP_URL') || 'https://invoiceflow.dev'}/bills" 
                  style="display: inline-block; background: linear-gradient(135deg, ${headerColor}, ${headerColor}dd); color: white; padding: 15px 30px; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 16px; box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);">
                 📋 View Bills Dashboard
               </a>
@@ -299,13 +299,13 @@ const handler = async (req: Request): Promise<Response> => {
               <h4 style="margin: 0 0 15px 0; color: #0369a1; font-size: 16px;">💡 Quick Actions</h4>
               <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
                 <div style="text-align: center;">
-                  <a href="https://your-app.lovable.app/bills?action=pay&id=${bill.id}" 
+                  <a href="${Deno.env.get('APP_URL') || 'https://invoiceflow.dev'}/bills?action=pay&id=${bill.id}" 
                      style="display: block; background: #ffffff; color: #0369a1; padding: 12px; text-decoration: none; border-radius: 6px; font-size: 14px; font-weight: 600; border: 1px solid #bae6fd;">
                     💳 Mark as Paid
                   </a>
                 </div>
                 <div style="text-align: center;">
-                  <a href="https://your-app.lovable.app/bills?action=edit&id=${bill.id}" 
+                  <a href="${Deno.env.get('APP_URL') || 'https://invoiceflow.dev'}/bills?action=edit&id=${bill.id}" 
                      style="display: block; background: #ffffff; color: #0369a1; padding: 12px; text-decoration: none; border-radius: 6px; font-size: 14px; font-weight: 600; border: 1px solid #bae6fd;">
                     ✏️ Edit Bill
                   </a>

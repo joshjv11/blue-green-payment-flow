@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { Resend } from "npm:resend@2.0.0";
+import { testFooter } from "../_shared/emailFooter.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -48,31 +49,37 @@ const handler = async (req: Request): Promise<Response> => {
     // Send test email
     console.log(`📧 Sending test email to ${email}...`);
     
+    // Get FROM email from env or use default
+    const fromEmail = Deno.env.get('RESEND_FROM') || 'InvoiceFlow <no-reply@invoiceflow.dev>';
+
     const emailResponse = await resend.emails.send({
-      from: "InvoiceFlow <onboarding@resend.dev>",
+      from: fromEmail,
       to: [email],
-      subject: "🧪 Test Email from InvoiceFlow",
+      subject: "🧪 Test Email - Delivery Verification",
       html: `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-          <h1 style="color: #2563eb; text-align: center;">📧 Test Email Success!</h1>
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #ffffff;">
+          <h1 style="color: #2563eb; text-align: center; margin-bottom: 20px;">📧 Test Email Delivered Successfully</h1>
           
-          <div style="background: #f8fafc; padding: 20px; border-radius: 8px; margin: 20px 0;">
+          <div style="background: #f8fafc; padding: 20px; border-radius: 8px; margin: 20px 0; border: 1px solid #e2e8f0;">
             <h2 style="color: #334155; margin: 0 0 10px 0;">Hi ${displayName}!</h2>
             <p style="color: #64748b; line-height: 1.6; margin: 0;">
-              This is a test email from InvoiceFlow to confirm your email notifications are working correctly. 
+              This is a test email to confirm your notification settings are configured correctly. 
               You will receive bill reminders and important updates at this email address.
             </p>
           </div>
           
-          <div style="background: #ecfdf5; border: 1px solid #d1fae5; padding: 15px; border-radius: 8px; margin: 20px 0;">
-            <p style="color: #065f46; margin: 0; font-weight: 600;">✅ Email notifications are configured successfully!</p>
+          <div style="background: #ecfdf5; border: 2px solid #d1fae5; padding: 15px; border-radius: 8px; margin: 20px 0;">
+            <p style="color: #065f46; margin: 0; font-weight: 600; text-align: center;">✅ Email delivery confirmed</p>
           </div>
           
-          <div style="text-align: center; margin-top: 30px;">
-            <p style="color: #94a3b8; font-size: 14px; margin: 0;">
-              This is an automated test message from InvoiceFlow.
+          <div style="background: #f0f9ff; border: 1px solid #bae6fd; padding: 15px; border-radius: 8px; margin: 20px 0;">
+            <p style="color: #0369a1; margin: 0; font-size: 14px;">
+              <strong>What happens next?</strong><br>
+              When your bills are due, you'll receive automated reminders at this email address with bill details and due dates.
             </p>
           </div>
+          
+          ${testFooter}
         </div>
       `,
     });
@@ -80,7 +87,7 @@ const handler = async (req: Request): Promise<Response> => {
     console.log('✅ Test email sent successfully:', {
       id: emailResponse.data?.id,
       to: email,
-      from: "InvoiceFlow <onboarding@resend.dev>"
+      from: fromEmail
     });
 
     return new Response(

@@ -214,7 +214,7 @@ const handler = async (req: Request): Promise<Response> => {
               
               <div style="text-align: center; margin: 30px 0;">
                 <p style="margin: 0 0 15px 0; color: #64748b;">Keep track of all your bills:</p>
-                <a href="${Deno.env.get('SUPABASE_URL')?.replace('.supabase.co', '.lovable.app') || 'https://your-app.lovable.app'}/bills" 
+                <a href="${Deno.env.get('APP_URL') || 'https://invoiceflow.dev'}/bills" 
                    style="display: inline-block; background: #3b82f6; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold;">
                   📋 View All Bills
                 </a>

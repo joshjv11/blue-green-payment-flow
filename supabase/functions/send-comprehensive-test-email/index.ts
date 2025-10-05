@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.57.4';
 import { Resend } from "npm:resend@2.0.0";
+import { testFooter } from "../_shared/emailFooter.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -186,49 +187,28 @@ const handler = async (req: Request): Promise<Response> => {
             <!-- Summary Section -->
             <div style="background: linear-gradient(135deg, #f8fafc, #e2e8f0); padding: 25px; margin: 30px 0; border-radius: 12px; border: 2px solid #e2e8f0;">
               <div style="text-align: center;">
-                <h3 style="margin: 0 0 15px 0; color: #1e293b; font-size: 20px;">📊 Payment Summary</h3>
+                <h3 style="margin: 0 0 15px 0; color: #1e293b; font-size: 20px;">📊 Sample Payment Summary</h3>
                 <div style="background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
                   <p style="margin: 0; font-size: 32px; font-weight: bold; color: #3b82f6;">
                     ₹${totalAmount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
                   </p>
                   <p style="margin: 5px 0 0 0; font-size: 16px; color: #64748b;">
-                    Total Amount Due • ${sampleBills.length} Bill${sampleBills.length > 1 ? 's' : ''}
+                    Sample Total • ${sampleBills.length} Test Bill${sampleBills.length > 1 ? 's' : ''}
                   </p>
                 </div>
               </div>
             </div>
             
-            <!-- Call to Action -->
-            <div style="text-align: center; margin: 35px 0;">
-              <p style="margin: 0 0 20px 0; color: #64748b; font-size: 16px;">Manage all your bills in one place:</p>
-              <a href="https://your-app.lovable.app/bills" 
-                 style="display: inline-block; background: linear-gradient(135deg, #3b82f6, #1d4ed8); color: white; padding: 15px 30px; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 16px; box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);">
-                📋 View & Pay Bills
-              </a>
-            </div>
-            
-            <!-- Tips Section -->
-            <div style="background: #f0f9ff; border: 2px solid #bae6fd; padding: 20px; border-radius: 8px; margin: 30px 0;">
-              <h4 style="margin: 0 0 10px 0; color: #0369a1; font-size: 16px;">💡 Pro Tips for Better Bill Management</h4>
-              <ul style="margin: 0; padding-left: 20px; color: #0c4a6e;">
-                <li style="margin-bottom: 8px;">Set up automatic payments for recurring bills</li>
-                <li style="margin-bottom: 8px;">Enable email notifications for upcoming due dates</li>
-                <li style="margin-bottom: 8px;">Review and categorize your bills monthly</li>
-                <li>Keep digital receipts organized in InvoiceFlow</li>
-              </ul>
-            </div>
-            
-            <!-- Footer -->
-            <hr style="border: none; border-top: 2px solid #e5e7eb; margin: 35px 0;">
-            
-            <div style="text-align: center;">
-              <p style="font-size: 14px; color: #64748b; margin: 0 0 10px 0;">
-                This is a <strong>test email</strong> from InvoiceFlow Bill Reminder System
-              </p>
-              <p style="font-size: 12px; color: #9ca3af; margin: 0;">
-                Stay on top of your finances with InvoiceFlow 💪
+            <!-- Test Notice -->
+            <div style="background: #fffbeb; border: 2px solid #fcd34d; padding: 20px; border-radius: 8px; margin: 30px 0;">
+              <p style="margin: 0; color: #92400e; font-size: 14px; text-align: center;">
+                <strong>⚠️ This is a test email to confirm delivery</strong><br>
+                The bills shown above are sample data for demonstration purposes only. 
+                You will receive real reminders when your actual bills are due.
               </p>
             </div>
+            
+            ${testFooter}
           </div>
         </div>
       </body>
@@ -238,10 +218,13 @@ const handler = async (req: Request): Promise<Response> => {
     // Send test email
     console.log(`📧 Sending comprehensive test email to ${email}...`);
     
+    // Get FROM email from env or use default
+    const fromEmail = Deno.env.get('RESEND_FROM') || 'InvoiceFlow <no-reply@invoiceflow.dev>';
+    
     const emailResponse = await resend.emails.send({
-      from: "InvoiceFlow <no-reply@invoiceflow.dev>",
+      from: fromEmail,
       to: [email],
-      subject: subject,
+      subject: `🧪 Test: ${subject}`,
       html: htmlContent,
     });
 

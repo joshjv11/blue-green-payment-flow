@@ -311,7 +311,7 @@ const handler = async (req: Request): Promise<Response> => {
                 <!-- Call to Action -->
                 <div style="text-align: center; margin: 35px 0;">
                   <p style="margin: 0 0 20px 0; color: #64748b; font-size: 16px;">Manage all your bills in one place:</p>
-                  <a href="https://your-app.lovable.app/bills" 
+                  <a href="${Deno.env.get('APP_URL') || 'https://invoiceflow.dev'}/bills" 
                      style="display: inline-block; background: linear-gradient(135deg, #3b82f6, #1d4ed8); color: white; padding: 15px 30px; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 16px; box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);">
                     📋 View & Pay Bills
                   </a>
