@@ -1,4 +1,10 @@
-import { createClient } from '@supabase/supabase-js';
+import { createClient, SupabaseClient } from '@supabase/supabase-js';
+import { apiFetch } from './apiFetch';
+
+// Override global fetch with our timeout wrapper
+if (typeof window !== 'undefined') {
+  (window as any).fetch = apiFetch;
+}
 
 // Supabase client configuration - NEW PROJECT
 const supabaseUrl = "https://qusloccwftavvcsttmnq.supabase.co";
@@ -7,14 +13,48 @@ const supabaseAnonKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYm
 // Check if Supabase is configured
 export const isSupabaseConfigured = !!(supabaseUrl && supabaseAnonKey);
 
-// Create Supabase client with proper configuration
-export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
-  auth: {
-    storage: localStorage,
-    persistSession: true,
-    autoRefreshToken: true,
+// Singleton Supabase client instance
+let supabaseInstance: SupabaseClient | null = null;
+
+function createSupabaseClient() {
+  if (supabaseInstance) {
+    return supabaseInstance;
   }
-});
+
+  supabaseInstance = createClient(supabaseUrl, supabaseAnonKey, {
+    auth: {
+      storage: localStorage,
+      persistSession: true,
+      autoRefreshToken: true,
+      detectSessionInUrl: true,
+    },
+    global: {
+      fetch: apiFetch, // Use our custom fetch with timeout
+    },
+  });
+
+  // Session recovery on visibility change
+  if (typeof document !== 'undefined') {
+    document.addEventListener('visibilitychange', async () => {
+      if (!document.hidden && supabaseInstance) {
+        try {
+          const { data: { session } } = await supabaseInstance.auth.getSession();
+          if (!session) {
+            console.warn('⚠️ Session lost while tab was hidden, attempting recovery...');
+            await supabaseInstance.auth.refreshSession();
+          }
+        } catch (error) {
+          console.error('❌ Session recovery failed:', error);
+        }
+      }
+    });
+  }
+
+  return supabaseInstance;
+}
+
+// Export singleton instance
+export const supabase = createSupabaseClient();
 
 export type Database = {
   public: {

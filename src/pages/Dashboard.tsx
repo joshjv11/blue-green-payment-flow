@@ -12,7 +12,7 @@ import { useNotifications } from '@/hooks/useNotifications';
 import { useEmailReminders } from '@/hooks/useEmailReminders';
 import { supabase, isSupabaseConfigured } from '@/lib/supabase';
 import { useToast } from '@/hooks/use-toast';
-import { LogOut, User, Building, Mail, FileText, ArrowRight, Plus, DollarSign, Calendar, AlertCircle, CheckCircle, Clock, BarChart3, Settings, Download, Upload, Crown } from 'lucide-react';
+import { LogOut, User, Building, Mail, FileText, ArrowRight, Plus, DollarSign, Calendar, AlertCircle, CheckCircle, Clock, BarChart3, Settings, Download, Upload, Crown, RefreshCw } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { parseISO, differenceInDays, isBefore, isToday, isAfter, addDays, format } from 'date-fns';
 // Dashboard component with bills management
@@ -28,6 +28,8 @@ import UpgradeTrigger from '@/components/UpgradeTrigger';
 import UpgradeModal from '@/components/UpgradeModal';
 import AddPasskeyBanner from '@/components/auth/AddPasskeyBanner';
 import { useAnalytics } from '@/hooks/useAnalytics';
+import { useLoadingWatchdog } from '@/hooks/useLoadingWatchdog';
+import { cancelAllQueries, refetchAllQueries } from '@/lib/query';
 
 interface Bill {
   id: string;
@@ -66,6 +68,33 @@ const Dashboard = () => {
   useNotifications();
   useEmailReminders();
   usePaymentVerification();
+
+  // Loading watchdog to detect stuck states
+  useLoadingWatchdog({
+    enabled: true,
+    onTimeout: () => {
+      console.warn('⚠️ Loading timeout in Dashboard page');
+    }
+  });
+
+  const handleRetryAll = async () => {
+    try {
+      await cancelAllQueries();
+      await refetchAllQueries();
+      await fetchProfile();
+      await fetchBills();
+      toast({
+        title: 'Refreshed',
+        description: 'Dashboard data has been reloaded',
+      });
+    } catch (error) {
+      toast({
+        title: 'Retry failed',
+        description: 'Please try again',
+        variant: 'destructive',
+      });
+    }
+  };
 
   useEffect(() => {
     if (user) {
@@ -331,6 +360,26 @@ const Dashboard = () => {
                 <AddPasskeyBanner onDismiss={handlePasskeyBannerDismiss} className="max-w-md" />
               </div>
             )}
+
+            {/* Dashboard Header with Retry */}
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+              <div>
+                <h1 className="text-2xl sm:text-3xl font-bold text-foreground">
+                  Welcome back, {profile?.full_name || user?.email?.split('@')[0] || 'there'}! 👋
+                </h1>
+                <p className="text-sm sm:text-base text-muted-foreground">Here's an overview of your bills and finances</p>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleRetryAll}
+                disabled={loading || billsLoading}
+                className="flex items-center gap-2"
+              >
+                <RefreshCw className={`h-4 w-4 ${(loading || billsLoading) ? 'animate-spin' : ''}`} />
+                <span className="hidden sm:inline">Refresh</span>
+              </Button>
+            </div>
             
             <div className="text-center">
               <h1 className="text-2xl sm:text-3xl font-bold text-foreground mb-2">

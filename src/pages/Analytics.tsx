@@ -12,11 +12,13 @@ import { useToast } from '@/hooks/use-toast';
 import { Navigation } from '@/components/Navigation';
 import AdvancedAnalytics from '@/components/AdvancedAnalytics';
 import { logError } from '@/lib/logger';
-import { BarChart3, TrendingUp, DollarSign, Calendar, Crown, Lock, AlertCircle } from 'lucide-react';
+import { BarChart3, TrendingUp, DollarSign, Calendar, Crown, Lock, AlertCircle, RefreshCw } from 'lucide-react';
 import { format, parseISO, startOfMonth, endOfMonth, differenceInDays, isBefore, isAfter } from 'date-fns';
 import UpgradeModal from '@/components/UpgradeModal';
 import FreemiumLimitCard from '@/components/FreemiumLimitCard';
 import EnhancedAIAssistantV2 from '@/components/EnhancedAIAssistantV2';
+import { useLoadingWatchdog } from '@/hooks/useLoadingWatchdog';
+import { cancelAllQueries, refetchAllQueries } from '@/lib/query';
 
 interface Bill {
   id: string;
@@ -42,6 +44,32 @@ const Analytics = () => {
   
   // Initialize payment verification
   usePaymentVerification();
+
+  // Loading watchdog to detect stuck states
+  useLoadingWatchdog({
+    enabled: true,
+    onTimeout: () => {
+      console.warn('⚠️ Loading timeout in Analytics page');
+    }
+  });
+
+  const handleRetryAll = async () => {
+    try {
+      await cancelAllQueries();
+      await refetchAllQueries();
+      await fetchBills();
+      toast({
+        title: 'Refreshed',
+        description: 'Analytics data has been reloaded',
+      });
+    } catch (error) {
+      toast({
+        title: 'Retry failed',
+        description: 'Please try again',
+        variant: 'destructive',
+      });
+    }
+  };
 
   useEffect(() => {
     if (user) {
@@ -163,12 +191,24 @@ const Analytics = () => {
               <h1 className="text-3xl font-bold text-foreground">Analytics Dashboard</h1>
               <p className="text-muted-foreground">Insights into your financial patterns and bill management</p>
             </div>
-            {!hasAdvancedAnalytics && (
-              <Button onClick={() => setShowUpgradeModal(true)} className="flex items-center gap-2">
-                <Crown className="h-4 w-4" />
-                Unlock Advanced Analytics
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleRetryAll}
+                disabled={loading}
+                className="flex items-center gap-2"
+              >
+                <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+                <span className="hidden sm:inline">Refresh</span>
               </Button>
-            )}
+              {!hasAdvancedAnalytics && (
+                <Button onClick={() => setShowUpgradeModal(true)} className="flex items-center gap-2">
+                  <Crown className="h-4 w-4" />
+                  Unlock Advanced Analytics
+                </Button>
+              )}
+            </div>
           </div>
 
           {/* Freemium Limit Card */}

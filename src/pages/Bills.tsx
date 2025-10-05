@@ -29,7 +29,8 @@ import {
   Bell, 
   CalendarPlus,
   Download,
-  Clock
+  Clock,
+  RefreshCw
 } from 'lucide-react';
 import { format, parseISO, differenceInDays, isAfter, isBefore, addDays } from 'date-fns';
 import { useSupabasePlan } from '@/hooks/useSupabasePlan';
@@ -45,6 +46,8 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import BillReminderManager from '@/components/BillReminderManager';
 import { formatINRCompact } from '@/utils/currency';
 import { logError, logInfo } from '@/lib/logger';
+import { useLoadingWatchdog } from '@/hooks/useLoadingWatchdog';
+import { cancelAllQueries, refetchAllQueries } from '@/lib/query';
 
 interface Bill {
   id: string;
@@ -115,6 +118,32 @@ const Bills = () => {
   
   // Initialize payment verification
   usePaymentVerification();
+
+  // Loading watchdog to detect stuck states
+  useLoadingWatchdog({
+    enabled: true,
+    onTimeout: () => {
+      console.warn('⚠️ Loading timeout in Bills page');
+    }
+  });
+
+  const handleRetryAll = async () => {
+    try {
+      await cancelAllQueries();
+      await refetchAllQueries();
+      await fetchBills();
+      toast({
+        title: 'Refreshed',
+        description: 'All data has been reloaded',
+      });
+    } catch (error) {
+      toast({
+        title: 'Retry failed',
+        description: 'Please try again',
+        variant: 'destructive',
+      });
+    }
+  };
 
   useEffect(() => {
     if (user) {
@@ -553,26 +582,38 @@ const Bills = () => {
               onUpgrade={() => setShowUpgradeModal(true)}
             />
             
-            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-              <DialogTrigger asChild>
-                <Button 
-                  className="flex items-center space-x-2 h-10 w-full sm:w-auto"
-                  disabled={!canAddBill(bills.length) && !editingBill}
-                  onClick={() => {
-                    if (!canAddBill(bills.length) && !editingBill) {
-                      setShowUpgradeModal(true);
-                    } else {
-                      resetForm();
-                    }
-                  }}
-                >
-                  <Plus className="h-4 w-4" />
-                  <span>Add New Bill</span>
-                  {!canAddBill(bills.length) && (
-                    <Crown className="h-4 w-4 ml-1 text-yellow-500" />
-                  )}
-                </Button>
-              </DialogTrigger>
+            <div className="flex gap-2 flex-wrap">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleRetryAll}
+                disabled={loading}
+                className="flex items-center gap-2"
+              >
+                <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+                <span className="hidden sm:inline">Refresh</span>
+              </Button>
+              
+              <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button 
+                    className="flex items-center space-x-2 h-10 w-full sm:w-auto"
+                    disabled={!canAddBill(bills.length) && !editingBill}
+                    onClick={() => {
+                      if (!canAddBill(bills.length) && !editingBill) {
+                        setShowUpgradeModal(true);
+                      } else {
+                        resetForm();
+                      }
+                    }}
+                  >
+                    <Plus className="h-4 w-4" />
+                    <span>Add New Bill</span>
+                    {!canAddBill(bills.length) && (
+                      <Crown className="h-4 w-4 ml-1 text-yellow-500" />
+                    )}
+                  </Button>
+                </DialogTrigger>
                 <DialogContent className="max-w-2xl mx-4 sm:mx-auto max-h-[90vh] overflow-y-auto">
                   <DialogHeader>
                     <DialogTitle className="text-lg sm:text-xl">
@@ -580,14 +621,15 @@ const Bills = () => {
                     </DialogTitle>
                   </DialogHeader>
                   
-                  <SmartBillForm
-                    formData={formData}
-                    setFormData={setFormData}
-                    onSubmit={handleSubmit}
-                    editingBill={editingBill}
-                  />
-                </DialogContent>
-            </Dialog>
+                    <SmartBillForm
+                      formData={formData}
+                      setFormData={setFormData}
+                      onSubmit={handleSubmit}
+                      editingBill={editingBill}
+                    />
+                  </DialogContent>
+              </Dialog>
+            </div>
           </div>
 
           {/* Bills Table */}
