@@ -129,7 +129,7 @@ export default function SimpleAuthForm({ onSuccess }: SimpleAuthFormProps) {
           <CardDescription>
             {mode === 'signin'
               ? 'Sign in to access your dashboard'
-              : 'Get started with InvoiceFlow today'}
+              : 'Create your account in seconds — no credit card required.'}
           </CardDescription>
         </CardHeader>
 
@@ -145,9 +145,13 @@ export default function SimpleAuthForm({ onSuccess }: SimpleAuthFormProps) {
                   {...signUpForm.register('email')}
                   className="h-11"
                 />
-                {signUpForm.formState.errors.email && (
+                {signUpForm.formState.errors.email ? (
                   <p className="text-sm text-destructive">
                     {signUpForm.formState.errors.email.message}
+                  </p>
+                ) : (
+                  <p className="text-xs text-muted-foreground">
+                    We'll never share your email.
                   </p>
                 )}
               </div>
