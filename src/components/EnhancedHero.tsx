@@ -63,7 +63,7 @@ const EnhancedHero = () => {
               <ul className="space-y-3">
                 {benefits.map((benefit, index) => (
                   <li key={index} className="flex items-center space-x-3 text-white/90">
-                    <CheckCircle className="h-5 w-5 text-accent-foreground flex-shrink-0" />
+                    <CheckCircle className="h-5 w-5 text-accent-foreground flex-shrink-0 stroke-[1.5]" />
                     <span>{benefit}</span>
                   </li>
                 ))}
@@ -71,14 +71,14 @@ const EnhancedHero = () => {
             </div>
             
             <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
-              <Button 
-                size="lg" 
-                className="bg-white text-primary hover:bg-white/90 shadow-medium text-lg px-8 h-14 font-semibold"
-                onClick={handleGetStarted}
-              >
-                {user ? 'Go to Dashboard' : 'Start Free Trial'}
-                <ArrowRight className="ml-2 h-5 w-5" />
-              </Button>
+                <Button 
+                  size="lg" 
+                  className="bg-white text-primary hover:bg-white/90 shadow-medium text-lg px-8 h-14 font-semibold"
+                  onClick={handleGetStarted}
+                >
+                  {user ? 'Go to Dashboard' : 'Start Free Trial'}
+                  <ArrowRight className="ml-2 h-5 w-5 stroke-[1.5]" />
+                </Button>
               <Button 
                 variant="outline" 
                 size="lg"

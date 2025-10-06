@@ -8,35 +8,36 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 215 25% 27%;
+    --background: 0 0% 97.3%;
+    --foreground: 215 25% 12%;
 
     --card: 0 0% 100%;
-    --card-foreground: 215 25% 27%;
+    --card-foreground: 215 25% 12%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 215 25% 27%;
+    --popover-foreground: 215 25% 12%;
 
-    /* InvoiceFlow Brand Colors */
-    --primary: 199 89% 48%;
+    /* InvoiceFlow Brand Colors - Blue Primary */
+    --primary: 217 91% 60%;
     --primary-foreground: 0 0% 100%;
-    --primary-hover: 199 89% 42%;
+    --primary-hover: 217 91% 54%;
 
     --secondary: 210 40% 96%;
-    --secondary-foreground: 215 25% 27%;
+    --secondary-foreground: 215 25% 12%;
 
     --muted: 210 40% 96%;
-    --muted-foreground: 215 16% 47%;
+    --muted-foreground: 220 9% 46%;
 
-    --accent: 186 100% 40%;
+    --accent: 217 91% 60%;
     --accent-foreground: 0 0% 100%;
 
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 214 32% 91%;
-    --input: 214 32% 91%;
-    --ring: 199 89% 48%;
+    --border: 220 13% 82%;
+    --input: 220 13% 82%;
+    --ring: 217 91% 78%;
+    --input-focus-glow: 217 91% 78%;
     
     /* InvoiceFlow Brand Gradients */
     --hero-gradient: linear-gradient(135deg, hsl(199 89% 48%), hsl(186 100% 40%));
@@ -69,18 +70,18 @@ All colors MUST be HSL.
   }
 
   .dark {
-    --background: 215 28% 17%;
+    --background: 222 47% 11%;
     --foreground: 210 40% 98%;
 
-    --card: 215 28% 17%;
+    --card: 222 47% 14%;
     --card-foreground: 210 40% 98%;
 
-    --popover: 215 28% 17%;
+    --popover: 222 47% 14%;
     --popover-foreground: 210 40% 98%;
 
-    --primary: 199 89% 48%;
+    --primary: 217 91% 60%;
     --primary-foreground: 0 0% 100%;
-    --primary-hover: 199 89% 42%;
+    --primary-hover: 217 91% 54%;
 
     --secondary: 217 32% 20%;
     --secondary-foreground: 210 40% 98%;
@@ -88,15 +89,16 @@ All colors MUST be HSL.
     --muted: 217 32% 20%;
     --muted-foreground: 215 20% 65%;
 
-    --accent: 186 100% 40%;
+    --accent: 217 91% 60%;
     --accent-foreground: 0 0% 100%;
 
     --destructive: 0 62% 50%;
     --destructive-foreground: 210 40% 98%;
 
-    --border: 217 32% 20%;
-    --input: 217 32% 20%;
-    --ring: 199 89% 48%;
+    --border: 217 32% 25%;
+    --input: 217 32% 25%;
+    --ring: 217 91% 78%;
+    --input-focus-glow: 217 91% 78%;
     --sidebar-background: 240 5.9% 10%;
     --sidebar-foreground: 240 4.8% 95.9%;
     --sidebar-primary: 224.3 76.3% 48%;

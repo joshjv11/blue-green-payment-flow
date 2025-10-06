@@ -33,14 +33,14 @@ const Hero = () => {
               and powerful analytics. Get paid faster and keep your cash flow healthy.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
-              <Button 
-                size="lg" 
-                className="bg-white text-primary hover:bg-white/90 shadow-medium text-lg px-8"
-                onClick={handleGetStarted}
-              >
-                {user ? 'Go to Dashboard' : 'Start Free Trial'}
-                <ArrowRight className="ml-2 h-5 w-5" />
-              </Button>
+                <Button 
+                  size="lg" 
+                  className="bg-white text-primary hover:bg-white/90 shadow-medium text-lg px-8"
+                  onClick={handleGetStarted}
+                >
+                  {user ? 'Go to Dashboard' : 'Start Free Trial'}
+                  <ArrowRight className="ml-2 h-5 w-5 stroke-[1.5]" />
+                </Button>
               <Button 
                 variant="outline" 
                 size="lg"

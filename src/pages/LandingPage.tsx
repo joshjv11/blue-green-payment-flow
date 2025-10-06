@@ -46,7 +46,7 @@ const LandingPage = () => {
       </header>
 
       {/* Hero Section */}
-      <section className="container mx-auto px-4 py-24 md:py-32 lg:py-40">
+      <section className="container mx-auto px-4 py-24 md:py-32 lg:py-40 flex items-center justify-center min-h-[80vh]">
         <div className="text-center max-w-4xl mx-auto space-y-12">
           {/* Grand headline with reflective text */}
           <div className="space-y-6">
@@ -69,7 +69,7 @@ const LandingPage = () => {
                       size="lg"
                       className="w-full h-14 text-lg font-semibold bg-white text-primary hover:bg-white/90 shadow-lg"
                     >
-                      <Mail className="mr-2 h-5 w-5" />
+                      <Mail className="mr-2 h-5 w-5 stroke-[1.5]" />
                       Sign In with Email
                     </Button>
                     <div className="relative">
@@ -108,31 +108,30 @@ const LandingPage = () => {
       {/* Footer */}
       <footer className="border-t bg-background/95 backdrop-blur">
         <div className="container mx-auto px-4 py-8">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-            <div className="flex items-center space-x-2">
-              <img src={invoiceFlowLogo} alt="InvoiceFlow" className="h-8 w-auto" />
-              <span className="text-sm text-muted-foreground">© 2025 InvoiceFlow</span>
-            </div>
-            <div className="flex items-center gap-6">
-              <a
-                href="/terms"
-                className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-              >
-                Terms
-              </a>
+          <div className="flex flex-col items-center justify-center gap-4 text-center">
+            <div className="flex items-center gap-4 text-sm text-muted-foreground">
               <a
                 href="/privacy"
-                className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                className="hover:text-foreground transition-colors"
               >
                 Privacy
               </a>
+              <span>|</span>
+              <a
+                href="/terms"
+                className="hover:text-foreground transition-colors"
+              >
+                Terms
+              </a>
+              <span>|</span>
               <a
                 href="mailto:support@invoiceflow.com"
-                className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                className="hover:text-foreground transition-colors"
               >
                 Contact
               </a>
             </div>
+            <p className="text-xs text-muted-foreground">© 2025 InvoiceFlow</p>
           </div>
         </div>
       </footer>
