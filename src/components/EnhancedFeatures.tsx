@@ -50,10 +50,10 @@ const EnhancedFeatures = () => {
   ];
 
   return (
-    <section className="py-20 lg:py-32 bg-feature-gradient">
+    <section className="py-20 lg:py-32 bg-feature-gradient animate-fade-in">
       <div className="container mx-auto px-4">
         {/* Header */}
-        <div className="text-center mb-16">
+        <div className="text-center mb-16 animate-fade-in">
           <Badge className="mb-4 bg-primary/10 text-primary border-primary/20">
             ⚡ Powerful Features
           </Badge>
@@ -70,9 +70,9 @@ const EnhancedFeatures = () => {
         </div>
 
         {/* Stats Row */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-16">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-16 animate-fade-in">
           {stats.map((stat, index) => (
-            <div key={index} className="text-center">
+            <div key={index} className="text-center animate-fade-in" style={{ animationDelay: `${index * 0.1}s` }}>
               <div className="text-3xl md:text-4xl font-bold text-primary mb-2">
                 {stat.value}
               </div>
@@ -88,7 +88,8 @@ const EnhancedFeatures = () => {
           {features.map((feature, index) => (
             <Card 
               key={index} 
-              className="group border-0 shadow-soft hover:shadow-medium transition-all duration-500 hover:-translate-y-2 bg-card-gradient"
+              className="group border-0 shadow-soft hover:shadow-medium transition-all duration-500 hover:-translate-y-2 bg-card-gradient animate-fade-in"
+              style={{ animationDelay: `${index * 0.1}s` }}
             >
               <CardContent className="p-8">
                 <div className="relative">
@@ -116,7 +117,7 @@ const EnhancedFeatures = () => {
         </div>
 
         {/* CTA Section */}
-        <div className="mt-16 text-center">
+        <div className="mt-16 text-center animate-fade-in">
           <div className="bg-hero-gradient rounded-2xl p-8 md:p-12 text-white">
             <h3 className="text-2xl md:text-3xl font-bold mb-4">
               Ready to transform your payment collection?

@@ -46,7 +46,7 @@ const FreemiumLimitCard = ({ type, currentCount, onUpgrade, className }: Freemiu
   const content = getContent();
 
   return (
-    <Card className={`shadow-soft bg-gradient-to-r ${content.color} ${className || ''}`}>
+    <Card className={`shadow-soft bg-gradient-to-r ${content.color} ${className || ''} animate-fade-in`}>
       <CardContent className="p-4 sm:p-6">
         <div className="flex items-start gap-3">
           {content.icon}

@@ -17,11 +17,11 @@ const Hero = () => {
   };
 
   return (
-    <section className="relative overflow-hidden bg-hero-gradient">
+    <section className="relative overflow-hidden bg-hero-gradient animate-fade-in">
       <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-accent/10" />
       <div className="container relative mx-auto px-4 py-20 lg:py-32">
         <div className="grid lg:grid-cols-2 gap-12 items-center">
-          <div className="text-center lg:text-left">
+          <div className="text-center lg:text-left animate-fade-in">
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-6 leading-tight">
               Never miss another 
               <span className="block text-transparent bg-gradient-to-r from-white to-accent-foreground bg-clip-text">
@@ -50,7 +50,7 @@ const Hero = () => {
               </Button>
             </div>
           </div>
-          <div className="relative">
+          <div className="relative animate-fade-in" style={{ animationDelay: '0.2s' }}>
             <div className="relative rounded-2xl overflow-hidden shadow-strong">
               <img 
                 src={heroImage} 

@@ -21,9 +21,9 @@ const Features = () => {
   ];
 
   return (
-    <section className="py-20 lg:py-32 bg-feature-gradient">
+    <section className="py-20 lg:py-32 bg-feature-gradient animate-fade-in">
       <div className="container mx-auto px-4">
-        <div className="text-center mb-16">
+        <div className="text-center mb-16 animate-fade-in">
           <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-foreground mb-6">
             Everything you need to
             <span className="block text-transparent bg-gradient-to-r from-primary to-accent bg-clip-text">
@@ -40,7 +40,8 @@ const Features = () => {
           {features.map((feature, index) => (
             <Card 
               key={index} 
-              className="group border-0 shadow-soft hover:shadow-medium transition-all duration-300 hover:-translate-y-1"
+              className="group border-0 shadow-soft hover:shadow-medium transition-all duration-300 hover:-translate-y-1 animate-fade-in"
+              style={{ animationDelay: `${index * 0.1}s` }}
             >
               <CardContent className="p-8 text-center">
                 <div className="mb-6 inline-flex items-center justify-center w-16 h-16 bg-hero-gradient rounded-2xl group-hover:scale-110 transition-transform duration-300">

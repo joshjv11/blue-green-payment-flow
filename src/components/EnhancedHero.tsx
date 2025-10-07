@@ -34,13 +34,13 @@ const EnhancedHero = () => {
   ];
 
   return (
-    <section className="relative overflow-hidden bg-hero-gradient">
+    <section className="relative overflow-hidden bg-hero-gradient animate-fade-in">
       <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-accent/10" />
       <div className="absolute inset-0 bg-[url('data:image/svg+xml,%3csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 32 32%27 width=%2732%27 height=%2732%27 fill=%27none%27%3e%3ccircle fill=%27%23ffffff%27 fill-opacity=%270.05%27 cx=%2716%27 cy=%2716%27 r=%271%27/%3e%3c/svg%3e')] opacity-50" />
       
       <div className="container relative mx-auto px-4 py-20 lg:py-32">
         <div className="grid lg:grid-cols-2 gap-12 items-center">
-          <div className="text-center lg:text-left space-y-8">
+          <div className="text-center lg:text-left space-y-8 animate-fade-in">
             <div className="space-y-4">
               <Badge className="bg-white/20 text-white border-white/30 backdrop-blur-sm">
                 🚀 Streamline your invoicing process
@@ -98,7 +98,7 @@ const EnhancedHero = () => {
             </div>
           </div>
           
-          <div className="relative">
+          <div className="relative animate-fade-in" style={{ animationDelay: '0.2s' }}>
             <div className="relative rounded-2xl overflow-hidden shadow-strong">
               <img 
                 src={heroImage} 
@@ -109,7 +109,7 @@ const EnhancedHero = () => {
             </div>
             
             {/* Floating benefits */}
-            <div className="hidden lg:block absolute -right-4 top-1/4 space-y-4">
+            <div className="hidden lg:block absolute -right-4 top-1/4 space-y-4 animate-fade-in" style={{ animationDelay: '0.4s' }}>
               <Card className="w-80 shadow-medium border-0 backdrop-blur-sm bg-white/95">
                 <CardContent className="p-6">
                   <div className="text-center space-y-4">
