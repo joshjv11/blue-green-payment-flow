@@ -81,7 +81,7 @@ const handler = async (req: Request): Promise<Response> => {
     let retried = 0;
 
     const supabaseUrl = Deno.env.get('SUPABASE_URL');
-    const anonKey = Deno.env.get('SUPABASE_ANON_KEY');
+    const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
 
     // Process each reminder
     for (const reminder of dueReminders) {
@@ -105,14 +105,14 @@ const handler = async (req: Request): Promise<Response> => {
           continue;
         }
 
-        // Call send-individual-reminder edge function
+        // Call send-individual-reminder edge function using service role key
         const sendResponse = await fetch(
           `${supabaseUrl}/functions/v1/send-individual-reminder`,
           {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
-              'Authorization': `Bearer ${anonKey}`
+              'Authorization': `Bearer ${serviceRoleKey}`
             },
             body: JSON.stringify({
               reminder_id: reminder.id,
