@@ -151,6 +151,17 @@ const handler = async (req: Request): Promise<Response> => {
           });
         } else {
           console.log(`✅ Reminder ${reminder.id} processed successfully`);
+          
+          // Update reminder status with sent timestamp
+          await supabase
+            .from('bill_reminders')
+            .update({
+              status: 'sent',
+              sent_at: new Date().toISOString(),
+              retry_count: 0
+            })
+            .eq('id', reminder.id);
+          
           processed++;
           results.push({
             reminder_id: reminder.id,
