@@ -193,6 +193,36 @@ const handler = async (req: Request): Promise<Response> => {
       throw new Error(`Failed to create reminder: ${reminderError?.message}`);
     }
 
+    // Calculate IST time for 9 AM reminder (3:30 AM UTC)
+    const nineAmIST = new Date(reminderDate);
+    nineAmIST.setUTCHours(3, 30, 0, 0); // 9:00 AM IST = 3:30 AM UTC
+    
+    const now = new Date();
+    const timeUntilNineAmIST = nineAmIST.getTime() - now.getTime();
+    const oneHourInMs = 60 * 60 * 1000;
+    
+    // Get keys for later use
+    const supabaseUrl = Deno.env.get('SUPABASE_URL');
+    const anonKey = Deno.env.get('SUPABASE_ANON_KEY');
+    
+    // Determine final schedule time
+    let scheduleAt: Date;
+    let schedulingReason: string;
+    
+    if (nineAmIST <= now) {
+      // Time has already passed, schedule for now + 2 minutes
+      scheduleAt = new Date(now.getTime() + 2 * 60 * 1000);
+      schedulingReason = 'Intended time has passed, scheduling for now + 2 minutes';
+    } else if (timeUntilNineAmIST <= oneHourInMs) {
+      // Within the next hour, schedule for now + 2 minutes (for testing)
+      scheduleAt = new Date(now.getTime() + 2 * 60 * 1000);
+      schedulingReason = 'Reminder window within next hour, scheduling for now + 2 minutes (fast test mode)';
+    } else {
+      // Schedule for the original 9 AM IST time
+      scheduleAt = nineAmIST;
+      schedulingReason = 'Scheduling for original 9:00 AM IST time';
+    }
+
     console.log(`✅ Bill reminder scheduled successfully:`, {
       reminder_id: reminder.id,
       bill_id,
@@ -200,12 +230,13 @@ const handler = async (req: Request): Promise<Response> => {
       user_email: profile.email,
       reminder_date: reminderDate.toISOString().split('T')[0],
       due_date: bill.due_date,
-      priority
+      reminder_days_before,
+      priority,
+      computed_send_time_utc: nineAmIST.toISOString(),
+      final_schedule_time_utc: scheduleAt.toISOString(),
+      scheduling_reason: schedulingReason,
+      using_key: anonKey ? 'anon_key' : 'service_key'
     });
-
-    // Calculate IST time for 9 AM reminder (3:30 AM UTC)
-    const reminderDateTime = new Date(reminderDate);
-    reminderDateTime.setUTCHours(3, 30, 0, 0); // 9:00 AM IST = 3:30 AM UTC
 
     // Create unique job name
     const jobName = `bill-reminder-${reminder.id}`;
@@ -219,11 +250,26 @@ const handler = async (req: Request): Promise<Response> => {
         `
       });
 
-      // Schedule one-time reminder
-      const cronExpression = `${reminderDateTime.getUTCMinutes()} ${reminderDateTime.getUTCHours()} ${reminderDateTime.getUTCDate()} ${reminderDateTime.getUTCMonth() + 1} *`;
-      
-      const supabaseUrl = Deno.env.get('SUPABASE_URL');
-      const anonKey = Deno.env.get('SUPABASE_ANON_KEY');
+      // Unschedule any existing job with this name to avoid duplicates
+      await supabase.rpc('exec', {
+        sql: `
+          DO $$
+          BEGIN
+            IF EXISTS (SELECT 1 FROM cron.job WHERE jobname = '${jobName}') THEN
+              PERFORM cron.unschedule('${jobName}');
+            END IF;
+          END $$;
+        `
+      });
+
+      // Build cron expression from final scheduleAt time
+      const cronExpression = `${scheduleAt.getUTCMinutes()} ${scheduleAt.getUTCHours()} ${scheduleAt.getUTCDate()} ${scheduleAt.getUTCMonth() + 1} *`;
+
+      console.log(`📅 Scheduling cron job: ${jobName}`, {
+        cron_expression: cronExpression,
+        execution_time_utc: scheduleAt.toISOString(),
+        reminder_id: reminder.id
+      });
 
       await supabase.rpc('exec', {
         sql: `
@@ -249,11 +295,11 @@ const handler = async (req: Request): Promise<Response> => {
           bill_reminder_id: reminder.id,
           job_name: jobName,
           cron_expression: cronExpression,
-          execution_date: reminderDateTime.toISOString(),
+          execution_date: scheduleAt.toISOString(),
           status: 'scheduled'
         });
 
-      console.log(`✅ Cron job scheduled: ${jobName} at ${reminderDateTime.toISOString()}`);
+      console.log(`✅ Cron job scheduled: ${jobName} at ${scheduleAt.toISOString()}`);
 
     } catch (cronError) {
       console.error('⚠️ Error scheduling cron job:', cronError);
@@ -277,7 +323,9 @@ const handler = async (req: Request): Promise<Response> => {
           bill_name: bill.name,
           user_email: profile.email,
           reminder_date: reminderDate.toISOString().split('T')[0],
-          reminder_time: reminderDateTime.toISOString(),
+          computed_send_time_utc: nineAmIST.toISOString(),
+          final_schedule_time_utc: scheduleAt.toISOString(),
+          scheduling_reason: schedulingReason,
           due_date: bill.due_date,
           priority,
           status: 'pending'
