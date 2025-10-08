@@ -208,6 +208,8 @@ export type Database = {
           resend_email_id: string | null
           retry_count: number
           scheduled_job_id: string | null
+          scheduled_send_at: string | null
+          sent_at: string | null
           status: string
           updated_at: string
           user_id: string
@@ -226,6 +228,8 @@ export type Database = {
           resend_email_id?: string | null
           retry_count?: number
           scheduled_job_id?: string | null
+          scheduled_send_at?: string | null
+          sent_at?: string | null
           status?: string
           updated_at?: string
           user_id: string
@@ -244,6 +248,8 @@ export type Database = {
           resend_email_id?: string | null
           retry_count?: number
           scheduled_job_id?: string | null
+          scheduled_send_at?: string | null
+          sent_at?: string | null
           status?: string
           updated_at?: string
           user_id?: string

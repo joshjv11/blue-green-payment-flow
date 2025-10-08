@@ -48,3 +48,6 @@ verify_jwt = false
 
 [functions.setup-reminder-cron]
 verify_jwt = false
+
+[functions.run-reminders-due]
+verify_jwt = false

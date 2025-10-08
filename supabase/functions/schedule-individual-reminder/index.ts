@@ -223,6 +223,12 @@ const handler = async (req: Request): Promise<Response> => {
       schedulingReason = 'Scheduling for original 9:00 AM IST time';
     }
 
+    // Store the computed send time in the reminder record
+    await supabase
+      .from('bill_reminders')
+      .update({ scheduled_send_at: scheduleAt.toISOString() })
+      .eq('id', reminder.id);
+
     console.log(`✅ Bill reminder scheduled successfully:`, {
       reminder_id: reminder.id,
       bill_id,
