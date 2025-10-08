@@ -131,6 +131,7 @@ const handler = async (req: Request): Promise<Response> => {
               status: 'sent',
               delivery_status: 'queued',
               sent_at: now.toISOString(),
+              retry_count: 0,
               error_message: null,
               updated_at: now.toISOString()
             })
