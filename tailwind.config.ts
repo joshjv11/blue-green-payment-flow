@@ -63,12 +63,18 @@ export default {
         'hero-gradient': 'var(--hero-gradient)',
         'feature-gradient': 'var(--feature-gradient)',
         'premium-gradient': 'var(--premium-gradient)',
+        'glass-gradient': 'var(--glass-gradient)',
       },
       boxShadow: {
         'soft': 'var(--shadow-soft)',
         'medium': 'var(--shadow-medium)',
         'strong': 'var(--shadow-strong)',
         'premium-glow': 'var(--shadow-premium-glow)',
+        'glass': 'var(--shadow-glass)',
+        'float': 'var(--shadow-float)',
+      },
+      backdropBlur: {
+        'glass': '16px',
       },
       transitionTimingFunction: {
         'smooth': 'var(--transition-smooth)',
@@ -113,12 +119,30 @@ export default {
             opacity: "0.85",
           }
         },
+        "heartbeat": {
+          "0%, 100%": {
+            transform: "scale(1)",
+          },
+          "14%": {
+            transform: "scale(1.05)",
+          },
+          "28%": {
+            transform: "scale(1)",
+          },
+          "42%": {
+            transform: "scale(1.05)",
+          },
+          "56%": {
+            transform: "scale(1)",
+          }
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
         "fade-in": "fade-in 0.4s ease-out",
         "pulse-slow": "pulse-slow 10s ease-in-out infinite",
+        "heartbeat": "heartbeat 10s ease-in-out infinite",
       },
     },
   },
