@@ -62,11 +62,13 @@ export default {
       backgroundImage: {
         'hero-gradient': 'var(--hero-gradient)',
         'feature-gradient': 'var(--feature-gradient)',
+        'premium-gradient': 'var(--premium-gradient)',
       },
       boxShadow: {
         'soft': 'var(--shadow-soft)',
         'medium': 'var(--shadow-medium)',
         'strong': 'var(--shadow-strong)',
+        'premium-glow': 'var(--shadow-premium-glow)',
       },
       transitionTimingFunction: {
         'smooth': 'var(--transition-smooth)',
@@ -103,11 +105,20 @@ export default {
             transform: "translateY(0)"
           }
         },
+        "pulse-slow": {
+          "0%, 100%": {
+            opacity: "1",
+          },
+          "50%": {
+            opacity: "0.85",
+          }
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
         "fade-in": "fade-in 0.4s ease-out",
+        "pulse-slow": "pulse-slow 10s ease-in-out infinite",
       },
     },
   },

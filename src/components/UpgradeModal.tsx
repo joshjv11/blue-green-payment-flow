@@ -162,9 +162,10 @@ const UpgradeModal: React.FC<UpgradeModalProps> = ({
 
                   <Button 
                     onClick={() => handleUpgrade('monthly')}
-                    className="w-full bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70"
+                    className="w-full bg-premium-gradient text-white text-base font-semibold hover:shadow-premium-glow hover:scale-[1.02] transition-all duration-300 animate-pulse-slow"
+                    size="lg"
                   >
-                    <CreditCard className="h-4 w-4 mr-2" />
+                    <CreditCard className="h-5 w-5 mr-2" />
                     Pay ₹99/month via UPI
                   </Button>
                 </div>
@@ -202,10 +203,10 @@ const UpgradeModal: React.FC<UpgradeModalProps> = ({
 
                   <Button 
                     onClick={() => handleUpgrade('yearly')}
-                    variant="outline" 
-                    className="w-full border-green-200 hover:bg-green-50 dark:border-green-800 dark:hover:bg-green-950/20"
+                    className="w-full bg-premium-gradient text-white text-base font-semibold hover:shadow-premium-glow hover:scale-[1.02] transition-all duration-300"
+                    size="lg"
                   >
-                    <CreditCard className="h-4 w-4 mr-2" />
+                    <CreditCard className="h-5 w-5 mr-2" />
                     Pay ₹999/year via UPI
                   </Button>
                 </div>
