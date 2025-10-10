@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Skeleton } from '@/components/ui/skeleton';
 import { useAuth } from '@/hooks/useAuth';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
 import { useNotifications } from '@/hooks/useNotifications';
@@ -628,8 +629,16 @@ const Dashboard = () => {
             </CardHeader>
             <CardContent>
               {billsLoading ? (
-                <div className="flex items-center justify-center py-8">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                <div className="space-y-3">
+                  {[...Array(5)].map((_, i) => (
+                    <div key={i} className="flex items-center gap-4 p-3 border rounded-lg">
+                      <Skeleton className="h-8 flex-1" />
+                      <Skeleton className="h-8 w-24" />
+                      <Skeleton className="h-8 w-32" />
+                      <Skeleton className="h-8 w-16" />
+                      <Skeleton className="h-8 w-24" />
+                    </div>
+                  ))}
                 </div>
               ) : bills.length === 0 ? (
                 <div className="text-center py-8">

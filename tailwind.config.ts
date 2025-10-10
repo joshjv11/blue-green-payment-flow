@@ -136,6 +136,14 @@ export default {
             transform: "scale(1)",
           }
         },
+        "shimmer": {
+          "0%": {
+            transform: "translateX(-100%)",
+          },
+          "100%": {
+            transform: "translateX(100%)",
+          }
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
@@ -143,6 +151,7 @@ export default {
         "fade-in": "fade-in 0.4s ease-out",
         "pulse-slow": "pulse-slow 10s ease-in-out infinite",
         "heartbeat": "heartbeat 10s ease-in-out infinite",
+        "shimmer": "shimmer 2s infinite",
       },
     },
   },

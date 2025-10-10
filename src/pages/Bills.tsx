@@ -9,6 +9,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
+import { Skeleton } from '@/components/ui/skeleton';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase, isSupabaseConfigured } from '@/lib/supabase';
 import { useToast } from '@/hooks/use-toast';
@@ -557,8 +558,38 @@ const Bills = () => {
       <div className="min-h-screen bg-background">
         <Navigation />
         <div className="container mx-auto px-4 py-8">
-          <div className="animate-pulse space-y-6">
-            <div className="h-8 bg-muted rounded w-1/3"></div>
+          <div className="space-y-6">
+            <div className="space-y-2">
+              <Skeleton className="h-8 w-64" />
+              <Skeleton className="h-4 w-96" />
+            </div>
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+              {[...Array(4)].map((_, i) => (
+                <Card key={i} className="shadow-soft">
+                  <CardContent className="p-6">
+                    <div className="flex items-center space-x-2">
+                      <Skeleton className="h-8 w-8 rounded-full" />
+                      <div className="flex-1 space-y-2">
+                        <Skeleton className="h-6 w-16" />
+                        <Skeleton className="h-4 w-24" />
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+            <div className="space-y-3">
+              {[...Array(5)].map((_, i) => (
+                <Card key={i} className="p-4">
+                  <div className="flex items-center gap-4">
+                    <Skeleton className="h-4 flex-1" />
+                    <Skeleton className="h-4 w-24" />
+                    <Skeleton className="h-4 w-32" />
+                    <Skeleton className="h-8 w-16" />
+                  </div>
+                </Card>
+              ))}
+            </div>
           </div>
         </div>
       </div>

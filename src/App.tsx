@@ -3,13 +3,14 @@ import { Toaster as Sonner } from '@/components/ui/sonner';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { getQueryClient } from '@/lib/query';
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
 import { AuthProvider } from '@/hooks/useAuth';
 import { PlanProvider } from '@/contexts/PlanContext';
 import ErrorBoundary from '@/components/ErrorBoundary';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import DebugInfo from '@/components/DebugInfo';
 import MobileOptimizer from '@/components/MobileOptimizer';
+import { PageTransition } from '@/components/PageTransition';
 import Index from './pages/Index';
 import Auth from './pages/Auth';
 import Terms from './pages/Terms';
@@ -24,6 +25,82 @@ import AdminDbHealth from './pages/AdminDbHealth';
 import AdminLogs from './pages/AdminLogs';
 import NotFound from './pages/NotFound';
 
+function AppRoutes() {
+  return (
+    <Routes>
+      <Route path="/" element={<PageTransition><Index /></PageTransition>} />
+      <Route path="/auth" element={<PageTransition><Auth /></PageTransition>} />
+      <Route path="/terms" element={<PageTransition><Terms /></PageTransition>} />
+      <Route path="/privacy" element={<PageTransition><Privacy /></PageTransition>} />
+      <Route 
+        path="/dashboard" 
+        element={
+          <ProtectedRoute>
+            <PageTransition><Dashboard /></PageTransition>
+          </ProtectedRoute>
+        } 
+      />
+      <Route 
+        path="/bills" 
+        element={
+          <ProtectedRoute>
+            <PageTransition><Bills /></PageTransition>
+          </ProtectedRoute>
+        } 
+      />
+      <Route 
+        path="/analytics" 
+        element={
+          <ProtectedRoute>
+            <PageTransition><Analytics /></PageTransition>
+          </ProtectedRoute>
+        } 
+      />
+      <Route 
+        path="/settings" 
+        element={
+          <ProtectedRoute>
+            <PageTransition><Settings /></PageTransition>
+          </ProtectedRoute>
+        } 
+      />
+      <Route 
+        path="/admin" 
+        element={
+          <ProtectedRoute>
+            <PageTransition><Admin /></PageTransition>
+          </ProtectedRoute>
+        } 
+      />
+      <Route 
+        path="/admin/users" 
+        element={
+          <ProtectedRoute>
+            <PageTransition><AdminUsers /></PageTransition>
+          </ProtectedRoute>
+        } 
+      />
+      <Route 
+        path="/admin/db-health" 
+        element={
+          <ProtectedRoute>
+            <PageTransition><AdminDbHealth /></PageTransition>
+          </ProtectedRoute>
+        } 
+      />
+      <Route 
+        path="/admin/logs" 
+        element={
+          <ProtectedRoute>
+            <PageTransition><AdminLogs /></PageTransition>
+          </ProtectedRoute>
+        } 
+      />
+      <Route path="*" element={<PageTransition><NotFound /></PageTransition>} />
+    </Routes>
+  );
+}
+
 const App = () => (
   <ErrorBoundary>
     <QueryClientProvider client={getQueryClient()}>
@@ -35,79 +112,9 @@ const App = () => (
             <DebugInfo />
             <BrowserRouter>
               <MobileOptimizer />
-              <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/auth" element={<Auth />} />
-            <Route path="/terms" element={<Terms />} />
-            <Route path="/privacy" element={<Privacy />} />
-            <Route 
-              path="/dashboard" 
-              element={
-                <ProtectedRoute>
-                  <Dashboard />
-                </ProtectedRoute>
-              } 
-            />
-            <Route 
-              path="/bills" 
-              element={
-                <ProtectedRoute>
-                  <Bills />
-                </ProtectedRoute>
-              } 
-            />
-            <Route 
-              path="/analytics" 
-              element={
-                <ProtectedRoute>
-                  <Analytics />
-                </ProtectedRoute>
-              } 
-            />
-            <Route 
-              path="/settings" 
-              element={
-                <ProtectedRoute>
-                  <Settings />
-                </ProtectedRoute>
-              } 
-            />
-            <Route 
-              path="/admin" 
-              element={
-                <ProtectedRoute>
-                  <Admin />
-                </ProtectedRoute>
-              } 
-            />
-            <Route 
-              path="/admin/users" 
-              element={
-                <ProtectedRoute>
-                  <AdminUsers />
-                </ProtectedRoute>
-              } 
-            />
-            <Route 
-              path="/admin/db-health" 
-              element={
-                <ProtectedRoute>
-                  <AdminDbHealth />
-                </ProtectedRoute>
-              } 
-            />
-            <Route 
-              path="/admin/logs" 
-              element={
-                <ProtectedRoute>
-                  <AdminLogs />
-                </ProtectedRoute>
-              } 
-            />
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </BrowserRouter>
-      </TooltipProvider>
+              <AppRoutes />
+            </BrowserRouter>
+          </TooltipProvider>
         </PlanProvider>
       </AuthProvider>
     </QueryClientProvider>

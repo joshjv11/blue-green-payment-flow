@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
+import { Skeleton } from '@/components/ui/skeleton';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase, isSupabaseConfigured } from '@/lib/supabase';
 import { useSupabasePlan } from '@/hooks/useSupabasePlan';
@@ -166,13 +167,39 @@ const Analytics = () => {
       <div className="min-h-screen bg-background pb-20 md:pb-0">
         <Navigation />
         <div className="container mx-auto px-4 py-8">
-          <div className="animate-pulse space-y-6">
-            <div className="h-8 bg-muted rounded w-1/3"></div>
+          <div className="space-y-6">
+            <div className="space-y-2">
+              <Skeleton className="h-9 w-72" />
+              <Skeleton className="h-5 w-96" />
+            </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               {[...Array(4)].map((_, i) => (
-                <div key={i} className="h-24 bg-muted rounded"></div>
+                <Card key={i}>
+                  <CardContent className="p-6">
+                    <div className="flex items-center justify-between">
+                      <div className="flex-1 space-y-2">
+                        <Skeleton className="h-4 w-32" />
+                        <Skeleton className="h-8 w-20" />
+                      </div>
+                      <Skeleton className="h-8 w-8 rounded-full" />
+                    </div>
+                  </CardContent>
+                </Card>
               ))}
             </div>
+            <Card>
+              <CardHeader>
+                <Skeleton className="h-6 w-40" />
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <Skeleton className="h-4 w-full" />
+                <Skeleton className="h-8 w-full" />
+                <div className="flex justify-between">
+                  <Skeleton className="h-3 w-24" />
+                  <Skeleton className="h-3 w-24" />
+                </div>
+              </CardContent>
+            </Card>
           </div>
         </div>
       </div>
