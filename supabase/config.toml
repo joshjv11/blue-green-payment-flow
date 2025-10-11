@@ -16,6 +16,9 @@ verify_jwt = true
 [functions.get-current-plan]
 verify_jwt = true
 
+[functions.admin-update-user-plan]
+verify_jwt = true
+
 [functions.log-client-event]
 verify_jwt = false
 

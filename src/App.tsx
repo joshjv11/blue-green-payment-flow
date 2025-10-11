@@ -21,6 +21,7 @@ import Analytics from './pages/Analytics';
 import Settings from './pages/Settings';
 import Admin from './pages/Admin';
 import AdminUsers from './pages/AdminUsers';
+import AdminUserPlans from './pages/AdminUserPlans';
 import AdminDbHealth from './pages/AdminDbHealth';
 import AdminLogs from './pages/AdminLogs';
 import NotFound from './pages/NotFound';
@@ -76,7 +77,7 @@ function AppRoutes() {
         path="/admin/users" 
         element={
           <ProtectedRoute>
-            <PageTransition><AdminUsers /></PageTransition>
+            <PageTransition><AdminUserPlans /></PageTransition>
           </ProtectedRoute>
         } 
       />

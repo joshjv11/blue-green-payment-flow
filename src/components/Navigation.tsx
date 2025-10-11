@@ -1,8 +1,11 @@
 import { Button } from '@/components/ui/button';
-import { Home, FileText, BarChart3, Settings } from 'lucide-react';
+import { Home, FileText, BarChart3, Settings, Shield } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { motion } from 'framer-motion';
+import { useEffect, useState } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
 
 interface NavigationProps {
   className?: string;
@@ -11,12 +14,34 @@ interface NavigationProps {
 export const Navigation = ({ className }: NavigationProps) => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { user } = useAuth();
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  useEffect(() => {
+    checkAdminStatus();
+  }, [user]);
+
+  const checkAdminStatus = async () => {
+    if (!user) {
+      setIsAdmin(false);
+      return;
+    }
+    
+    try {
+      const { data } = await supabase.rpc('is_system_admin');
+      setIsAdmin(!!data);
+    } catch (error) {
+      console.error('Error checking admin status:', error);
+      setIsAdmin(false);
+    }
+  };
 
   const navigationItems = [
     { path: '/dashboard', icon: Home, label: 'Dashboard' },
     { path: '/bills', icon: FileText, label: 'Bills' },
     { path: '/analytics', icon: BarChart3, label: 'Analytics' },
     { path: '/settings', icon: Settings, label: 'Settings' },
+    ...(isAdmin ? [{ path: '/admin/users', icon: Shield, label: 'Admin' }] : []),
   ];
 
   return (
@@ -102,7 +127,10 @@ export const Navigation = ({ className }: NavigationProps) => {
           "safe-area-inset-bottom"
         )}
       >
-        <div className="grid grid-cols-4 gap-1 px-2 py-3">
+        <div className={cn(
+          "grid gap-1 px-2 py-3",
+          navigationItems.length === 5 ? "grid-cols-5" : "grid-cols-4"
+        )}>
           {navigationItems.map((item) => {
             const isActive = location.pathname === item.path;
             const Icon = item.icon;
