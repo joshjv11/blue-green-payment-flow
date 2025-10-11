@@ -164,4 +164,8 @@ All colors MUST be HSL.
       @apply text-4xl;
     }
   }
+
+  .safe-area-inset-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
 }

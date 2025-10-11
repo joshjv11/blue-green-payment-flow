@@ -321,34 +321,7 @@ const Dashboard = () => {
 
   return (
     <div className="min-h-screen bg-background pb-20 md:pb-0">
-      {/* Header */}
-      <header className="border-b border-border bg-card">
-        <div className="container mx-auto px-4 py-3 sm:py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-2">
-              <div className="w-8 h-8 bg-hero-gradient rounded-lg flex items-center justify-center">
-                <div className="w-4 h-4 bg-white rounded-sm"></div>
-              </div>
-              <span className="text-lg sm:text-xl font-bold text-foreground">InvoiceFlow</span>
-            </div>
-            
-            <div className="flex items-center space-x-2 sm:space-x-4">
-              <span className="hidden sm:block text-sm text-muted-foreground">
-                Welcome, {profile?.full_name || user?.email}
-              </span>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={signOut}
-                className="flex items-center space-x-1 sm:space-x-2 h-9"
-              >
-                <LogOut className="h-4 w-4" />
-                <span className="hidden xs:inline">Sign Out</span>
-              </Button>
-            </div>
-          </div>
-        </div>
-      </header>
+      <Navigation />
 
       {/* Main Content */}
       <main className="container mx-auto px-4 py-6 sm:py-8">

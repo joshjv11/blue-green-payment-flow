@@ -1,14 +1,14 @@
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Home, FileText, BarChart3, Settings } from 'lucide-react';
+import { Home, FileText, BarChart3, Settings } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
+import { motion } from 'framer-motion';
 
 interface NavigationProps {
-  showBackButton?: boolean;
   className?: string;
 }
 
-export const Navigation = ({ showBackButton = true, className }: NavigationProps) => {
+export const Navigation = ({ className }: NavigationProps) => {
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -19,99 +19,156 @@ export const Navigation = ({ showBackButton = true, className }: NavigationProps
     { path: '/settings', icon: Settings, label: 'Settings' },
   ];
 
-  const getCurrentPageName = () => {
-    const currentItem = navigationItems.find(item => item.path === location.pathname);
-    return currentItem?.label || 'Page';
-  };
-
-  const canGoBack = () => {
-    return window.history.length > 1 && location.pathname !== '/dashboard';
-  };
-
-  const handleBack = () => {
-    if (canGoBack()) {
-      navigate(-1);
-    } else {
-      navigate('/dashboard');
-    }
-  };
-
   return (
-    <div className={cn("sticky top-0 z-40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b", className)}>
-      <div className="container mx-auto px-4 py-3">
-        {/* Mobile-optimized navigation */}
-        <div className="flex items-center justify-between md:justify-start md:gap-6">
-          {showBackButton && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleBack}
-              className="flex items-center gap-2 h-10 px-3"
-              disabled={location.pathname === '/dashboard'}
-            >
-              <ArrowLeft className="h-4 w-4" />
-              <span className="hidden sm:inline">Back</span>
-            </Button>
-          )}
-          
-          {/* Page title for small screens */}
-          <div className="md:hidden">
-            <h1 className="text-lg font-semibold text-foreground">
-              {getCurrentPageName()}
-            </h1>
-          </div>
-
-          {/* Navigation items - horizontal scroll on mobile, normal on desktop */}
-          <div className="hidden md:flex items-center gap-2">
+    <>
+      {/* Desktop Navigation - Fixed Top */}
+      <motion.nav
+        initial={{ y: -100, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ duration: 0.3, ease: 'easeOut' }}
+        className={cn(
+          "hidden md:block fixed top-0 left-0 right-0 z-50",
+          "bg-background/80 backdrop-blur-xl",
+          "border-b border-border/40",
+          "shadow-lg shadow-black/5",
+          className
+        )}
+      >
+        <div className="container mx-auto px-6 py-4">
+          <div className="flex items-center justify-center gap-2">
             {navigationItems.map((item) => {
               const isActive = location.pathname === item.path;
               const Icon = item.icon;
               
               return (
-                <Button
+                <motion.div
                   key={item.path}
-                  variant={isActive ? "default" : "ghost"}
-                  size="sm"
-                  onClick={() => navigate(item.path)}
-                  className={cn(
-                    "flex items-center gap-2 h-10 px-4",
-                    isActive && "bg-primary text-primary-foreground"
-                  )}
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  transition={{ duration: 0.2 }}
                 >
-                  <Icon className="h-4 w-4" />
-                  <span>{item.label}</span>
-                </Button>
+                  <Button
+                    variant="ghost"
+                    size="default"
+                    onClick={() => navigate(item.path)}
+                    className={cn(
+                      "relative flex items-center gap-3 h-11 px-6",
+                      "transition-all duration-300 ease-out",
+                      "hover:bg-primary/10",
+                      isActive && "text-primary font-semibold"
+                    )}
+                  >
+                    <Icon className={cn(
+                      "h-5 w-5 transition-all duration-300",
+                      isActive && "scale-110"
+                    )} />
+                    <span>{item.label}</span>
+                    
+                    {/* Active indicator with slide animation */}
+                    {isActive && (
+                      <motion.div
+                        layoutId="activeTab"
+                        className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-primary via-primary/80 to-primary rounded-full"
+                        transition={{ type: "spring", stiffness: 380, damping: 30 }}
+                      />
+                    )}
+                    
+                    {/* Glow effect on active */}
+                    {isActive && (
+                      <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        className="absolute inset-0 bg-primary/5 rounded-md -z-10"
+                      />
+                    )}
+                  </Button>
+                </motion.div>
               );
             })}
           </div>
         </div>
+      </motion.nav>
 
-        {/* Bottom navigation for mobile */}
-        <div className="md:hidden fixed bottom-0 left-0 right-0 bg-background border-t z-[55] touch-manipulation">
-          <div className="grid grid-cols-4 gap-1 p-2">
-            {navigationItems.map((item) => {
-              const isActive = location.pathname === item.path;
-              const Icon = item.icon;
-              
-              return (
+      {/* Mobile Navigation - Fixed Bottom */}
+      <motion.nav
+        initial={{ y: 100, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ duration: 0.3, ease: 'easeOut' }}
+        className={cn(
+          "md:hidden fixed bottom-0 left-0 right-0 z-50",
+          "bg-background/95 backdrop-blur-xl",
+          "border-t border-border/40",
+          "shadow-[0_-4px_16px_rgba(0,0,0,0.08)]",
+          "safe-area-inset-bottom"
+        )}
+      >
+        <div className="grid grid-cols-4 gap-1 px-2 py-3">
+          {navigationItems.map((item) => {
+            const isActive = location.pathname === item.path;
+            const Icon = item.icon;
+            
+            return (
+              <motion.div
+                key={item.path}
+                whileTap={{ scale: 0.9 }}
+                transition={{ duration: 0.15 }}
+              >
                 <Button
-                  key={item.path}
-                  variant={isActive ? "default" : "ghost"}
+                  variant="ghost"
                   size="sm"
                   onClick={() => navigate(item.path)}
                   className={cn(
-                    "flex flex-col items-center gap-1 h-14 p-2",
-                    isActive && "bg-primary text-primary-foreground"
+                    "relative flex flex-col items-center justify-center gap-1.5 h-16 w-full",
+                    "transition-all duration-300 ease-out",
+                    "hover:bg-primary/10",
+                    isActive && "text-primary"
                   )}
                 >
-                  <Icon className="h-5 w-5" />
-                  <span className="text-xs font-medium">{item.label}</span>
+                  {/* Icon with scale animation */}
+                  <motion.div
+                    animate={{ 
+                      scale: isActive ? 1.1 : 1,
+                      y: isActive ? -2 : 0
+                    }}
+                    transition={{ duration: 0.3, ease: 'easeOut' }}
+                  >
+                    <Icon className="h-5 w-5" />
+                  </motion.div>
+                  
+                  <span className={cn(
+                    "text-xs font-medium transition-all duration-300",
+                    isActive && "font-semibold"
+                  )}>
+                    {item.label}
+                  </span>
+                  
+                  {/* Active indicator dot */}
+                  {isActive && (
+                    <motion.div
+                      layoutId="activeMobileTab"
+                      className="absolute top-1 w-1 h-1 bg-primary rounded-full"
+                      transition={{ type: "spring", stiffness: 380, damping: 30 }}
+                    />
+                  )}
+                  
+                  {/* Background glow on active */}
+                  {isActive && (
+                    <motion.div
+                      initial={{ opacity: 0, scale: 0.8 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      className="absolute inset-0 bg-primary/5 rounded-lg -z-10"
+                    />
+                  )}
                 </Button>
-              );
-            })}
-          </div>
+              </motion.div>
+            );
+          })}
         </div>
-      </div>
-    </div>
+      </motion.nav>
+
+      {/* Spacer to prevent content from going under fixed nav */}
+      <div className="hidden md:block h-[73px]" />
+      <div className="md:hidden h-[88px]" />
+    </>
   );
 };
