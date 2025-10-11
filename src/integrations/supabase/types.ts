@@ -519,6 +519,7 @@ export type Database = {
           is_active: boolean | null
           phone_number: string | null
           reminder_email: string | null
+          short_id: string | null
           sms_notifications_enabled: boolean | null
           updated_at: string
         }
@@ -533,6 +534,7 @@ export type Database = {
           is_active?: boolean | null
           phone_number?: string | null
           reminder_email?: string | null
+          short_id?: string | null
           sms_notifications_enabled?: boolean | null
           updated_at?: string
         }
@@ -547,6 +549,7 @@ export type Database = {
           is_active?: boolean | null
           phone_number?: string | null
           reminder_email?: string | null
+          short_id?: string | null
           sms_notifications_enabled?: boolean | null
           updated_at?: string
         }
@@ -660,6 +663,48 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      user_plan_changes: {
+        Row: {
+          changed_at: string
+          changed_by: string | null
+          id: string
+          new_plan: string
+          old_plan: string
+          user_id: string
+        }
+        Insert: {
+          changed_at?: string
+          changed_by?: string | null
+          id?: string
+          new_plan: string
+          old_plan: string
+          user_id: string
+        }
+        Update: {
+          changed_at?: string
+          changed_by?: string | null
+          id?: string
+          new_plan?: string
+          old_plan?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_plan_changes_changed_by_fkey"
+            columns: ["changed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_plan_changes_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_plans: {
         Row: {
