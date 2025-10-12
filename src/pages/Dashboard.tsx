@@ -324,74 +324,103 @@ const Dashboard = () => {
       <Navigation />
 
       {/* Main Content */}
-      <main className="container mx-auto px-4 py-6 sm:py-8">
-        <div className="max-w-6xl mx-auto space-y-6 sm:space-y-8">
-          {/* Welcome Section with Plan Status */}
-          <div className="space-y-4">
-            {/* Passkey Banner */}
-            {showPasskeyBanner && (
-              <div className="flex justify-center">
-                <AddPasskeyBanner onDismiss={handlePasskeyBannerDismiss} className="max-w-md" />
-              </div>
-            )}
+      <main className="container mx-auto px-4 py-4 md:py-6">
+        <div className="max-w-6xl mx-auto space-y-4 md:space-y-6">
+          {/* Passkey Banner */}
+          {showPasskeyBanner && (
+            <AddPasskeyBanner onDismiss={handlePasskeyBannerDismiss} />
+          )}
 
-            {/* Dashboard Header with Retry */}
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-              <div>
-                <h1 className="text-2xl sm:text-3xl font-bold text-foreground">
-                  Welcome back, {profile?.full_name || user?.email?.split('@')[0] || 'there'}! 👋
-                </h1>
-                <p className="text-sm sm:text-base text-muted-foreground">Here's an overview of your bills and finances</p>
+          {/* Profile & Plan Section - Mobile First */}
+          <Card className="border-none shadow-sm">
+            <CardContent className="p-4 md:p-6">
+              <div className="flex items-start justify-between gap-4 mb-4">
+                <div className="flex-1 min-w-0">
+                  <h1 className="text-xl md:text-2xl font-bold text-foreground truncate">
+                    {profile?.full_name || user?.email?.split('@')[0] || 'Welcome'}
+                  </h1>
+                  <p className="text-sm text-muted-foreground">{user?.email}</p>
+                  {profile?.company && (
+                    <p className="text-xs text-muted-foreground mt-1">{profile.company}</p>
+                  )}
+                </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleRetryAll}
+                  disabled={loading || billsLoading}
+                  className="shrink-0"
+                >
+                  <RefreshCw className={`h-4 w-4 ${(loading || billsLoading) ? 'animate-spin' : ''}`} />
+                </Button>
               </div>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleRetryAll}
-                disabled={loading || billsLoading}
-                className="flex items-center gap-2"
-              >
-                <RefreshCw className={`h-4 w-4 ${(loading || billsLoading) ? 'animate-spin' : ''}`} />
-                <span className="hidden sm:inline">Refresh</span>
-              </Button>
-            </div>
-            
-            <div className="text-center">
-              <h1 className="text-2xl sm:text-3xl font-bold text-foreground mb-2">
-                Welcome to your Dashboard
-              </h1>
-              <p className="text-sm sm:text-base text-muted-foreground">
-                Manage your bills, track payments, and stay on top of your finances.
-              </p>
-            </div>
-            
-            {/* Plan Status Display */}
-            <div className="flex justify-center">
+              
+              {/* Plan Status Inline */}
               <PlanStatusCard 
                 compact={true}
                 onUpgrade={() => setShowUpgradeModal(true)}
               />
-            </div>
-          </div>
+            </CardContent>
+          </Card>
 
           {/* Bill Statistics */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
-            <Card className="shadow-soft">
-              <CardContent className="p-4 sm:p-6">
-                <div className="flex items-center space-x-2">
-                  <FileText className="h-6 w-6 sm:h-8 sm:w-8 text-primary" />
-                  <div>
-                    <div className="text-xl sm:text-2xl font-bold text-foreground">{activeBills.length}</div>
-                    <div className="text-xs sm:text-sm text-muted-foreground">
-                      Active Bills
-                      {plan === 'free' && (
-                        <div className="text-xs text-orange-600">({bills.length}/{billLimit})</div>
-                      )}
-                    </div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
+            <Card>
+              <CardContent className="p-4">
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <FileText className="h-5 w-5 text-primary" />
+                    <span className="text-xs text-muted-foreground">Active</span>
                   </div>
+                  <div className="text-2xl font-bold text-foreground">{activeBills.length}</div>
+                  {plan === 'free' && (
+                    <div className="text-xs text-muted-foreground">
+                      {bills.length}/{billLimit} bills
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+            
+            <Card>
+              <CardContent className="p-4">
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <AlertCircle className="h-5 w-5 text-destructive" />
+                    <span className="text-xs text-muted-foreground">Overdue</span>
+                  </div>
+                  <div className="text-2xl font-bold text-destructive">{overdueBills.length}</div>
+                </div>
+              </CardContent>
+            </Card>
+            
+            <Card>
+              <CardContent className="p-4">
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <Clock className="h-5 w-5 text-yellow-600" />
+                    <span className="text-xs text-muted-foreground">Due Soon</span>
+                  </div>
+                  <div className="text-2xl font-bold text-yellow-600">{billsDueIn7Days.length}</div>
+                </div>
+              </CardContent>
+            </Card>
+            
+            <Card>
+              <CardContent className="p-4">
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <CheckCircle className="h-5 w-5 text-green-600" />
+                    <span className="text-xs text-muted-foreground">Paid</span>
+                  </div>
+                  <div className="text-2xl font-bold text-green-600">{paidBills.length}</div>
+                </div>
+              </CardContent>
+            </Card>
           </div>
 
           {/* Plan Limit Warnings */}
-          <div className="space-y-4">
+          <div className="space-y-3">
             <FreemiumLimitCard
               type="bills"
               currentCount={bills.length}
@@ -402,45 +431,6 @@ const Dashboard = () => {
               currentCount={aiQueriesUsed}
               onUpgrade={() => setShowUpgradeModal(true)}
             />
-          </div>
-              </CardContent>
-            </Card>
-            
-            <Card className="shadow-soft">
-              <CardContent className="p-4 sm:p-6">
-                <div className="flex items-center space-x-2">
-                  <AlertCircle className="h-6 w-6 sm:h-8 sm:w-8 text-destructive" />
-                  <div>
-                    <div className="text-xl sm:text-2xl font-bold text-destructive">{overdueBills.length}</div>
-                    <div className="text-xs sm:text-sm text-muted-foreground">Overdue Bills</div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-            
-            <Card className="shadow-soft">
-              <CardContent className="p-4 sm:p-6">
-                <div className="flex items-center space-x-2">
-                  <Clock className="h-6 w-6 sm:h-8 sm:w-8 text-yellow-600" />
-                  <div>
-                    <div className="text-xl sm:text-2xl font-bold text-yellow-600">{billsDueIn7Days.length}</div>
-                    <div className="text-xs sm:text-sm text-muted-foreground">Due in 7 Days</div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-            
-            <Card className="shadow-soft">
-              <CardContent className="p-4 sm:p-6">
-                <div className="flex items-center space-x-2">
-                  <CheckCircle className="h-6 w-6 sm:h-8 sm:w-8 text-green-600" />
-                  <div>
-                    <div className="text-xl sm:text-2xl font-bold text-green-600">{paidBills.length}</div>
-                    <div className="text-xs sm:text-sm text-muted-foreground">Paid Bills</div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
           </div>
 
           {/* Bills Due Today */}

@@ -151,13 +151,16 @@ const SettingsPage = () => {
     <div className="min-h-screen bg-background pb-20 md:pb-0">
       <Navigation />
       
-      <div className="container mx-auto px-4 py-6 sm:py-8 max-w-2xl">
-      <div className="flex items-center gap-3 mb-6 sm:mb-8">
-        <SettingsIcon className="h-6 w-6 sm:h-8 sm:w-8 text-primary" />
-        <h1 className="text-2xl sm:text-3xl font-bold">Settings</h1>
-      </div>
+      <div className="container mx-auto px-4 py-4 md:py-6 max-w-2xl">
+        {/* Sticky Header */}
+        <div className="sticky top-[73px] md:top-[73px] z-40 bg-background/95 backdrop-blur-sm -mx-4 px-4 py-3 md:py-4 border-b mb-4 md:mb-6">
+          <div className="flex items-center gap-3">
+            <SettingsIcon className="h-5 w-5 md:h-6 md:w-6 text-primary" />
+            <h1 className="text-xl md:text-2xl font-bold">Settings</h1>
+          </div>
+        </div>
 
-      <div className="space-y-6">
+        <div className="space-y-4 md:space-y-6">
         {/* Freemium Limit Card */}
         <FreemiumLimitCard
           type="ai"
@@ -165,17 +168,20 @@ const SettingsPage = () => {
           onUpgrade={() => setShowUpgradeModal(true)}
         />
 
-        {/* Reminder Settings */}
+        {/* Notifications & Reminders Group */}
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
+            <CardTitle className="flex items-center gap-2 text-base md:text-lg">
               <Bell className="h-5 w-5" />
-              Default Reminder Settings
+              Reminders
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex flex-col space-y-2">
-              <Label htmlFor="reminder-days">Default reminder time before due date</Label>
+          <CardContent className="space-y-6">
+            {/* Default Reminder Time */}
+            <div className="space-y-3">
+              <Label htmlFor="reminder-days" className="text-sm font-medium">
+                Default reminder timing
+              </Label>
               <Select
                 value={tempSettings.defaultReminderDays.toString()}
                 onValueChange={(value) => setTempSettings(prev => ({
@@ -184,7 +190,7 @@ const SettingsPage = () => {
                 }))}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Select reminder time" />
+                  <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="1">1 day before</SelectItem>
@@ -194,95 +200,98 @@ const SettingsPage = () => {
                 </SelectContent>
               </Select>
             </div>
-          </CardContent>
-        </Card>
 
-        {/* Email Reminder Settings */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Mail className="h-5 w-5" />
-              Email Reminders
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div className="space-y-1">
-                <Label>Email reminders for bills due soon</Label>
-                <p className="text-sm text-muted-foreground">
-                  Get email notifications for upcoming and overdue bills
-                </p>
-                {!hasEmailReminders && (
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <Crown className="h-4 w-4 text-yellow-500" />
-                    <span>Pro feature</span>
+            <div className="h-px bg-border" />
+
+            {/* Email Reminders Section */}
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div className="space-y-1 flex-1">
+                  <div className="flex items-center gap-2">
+                    <Mail className="h-4 w-4 text-muted-foreground" />
+                    <Label className="text-sm font-medium">Email reminders</Label>
+                    {!hasEmailReminders && (
+                      <Crown className="h-3 w-3 text-yellow-500" />
+                    )}
                   </div>
-                )}
-              </div>
-              <Switch
-                checked={hasEmailReminders && tempSettings.emailRemindersEnabled}
-                onCheckedChange={(enabled) => {
-                  if (!hasEmailReminders) {
-                    setShowUpgradeModal(true);
-                    return;
-                  }
-                  setTempSettings(prev => ({
-                    ...prev,
-                    emailRemindersEnabled: enabled
-                  }));
-                }}
-                disabled={!hasEmailReminders}
-              />
-            </div>
-            
-            {hasEmailReminders && tempSettings.emailRemindersEnabled && (
-              <div className="space-y-2">
-                <Label htmlFor="reminder-email">Email address for reminders</Label>
-                <Input
-                  id="reminder-email"
-                  type="email"
-                  placeholder="your.email@example.com"
-                  value={tempSettings.reminderEmail}
-                  onChange={(e) => setTempSettings(prev => ({
-                    ...prev,
-                    reminderEmail: e.target.value
-                  }))}
+                  <p className="text-xs text-muted-foreground">
+                    Get email notifications for upcoming bills
+                  </p>
+                </div>
+                <Switch
+                  checked={hasEmailReminders && tempSettings.emailRemindersEnabled}
+                  onCheckedChange={(enabled) => {
+                    if (!hasEmailReminders) {
+                      setShowUpgradeModal(true);
+                      return;
+                    }
+                    setTempSettings(prev => ({
+                      ...prev,
+                      emailRemindersEnabled: enabled
+                    }));
+                  }}
+                  disabled={!hasEmailReminders}
                 />
-                <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3">
+              </div>
+              
+              {hasEmailReminders && tempSettings.emailRemindersEnabled && (
+                <div className="space-y-2 pt-2">
+                  <Label htmlFor="reminder-email" className="text-xs">Email address</Label>
+                  <Input
+                    id="reminder-email"
+                    type="email"
+                    placeholder="your.email@example.com"
+                    value={tempSettings.reminderEmail}
+                    onChange={(e) => setTempSettings(prev => ({
+                      ...prev,
+                      reminderEmail: e.target.value
+                    }))}
+                    className="h-9"
+                  />
+                </div>
+              )}
+
+              {!hasEmailReminders && (
+                <div className="bg-primary/5 border border-primary/20 rounded-lg p-3">
                   <div className="flex items-start gap-2">
-                    <Mail className="h-4 w-4 text-blue-600 mt-0.5" />
-                    <div className="text-sm">
-                      <p className="text-blue-800 dark:text-blue-200 font-medium">Pro Feature Active</p>
-                      <p className="text-blue-700 dark:text-blue-300">
-                        Real email reminders are enabled for your Pro account.
+                    <Crown className="h-4 w-4 text-primary mt-0.5 shrink-0" />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs font-medium">Unlock with Pro</p>
+                      <p className="text-xs text-muted-foreground">
+                        Never miss payments with email alerts
                       </p>
+                      <Button 
+                        size="sm" 
+                        onClick={() => setShowUpgradeModal(true)}
+                        className="h-7 mt-2 text-xs"
+                      >
+                        Upgrade
+                      </Button>
                     </div>
                   </div>
                 </div>
-              </div>
-            )}
+              )}
 
-            {!hasEmailReminders && (
-              <div className="bg-gradient-to-r from-primary/5 to-primary/10 border border-primary/20 rounded-lg p-4">
-                <div className="flex items-start gap-3">
-                  <Crown className="h-5 w-5 text-primary mt-0.5" />
-                  <div className="flex-1">
-                    <p className="font-medium text-foreground">Unlock Email Reminders</p>
-                    <p className="text-sm text-muted-foreground mb-3">
-                      Never miss a bill payment with automated email notifications.
-                    </p>
-                    <Button 
-                      size="sm" 
-                      onClick={() => setShowUpgradeModal(true)}
-                      className="h-8"
-                    >
-                      <Zap className="h-3 w-3 mr-1" />
-                      Upgrade to Pro
-                    </Button>
-                  </div>
+              <div className="h-px bg-border" />
+
+              {/* Browser Notifications */}
+              <div className="flex items-center justify-between">
+                <div className="space-y-1 flex-1">
+                  <Label className="text-sm font-medium">Browser notifications</Label>
+                  <p className="text-xs text-muted-foreground">
+                    Push notifications for bills due today
+                  </p>
+                  {Notification.permission === 'denied' && (
+                    <p className="text-xs text-destructive">Blocked in browser</p>
+                  )}
                 </div>
+                <Switch
+                  checked={tempSettings.notificationsEnabled}
+                  onCheckedChange={handleNotificationToggle}
+                  disabled={Notification.permission === 'denied'}
+                />
               </div>
-            )}
+            </div>
           </CardContent>
         </Card>
 
@@ -292,46 +301,12 @@ const SettingsPage = () => {
         {/* Reminder Dashboard */}
         <ReminderDashboard />
 
-        {/* Notification Settings */}
+        {/* Data Management Group */}
         <Card>
           <CardHeader>
-            <CardTitle>Browser Notifications</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div className="space-y-1">
-                <Label>Push notifications for bills due soon</Label>
-                <p className="text-sm text-muted-foreground">
-                  Get notified when bills are due today or in the next 2 days
-                </p>
-              </div>
-              <Switch
-                checked={tempSettings.notificationsEnabled}
-                onCheckedChange={handleNotificationToggle}
-                disabled={Notification.permission === 'denied'}
-              />
-            </div>
-            
-            {Notification.permission === 'denied' && (
-              <div className="text-sm text-destructive">
-                Notifications are blocked. Please enable them in your browser settings to use this feature.
-              </div>
-            )}
-            
-            {Notification.permission === 'default' && (
-              <div className="text-sm text-muted-foreground">
-                Click the toggle above to request notification permission.
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Export/Import Section */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
+            <CardTitle className="flex items-center gap-2 text-base md:text-lg">
               <Download className="h-5 w-5" />
-              Data Management
+              Data
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -344,13 +319,13 @@ const SettingsPage = () => {
         </Card>
 
         {/* Action Buttons */}
-        <div className="flex flex-col sm:flex-row gap-3 pt-4">
+        <div className="flex gap-3 pt-2">
           <Button onClick={saveSettings} className="flex-1 h-10">
             <Save className="h-4 w-4 mr-2" />
-            Save Settings
+            Save
           </Button>
-          <Button onClick={resetSettings} variant="outline" className="h-10">
-            Reset to Default
+          <Button onClick={resetSettings} variant="outline" className="h-10 px-4">
+            Reset
           </Button>
         </div>
         </div>

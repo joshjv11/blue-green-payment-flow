@@ -31,7 +31,8 @@ import {
   CalendarPlus,
   Download,
   Clock,
-  RefreshCw
+  RefreshCw,
+  FileText
 } from 'lucide-react';
 import { format, parseISO, differenceInDays, isAfter, isBefore, addDays } from 'date-fns';
 import { useSupabasePlan } from '@/hooks/useSupabasePlan';
@@ -600,51 +601,47 @@ const Bills = () => {
     <div className="min-h-screen bg-background pb-20 md:pb-0">
       <Navigation />
 
-      <main className="container mx-auto px-4 py-6 sm:py-8">
-        <div className="max-w-7xl mx-auto space-y-6 sm:space-y-8">
-          <div className="space-y-6">
-            <div>
-              <h1 className="text-2xl sm:text-3xl font-bold text-foreground">Bills Management</h1>
-              <p className="text-sm sm:text-base text-muted-foreground">Track and manage all your bills in one place</p>
-            </div>
-
-            <BillLimitBanner 
-              currentCount={bills.length}
-              onUpgrade={() => setShowUpgradeModal(true)}
-            />
-            
-            <div className="flex gap-2 flex-wrap">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleRetryAll}
-                disabled={loading}
-                className="flex items-center gap-2"
-              >
-                <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
-                <span className="hidden sm:inline">Refresh</span>
-              </Button>
-              
-              <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-                <DialogTrigger asChild>
-                  <Button 
-                    className="flex items-center space-x-2 h-10 w-full sm:w-auto"
-                    disabled={!canAddBill(bills.length) && !editingBill}
-                    onClick={() => {
-                      if (!canAddBill(bills.length) && !editingBill) {
-                        setShowUpgradeModal(true);
-                      } else {
-                        resetForm();
-                      }
-                    }}
-                  >
-                    <Plus className="h-4 w-4" />
-                    <span>Add New Bill</span>
-                    {!canAddBill(bills.length) && (
-                      <Crown className="h-4 w-4 ml-1 text-yellow-500" />
-                    )}
-                  </Button>
-                </DialogTrigger>
+      <main className="container mx-auto px-4 py-4 md:py-6">
+        <div className="max-w-6xl mx-auto space-y-4 md:space-y-6">
+          {/* Sticky Header */}
+          <div className="sticky top-[73px] md:top-[73px] z-40 bg-background/95 backdrop-blur-sm -mx-4 px-4 py-3 md:py-4 border-b">
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex-1 min-w-0">
+                <h1 className="text-xl md:text-2xl font-bold text-foreground">Bills</h1>
+                <p className="text-xs md:text-sm text-muted-foreground truncate">
+                  {bills.length} {bills.length === 1 ? 'bill' : 'bills'}
+                </p>
+              </div>
+              <div className="flex gap-2 shrink-0">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleRetryAll}
+                  disabled={loading}
+                >
+                  <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+                </Button>
+                
+                <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                  <DialogTrigger asChild>
+                    <Button 
+                      size="sm"
+                      disabled={!canAddBill(bills.length) && !editingBill}
+                      onClick={() => {
+                        if (!canAddBill(bills.length) && !editingBill) {
+                          setShowUpgradeModal(true);
+                        } else {
+                          resetForm();
+                        }
+                      }}
+                    >
+                      <Plus className="h-4 w-4" />
+                      <span className="hidden sm:inline ml-2">Add</span>
+                      {!canAddBill(bills.length) && (
+                        <Crown className="h-3 w-3 ml-1 text-yellow-500" />
+                      )}
+                    </Button>
+                  </DialogTrigger>
                 <DialogContent className="max-w-2xl mx-4 sm:mx-auto max-h-[90vh] overflow-y-auto">
                   <DialogHeader>
                     <DialogTitle className="text-lg sm:text-xl">
@@ -658,40 +655,64 @@ const Bills = () => {
                       onSubmit={handleSubmit}
                       editingBill={editingBill}
                     />
-                  </DialogContent>
-              </Dialog>
+                </DialogContent>
+                </Dialog>
+              </div>
             </div>
           </div>
 
-          {/* Bills Table */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Your Bills ({bills.length})</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {bills.length === 0 ? (
-                <div className="text-center py-8">
-                  <p className="text-muted-foreground">No bills found. Add your first bill to get started!</p>
-                </div>
-              ) : (
-                <>
-                  {/* Mobile Cards View */}
-                  {isMobile ? (
-                    <div className="space-y-4">
-                      {bills.map((bill) => (
-                        <BillCard key={bill.id} bill={bill} />
-                      ))}
-                    </div>
-                  ) : (
-                    /* Desktop Table View */
-                    <div className="overflow-x-auto">
-                      <Table>
-                        <TableHeader>
-                          <TableRow>
-                            <TableHead>Name</TableHead>
-                            <TableHead>Amount</TableHead>
-                            <TableHead>Due Date</TableHead>
-                            <TableHead>Category</TableHead>
+          {/* Limit Warnings - Compact */}
+          <div className="space-y-3">
+            <FreemiumLimitCard
+              type="bills"
+              currentCount={bills.length}
+              onUpgrade={() => setShowUpgradeModal(true)}
+            />
+            <FreemiumLimitCard
+              type="ai"
+              currentCount={aiQueriesUsed}
+              onUpgrade={() => setShowUpgradeModal(true)}
+            />
+          </div>
+
+          {/* Bills List */}
+          {bills.length === 0 ? (
+            <Card>
+              <CardContent className="py-12 text-center">
+                <FileText className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+                <h3 className="text-lg font-semibold mb-2">No bills yet</h3>
+                <p className="text-sm text-muted-foreground mb-4">
+                  Add your first bill to get started
+                </p>
+                <Button onClick={() => setIsDialogOpen(true)}>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add First Bill
+                </Button>
+              </CardContent>
+            </Card>
+          ) : (
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base md:text-lg">All Bills</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {/* Mobile Cards View */}
+                {isMobile ? (
+                  <div className="space-y-3">
+                    {bills.map((bill) => (
+                      <BillCard key={bill.id} bill={bill} />
+                    ))}
+                  </div>
+                ) : (
+                  /* Desktop Table View */
+                  <div className="overflow-x-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Name</TableHead>
+                          <TableHead>Amount</TableHead>
+                          <TableHead>Due Date</TableHead>
+                          <TableHead>Category</TableHead>
                             <TableHead>Status</TableHead>
                             <TableHead>Actions</TableHead>
                           </TableRow>
@@ -750,11 +771,11 @@ const Bills = () => {
                       </Table>
                     </div>
                   )}
-                </>
-              )}
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+          )}
 
+          {/* Modals & Components */}
           <UpgradeModal
             open={showUpgradeModal}
             onOpenChange={setShowUpgradeModal}
@@ -774,13 +795,6 @@ const Bills = () => {
                 description: "Your bill reminder has been set up successfully",
               });
             }}
-          />
-
-          <FreemiumLimitCard
-            type="bills"
-            currentCount={bills.length}
-            onUpgrade={() => setShowUpgradeModal(true)}
-            className="shadow-lg"
           />
 
           <EnhancedAIAssistantV2

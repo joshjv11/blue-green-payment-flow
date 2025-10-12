@@ -210,31 +210,34 @@ const Analytics = () => {
     <div className="min-h-screen bg-background pb-20 md:pb-0">
       <Navigation />
       
-      <div className="container mx-auto px-4 py-8">
-        <div className="max-w-6xl mx-auto space-y-8">
-          {/* Header */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div>
-              <h1 className="text-3xl font-bold text-foreground">Analytics Dashboard</h1>
-              <p className="text-muted-foreground">Insights into your financial patterns and bill management</p>
-            </div>
-            <div className="flex gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleRetryAll}
-                disabled={loading}
-                className="flex items-center gap-2"
-              >
-                <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
-                <span className="hidden sm:inline">Refresh</span>
-              </Button>
-              {!hasAdvancedAnalytics && (
-                <Button onClick={() => setShowUpgradeModal(true)} className="flex items-center gap-2">
-                  <Crown className="h-4 w-4" />
-                  Unlock Advanced Analytics
+      <div className="container mx-auto px-4 py-4 md:py-6">
+        <div className="max-w-6xl mx-auto space-y-4 md:space-y-6">
+          {/* Sticky Header */}
+          <div className="sticky top-[73px] md:top-[73px] z-40 bg-background/95 backdrop-blur-sm -mx-4 px-4 py-3 md:py-4 border-b">
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex-1 min-w-0">
+                <h1 className="text-xl md:text-2xl font-bold text-foreground">Analytics</h1>
+                <p className="text-xs md:text-sm text-muted-foreground truncate">Financial insights</p>
+              </div>
+              <div className="flex gap-2 shrink-0">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleRetryAll}
+                  disabled={loading}
+                >
+                  <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
                 </Button>
-              )}
+                {!hasAdvancedAnalytics && (
+                  <Button 
+                    size="sm" 
+                    onClick={() => setShowUpgradeModal(true)}
+                  >
+                    <Crown className="h-4 w-4" />
+                    <span className="hidden sm:inline ml-2">Unlock Pro</span>
+                  </Button>
+                )}
+              </div>
             </div>
           </div>
 
@@ -260,54 +263,54 @@ const Analytics = () => {
               </CardContent>
             </Card>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
               <Card>
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm font-medium text-muted-foreground">Total Bills</p>
-                      <p className="text-2xl font-bold">{bills.length}</p>
+                <CardContent className="p-4">
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2">
+                      <BarChart3 className="h-4 w-4 text-blue-600" />
+                      <span className="text-xs text-muted-foreground">Total</span>
                     </div>
-                    <BarChart3 className="h-8 w-8 text-blue-600" />
+                    <p className="text-2xl font-bold">{bills.length}</p>
                   </div>
                 </CardContent>
               </Card>
 
-            <Card>
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-muted-foreground">Total Amount</p>
-                    <p className="text-2xl font-bold">{formatINR(totalAmount)}</p>
+              <Card>
+                <CardContent className="p-4">
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2">
+                      <DollarSign className="h-4 w-4 text-green-600" />
+                      <span className="text-xs text-muted-foreground">Amount</span>
+                    </div>
+                    <p className="text-lg md:text-2xl font-bold truncate">{formatINRCompact(totalAmount)}</p>
                   </div>
-                  <DollarSign className="h-8 w-8 text-green-600" />
-                </div>
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
 
-            <Card>
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-muted-foreground">Paid Amount</p>
-                    <p className="text-2xl font-bold text-green-600">{formatINR(paidAmount)}</p>
+              <Card>
+                <CardContent className="p-4">
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2">
+                      <TrendingUp className="h-4 w-4 text-green-600" />
+                      <span className="text-xs text-muted-foreground">Paid</span>
+                    </div>
+                    <p className="text-lg md:text-2xl font-bold text-green-600 truncate">{formatINRCompact(paidAmount)}</p>
                   </div>
-                  <TrendingUp className="h-8 w-8 text-green-600" />
-                </div>
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
 
-            <Card>
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-muted-foreground">Pending Amount</p>
-                    <p className="text-2xl font-bold text-red-600">{formatINR(unpaidAmount)}</p>
+              <Card>
+                <CardContent className="p-4">
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2">
+                      <AlertCircle className="h-4 w-4 text-red-600" />
+                      <span className="text-xs text-muted-foreground">Pending</span>
+                    </div>
+                    <p className="text-lg md:text-2xl font-bold text-red-600 truncate">{formatINRCompact(unpaidAmount)}</p>
                   </div>
-                  <AlertCircle className="h-8 w-8 text-red-600" />
-                </div>
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
             </div>
           )}
 
