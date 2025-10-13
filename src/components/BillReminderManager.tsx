@@ -268,31 +268,6 @@ const BillReminderManager = () => {
             </div>
           </div>
         </div>
-
-        {/* Setup Instructions */}
-        <div className="border-t pt-6">
-          <div className="p-6 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 rounded-lg">
-            <div className="flex items-start gap-3">
-              <AlertCircle className="h-5 w-5 text-amber-600 mt-0.5 flex-shrink-0" />
-              <div className="space-y-3">
-                <h4 className="font-medium text-amber-800 dark:text-amber-400">Enhanced Setup Requirements</h4>
-                <div className="text-sm text-amber-700 dark:text-amber-300 space-y-2">
-                  <p><strong>Required:</strong> Configure RESEND_API_KEY in Supabase Edge Functions settings</p>
-                  <p><strong>Features:</strong> Professional HTML emails, INR currency formatting, retry mechanisms</p>
-                  <p><strong>Scheduling:</strong> 9:00 AM IST daily (3:30 AM UTC) with IST timezone handling</p>
-                  <p><strong>Targeting:</strong> Only users with email_notifications_enabled = true receive emails</p>
-                </div>
-                <div className="flex flex-wrap gap-2 mt-3">
-                  <Badge variant="outline" className="text-amber-700">✅ Professional Design</Badge>
-                  <Badge variant="outline" className="text-amber-700">✅ INR Formatting</Badge>
-                  <Badge variant="outline" className="text-amber-700">✅ Retry Logic</Badge>
-                  <Badge variant="outline" className="text-amber-700">✅ IST Timezone</Badge>
-                  <Badge variant="outline" className="text-amber-700">✅ User Preferences</Badge>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
       </CardContent>
     </Card>
   );
