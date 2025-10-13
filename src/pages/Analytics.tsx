@@ -210,19 +210,19 @@ const Analytics = () => {
     <div className="min-h-screen bg-background pb-20 md:pb-0">
       <Navigation />
       
-      <div className="container mx-auto px-4 py-4 md:py-6">
-        <div className="max-w-6xl mx-auto space-y-4 md:space-y-6">
+      <div className="container mx-auto px-3 py-4 md:px-4 md:py-6">
+        <div className="max-w-6xl mx-auto space-y-3 md:space-y-4">
           {/* Sticky Header */}
-          <div className="sticky top-[73px] md:top-[73px] z-40 bg-background/95 backdrop-blur-sm -mx-4 px-4 py-3 md:py-4 border-b">
-            <div className="flex items-center justify-between gap-3">
+          <div className="sticky top-[73px] md:top-[73px] z-40 bg-background/95 backdrop-blur-sm -mx-3 px-3 md:-mx-4 md:px-4 py-3 border-b">
+            <div className="flex items-center justify-between gap-2">
               <div className="flex-1 min-w-0">
-                <h1 className="text-xl md:text-2xl font-bold text-foreground">Analytics</h1>
-                <p className="text-xs md:text-sm text-muted-foreground truncate">Financial insights</p>
+                <h1 className="text-lg md:text-xl font-bold text-foreground">Analytics</h1>
+                <p className="text-xs text-muted-foreground truncate">Financial insights</p>
               </div>
-              <div className="flex gap-2 shrink-0">
+              <div className="flex gap-1.5 shrink-0">
                 <Button
                   variant="ghost"
-                  size="sm"
+                  size="icon"
                   onClick={handleRetryAll}
                   disabled={loading}
                 >
@@ -234,7 +234,7 @@ const Analytics = () => {
                     onClick={() => setShowUpgradeModal(true)}
                   >
                     <Crown className="h-4 w-4" />
-                    <span className="hidden sm:inline ml-2">Unlock Pro</span>
+                    <span className="hidden sm:inline ml-1.5">Pro</span>
                   </Button>
                 )}
               </div>
@@ -250,64 +250,64 @@ const Analytics = () => {
 
           {/* Basic Statistics - Available to All Users */}
           {bills.length === 0 ? (
-            <Card className="col-span-full">
+            <Card>
               <CardContent className="p-12 text-center">
-                <BarChart3 className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-                <h3 className="text-lg font-semibold mb-2">No Bills Yet</h3>
-                <p className="text-muted-foreground mb-4">
-                  Start by adding your first bill to see analytics and insights
+                <BarChart3 className="h-12 w-12 mx-auto mb-3 text-muted-foreground" />
+                <h3 className="text-base md:text-lg font-semibold mb-1.5">No Bills Yet</h3>
+                <p className="text-xs md:text-sm text-muted-foreground mb-4">
+                  Start by adding your first bill to see analytics
                 </p>
-                <Button onClick={() => window.location.href = '/bills'}>
+                <Button onClick={() => window.location.href = '/bills'} size="sm">
                   Add Your First Bill
                 </Button>
               </CardContent>
             </Card>
           ) : (
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-3">
               <Card>
-                <CardContent className="p-4">
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-2">
+                <CardContent className="p-3 md:p-4">
+                  <div className="space-y-1.5">
+                    <div className="flex items-center gap-1.5">
                       <BarChart3 className="h-4 w-4 text-blue-600" />
                       <span className="text-xs text-muted-foreground">Total</span>
                     </div>
-                    <p className="text-2xl font-bold">{bills.length}</p>
+                    <p className="text-xl md:text-2xl font-bold">{bills.length}</p>
                   </div>
                 </CardContent>
               </Card>
 
               <Card>
-                <CardContent className="p-4">
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-2">
+                <CardContent className="p-3 md:p-4">
+                  <div className="space-y-1.5">
+                    <div className="flex items-center gap-1.5">
                       <DollarSign className="h-4 w-4 text-green-600" />
                       <span className="text-xs text-muted-foreground">Amount</span>
                     </div>
-                    <p className="text-lg md:text-2xl font-bold truncate">{formatINRCompact(totalAmount)}</p>
+                    <p className="text-base md:text-xl font-bold truncate">{formatINRCompact(totalAmount)}</p>
                   </div>
                 </CardContent>
               </Card>
 
               <Card>
-                <CardContent className="p-4">
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-2">
+                <CardContent className="p-3 md:p-4">
+                  <div className="space-y-1.5">
+                    <div className="flex items-center gap-1.5">
                       <TrendingUp className="h-4 w-4 text-green-600" />
                       <span className="text-xs text-muted-foreground">Paid</span>
                     </div>
-                    <p className="text-lg md:text-2xl font-bold text-green-600 truncate">{formatINRCompact(paidAmount)}</p>
+                    <p className="text-base md:text-xl font-bold text-green-600 truncate">{formatINRCompact(paidAmount)}</p>
                   </div>
                 </CardContent>
               </Card>
 
               <Card>
-                <CardContent className="p-4">
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-2">
+                <CardContent className="p-3 md:p-4">
+                  <div className="space-y-1.5">
+                    <div className="flex items-center gap-1.5">
                       <AlertCircle className="h-4 w-4 text-red-600" />
                       <span className="text-xs text-muted-foreground">Pending</span>
                     </div>
-                    <p className="text-lg md:text-2xl font-bold text-red-600 truncate">{formatINRCompact(unpaidAmount)}</p>
+                    <p className="text-base md:text-xl font-bold text-red-600 truncate">{formatINRCompact(unpaidAmount)}</p>
                   </div>
                 </CardContent>
               </Card>
@@ -317,14 +317,14 @@ const Analytics = () => {
           {/* Payment Progress - Only show if there are bills */}
           {bills.length > 0 && (
           <Card>
-            <CardHeader>
-              <CardTitle>Payment Progress</CardTitle>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-base">Payment Progress</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
-                <div className="flex justify-between text-sm">
+              <div className="space-y-3">
+                <div className="flex justify-between text-xs md:text-sm">
                   <span>Paid Bills</span>
-                  <span>{Math.round((paidAmount / totalAmount) * 100)}%</span>
+                  <span className="font-medium">{Math.round((paidAmount / totalAmount) * 100)}%</span>
                 </div>
                 <Progress value={(paidAmount / totalAmount) * 100} className="h-2" />
                 <div className="flex justify-between text-xs text-muted-foreground">

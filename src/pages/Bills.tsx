@@ -472,18 +472,18 @@ const Bills = () => {
     };
 
     return (
-      <Card className="p-4 space-y-3">
-        <div className="flex items-start justify-between">
+      <Card className="p-3 space-y-2.5">
+        <div className="flex items-start justify-between gap-2">
           <div className="flex-1 min-w-0">
-            <h3 className="font-semibold text-foreground truncate">{bill.name}</h3>
-            <p className="text-sm text-muted-foreground capitalize">{bill.category}</p>
+            <h3 className="font-semibold text-sm text-foreground truncate">{bill.name}</h3>
+            <p className="text-xs text-muted-foreground capitalize">{bill.category}</p>
           </div>
           <div className="flex flex-col items-end gap-1">
-            <Badge variant={getBillStatusColor(bill.status)} className="ml-2">
+            <Badge variant={getBillStatusColor(bill.status)} className="text-xs">
               {bill.status}
             </Badge>
             {daysUntilDue <= 7 && (
-              <div className={`text-xs ${getUrgencyColor()} flex items-center gap-1`}>
+              <div className={`text-xs ${getUrgencyColor()} flex items-center gap-0.5`}>
                 <Clock className="h-3 w-3" />
                 {daysUntilDue <= 0 ? 'Overdue' : `${daysUntilDue}d left`}
               </div>
@@ -491,64 +491,66 @@ const Bills = () => {
           </div>
         </div>
         
-        <div className="flex items-center justify-between text-sm">
-          <div className="flex items-center space-x-2">
-            <DollarSign className="h-4 w-4 text-muted-foreground" />
+        <div className="flex items-center justify-between text-xs">
+          <div className="flex items-center gap-1.5">
+            <DollarSign className="h-3.5 w-3.5 text-muted-foreground" />
             <span className="font-medium">{formatINRCompact(bill.amount)}</span>
           </div>
-          <div className="flex items-center space-x-2">
-            <Calendar className="h-4 w-4 text-muted-foreground" />
-            <span>{format(parseISO(bill.due_date), 'MMM dd, yyyy')}</span>
+          <div className="flex items-center gap-1.5">
+            <Calendar className="h-3.5 w-3.5 text-muted-foreground" />
+            <span className="text-xs">{format(parseISO(bill.due_date), 'MMM dd, yyyy')}</span>
           </div>
         </div>
 
         {bill.notes && (
-          <p className="text-xs text-muted-foreground bg-muted p-2 rounded">
+          <p className="text-xs text-muted-foreground bg-muted/50 p-2 rounded-[8px] border border-border/50">
             {bill.notes}
           </p>
         )}
 
-        {/* Action Buttons */}
-        <div className="grid grid-cols-2 gap-2 pt-2">
-          <Button 
-            size="sm" 
-            variant="outline" 
-            onClick={() => editBill(bill)}
-            className="text-xs"
-          >
-            <Edit className="h-3 w-3 mr-1" />
-            Edit
-          </Button>
-          <Button 
-            size="sm" 
-            variant="outline"
-            onClick={() => setReminderModalBill(bill)}
-            className="text-xs"
-          >
-            <Bell className="h-3 w-3 mr-1" />
-            Remind
-          </Button>
-        </div>
-        
-        <div className="grid grid-cols-2 gap-2">
-          <Button 
-            size="sm" 
-            variant="outline"
-            onClick={() => window.open(generateGoogleCalendarUrl(bill), '_blank')}
-            className="text-xs"
-          >
-            <CalendarPlus className="h-3 w-3 mr-1" />
-            Calendar
-          </Button>
-          <Button 
-            size="sm" 
-            variant="destructive" 
-            onClick={() => deleteBill(bill.id)}
-            className="text-xs"
-          >
-            <Trash2 className="h-3 w-3 mr-1" />
-            Delete
-          </Button>
+        {/* Action Buttons - Improved Spacing */}
+        <div className="pt-1 space-y-1.5 border-t border-border/50">
+          <div className="grid grid-cols-2 gap-1.5">
+            <Button 
+              size="sm" 
+              variant="outline" 
+              onClick={() => editBill(bill)}
+              className="h-9 text-xs"
+            >
+              <Edit className="h-3 w-3 mr-1" />
+              Edit
+            </Button>
+            <Button 
+              size="sm" 
+              variant="outline"
+              onClick={() => setReminderModalBill(bill)}
+              className="h-9 text-xs"
+            >
+              <Bell className="h-3 w-3 mr-1" />
+              Remind
+            </Button>
+          </div>
+          
+          <div className="grid grid-cols-2 gap-1.5">
+            <Button 
+              size="sm" 
+              variant="outline"
+              onClick={() => window.open(generateGoogleCalendarUrl(bill), '_blank')}
+              className="h-9 text-xs"
+            >
+              <CalendarPlus className="h-3 w-3 mr-1" />
+              Calendar
+            </Button>
+            <Button 
+              size="sm" 
+              variant="destructive" 
+              onClick={() => deleteBill(bill.id)}
+              className="h-9 text-xs"
+            >
+              <Trash2 className="h-3 w-3 mr-1" />
+              Delete
+            </Button>
+          </div>
         </div>
       </Card>
     );
@@ -601,21 +603,21 @@ const Bills = () => {
     <div className="min-h-screen bg-background pb-20 md:pb-0">
       <Navigation />
 
-      <main className="container mx-auto px-4 py-4 md:py-6">
-        <div className="max-w-6xl mx-auto space-y-4 md:space-y-6">
+      <main className="container mx-auto px-3 py-4 md:px-4 md:py-6">
+        <div className="max-w-6xl mx-auto space-y-3 md:space-y-4">
           {/* Sticky Header */}
-          <div className="sticky top-[73px] md:top-[73px] z-40 bg-background/95 backdrop-blur-sm -mx-4 px-4 py-3 md:py-4 border-b">
-            <div className="flex items-center justify-between gap-3">
+          <div className="sticky top-[73px] md:top-[73px] z-40 bg-background/95 backdrop-blur-sm -mx-3 px-3 md:-mx-4 md:px-4 py-3 border-b">
+            <div className="flex items-center justify-between gap-2">
               <div className="flex-1 min-w-0">
-                <h1 className="text-xl md:text-2xl font-bold text-foreground">Bills</h1>
-                <p className="text-xs md:text-sm text-muted-foreground truncate">
+                <h1 className="text-lg md:text-xl font-bold text-foreground">Bills</h1>
+                <p className="text-xs text-muted-foreground truncate">
                   {bills.length} {bills.length === 1 ? 'bill' : 'bills'}
                 </p>
               </div>
-              <div className="flex gap-2 shrink-0">
+              <div className="flex gap-1.5 shrink-0">
                 <Button
                   variant="ghost"
-                  size="sm"
+                  size="icon"
                   onClick={handleRetryAll}
                   disabled={loading}
                 >
@@ -636,7 +638,7 @@ const Bills = () => {
                       }}
                     >
                       <Plus className="h-4 w-4" />
-                      <span className="hidden sm:inline ml-2">Add</span>
+                      <span className="hidden sm:inline ml-1.5">Add</span>
                       {!canAddBill(bills.length) && (
                         <Crown className="h-3 w-3 ml-1 text-yellow-500" />
                       )}
@@ -644,7 +646,7 @@ const Bills = () => {
                   </DialogTrigger>
                 <DialogContent className="max-w-2xl mx-4 sm:mx-auto max-h-[90vh] overflow-y-auto">
                   <DialogHeader>
-                    <DialogTitle className="text-lg sm:text-xl">
+                    <DialogTitle className="text-base md:text-lg">
                       {editingBill ? 'Edit Bill' : 'Add New Bill'}
                     </DialogTitle>
                   </DialogHeader>
@@ -662,7 +664,7 @@ const Bills = () => {
           </div>
 
           {/* Limit Warnings - Compact */}
-          <div className="space-y-3">
+          <div className="space-y-2">
             <FreemiumLimitCard
               type="bills"
               currentCount={bills.length}
@@ -679,26 +681,26 @@ const Bills = () => {
           {bills.length === 0 ? (
             <Card>
               <CardContent className="py-12 text-center">
-                <FileText className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-                <h3 className="text-lg font-semibold mb-2">No bills yet</h3>
-                <p className="text-sm text-muted-foreground mb-4">
+                <FileText className="h-12 w-12 mx-auto mb-3 text-muted-foreground" />
+                <h3 className="text-base md:text-lg font-semibold mb-1.5">No bills yet</h3>
+                <p className="text-xs md:text-sm text-muted-foreground mb-4">
                   Add your first bill to get started
                 </p>
-                <Button onClick={() => setIsDialogOpen(true)}>
-                  <Plus className="h-4 w-4 mr-2" />
+                <Button onClick={() => setIsDialogOpen(true)} size="sm">
+                  <Plus className="h-4 w-4 mr-1.5" />
                   Add First Bill
                 </Button>
               </CardContent>
             </Card>
           ) : (
             <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-base md:text-lg">All Bills</CardTitle>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-base">All Bills</CardTitle>
               </CardHeader>
               <CardContent>
                 {/* Mobile Cards View */}
                 {isMobile ? (
-                  <div className="space-y-3">
+                  <div className="space-y-2">
                     {bills.map((bill) => (
                       <BillCard key={bill.id} bill={bill} />
                     ))}

@@ -324,29 +324,29 @@ const Dashboard = () => {
       <Navigation />
 
       {/* Main Content */}
-      <main className="container mx-auto px-4 py-4 md:py-6">
-        <div className="max-w-6xl mx-auto space-y-4 md:space-y-6">
+      <main className="container mx-auto px-3 py-4 md:px-4 md:py-6">
+        <div className="max-w-6xl mx-auto space-y-3 md:space-y-4">
           {/* Passkey Banner */}
           {showPasskeyBanner && (
             <AddPasskeyBanner onDismiss={handlePasskeyBannerDismiss} />
           )}
 
           {/* Profile & Plan Section - Mobile First */}
-          <Card className="border-none shadow-sm">
-            <CardContent className="p-4 md:p-6">
-              <div className="flex items-start justify-between gap-4 mb-4">
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-start justify-between gap-3 mb-3">
                 <div className="flex-1 min-w-0">
-                  <h1 className="text-xl md:text-2xl font-bold text-foreground truncate">
+                  <h1 className="text-lg md:text-xl font-bold text-foreground truncate">
                     {profile?.full_name || user?.email?.split('@')[0] || 'Welcome'}
                   </h1>
-                  <p className="text-sm text-muted-foreground">{user?.email}</p>
+                  <p className="text-xs md:text-sm text-muted-foreground truncate">{user?.email}</p>
                   {profile?.company && (
-                    <p className="text-xs text-muted-foreground mt-1">{profile.company}</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">{profile.company}</p>
                   )}
                 </div>
                 <Button
                   variant="ghost"
-                  size="sm"
+                  size="icon"
                   onClick={handleRetryAll}
                   disabled={loading || billsLoading}
                   className="shrink-0"
@@ -364,15 +364,15 @@ const Dashboard = () => {
           </Card>
 
           {/* Bill Statistics */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-3">
             <Card>
-              <CardContent className="p-4">
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2">
-                    <FileText className="h-5 w-5 text-primary" />
+              <CardContent className="p-3 md:p-4">
+                <div className="space-y-1.5">
+                  <div className="flex items-center gap-1.5">
+                    <FileText className="h-4 w-4 text-primary" />
                     <span className="text-xs text-muted-foreground">Active</span>
                   </div>
-                  <div className="text-2xl font-bold text-foreground">{activeBills.length}</div>
+                  <div className="text-xl md:text-2xl font-bold text-foreground">{activeBills.length}</div>
                   {plan === 'free' && (
                     <div className="text-xs text-muted-foreground">
                       {bills.length}/{billLimit} bills
@@ -383,44 +383,44 @@ const Dashboard = () => {
             </Card>
             
             <Card>
-              <CardContent className="p-4">
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2">
-                    <AlertCircle className="h-5 w-5 text-destructive" />
+              <CardContent className="p-3 md:p-4">
+                <div className="space-y-1.5">
+                  <div className="flex items-center gap-1.5">
+                    <AlertCircle className="h-4 w-4 text-destructive" />
                     <span className="text-xs text-muted-foreground">Overdue</span>
                   </div>
-                  <div className="text-2xl font-bold text-destructive">{overdueBills.length}</div>
+                  <div className="text-xl md:text-2xl font-bold text-destructive">{overdueBills.length}</div>
                 </div>
               </CardContent>
             </Card>
             
             <Card>
-              <CardContent className="p-4">
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2">
-                    <Clock className="h-5 w-5 text-yellow-600" />
+              <CardContent className="p-3 md:p-4">
+                <div className="space-y-1.5">
+                  <div className="flex items-center gap-1.5">
+                    <Clock className="h-4 w-4 text-yellow-600" />
                     <span className="text-xs text-muted-foreground">Due Soon</span>
                   </div>
-                  <div className="text-2xl font-bold text-yellow-600">{billsDueIn7Days.length}</div>
+                  <div className="text-xl md:text-2xl font-bold text-yellow-600">{billsDueIn7Days.length}</div>
                 </div>
               </CardContent>
             </Card>
             
             <Card>
-              <CardContent className="p-4">
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2">
-                    <CheckCircle className="h-5 w-5 text-green-600" />
+              <CardContent className="p-3 md:p-4">
+                <div className="space-y-1.5">
+                  <div className="flex items-center gap-1.5">
+                    <CheckCircle className="h-4 w-4 text-green-600" />
                     <span className="text-xs text-muted-foreground">Paid</span>
                   </div>
-                  <div className="text-2xl font-bold text-green-600">{paidBills.length}</div>
+                  <div className="text-xl md:text-2xl font-bold text-green-600">{paidBills.length}</div>
                 </div>
               </CardContent>
             </Card>
           </div>
 
           {/* Plan Limit Warnings */}
-          <div className="space-y-3">
+          <div className="space-y-2">
             <FreemiumLimitCard
               type="bills"
               currentCount={bills.length}
@@ -435,26 +435,26 @@ const Dashboard = () => {
 
           {/* Bills Due Today */}
           {billsDueToday.length > 0 && (
-            <Card className="shadow-soft border-yellow-200 bg-yellow-50">
-              <CardHeader>
-                <CardTitle className="flex items-center space-x-2 text-yellow-800">
-                  <Calendar className="h-5 w-5" />
-                  <span>Bills Due Today ({billsDueToday.length})</span>
+            <Card className="border-yellow-200 bg-yellow-50/50">
+              <CardHeader className="pb-3">
+                <CardTitle className="flex items-center gap-2 text-yellow-800 text-base">
+                  <Calendar className="h-4 w-4" />
+                  <span>Due Today ({billsDueToday.length})</span>
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-3">
+              <CardContent className="space-y-2">
                 {billsDueToday.map((bill) => (
-                  <div key={bill.id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 bg-white rounded-lg border">
+                  <div key={bill.id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-3 bg-white rounded-[10px] border border-yellow-100">
                     <div className="flex-1 min-w-0">
-                      <div className="font-medium text-foreground truncate">{bill.name}</div>
-                      <div className="text-sm text-muted-foreground">
+                      <div className="font-medium text-sm text-foreground truncate">{bill.name}</div>
+                      <div className="text-xs text-muted-foreground">
                         {formatINRCompact(bill.amount)} • {bill.category.charAt(0).toUpperCase() + bill.category.slice(1)}
                       </div>
                     </div>
                     <Button 
                       size="sm" 
                       onClick={() => toggleBillStatus(bill)}
-                      className="bg-green-600 hover:bg-green-700 h-9 w-full sm:w-auto"
+                      className="w-full sm:w-auto shrink-0"
                     >
                       Mark as Paid
                     </Button>
@@ -465,11 +465,11 @@ const Dashboard = () => {
           )}
 
           {/* Quick Actions */}
-          <Card className="shadow-soft">
-            <CardHeader>
-              <CardTitle>Quick Actions</CardTitle>
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base">Quick Actions</CardTitle>
             </CardHeader>
-            <CardContent className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+            <CardContent className="grid grid-cols-1 sm:grid-cols-2 gap-2 md:gap-3">
               <Button 
                 onClick={() => {
                   if (!canAddBill(bills.length)) {
@@ -478,22 +478,22 @@ const Dashboard = () => {
                     navigate('/bills');
                   }
                 }}
-                className="h-auto p-3 sm:p-4 justify-start min-h-[48px]"
+                className="h-auto p-3 justify-start"
                 variant="outline"
               >
-                <div className="flex items-center space-x-3">
-                  <Plus className="h-5 w-5 sm:h-6 sm:w-6 text-primary flex-shrink-0" />
-                  <div className="text-left flex-1">
-                    <div className="font-medium text-sm sm:text-base flex items-center gap-2">
+                <div className="flex items-center gap-2.5 w-full">
+                  <Plus className="h-5 w-5 text-primary shrink-0" />
+                  <div className="text-left flex-1 min-w-0">
+                    <div className="font-medium text-sm flex items-center gap-1.5">
                       Add New Bill
                       {!canAddBill(bills.length) && (
-                        <Crown className="h-4 w-4 text-yellow-500" />
+                        <Crown className="h-3 w-3 text-yellow-500 shrink-0" />
                       )}
                     </div>
-                    <div className="text-xs sm:text-sm text-muted-foreground">
+                    <div className="text-xs text-muted-foreground truncate">
                       {canAddBill(bills.length) 
                         ? 'Create a new bill entry'
-                        : 'Upgrade to Pro for unlimited bills'
+                        : 'Upgrade for unlimited'
                       }
                     </div>
                   </div>
@@ -502,37 +502,34 @@ const Dashboard = () => {
               
               <Button 
                 onClick={() => navigate('/bills')}
-                className="h-auto p-3 sm:p-4 justify-start min-h-[48px]"
+                className="h-auto p-3 justify-start"
                 variant="outline"
               >
-                <div className="flex items-center space-x-3">
-                  <FileText className="h-5 w-5 sm:h-6 sm:w-6 text-primary flex-shrink-0" />
+                <div className="flex items-center gap-2.5">
+                  <FileText className="h-5 w-5 text-primary shrink-0" />
                   <div className="text-left">
-                    <div className="font-medium text-sm sm:text-base">Manage Bills</div>
-                    <div className="text-xs sm:text-sm text-muted-foreground">View and edit all bills</div>
+                    <div className="font-medium text-sm">Manage Bills</div>
+                    <div className="text-xs text-muted-foreground">View and edit all</div>
                   </div>
                 </div>
               </Button>
               
               <Button 
                 onClick={() => navigate('/analytics')}
-                className="h-auto p-3 sm:p-4 justify-start min-h-[48px]"
+                className="h-auto p-3 justify-start"
                 variant="outline"
               >
-                <div className="flex items-center space-x-3">
-                  <BarChart3 className="h-5 w-5 sm:h-6 sm:w-6 text-primary flex-shrink-0" />
+                <div className="flex items-center gap-2.5">
+                  <BarChart3 className="h-5 w-5 text-primary shrink-0" />
                   <div className="text-left">
-                    <div className="font-medium text-sm sm:text-base flex items-center gap-2">
-                      View Analytics
+                    <div className="font-medium text-sm flex items-center gap-1.5">
+                      Analytics
                       {plan === 'free' && (
-                        <Crown className="h-4 w-4 text-yellow-500" />
+                        <Crown className="h-3 w-3 text-yellow-500 shrink-0" />
                       )}
                     </div>
-                    <div className="text-xs sm:text-sm text-muted-foreground">
-                      {plan === 'pro' 
-                        ? 'Financial insights and reports'
-                        : 'Basic analytics • Pro for advanced'
-                      }
+                    <div className="text-xs text-muted-foreground">
+                      {plan === 'pro' ? 'Financial insights' : 'Basic analytics'}
                     </div>
                   </div>
                 </div>
@@ -540,28 +537,28 @@ const Dashboard = () => {
               
               <Button 
                 onClick={() => navigate('/settings')}
-                className="h-auto p-3 sm:p-4 justify-start min-h-[48px]"
+                className="h-auto p-3 justify-start"
                 variant="outline"
               >
-                <div className="flex items-center space-x-3">
-                  <Settings className="h-5 w-5 sm:h-6 sm:w-6 text-primary flex-shrink-0" />
+                <div className="flex items-center gap-2.5">
+                  <Settings className="h-5 w-5 text-primary shrink-0" />
                   <div className="text-left">
-                    <div className="font-medium text-sm sm:text-base">Settings</div>
-                    <div className="text-xs sm:text-sm text-muted-foreground">Manage preferences and notifications</div>
+                    <div className="font-medium text-sm">Settings</div>
+                    <div className="text-xs text-muted-foreground">Manage preferences</div>
                   </div>
                 </div>
               </Button>
 
               <Button 
                 onClick={() => setShowExportImport(true)}
-                className="h-auto p-3 sm:p-4 justify-start min-h-[48px] sm:col-span-2"
+                className="h-auto p-3 justify-start sm:col-span-2"
                 variant="outline"
               >
-                <div className="flex items-center space-x-3">
-                  <Download className="h-5 w-5 sm:h-6 sm:w-6 text-primary flex-shrink-0" />
+                <div className="flex items-center gap-2.5">
+                  <Download className="h-5 w-5 text-primary shrink-0" />
                   <div className="text-left">
-                    <div className="font-medium text-sm sm:text-base">Export/Import Bills</div>
-                    <div className="text-xs sm:text-sm text-muted-foreground">Backup or import your bill data</div>
+                    <div className="font-medium text-sm">Export/Import</div>
+                    <div className="text-xs text-muted-foreground">Backup or import data</div>
                   </div>
                 </div>
               </Button>
@@ -569,15 +566,15 @@ const Dashboard = () => {
               {/* Always show upgrade option for free users */}
               {plan === 'free' && (
                 <UpgradeTrigger 
-                  className="h-auto p-3 sm:p-4 justify-start min-h-[48px] sm:col-span-2"
+                  className="h-auto p-3 justify-start sm:col-span-2"
                   variant="default"
                   trigger="general"
                 >
-                  <div className="flex items-center space-x-3">
-                    <Crown className="h-5 w-5 sm:h-6 sm:w-6 text-white flex-shrink-0" />
+                  <div className="flex items-center gap-2.5">
+                    <Crown className="h-5 w-5 text-white shrink-0" />
                     <div className="text-left flex-1">
-                      <div className="font-medium text-sm sm:text-base text-white">Upgrade to Pro</div>
-                      <div className="text-xs sm:text-sm text-white/80">₹99/month • Unlimited bills & AI coaching</div>
+                      <div className="font-medium text-sm text-white">Upgrade to Pro</div>
+                      <div className="text-xs text-white/90">₹99/mo • Unlimited bills & AI</div>
                     </div>
                   </div>
                 </UpgradeTrigger>

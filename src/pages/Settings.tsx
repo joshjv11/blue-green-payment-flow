@@ -151,16 +151,16 @@ const SettingsPage = () => {
     <div className="min-h-screen bg-background pb-20 md:pb-0">
       <Navigation />
       
-      <div className="container mx-auto px-4 py-4 md:py-6 max-w-2xl">
+      <div className="container mx-auto px-3 py-4 md:px-4 md:py-6 max-w-2xl">
         {/* Sticky Header */}
-        <div className="sticky top-[73px] md:top-[73px] z-40 bg-background/95 backdrop-blur-sm -mx-4 px-4 py-3 md:py-4 border-b mb-4 md:mb-6">
-          <div className="flex items-center gap-3">
-            <SettingsIcon className="h-5 w-5 md:h-6 md:w-6 text-primary" />
-            <h1 className="text-xl md:text-2xl font-bold">Settings</h1>
+        <div className="sticky top-[73px] md:top-[73px] z-40 bg-background/95 backdrop-blur-sm -mx-3 px-3 md:-mx-4 md:px-4 py-3 border-b mb-3 md:mb-4">
+          <div className="flex items-center gap-2">
+            <SettingsIcon className="h-5 w-5 text-primary" />
+            <h1 className="text-lg md:text-xl font-bold">Settings</h1>
           </div>
         </div>
 
-        <div className="space-y-4 md:space-y-6">
+        <div className="space-y-3 md:space-y-4">
         {/* Freemium Limit Card */}
         <FreemiumLimitCard
           type="ai"
@@ -319,12 +319,12 @@ const SettingsPage = () => {
         </Card>
 
         {/* Action Buttons */}
-        <div className="flex gap-3 pt-2">
-          <Button onClick={saveSettings} className="flex-1 h-10">
-            <Save className="h-4 w-4 mr-2" />
+        <div className="flex gap-2 pt-2">
+          <Button onClick={saveSettings} className="flex-1">
+            <Save className="h-4 w-4 mr-1.5" />
             Save
           </Button>
-          <Button onClick={resetSettings} variant="outline" className="h-10 px-4">
+          <Button onClick={resetSettings} variant="outline" className="px-4">
             Reset
           </Button>
         </div>
