@@ -99,7 +99,15 @@ function AppRoutes() {
         } 
       />
       <Route 
-        path="/exports" 
+        path="/reports/tax" 
+        element={
+          <ProtectedRoute>
+            <PageTransition><Reports /></PageTransition>
+          </ProtectedRoute>
+        } 
+      />
+      <Route 
+        path="/exports"
         element={
           <ProtectedRoute>
             <PageTransition><Exports /></PageTransition>

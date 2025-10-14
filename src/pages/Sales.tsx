@@ -49,7 +49,8 @@ interface SalesOrder {
   id: string;
   customer_name: string;
   invoice_number: string;
-  transaction_date: string;
+  transaction_date?: string; // Legacy field
+  order_date: string;
   total_amount: number;
   tax_amount: number;
   grand_total: number;
@@ -78,10 +79,14 @@ export default function Sales() {
   const [customerAddress, setCustomerAddress] = useState('');
   const [customerGstin, setCustomerGstin] = useState('');
   const [customerState, setCustomerState] = useState('');
+  const [customerId, setCustomerId] = useState<string | null>(null);
   const [invoiceNumber, setInvoiceNumber] = useState('');
-  const [transactionDate, setTransactionDate] = useState<Date>(new Date());
+  const [orderDate, setOrderDate] = useState<Date>(new Date());
   const [dueDate, setDueDate] = useState<Date | undefined>();
-  const [paymentStatus, setPaymentStatus] = useState<'paid' | 'unpaid' | 'partial'>('unpaid');
+  const [currency, setCurrency] = useState<string>('');
+  const [fxCurrency, setFxCurrency] = useState<string>('');
+  const [fxRate, setFxRate] = useState(1.0);
+  const [status, setStatus] = useState<'paid' | 'unpaid' | 'partial'>('unpaid');
   const [amountPaid, setAmountPaid] = useState(0);
   const [notes, setNotes] = useState('');
   const [orderLines, setOrderLines] = useState<OrderLine[]>([{
@@ -108,6 +113,13 @@ export default function Sales() {
     }
   }, [user]);
 
+  useEffect(() => {
+    if (settings.currency && !currency) {
+      setCurrency(settings.currency);
+      setFxCurrency(settings.currency);
+    }
+  }, [settings.currency]);
+
   const fetchSales = async () => {
     try {
       setLoading(true);
@@ -118,7 +130,7 @@ export default function Sales() {
         .order('transaction_date', { ascending: false });
 
       if (error) throw error;
-      setSales((data || []) as SalesOrder[]);
+      setSales((data || []) as any); // Handle both transaction_date and order_date fields
     } catch (error: any) {
       toast({ title: 'Error loading sales', description: error.message, variant: 'destructive' });
     } finally {
@@ -224,22 +236,62 @@ export default function Sales() {
       const totalSGST = orderLines.reduce((sum, line) => sum + line.sgst_amount, 0);
       const totalIGST = orderLines.reduce((sum, line) => sum + line.igst_amount, 0);
 
+      // Resolve or create customer
+      let resolvedCustomerId = customerId;
+      if (!resolvedCustomerId) {
+        // Check if customer exists by name
+        const { data: existingCustomer } = await supabase
+          .from('customers')
+          .select('id')
+          .eq('user_id', user!.id)
+          .eq('name', customerName.trim())
+          .maybeSingle();
+
+        if (existingCustomer) {
+          resolvedCustomerId = existingCustomer.id;
+        } else {
+          // Create new customer
+          const { data: newCustomer, error: customerError } = await supabase
+            .from('customers')
+            .insert({
+              user_id: user!.id,
+              name: customerName.trim(),
+              address: customerAddress || null,
+              party_gstin: customerGstin || null,
+              party_state: customerState || null,
+              email: '', // Required field, use empty string as default
+            })
+            .select('id')
+            .single();
+
+          if (customerError) {
+            console.error('❌ Customer creation error:', customerError);
+            throw new Error('Failed to create customer: ' + customerError.message);
+          }
+          resolvedCustomerId = newCustomer.id;
+        }
+      }
+
       const orderData = {
         user_id: user!.id,
+        customer_id: resolvedCustomerId,
         customer_name: customerName,
         customer_address: customerAddress || null,
         customer_gstin: customerGstin || null,
         customer_state: customerState || null,
         invoice_number: invoiceNumber,
-        transaction_date: format(transactionDate, 'yyyy-MM-dd'),
+        order_date: format(orderDate, 'yyyy-MM-dd'),
         due_date: dueDate ? format(dueDate, 'yyyy-MM-dd') : null,
+        currency: currency || settings.currency,
+        fx_currency: fxCurrency || currency || settings.currency,
+        fx_rate_to_base: fxRate,
         total_amount: totalAmount,
         tax_amount: taxAmount,
         cgst_amount: totalCGST,
         sgst_amount: totalSGST,
         igst_amount: totalIGST,
         grand_total: grandTotal,
-        payment_status: paymentStatus,
+        status: status,
         amount_paid: amountPaid,
         is_igst: isIGST,
         tax_regime: settings.tax_regime,
@@ -356,9 +408,13 @@ export default function Sales() {
     setCustomerAddress('');
     setCustomerGstin('');
     setCustomerState('');
-    setTransactionDate(new Date());
+    setCustomerId(null);
+    setOrderDate(new Date());
     setDueDate(undefined);
-    setPaymentStatus('unpaid');
+    setCurrency(settings.currency);
+    setFxCurrency(settings.currency);
+    setFxRate(1.0);
+    setStatus('unpaid');
     setAmountPaid(0);
     setNotes('');
     setIsIGST(false);
@@ -399,7 +455,7 @@ export default function Sales() {
 
   const getStats = () => {
     const thisMonth = sales.filter(s => {
-      const date = new Date(s.transaction_date);
+      const date = new Date(s.transaction_date || s.order_date);
       return date >= dateRange.from && date <= dateRange.to;
     });
 
@@ -413,7 +469,7 @@ export default function Sales() {
   const getChartData = () => {
     const monthData: { [key: string]: number } = {};
     sales.forEach(sale => {
-      const month = format(new Date(sale.transaction_date), 'MMM yyyy');
+      const month = format(new Date(sale.transaction_date || sale.order_date), 'MMM yyyy');
       monthData[month] = (monthData[month] || 0) + Number(sale.grand_total);
     });
     return Object.entries(monthData).map(([month, amount]) => ({ month, amount }));
@@ -421,7 +477,7 @@ export default function Sales() {
 
   const filteredSales = sales.filter(s => {
     if (filterStatus !== 'all' && s.payment_status !== filterStatus) return false;
-    const date = new Date(s.transaction_date);
+    const date = new Date(s.transaction_date || s.order_date);
     return date >= dateRange.from && date <= dateRange.to;
   });
 
@@ -549,7 +605,7 @@ export default function Sales() {
                       <TableRow key={sale.id}>
                         <TableCell className="font-mono">{sale.invoice_number}</TableCell>
                         <TableCell>{sale.customer_name}</TableCell>
-                        <TableCell>{format(new Date(sale.transaction_date), 'PP')}</TableCell>
+                        <TableCell>{format(new Date(sale.transaction_date || sale.order_date), 'PP')}</TableCell>
                         <TableCell className="font-bold">{formatINR(sale.grand_total)}</TableCell>
                         <TableCell>
                           <Badge variant={
@@ -592,23 +648,27 @@ export default function Sales() {
                   <Input value={invoiceNumber} onChange={e => setInvoiceNumber(e.target.value)} required />
                 </div>
                 <div>
-                  <Label>Transaction Date</Label>
+                  <Label>Order Date</Label>
                   <Popover>
                     <PopoverTrigger asChild>
                       <Button variant="outline" className="w-full justify-start">
                         <CalendarIcon className="mr-2 h-4 w-4" />
-                        {format(transactionDate, 'PPP')}
+                        {format(orderDate, 'PPP')}
                       </Button>
                     </PopoverTrigger>
                     <PopoverContent className="w-auto p-0">
-                      <Calendar mode="single" selected={transactionDate} onSelect={(d) => d && setTransactionDate(d)} 
-                        className="pointer-events-auto" />
+                      <Calendar 
+                        mode="single" 
+                        selected={orderDate} 
+                        onSelect={(d) => d && setOrderDate(d)} 
+                        className="pointer-events-auto" 
+                      />
                     </PopoverContent>
                   </Popover>
                 </div>
                 <div>
-                  <Label>Payment Status</Label>
-                  <Select value={paymentStatus} onValueChange={(v: any) => setPaymentStatus(v)}>
+                  <Label>Status</Label>
+                  <Select value={status} onValueChange={(v: any) => setStatus(v)}>
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
@@ -619,7 +679,7 @@ export default function Sales() {
                     </SelectContent>
                   </Select>
                 </div>
-                {paymentStatus !== 'unpaid' && (
+                {status !== 'unpaid' && (
                   <div>
                     <Label>Amount Paid</Label>
                     <Input type="number" value={amountPaid} onChange={e => setAmountPaid(Number(e.target.value))} />
