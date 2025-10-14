@@ -411,6 +411,42 @@ export type Database = {
           },
         ]
       }
+      export_logs: {
+        Row: {
+          created_at: string
+          date_from: string | null
+          date_to: string | null
+          export_type: string
+          file_format: string
+          file_name: string
+          id: string
+          record_count: number | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          date_from?: string | null
+          date_to?: string | null
+          export_type: string
+          file_format: string
+          file_name: string
+          id?: string
+          record_count?: number | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          date_from?: string | null
+          date_to?: string | null
+          export_type?: string
+          file_format?: string
+          file_name?: string
+          id?: string
+          record_count?: number | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       inventory_txns: {
         Row: {
           created_at: string
