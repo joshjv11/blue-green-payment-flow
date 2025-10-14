@@ -1772,28 +1772,37 @@ export type Database = {
       user_plan_view: {
         Row: {
           ai_queries_limit: number | null
+          ai_queries_reset_date: string | null
           ai_queries_used: number | null
+          created_at: string | null
           credits_remaining: number | null
           is_active: boolean | null
           plan: string | null
+          updated_at: string | null
           user_id: string | null
           valid_until: string | null
         }
         Insert: {
           ai_queries_limit?: number | null
+          ai_queries_reset_date?: string | null
           ai_queries_used?: number | null
+          created_at?: string | null
           credits_remaining?: never
-          is_active?: boolean | null
-          plan?: string | null
+          is_active?: never
+          plan?: never
+          updated_at?: string | null
           user_id?: string | null
           valid_until?: string | null
         }
         Update: {
           ai_queries_limit?: number | null
+          ai_queries_reset_date?: string | null
           ai_queries_used?: number | null
+          created_at?: string | null
           credits_remaining?: never
-          is_active?: boolean | null
-          plan?: string | null
+          is_active?: never
+          plan?: never
+          updated_at?: string | null
           user_id?: string | null
           valid_until?: string | null
         }
