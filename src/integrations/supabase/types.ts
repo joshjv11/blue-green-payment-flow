@@ -1513,8 +1513,11 @@ export type Database = {
           ai_queries_reset_date: string
           ai_queries_used: number
           created_at: string
+          expires_at: string | null
           id: string
+          is_active: boolean | null
           plan: string
+          started_at: string | null
           updated_at: string
           user_id: string
         }
@@ -1523,8 +1526,11 @@ export type Database = {
           ai_queries_reset_date?: string
           ai_queries_used?: number
           created_at?: string
+          expires_at?: string | null
           id?: string
+          is_active?: boolean | null
           plan?: string
+          started_at?: string | null
           updated_at?: string
           user_id: string
         }
@@ -1533,8 +1539,11 @@ export type Database = {
           ai_queries_reset_date?: string
           ai_queries_used?: number
           created_at?: string
+          expires_at?: string | null
           id?: string
+          is_active?: boolean | null
           plan?: string
+          started_at?: string | null
           updated_at?: string
           user_id?: string
         }
@@ -1703,6 +1712,33 @@ export type Database = {
         }
         Relationships: []
       }
+      user_plan_status: {
+        Row: {
+          is_active: boolean | null
+          is_premium: boolean | null
+          is_pro: boolean | null
+          not_expired: boolean | null
+          plan: string | null
+          user_id: string | null
+        }
+        Insert: {
+          is_active?: boolean | null
+          is_premium?: never
+          is_pro?: never
+          not_expired?: never
+          plan?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          is_active?: boolean | null
+          is_premium?: never
+          is_pro?: never
+          not_expired?: never
+          plan?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       add_sample_data_for_user: {
@@ -1784,6 +1820,10 @@ export type Database = {
       }
       can_view_team_membership: {
         Args: { target_team_id: string; target_user_id: string }
+        Returns: boolean
+      }
+      check_plan_access: {
+        Args: { required_plan: string }
         Returns: boolean
       }
       create_default_user_plan: {

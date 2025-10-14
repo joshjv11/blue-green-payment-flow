@@ -30,6 +30,7 @@ import Reports from './pages/Reports';
 import TaxSettings from './pages/TaxSettings';
 import Expenses from './pages/Expenses';
 import FinancialReports from './pages/FinancialReports';
+import Upgrade from './pages/Upgrade';
 import Admin from './pages/Admin';
 import AdminUsers from './pages/AdminUsers';
 import AdminUserPlans from './pages/AdminUserPlans';
@@ -148,8 +149,16 @@ function AppRoutes() {
           </ProtectedRoute>
         } 
       />
+      <Route
+        path="/upgrade"
+        element={
+          <ProtectedRoute>
+            <PageTransition><Upgrade /></PageTransition>
+          </ProtectedRoute>
+        } 
+      />
       <Route 
-        path="/admin" 
+        path="/admin"
         element={
           <ProtectedRoute>
             <PageTransition><Admin /></PageTransition>

@@ -3,7 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
 import { useToast } from './use-toast';
 
-export type UserPlan = 'free' | 'pro';
+export type UserPlan = 'free' | 'pro' | 'premium';
 
 interface UserPlanData {
   plan: UserPlan;
@@ -14,15 +14,23 @@ interface UserPlanData {
   aiQueriesLimit: number;
   aiQueriesUsed: number;
   hasUnlimitedAI: boolean;
+  hasInventory: boolean;
+  hasGSTAutomation: boolean;
+  hasExports: boolean;
+  hasFinancialReports: boolean;
+  isPremium: boolean;
 }
 
 interface SupabaseUserPlan {
   id: string;
   user_id: string;
-  plan: 'free' | 'pro' | 'enterprise';
+  plan: 'free' | 'pro' | 'premium';
   ai_queries_used: number;
   ai_queries_limit: number;
   ai_queries_reset_date: string;
+  is_active: boolean;
+  started_at: string;
+  expires_at: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -126,20 +134,32 @@ export const useSupabasePlan = () => {
         aiQueriesLimit: 3,
         aiQueriesUsed: 0,
         hasUnlimitedAI: false,
+        hasInventory: false,
+        hasGSTAutomation: false,
+        hasExports: false,
+        hasFinancialReports: false,
+        isPremium: false,
       };
     }
 
-    const isPro = plan.plan === 'pro' || plan.plan === 'enterprise';
+    const isActive = plan.is_active && (!plan.expires_at || new Date(plan.expires_at) > new Date());
+    const isPro = (plan.plan === 'pro' && isActive);
+    const isPremium = (plan.plan === 'premium' && isActive);
 
     return {
-      plan: isPro ? 'pro' : 'free',
-      billLimit: isPro ? Infinity : 5,
-      hasUnlimitedBills: isPro,
-      hasAdvancedAnalytics: isPro,
-      hasEmailReminders: isPro,
+      plan: isPremium ? 'premium' : (isPro ? 'pro' : 'free'),
+      billLimit: (isPro || isPremium) ? Infinity : 5,
+      hasUnlimitedBills: isPro || isPremium,
+      hasAdvancedAnalytics: isPro || isPremium,
+      hasEmailReminders: isPro || isPremium,
       aiQueriesLimit: plan.ai_queries_limit,
       aiQueriesUsed: plan.ai_queries_used,
-      hasUnlimitedAI: isPro,
+      hasUnlimitedAI: isPro || isPremium,
+      hasInventory: isPremium,
+      hasGSTAutomation: isPremium,
+      hasExports: isPremium,
+      hasFinancialReports: isPremium,
+      isPremium,
     };
   };
 
