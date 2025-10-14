@@ -40,6 +40,8 @@ import { MotivationalBanner } from '@/components/MotivationalBanner';
 import { TierBadge } from '@/components/TierBadge';
 import { useRewards } from '@/hooks/useRewards';
 import { MobileLayout } from '@/components/MobileLayout';
+import { useDailyBonus } from '@/hooks/useDailyBonus';
+import { DailyBonusWheel } from '@/components/DailyBonusWheel';
 
 interface Bill {
   id: string;
@@ -64,8 +66,10 @@ const Dashboard = () => {
   const isPro = contextPlan === 'pro';
   const { plan, aiQueriesUsed, aiQueriesLimit, loading: planLoading } = useSupabasePlan();
   const { rewards, badges, loading: rewardsLoading, awardXP, updateStreak, checkAndAwardMilestoneBadges } = useRewards();
+  const { canClaim: canClaimBonus, claimDailyBonus, loading: bonusLoading } = useDailyBonus();
   const [showCelebration, setShowCelebration] = useState(false);
   const [celebrationData, setCelebrationData] = useState<any>(null);
+  const [showBonusWheel, setShowBonusWheel] = useState(false);
   const [profile, setProfile] = useState<any>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [fullName, setFullName] = useState('');
@@ -128,8 +132,17 @@ const Dashboard = () => {
 
       checkPasskeySupport();
       track('dashboard_viewed', { user_id: user?.id });
+      
+      // Show daily bonus with unpredictable timing
+      if (canClaimBonus && !showBonusWheel) {
+        const delay = Math.random() * 5000; // 0-5 seconds
+        const timer = setTimeout(() => {
+          setShowBonusWheel(true);
+        }, delay);
+        return () => clearTimeout(timer);
+      }
     }
-  }, [user, track]);
+  }, [user, track, canClaimBonus]);
 
   const fetchProfile = async () => {
     try {
@@ -396,6 +409,15 @@ const Dashboard = () => {
     <MobileLayout>
       <div className="min-h-screen bg-background pb-24 md:pb-6">
         <Navigation />
+        
+        {/* Daily Bonus Wheel */}
+        {showBonusWheel && (
+          <DailyBonusWheel
+            onClaim={claimDailyBonus}
+            onClose={() => setShowBonusWheel(false)}
+            loading={bonusLoading}
+          />
+        )}
 
         {/* Main Content */}
         <main className="container mx-auto px-4 md:px-4 py-6 md:py-6 space-y-5 md:space-y-6 max-w-7xl">

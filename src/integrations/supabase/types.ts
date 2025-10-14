@@ -370,6 +370,47 @@ export type Database = {
         }
         Relationships: []
       }
+      daily_bonuses: {
+        Row: {
+          bonus_date: string
+          claimed_at: string | null
+          created_at: string
+          id: string
+          reward_type: string
+          reward_value: Json
+          streak_day: number
+          user_id: string
+        }
+        Insert: {
+          bonus_date?: string
+          claimed_at?: string | null
+          created_at?: string
+          id?: string
+          reward_type: string
+          reward_value: Json
+          streak_day?: number
+          user_id: string
+        }
+        Update: {
+          bonus_date?: string
+          claimed_at?: string | null
+          created_at?: string
+          id?: string
+          reward_type?: string
+          reward_value?: Json
+          streak_day?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "daily_bonuses_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       invoices: {
         Row: {
           amount: number
@@ -664,6 +705,47 @@ export type Database = {
         }
         Relationships: []
       }
+      temporary_unlocks: {
+        Row: {
+          created_at: string
+          expires_at: string
+          id: string
+          is_active: boolean
+          unlock_data: Json
+          unlock_type: string
+          unlocked_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          expires_at: string
+          id?: string
+          is_active?: boolean
+          unlock_data: Json
+          unlock_type: string
+          unlocked_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          expires_at?: string
+          id?: string
+          is_active?: boolean
+          unlock_data?: Json
+          unlock_type?: string
+          unlocked_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "temporary_unlocks_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_badges: {
         Row: {
           badge_description: string | null
@@ -699,6 +781,47 @@ export type Database = {
           xp_earned?: number | null
         }
         Relationships: []
+      }
+      user_collectibles: {
+        Row: {
+          collected_at: string
+          collectible_id: string
+          collectible_name: string
+          collectible_type: string
+          id: string
+          image_url: string | null
+          rarity: string
+          user_id: string
+        }
+        Insert: {
+          collected_at?: string
+          collectible_id: string
+          collectible_name: string
+          collectible_type: string
+          id?: string
+          image_url?: string | null
+          rarity: string
+          user_id: string
+        }
+        Update: {
+          collected_at?: string
+          collectible_id?: string
+          collectible_name?: string
+          collectible_type?: string
+          id?: string
+          image_url?: string | null
+          rarity?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_collectibles_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_plan_changes: {
         Row: {
@@ -957,6 +1080,10 @@ export type Database = {
         Args: { level: number }
         Returns: string
       }
+      can_claim_daily_bonus: {
+        Args: { p_user_id: string }
+        Returns: boolean
+      }
       can_manage_team_members: {
         Args: { target_team_id: string }
         Returns: boolean
@@ -968,6 +1095,10 @@ export type Database = {
       create_default_user_plan: {
         Args: { _user_id: string }
         Returns: undefined
+      }
+      generate_daily_reward: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
       }
       get_user_stats: {
         Args: { target_user_id: string }
