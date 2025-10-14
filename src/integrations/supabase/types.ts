@@ -589,6 +589,7 @@ export type Database = {
           quantity: number
           reference_type: string | null
           txn_type: string
+          user_id: string
         }
         Insert: {
           created_at?: string
@@ -599,6 +600,7 @@ export type Database = {
           quantity: number
           reference_type?: string | null
           txn_type: string
+          user_id: string
         }
         Update: {
           created_at?: string
@@ -609,6 +611,7 @@ export type Database = {
           quantity?: number
           reference_type?: string | null
           txn_type?: string
+          user_id?: string
         }
         Relationships: [
           {
@@ -1766,6 +1769,36 @@ export type Database = {
         }
         Relationships: []
       }
+      user_plan_view: {
+        Row: {
+          ai_queries_limit: number | null
+          ai_queries_used: number | null
+          credits_remaining: number | null
+          is_active: boolean | null
+          plan: string | null
+          user_id: string | null
+          valid_until: string | null
+        }
+        Insert: {
+          ai_queries_limit?: number | null
+          ai_queries_used?: number | null
+          credits_remaining?: never
+          is_active?: boolean | null
+          plan?: never
+          user_id?: string | null
+          valid_until?: string | null
+        }
+        Update: {
+          ai_queries_limit?: number | null
+          ai_queries_used?: number | null
+          credits_remaining?: never
+          is_active?: boolean | null
+          plan?: never
+          user_id?: string | null
+          valid_until?: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       add_sample_data_for_user: {
@@ -1868,6 +1901,15 @@ export type Database = {
       generate_invoice_number: {
         Args: { p_order_type: string; p_user_id: string }
         Returns: string
+      }
+      get_user_plan: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          credits_remaining: number
+          is_active: boolean
+          plan: string
+          valid_until: string
+        }[]
       }
       get_user_stats: {
         Args: { target_user_id: string }
