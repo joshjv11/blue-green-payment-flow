@@ -13,7 +13,6 @@ import { useNotifications } from '@/hooks/useNotifications';
 import { useEmailReminders } from '@/hooks/useEmailReminders';
 import { supabase, isSupabaseConfigured } from '@/lib/supabase';
 import { useToast } from '@/hooks/use-toast';
-import { toast } from 'sonner';
 import { LogOut, User, Building, Mail, FileText, ArrowRight, Plus, DollarSign, Calendar, AlertCircle, CheckCircle, Clock, BarChart3, Settings, Download, Upload, Crown, RefreshCw } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { parseISO, differenceInDays, isBefore, isToday, isAfter, addDays, format } from 'date-fns';
@@ -285,17 +284,22 @@ const Dashboard = () => {
             setTimeout(() => setShowCelebration(false), 2000);
         }
 
-        toast.success(`Bill marked as paid! +${xpAmount} XP`, {
+        toast({
+          title: `Bill marked as paid! +${xpAmount} XP`,
           description: daysEarly > 0 ? '🔥 Early payment bonus!' : 'Great job!',
         });
       } else {
-        toast.success(`Bill marked as ${newStatus}!`);
+        toast({
+          title: `Bill marked as ${newStatus}!`,
+        });
       }
 
       await fetchBills();
     } catch (error: any) {
-      toast.error("Error updating bill status", {
+      toast({
+        title: "Error updating bill status",
         description: error.message,
+        variant: "destructive",
       });
     }
   };
