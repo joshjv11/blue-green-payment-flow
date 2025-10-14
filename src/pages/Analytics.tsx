@@ -11,6 +11,7 @@ import { formatINR, formatINRCompact } from '@/utils/currency';
 import { usePaymentVerification } from '@/hooks/usePaymentVerification';
 import { useToast } from '@/hooks/use-toast';
 import { Navigation } from '@/components/Navigation';
+import { BackToDashboard } from '@/components/BackToDashboard';
 import AdvancedAnalytics from '@/components/AdvancedAnalytics';
 import { logError } from '@/lib/logger';
 import { BarChart3, TrendingUp, DollarSign, Calendar, Crown, Lock, AlertCircle, RefreshCw } from 'lucide-react';
@@ -212,6 +213,8 @@ const Analytics = () => {
       
       <div className="container mx-auto px-3 py-4 md:px-4 md:py-6">
         <div className="max-w-6xl mx-auto space-y-3 md:space-y-4">
+          <BackToDashboard />
+          
           {/* Sticky Header */}
           <div className="sticky top-[73px] md:top-[73px] z-40 bg-background/95 backdrop-blur-sm -mx-3 px-3 md:-mx-4 md:px-4 py-3 border-b">
             <div className="flex items-center justify-between gap-2">

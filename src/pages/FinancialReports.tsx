@@ -4,6 +4,7 @@ import { supabase } from '@/lib/supabase';
 import { useToast } from '@/hooks/use-toast';
 import { Navigation } from '@/components/Navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { BackToDashboard } from '@/components/BackToDashboard';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Download, FileSpreadsheet } from 'lucide-react';
@@ -182,6 +183,7 @@ const FinancialReports = () => {
       <>
         <Navigation />
         <div className="container mx-auto px-4 py-8">
+          <BackToDashboard />
           <div className="max-w-3xl mx-auto">
             <Card className="shadow-lg border-2">
               <CardHeader>
@@ -234,6 +236,8 @@ const FinancialReports = () => {
     <>
       <Navigation />
       <div className="container mx-auto px-4 py-8 space-y-6">
+        <BackToDashboard />
+        
         {/* Header */}
         <div className="flex flex-col gap-4">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">

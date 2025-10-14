@@ -14,6 +14,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Bell, Settings as SettingsIcon, Save, Mail, Download, Crown, Zap, RotateCcw, Globe, ChevronRight } from 'lucide-react';
 import ExportImport from '@/components/ExportImport';
 import { Navigation } from '@/components/Navigation';
+import { BackToDashboard } from '@/components/BackToDashboard';
 import FreemiumLimitCard from '@/components/FreemiumLimitCard';
 import UpgradeModal from '@/components/UpgradeModal';
 import { BusinessSettings } from '@/components/BusinessSettings';
@@ -160,6 +161,8 @@ const SettingsPage = () => {
       <Navigation />
       
       <div className="container mx-auto px-3 py-4 md:px-4 md:py-6 max-w-2xl">
+        <BackToDashboard />
+        
         {/* Sticky Header */}
         <div className="sticky top-[73px] md:top-[73px] z-40 bg-background/95 backdrop-blur-sm -mx-3 px-3 md:-mx-4 md:px-4 py-3 border-b mb-3 md:mb-4">
           <div className="flex items-center gap-2">

@@ -12,6 +12,7 @@ import { Plus, Package, AlertTriangle, DollarSign, Edit2, Trash2, ShoppingCart, 
 import { useToast } from "@/hooks/use-toast";
 import { PageTransition } from "@/components/PageTransition";
 import { Breadcrumb } from "@/components/Breadcrumb";
+import { BackToDashboard } from "@/components/BackToDashboard";
 
 interface Product {
   id: string;
@@ -155,6 +156,8 @@ export default function Inventory() {
   return (
     <PageTransition>
       <div className="container mx-auto p-4 md:p-6 space-y-6">
+        <BackToDashboard />
+        
         {/* Breadcrumb */}
         <Breadcrumb
           items={[

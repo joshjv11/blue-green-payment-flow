@@ -18,6 +18,7 @@ import { supabase } from '@/lib/supabase';
 import { Navigation } from '@/components/Navigation';
 import { MobileLayout } from '@/components/MobileLayout';
 import { cn } from '@/lib/utils';
+import { BackToDashboard } from '@/components/BackToDashboard';
 import { format, startOfMonth, endOfMonth } from 'date-fns';
 import { formatINR } from '@/utils/currency';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
@@ -288,6 +289,8 @@ export default function Purchases() {
         <Navigation />
 
         <main className="container mx-auto px-4 py-6 space-y-6 max-w-7xl">
+          <BackToDashboard />
+          
           <motion.div
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}

@@ -21,6 +21,7 @@ import { supabase } from '@/lib/supabase';
 import { Navigation } from '@/components/Navigation';
 import { MobileLayout } from '@/components/MobileLayout';
 import { useBusinessSettings } from '@/hooks/useBusinessSettings';
+import { BackToDashboard } from '@/components/BackToDashboard';
 import { calculateLineTax, getCurrencySymbol, formatCurrency } from '@/utils/taxCalculations';
 import { cn } from '@/lib/utils';
 import { format, startOfMonth, endOfMonth } from 'date-fns';
@@ -492,6 +493,8 @@ export default function Sales() {
         <Navigation />
 
         <main className="container mx-auto px-4 py-6 space-y-6 max-w-7xl">
+          <BackToDashboard />
+          
           {/* Header */}
           <motion.div
             initial={{ opacity: 0, y: -10 }}

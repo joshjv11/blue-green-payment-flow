@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { FileSpreadsheet, Download, Package, Calendar as CalendarIcon, FileText, CheckCircle2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { PageTransition } from "@/components/PageTransition";
+import { BackToDashboard } from "@/components/BackToDashboard";
 import { format, subMonths, startOfMonth, endOfMonth } from "date-fns";
 import { cn } from "@/lib/utils";
 import {
@@ -315,6 +316,8 @@ export default function Exports() {
   return (
     <PageTransition>
       <div className="container mx-auto p-4 md:p-6 space-y-6">
+        <BackToDashboard />
+        
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
           <div>
             <h1 className="text-3xl font-bold">CA-Ready Exports</h1>

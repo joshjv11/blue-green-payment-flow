@@ -3,6 +3,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { PageTransition } from "@/components/PageTransition";
 import { Breadcrumb } from "@/components/Breadcrumb";
+import { BackToDashboard } from "@/components/BackToDashboard";
 import TaxSummary from "@/components/TaxSummary";
 import { useSupabasePlan } from "@/hooks/useSupabasePlan";
 import { Lock, Crown } from "lucide-react";
@@ -16,6 +17,7 @@ export default function Reports() {
   return (
     <PageTransition>
       <div className="container mx-auto p-4 md:p-6 space-y-6">
+        <BackToDashboard />
         <Breadcrumb items={[{ label: "Dashboard", href: "/dashboard" }, { label: "Reports" }]} />
 
         <div className="flex justify-between items-start">

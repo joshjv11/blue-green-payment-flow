@@ -6,6 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { FileText, Download, TrendingUp } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { PageTransition } from "@/components/PageTransition";
+import { BackToDashboard } from "@/components/BackToDashboard";
 import { format, startOfMonth, endOfMonth, subMonths } from "date-fns";
 
 interface GSTSummaryData {
@@ -124,6 +125,8 @@ export default function GSTSummary() {
   return (
     <PageTransition>
       <div className="container mx-auto p-4 md:p-6 space-y-6">
+        <BackToDashboard />
+        
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
           <div>
             <h1 className="text-3xl font-bold">GST Summary Report</h1>

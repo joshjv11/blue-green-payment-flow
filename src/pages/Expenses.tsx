@@ -14,6 +14,7 @@ import { useSupabasePlan } from '@/hooks/useSupabasePlan';
 import UpgradeModal from '@/components/UpgradeModal';
 import { format, startOfMonth, endOfMonth } from 'date-fns';
 import { Navigation } from '@/components/Navigation';
+import { BackToDashboard } from '@/components/BackToDashboard';
 
 export interface Expense {
   id: string;
@@ -137,6 +138,7 @@ const Expenses = () => {
       <>
         <Navigation />
         <div className="container mx-auto px-4 py-8">
+          <BackToDashboard />
           <div className="max-w-3xl mx-auto">
             <Card className="shadow-lg border-2">
               <CardHeader>
@@ -183,6 +185,8 @@ const Expenses = () => {
     <>
       <Navigation />
       <div className="container mx-auto px-4 py-8 space-y-6">
+        <BackToDashboard />
+        
         {/* Header */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>

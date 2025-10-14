@@ -42,6 +42,7 @@ import BillLimitBanner from '@/components/BillLimitBanner';
 import EnhancedAIAssistantV2 from '@/components/EnhancedAIAssistantV2';
 import { usePaymentVerification } from '@/hooks/usePaymentVerification';
 import { Navigation } from '@/components/Navigation';
+import { BackToDashboard } from '@/components/BackToDashboard';
 import PlanStatusCard from '@/components/PlanStatusCard';
 import UpgradeTrigger from '@/components/UpgradeTrigger';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -608,6 +609,8 @@ const Bills = () => {
 
       <main className="container mx-auto px-3 py-4 md:px-4 md:py-6">
         <div className="max-w-6xl mx-auto space-y-3 md:space-y-4">
+          <BackToDashboard />
+          
           {/* Sticky Header */}
           <div className="sticky top-[73px] md:top-[73px] z-40 bg-background/95 backdrop-blur-sm -mx-3 px-3 md:-mx-4 md:px-4 py-3 border-b">
             <div className="flex items-center justify-between gap-2">

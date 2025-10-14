@@ -11,6 +11,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useToast } from "@/hooks/use-toast";
 import { ArrowLeft, Building2, Globe, DollarSign, FileText, AlertCircle } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { BackToDashboard } from "@/components/BackToDashboard";
 
 const COUNTRIES = [
   { code: "IN", name: "India" },
@@ -213,6 +214,8 @@ export default function TaxSettings() {
 
   return (
     <div className="container max-w-7xl mx-auto p-4 md:p-6 pb-20 md:pb-6">
+      <BackToDashboard />
+      
       <div className="flex items-center gap-4 mb-6">
         <Button
           variant="ghost"
