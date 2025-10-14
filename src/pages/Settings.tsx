@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
 import { useAuth } from '@/hooks/useAuth';
 import { useSupabasePlan } from '@/hooks/useSupabasePlan';
@@ -10,7 +11,7 @@ import { Input } from '@/components/ui/input';
 import { FloatingLabelInput } from '@/components/ui/floating-label-input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import { Bell, Settings as SettingsIcon, Save, Mail, Download, Crown, Zap, RotateCcw } from 'lucide-react';
+import { Bell, Settings as SettingsIcon, Save, Mail, Download, Crown, Zap, RotateCcw, Globe, ChevronRight } from 'lucide-react';
 import ExportImport from '@/components/ExportImport';
 import { Navigation } from '@/components/Navigation';
 import FreemiumLimitCard from '@/components/FreemiumLimitCard';
@@ -43,6 +44,7 @@ interface Bill {
 }
 
 const SettingsPage = () => {
+  const navigate = useNavigate();
   const { toast } = useToast();
   const { user } = useAuth();
   const { plan, hasEmailReminders, aiQueriesUsed, aiQueriesLimit } = useSupabasePlan();
@@ -169,6 +171,25 @@ const SettingsPage = () => {
         <div className="space-y-3 md:space-y-4">
         {/* Business Settings */}
         <BusinessSettings />
+
+        {/* Tax Settings Link */}
+        <Card 
+          className="cursor-pointer hover:bg-muted/50 transition-colors"
+          onClick={() => navigate('/settings/taxes')}
+        >
+          <CardContent className="flex items-center justify-between p-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-primary/10">
+                <Globe className="h-5 w-5 text-primary" />
+              </div>
+              <div>
+                <h3 className="font-semibold text-sm">Tax Settings</h3>
+                <p className="text-xs text-muted-foreground">Configure international tax regime</p>
+              </div>
+            </div>
+            <ChevronRight className="h-5 w-5 text-muted-foreground" />
+          </CardContent>
+        </Card>
         
         {/* Freemium Limit Card */}
         <FreemiumLimitCard

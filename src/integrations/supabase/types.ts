@@ -340,6 +340,54 @@ export type Database = {
           },
         ]
       }
+      business_settings: {
+        Row: {
+          base_currency: string | null
+          business_address: string | null
+          business_name: string | null
+          business_tax_id_label: string | null
+          business_tax_id_value: string | null
+          country: string | null
+          created_at: string | null
+          currency: string | null
+          id: string
+          number_format: string | null
+          tax_regime: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          base_currency?: string | null
+          business_address?: string | null
+          business_name?: string | null
+          business_tax_id_label?: string | null
+          business_tax_id_value?: string | null
+          country?: string | null
+          created_at?: string | null
+          currency?: string | null
+          id?: string
+          number_format?: string | null
+          tax_regime?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          base_currency?: string | null
+          business_address?: string | null
+          business_name?: string | null
+          business_tax_id_label?: string | null
+          business_tax_id_value?: string | null
+          country?: string | null
+          created_at?: string | null
+          currency?: string | null
+          id?: string
+          number_format?: string | null
+          tax_regime?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       customers: {
         Row: {
           address: string | null

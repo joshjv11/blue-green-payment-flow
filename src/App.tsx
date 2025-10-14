@@ -29,6 +29,7 @@ import AdminUsers from './pages/AdminUsers';
 import AdminUserPlans from './pages/AdminUserPlans';
 import AdminDbHealth from './pages/AdminDbHealth';
 import AdminLogs from './pages/AdminLogs';
+import TaxSettings from './pages/TaxSettings';
 import NotFound from './pages/NotFound';
 
 function AppRoutes() {
@@ -110,7 +111,15 @@ function AppRoutes() {
           </ProtectedRoute>
         } 
       />
-      <Route 
+      <Route
+        path="/settings/taxes"
+        element={
+          <ProtectedRoute>
+            <PageTransition><TaxSettings /></PageTransition>
+          </ProtectedRoute>
+        } 
+      />
+      <Route
         path="/admin" 
         element={
           <ProtectedRoute>
