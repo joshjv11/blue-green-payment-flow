@@ -13,7 +13,25 @@ import UpgradeModal from "@/components/UpgradeModal";
 
 export default function Reports() {
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
-  const { plan, hasAdvancedAnalytics } = useSupabasePlan();
+  const { plan, hasAdvancedAnalytics, loading } = useSupabasePlan();
+
+  // Show loading state while checking plan
+  if (loading) {
+    return (
+      <PageTransition>
+        <div className="container mx-auto p-4 md:p-6 space-y-6">
+          <BackToDashboard />
+          <Breadcrumb items={[{ label: "Dashboard", href: "/dashboard" }, { label: "Reports" }]} />
+          <div className="flex items-center justify-center py-12">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+              <p className="text-muted-foreground">Loading plan information...</p>
+            </div>
+          </div>
+        </div>
+      </PageTransition>
+    );
+  }
 
   return (
     <PageTransition>

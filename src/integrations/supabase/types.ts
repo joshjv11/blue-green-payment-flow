@@ -1784,7 +1784,7 @@ export type Database = {
           ai_queries_used?: number | null
           credits_remaining?: never
           is_active?: boolean | null
-          plan?: never
+          plan?: string | null
           user_id?: string | null
           valid_until?: string | null
         }
@@ -1793,7 +1793,7 @@ export type Database = {
           ai_queries_used?: number | null
           credits_remaining?: never
           is_active?: boolean | null
-          plan?: never
+          plan?: string | null
           user_id?: string | null
           valid_until?: string | null
         }

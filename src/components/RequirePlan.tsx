@@ -17,29 +17,35 @@ export const RequirePlan = ({
 }: RequirePlanProps) => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { hasPlan, loading } = usePlan();
+  const { hasPlan, loading, plan } = usePlan();
 
   useEffect(() => {
     if (loading) return;
 
-    const hasAccess = hasPlan(requiredPlan);
+    // Always allow access if plan check fails to prevent white screens
+    try {
+      const hasAccess = hasPlan(requiredPlan);
 
-    if (!hasAccess) {
-      const planName = requiredPlan === 'premium' 
-        ? 'Premium (₹500/month)' 
-        : 'Pro (₹100/month)';
-      
-      toast({
-        title: "Upgrade Required",
-        description: `${featureName} requires ${planName} plan.`,
-        variant: "destructive",
-      });
+      if (!hasAccess) {
+        const planName = requiredPlan === 'premium' 
+          ? 'Premium (₹500/month)' 
+          : 'Pro (₹100/month)';
+        
+        toast({
+          title: "Upgrade Required",
+          description: `${featureName} requires ${planName} plan. You have: ${plan || 'free'}`,
+          variant: "destructive",
+        });
 
-      setTimeout(() => {
-        navigate('/upgrade', { replace: true });
-      }, 1500);
+        setTimeout(() => {
+          navigate('/upgrade', { replace: true });
+        }, 1500);
+      }
+    } catch (error) {
+      console.error('[RequirePlan] Error checking plan access:', error);
+      // Allow access on error to prevent white screens
     }
-  }, [loading, hasPlan, requiredPlan, featureName, navigate, toast]);
+  }, [loading, hasPlan, requiredPlan, featureName, navigate, toast, plan]);
 
   if (loading) {
     return (
@@ -52,10 +58,15 @@ export const RequirePlan = ({
     );
   }
 
-  const hasAccess = hasPlan(requiredPlan);
-
-  if (!hasAccess) {
-    return null;
+  // Always render children if not loading to prevent white screens
+  try {
+    const hasAccess = hasPlan(requiredPlan);
+    if (!hasAccess) {
+      return null;
+    }
+  } catch (error) {
+    console.error('[RequirePlan] Error checking access:', error);
+    // Render children on error to prevent white screens
   }
 
   return <>{children}</>;

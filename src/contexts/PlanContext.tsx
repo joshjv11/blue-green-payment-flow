@@ -73,16 +73,36 @@ export const PlanProvider: React.FC<{ children: React.ReactNode }> = ({ children
     );
 
     try {
-      const fetchPromise = supabase
-        .from('user_plans')
+      // Try user_plan_view first (optimized view)
+      const viewPromise = supabase
+        .from('user_plan_view')
         .select('*')
-        .eq('user_id', user.id)
         .maybeSingle();
 
-      const { data, error } = await Promise.race([
-        fetchPromise,
+      let { data, error } = await Promise.race([
+        viewPromise,
         timeoutPromise
       ]) as any;
+
+      if (signal.aborted) throw new Error('Request aborted');
+
+      // If view query fails, fallback to direct table query
+      if (error || !data) {
+        console.warn('⚠️ View query failed, using direct table query');
+        const fallbackPromise = supabase
+          .from('user_plans')
+          .select('*')
+          .eq('user_id', user.id)
+          .maybeSingle();
+
+        const fallbackResult = await Promise.race([
+          fallbackPromise,
+          new Promise((_, reject) => setTimeout(() => reject(new Error('Fallback timeout')), 3000))
+        ]) as any;
+
+        data = fallbackResult.data;
+        error = fallbackResult.error;
+      }
 
       if (signal.aborted) throw new Error('Request aborted');
       if (error) throw error;

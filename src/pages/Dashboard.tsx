@@ -553,7 +553,7 @@ const Dashboard = () => {
               gradientFrom="from-primary/10"
               gradientTo="to-primary/5"
               isPro={isPro}
-              trendValue={plan === 'free' ? `${bills.length}/${billLimit}` : undefined}
+              trendValue={contextPlan === 'free' ? `${bills.length}/${billLimit}` : undefined}
             />
             <StatCardWithSparkline
               title="Overdue"
@@ -597,6 +597,52 @@ const Dashboard = () => {
 
           {/* Plan Limit Warnings */}
           <div className="space-y-2">
+            {/* Current Plan Display */}
+            <Card className={cn(
+              "glass border-border/50 transition-all duration-300",
+              (contextPlan === 'pro' || contextPlan === 'premium') && "border-[hsl(45,100%,60%)]/30 bg-gradient-to-br from-[hsl(45,100%,60%)]/5 to-transparent"
+            )}>
+              <CardContent className="pt-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className={cn(
+                      "p-2 rounded-lg transition-colors",
+                      (contextPlan === 'pro' || contextPlan === 'premium') ? "bg-[hsl(45,100%,60%)]/10" : "bg-primary/10"
+                    )}>
+                      <Crown className={cn(
+                        "h-5 w-5",
+                        (contextPlan === 'pro' || contextPlan === 'premium') ? "text-[hsl(45,100%,60%)]" : "text-primary"
+                      )} />
+                    </div>
+                    <div>
+                      <p className="text-sm text-muted-foreground">Current Plan</p>
+                      <p className={cn(
+                        "text-xl font-bold capitalize",
+                        (contextPlan === 'pro' || contextPlan === 'premium') && "pro-gradient-text"
+                      )}>
+                        {planLoading ? (
+                          <Skeleton className="h-6 w-20" />
+                        ) : (
+                          contextPlan || plan || 'Free'
+                        )}
+                      </p>
+                    </div>
+                  </div>
+                  {!(contextPlan === 'pro' || contextPlan === 'premium') && (
+                    <Button
+                      onClick={() => setShowUpgradeModal(true)}
+                      variant="default"
+                      size="sm"
+                      className="gap-2"
+                    >
+                      <Crown className="h-4 w-4" />
+                      Upgrade
+                    </Button>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+
             <FreemiumLimitCard
               type="bills"
               currentCount={bills.length}
