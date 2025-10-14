@@ -36,6 +36,8 @@ import { cn } from '@/lib/utils';
 import { StatCardWithSparkline } from '@/components/StatCardWithSparkline';
 import { DashboardAnalytics } from '@/components/DashboardAnalytics';
 import { FloatingActionButtons } from '@/components/FloatingActionButtons';
+import { EmptyState } from '@/components/EmptyState';
+import { motion } from 'framer-motion';
 
 interface Bill {
   id: string;
@@ -475,13 +477,12 @@ const Dashboard = () => {
                     </div>
                     <Button 
                       size="sm" 
+                      variant="gradient"
                       onClick={() => toggleBillStatus(bill)}
-                      className={cn(
-                        "w-full sm:w-auto shrink-0",
-                        isPro && "variant-pro"
-                      )}
+                      className="w-full sm:w-auto shrink-0"
                     >
-                      Mark as Paid
+                      <CheckCircle className="h-3 w-3 mr-1.5" />
+                      Mark Paid
                     </Button>
                   </div>
                 ))}
