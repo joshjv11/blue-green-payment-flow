@@ -41,38 +41,64 @@ export const FloatingActionButtons = ({
           <TooltipTrigger asChild>
             <motion.div
               whileHover={{ scale: 1.1, rotate: 90 }}
-              whileTap={{ scale: 0.9 }}
-              transition={{ duration: 0.2 }}
+              whileTap={{ scale: 0.85 }}
+              transition={{ 
+                type: "spring",
+                stiffness: 400,
+                damping: 25
+              }}
+              className="relative"
             >
               <Button
                 size="icon"
                 onClick={onAddBill}
                 className={cn(
-                  "h-14 w-14 rounded-2xl shadow-float hover:shadow-premium-glow transition-all duration-300 relative",
+                  "h-14 w-14 md:h-16 md:w-16 rounded-2xl shadow-float hover:shadow-premium-glow transition-all duration-300 relative",
+                  // Enhanced mobile touch target
+                  "touch-none select-none",
                   isPro 
                     ? "bg-gradient-to-br from-[hsl(45,100%,60%)] to-[hsl(35,100%,55%)] hover:shadow-pro-strong text-[hsl(230,35%,7%)]" 
                     : "bg-gradient-to-br from-primary to-primary-hover shadow-glow",
                   !canAddBill && "opacity-60"
                 )}
               >
-                <Plus className="h-6 w-6" />
+                <Plus className="h-6 w-6 md:h-7 md:w-7" strokeWidth={2.5} />
                 
-                {/* Ambient glow pulse effect */}
+                {/* Soft ambient glow - Mobile enhanced */}
                 <motion.div
                   animate={{
-                    scale: [1, 1.2, 1],
-                    opacity: [0.3, 0.15, 0.3],
+                    scale: [1, 1.3, 1],
+                    opacity: [0.4, 0.2, 0.4],
                   }}
                   transition={{
-                    duration: 2,
+                    duration: 2.5,
                     repeat: Infinity,
                     ease: "easeInOut"
                   }}
                   className={cn(
-                    "absolute inset-0 rounded-2xl blur-xl -z-10",
+                    "absolute inset-0 rounded-2xl blur-2xl -z-10",
                     isPro 
                       ? "bg-gradient-to-br from-[hsl(45,100%,60%)] to-[hsl(35,100%,55%)]"
                       : "bg-gradient-to-br from-primary to-accent"
+                  )}
+                />
+                
+                {/* Outer ring pulse - Mobile only */}
+                <motion.div
+                  animate={{
+                    scale: [1, 1.5, 1],
+                    opacity: [0.6, 0, 0.6],
+                  }}
+                  transition={{
+                    duration: 2,
+                    repeat: Infinity,
+                    ease: "easeOut"
+                  }}
+                  className={cn(
+                    "absolute inset-0 rounded-2xl border-2 -z-10",
+                    isPro 
+                      ? "border-[hsl(45,100%,60%)]"
+                      : "border-primary"
                   )}
                 />
               </Button>
@@ -88,8 +114,12 @@ export const FloatingActionButtons = ({
           <TooltipTrigger asChild>
             <motion.div
               whileHover={{ scale: 1.08 }}
-              whileTap={{ scale: 0.92 }}
-              transition={{ duration: 0.2 }}
+              whileTap={{ scale: 0.88 }}
+              transition={{ 
+                type: "spring",
+                stiffness: 400,
+                damping: 25
+              }}
             >
               <Button
                 size="icon"
@@ -97,6 +127,8 @@ export const FloatingActionButtons = ({
                 onClick={onExport}
                 className={cn(
                   "h-12 w-12 rounded-xl shadow-glass hover:shadow-float transition-all duration-300",
+                  // Mobile touch optimization
+                  "min-h-[48px] min-w-[48px] md:min-h-0 md:min-w-0",
                   isPro && "glass-pro border-[hsl(45,100%,60%)]/30 hover:shadow-pro-glow"
                 )}
               >
@@ -114,8 +146,12 @@ export const FloatingActionButtons = ({
           <TooltipTrigger asChild>
             <motion.div
               whileHover={{ scale: 1.08, rotate: 45 }}
-              whileTap={{ scale: 0.92 }}
-              transition={{ duration: 0.2 }}
+              whileTap={{ scale: 0.88 }}
+              transition={{ 
+                type: "spring",
+                stiffness: 400,
+                damping: 25
+              }}
             >
               <Button
                 size="icon"
@@ -123,6 +159,8 @@ export const FloatingActionButtons = ({
                 onClick={onSettings}
                 className={cn(
                   "h-12 w-12 rounded-xl shadow-glass hover:shadow-float transition-all duration-300",
+                  // Mobile touch optimization
+                  "min-h-[48px] min-w-[48px] md:min-h-0 md:min-w-0",
                   isPro && "glass-pro border-[hsl(45,100%,60%)]/30 hover:shadow-pro-glow"
                 )}
               >
@@ -141,24 +179,49 @@ export const FloatingActionButtons = ({
             <TooltipTrigger asChild>
               <motion.div
                 whileHover={{ scale: 1.08 }}
-                whileTap={{ scale: 0.92 }}
+                whileTap={{ scale: 0.88 }}
                 animate={{
-                  y: [0, -4, 0],
+                  y: [0, -6, 0],
                 }}
                 transition={{
                   y: {
-                    duration: 2,
+                    duration: 2.5,
                     repeat: Infinity,
                     ease: "easeInOut"
+                  },
+                  scale: {
+                    type: "spring",
+                    stiffness: 400,
+                    damping: 25
                   }
                 }}
               >
                 <Button
                   size="icon"
                   onClick={onUpgrade}
-                  className="h-12 w-12 rounded-xl bg-gradient-to-br from-[hsl(45,100%,60%)] to-[hsl(35,100%,55%)] hover:shadow-pro-glow text-[hsl(230,35%,7%)] transition-all duration-300 shimmer relative"
+                  className={cn(
+                    "h-12 w-12 rounded-xl transition-all duration-300 shimmer relative",
+                    "bg-gradient-to-br from-[hsl(45,100%,60%)] to-[hsl(35,100%,55%)]",
+                    "hover:shadow-pro-glow text-[hsl(230,35%,7%)]",
+                    // Mobile touch optimization
+                    "min-h-[48px] min-w-[48px] md:min-h-0 md:min-w-0"
+                  )}
                 >
                   <Crown className="h-5 w-5" />
+                  
+                  {/* Sparkle effect for Pro badge */}
+                  <motion.div
+                    animate={{
+                      scale: [0, 1.2, 0],
+                      opacity: [0, 1, 0],
+                    }}
+                    transition={{
+                      duration: 2,
+                      repeat: Infinity,
+                      repeatDelay: 1,
+                    }}
+                    className="absolute -top-1 -right-1 h-2 w-2 bg-[hsl(45,100%,60%)] rounded-full"
+                  />
                 </Button>
               </motion.div>
             </TooltipTrigger>

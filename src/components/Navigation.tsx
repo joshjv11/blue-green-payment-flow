@@ -118,65 +118,85 @@ export const Navigation = ({ className }: NavigationProps) => {
       <motion.nav
         initial={{ y: 100, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
-        transition={{ duration: 0.3, ease: 'easeOut' }}
+        transition={{ duration: 0.4, ease: [0.25, 0.4, 0.25, 1] }}
         className={cn(
           "md:hidden fixed bottom-0 left-0 right-0 z-50",
-          "bg-background/95 backdrop-blur-xl",
-          "border-t border-border/40",
-          "shadow-[0_-4px_16px_rgba(0,0,0,0.08)]",
+          "bg-background/98 backdrop-blur-2xl",
+          "border-t border-border/50",
+          "shadow-[0_-8px_24px_rgba(0,0,0,0.12)]",
           "safe-area-inset-bottom"
         )}
       >
         <div className={cn(
-          "grid gap-1 px-2 py-3",
+          "grid gap-0.5 px-2 py-2.5",
           navigationItems.length === 5 ? "grid-cols-5" : "grid-cols-4"
         )}>
-          {navigationItems.map((item) => {
+          {navigationItems.map((item, index) => {
             const isActive = location.pathname === item.path;
             const Icon = item.icon;
             
             return (
               <motion.div
                 key={item.path}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ 
+                  delay: index * 0.05,
+                  duration: 0.3,
+                  ease: [0.25, 0.4, 0.25, 1]
+                }}
                 whileTap={{ scale: 0.9 }}
-                transition={{ duration: 0.15 }}
               >
                 <Button
                   variant="ghost"
                   size="sm"
                   onClick={() => navigate(item.path)}
                   className={cn(
-                    "relative flex flex-col items-center justify-center gap-1.5 h-16 w-full",
+                    "relative flex flex-col items-center justify-center gap-1",
+                    "h-16 w-full rounded-xl",
                     "transition-all duration-300 ease-out",
-                    "hover:bg-primary/10",
-                    isActive && "text-primary"
+                    "min-h-[64px]", // Touch target
+                    isActive ? "text-primary" : "text-muted-foreground"
                   )}
                 >
-                  {/* Icon with scale animation */}
+                  {/* Icon with enhanced animation */}
                   <motion.div
                     animate={{ 
-                      scale: isActive ? 1.1 : 1,
-                      y: isActive ? -2 : 0
+                      scale: isActive ? 1.15 : 1,
+                      y: isActive ? -3 : 0
                     }}
-                    transition={{ duration: 0.3, ease: 'easeOut' }}
+                    transition={{ 
+                      type: "spring",
+                      stiffness: 400,
+                      damping: 25
+                    }}
                   >
-                    <Icon className="h-5 w-5" />
+                    <Icon className="h-5 w-5" strokeWidth={isActive ? 2.5 : 2} />
                   </motion.div>
                   
                   <span className={cn(
-                    "text-xs font-medium transition-all duration-300",
-                    isActive && "font-semibold"
+                    "text-[10px] font-medium transition-all duration-300",
+                    isActive && "font-bold"
                   )}>
                     {item.label}
                   </span>
                   
-                  {/* Active indicator dot */}
+                  {/* Active indicator - Glowing dot */}
                   {isActive && (
-                    <motion.div
-                      layoutId="activeMobileTab"
-                      className="absolute top-1 w-1 h-1 bg-primary rounded-full"
-                      transition={{ type: "spring", stiffness: 380, damping: 30 }}
-                    />
+                    <>
+                      <motion.div
+                        layoutId="activeMobileTab"
+                        className="absolute top-2 w-1.5 h-1.5 bg-primary rounded-full"
+                        transition={{ type: "spring", stiffness: 380, damping: 30 }}
+                      />
+                      
+                      {/* Glow effect */}
+                      <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        className="absolute top-2 w-3 h-3 bg-primary/30 rounded-full blur-sm"
+                      />
+                    </>
                   )}
                   
                   {/* Background glow on active */}
@@ -184,9 +204,17 @@ export const Navigation = ({ className }: NavigationProps) => {
                     <motion.div
                       initial={{ opacity: 0, scale: 0.8 }}
                       animate={{ opacity: 1, scale: 1 }}
-                      className="absolute inset-0 bg-primary/5 rounded-lg -z-10"
+                      className="absolute inset-0 bg-primary/5 rounded-xl -z-10"
                     />
                   )}
+                  
+                  {/* Ripple effect on tap */}
+                  <motion.div
+                    initial={{ scale: 0, opacity: 0.5 }}
+                    animate={{ scale: isActive ? 1.5 : 0, opacity: 0 }}
+                    transition={{ duration: 0.6 }}
+                    className="absolute inset-0 bg-primary/10 rounded-xl -z-10"
+                  />
                 </Button>
               </motion.div>
             );
