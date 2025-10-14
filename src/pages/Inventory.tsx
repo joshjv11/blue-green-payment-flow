@@ -1,14 +1,17 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { Card } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
-import { Plus, Package, AlertTriangle, DollarSign, Edit2, Trash2 } from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Plus, Package, AlertTriangle, DollarSign, Edit2, Trash2, ShoppingCart, ShoppingBag, ChevronDown, FileText } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { PageTransition } from "@/components/PageTransition";
+import { Breadcrumb } from "@/components/Breadcrumb";
 
 interface Product {
   id: string;
@@ -22,6 +25,7 @@ interface Product {
 }
 
 export default function Inventory() {
+  const navigate = useNavigate();
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -151,102 +155,160 @@ export default function Inventory() {
   return (
     <PageTransition>
       <div className="container mx-auto p-4 md:p-6 space-y-6">
+        {/* Breadcrumb */}
+        <Breadcrumb
+          items={[
+            { label: "Dashboard", href: "/dashboard" },
+            { label: "Inventory" },
+          ]}
+        />
+
+        {/* Header with Quick Actions */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
           <div>
             <h1 className="text-3xl font-bold">Inventory Management</h1>
             <p className="text-muted-foreground">Manage your product inventory</p>
           </div>
-          
-          <Dialog open={dialogOpen} onOpenChange={(open) => {
-            setDialogOpen(open);
-            if (!open) {
-              setEditingProduct(null);
-              setFormData({
-                name: "",
-                sku: "",
-                purchase_price: "",
-                selling_price: "",
-                stock_qty: "",
-                reorder_level: "10",
-              });
-            }
-          }}>
-            <DialogTrigger asChild>
-              <Button>
+
+          <div className="flex gap-2">
+            {/* Quick Navigation Dropdown */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline">
+                  Quick Actions
+                  <ChevronDown className="ml-2 h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuItem onClick={() => navigate("/sales")}>
+                  <ShoppingCart className="mr-2 h-4 w-4" />
+                  View Sales Invoices
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => navigate("/purchases")}>
+                  <ShoppingBag className="mr-2 h-4 w-4" />
+                  View Purchase Invoices
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => navigate("/dashboard")}>
+                  <FileText className="mr-2 h-4 w-4" />
+                  Back to Dashboard
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+
+            <Dialog open={dialogOpen} onOpenChange={(open) => {
+              setDialogOpen(open);
+              if (!open) {
+                setEditingProduct(null);
+                setFormData({
+                  name: "",
+                  sku: "",
+                  purchase_price: "",
+                  selling_price: "",
+                  stock_qty: "",
+                  reorder_level: "10",
+                });
+              }
+            }}>
+              <DialogTrigger asChild>
+                <Button>
+                  <Plus className="mr-2 h-4 w-4" />
+                  Add Product
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-md">
+                <DialogHeader>
+                  <DialogTitle>{editingProduct ? "Edit Product" : "Add New Product"}</DialogTitle>
+                </DialogHeader>
+                <form onSubmit={handleSubmit} className="space-y-4">
+                  <div>
+                    <Label>Product Name</Label>
+                    <Input
+                      value={formData.name}
+                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                      required
+                    />
+                  </div>
+                  <div>
+                    <Label>SKU Code</Label>
+                    <Input
+                      value={formData.sku}
+                      onChange={(e) => setFormData({ ...formData, sku: e.target.value })}
+                      required
+                    />
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label>Purchase Price</Label>
+                      <Input
+                        type="number"
+                        step="0.01"
+                        value={formData.purchase_price}
+                        onChange={(e) => setFormData({ ...formData, purchase_price: e.target.value })}
+                        required
+                      />
+                    </div>
+                    <div>
+                      <Label>Selling Price</Label>
+                      <Input
+                        type="number"
+                        step="0.01"
+                        value={formData.selling_price}
+                        onChange={(e) => setFormData({ ...formData, selling_price: e.target.value })}
+                        required
+                      />
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label>Current Stock</Label>
+                      <Input
+                        type="number"
+                        value={formData.stock_qty}
+                        onChange={(e) => setFormData({ ...formData, stock_qty: e.target.value })}
+                        required
+                      />
+                    </div>
+                    <div>
+                      <Label>Reorder Level</Label>
+                      <Input
+                        type="number"
+                        value={formData.reorder_level}
+                        onChange={(e) => setFormData({ ...formData, reorder_level: e.target.value })}
+                        required
+                      />
+                    </div>
+                  </div>
+                  <Button type="submit" className="w-full">
+                    {editingProduct ? "Update Product" : "Add Product"}
+                  </Button>
+                </form>
+              </DialogContent>
+            </Dialog>
+          </div>
+        </div>
+
+        {/* Empty State */}
+        {!loading && products.length === 0 && (
+          <Card className="p-8 text-center border-dashed">
+            <Package className="h-16 w-16 mx-auto text-muted-foreground mb-4" />
+            <CardHeader>
+              <CardTitle>No products yet</CardTitle>
+              <CardDescription>
+                Start by adding a product or recording a purchase invoice to track your inventory
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="flex justify-center gap-3">
+              <Button onClick={() => setDialogOpen(true)}>
                 <Plus className="mr-2 h-4 w-4" />
                 Add Product
               </Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-md">
-              <DialogHeader>
-                <DialogTitle>{editingProduct ? "Edit Product" : "Add New Product"}</DialogTitle>
-              </DialogHeader>
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div>
-                  <Label>Product Name</Label>
-                  <Input
-                    value={formData.name}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    required
-                  />
-                </div>
-                <div>
-                  <Label>SKU Code</Label>
-                  <Input
-                    value={formData.sku}
-                    onChange={(e) => setFormData({ ...formData, sku: e.target.value })}
-                    required
-                  />
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label>Purchase Price</Label>
-                    <Input
-                      type="number"
-                      step="0.01"
-                      value={formData.purchase_price}
-                      onChange={(e) => setFormData({ ...formData, purchase_price: e.target.value })}
-                      required
-                    />
-                  </div>
-                  <div>
-                    <Label>Selling Price</Label>
-                    <Input
-                      type="number"
-                      step="0.01"
-                      value={formData.selling_price}
-                      onChange={(e) => setFormData({ ...formData, selling_price: e.target.value })}
-                      required
-                    />
-                  </div>
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label>Current Stock</Label>
-                    <Input
-                      type="number"
-                      value={formData.stock_qty}
-                      onChange={(e) => setFormData({ ...formData, stock_qty: e.target.value })}
-                      required
-                    />
-                  </div>
-                  <div>
-                    <Label>Reorder Level</Label>
-                    <Input
-                      type="number"
-                      value={formData.reorder_level}
-                      onChange={(e) => setFormData({ ...formData, reorder_level: e.target.value })}
-                      required
-                    />
-                  </div>
-                </div>
-                <Button type="submit" className="w-full">
-                  {editingProduct ? "Update Product" : "Add Product"}
-                </Button>
-              </form>
-            </DialogContent>
-          </Dialog>
-        </div>
+              <Button variant="outline" onClick={() => navigate("/purchases")}>
+                <ShoppingBag className="mr-2 h-4 w-4" />
+                Create Purchase Invoice
+              </Button>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Summary Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
