@@ -33,6 +33,9 @@ import { useLoadingWatchdog } from '@/hooks/useLoadingWatchdog';
 import { cancelAllQueries, refetchAllQueries } from '@/lib/query';
 import { usePlan } from '@/contexts/PlanContext';
 import { cn } from '@/lib/utils';
+import { StatCardWithSparkline } from '@/components/StatCardWithSparkline';
+import { DashboardAnalytics } from '@/components/DashboardAnalytics';
+import { FloatingActionButtons } from '@/components/FloatingActionButtons';
 
 interface Bill {
   id: string;
@@ -318,149 +321,122 @@ const Dashboard = () => {
     return 'bg-blue-100 text-blue-800 border-blue-200';
   };
 
+  // Generate sparkline data for each stat (last 7 days)
+  const generateSparklineData = (filterFn: (bill: Bill) => boolean) => {
+    return Array.from({ length: 7 }, (_, i) => {
+      const date = addDays(new Date(), -6 + i);
+      const count = bills.filter(bill => {
+        const billDate = parseISO(bill.due_date);
+        return filterFn(bill) && billDate.toDateString() === date.toDateString();
+      }).length;
+      return { value: count };
+    });
+  };
+
+  const activeSparkline = generateSparklineData(b => b.status !== 'paid');
+  const overdueSparkline = generateSparklineData(b => b.status === 'overdue');
+  const dueSoonSparkline = generateSparklineData(b => {
+    const daysUntilDue = differenceInDays(parseISO(b.due_date), new Date());
+    return b.status !== 'paid' && daysUntilDue <= 7 && daysUntilDue >= 0;
+  });
+  const paidSparkline = generateSparklineData(b => b.status === 'paid');
+
   const handlePasskeyBannerDismiss = () => {
     setShowPasskeyBanner(false);
     localStorage.setItem('invoiceflow_passkey_banner_dismissed', 'true');
   };
 
   return (
-    <div className="min-h-screen bg-background pb-20 md:pb-0">
+    <div className="min-h-screen bg-background pb-20 md:pb-6">
       <Navigation />
 
       {/* Main Content */}
       <main className="container mx-auto px-3 py-4 md:px-4 md:py-6">
-        <div className="max-w-6xl mx-auto space-y-3 md:space-y-4">
+        <div className="max-w-7xl mx-auto space-y-4 md:space-y-6">
           {/* Passkey Banner */}
           {showPasskeyBanner && (
             <AddPasskeyBanner onDismiss={handlePasskeyBannerDismiss} />
           )}
 
-          {/* Profile & Plan Section - Mobile First */}
-          <Card className={cn(
-            "transition-all duration-300",
-            isPro && "glass-pro border-[hsl(45,100%,60%)]/30 shadow-pro-strong shimmer"
-          )}>
-            <CardContent className="p-4">
-              <div className="flex items-start justify-between gap-3 mb-3">
-                <div className="flex-1 min-w-0">
-                  <h1 className={cn(
-                    "text-lg md:text-xl font-bold truncate transition-colors duration-300",
-                    isPro ? "pro-gradient-text" : "text-foreground"
-                  )}>
-                    {profile?.full_name || user?.email?.split('@')[0] || 'Welcome'}
-                  </h1>
-                  <p className={cn(
-                    "text-xs md:text-sm truncate transition-colors duration-300",
-                    isPro ? "text-foreground/90" : "text-muted-foreground"
-                  )}>
-                    {user?.email}
-                  </p>
-                  {profile?.company && (
-                    <p className={cn(
-                      "text-xs mt-0.5 transition-colors duration-300",
-                      isPro ? "text-foreground/70" : "text-muted-foreground"
-                    )}>
-                      {profile.company}
-                    </p>
-                  )}
-                </div>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={handleRetryAll}
-                  disabled={loading || billsLoading}
-                  className={cn(
-                    "shrink-0 transition-colors duration-300",
-                    isPro && "hover:bg-[hsl(45,100%,60%)]/10"
-                  )}
-                >
-                  <RefreshCw className={`h-4 w-4 ${(loading || billsLoading) ? 'animate-spin' : ''}`} />
-                </Button>
-              </div>
-              
-              {/* Plan Status Inline */}
-              <PlanStatusCard 
-                compact={true}
-                onUpgrade={() => setShowUpgradeModal(true)}
-              />
-            </CardContent>
-          </Card>
-
-          {/* Bill Statistics */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-3">
-            <Card className={cn(
-              "transition-all duration-300",
-              isPro && "glass-pro border-[hsl(45,100%,60%)]/20 hover:shadow-pro-glow"
-            )}>
-              <CardContent className="p-3 md:p-4">
-                <div className="space-y-1.5">
-                  <div className="flex items-center gap-1.5">
-                    <FileText className={cn(
-                      "h-4 w-4 transition-colors duration-300",
-                      isPro ? "text-[hsl(45,100%,60%)]" : "text-primary"
-                    )} />
-                    <span className="text-xs text-muted-foreground">Active</span>
-                  </div>
-                  <div className={cn(
-                    "text-xl md:text-2xl font-bold transition-colors duration-300",
-                    isPro ? "pro-gradient-text" : "text-foreground"
-                  )}>
-                    {activeBills.length}
-                  </div>
-                  {plan === 'free' && (
-                    <div className="text-xs text-muted-foreground">
-                      {bills.length}/{billLimit} bills
-                    </div>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-            
-            <Card className={cn(
-              "transition-all duration-300",
-              isPro && "glass-pro border-[hsl(45,100%,60%)]/20 hover:shadow-pro-glow"
-            )}>
-              <CardContent className="p-3 md:p-4">
-                <div className="space-y-1.5">
-                  <div className="flex items-center gap-1.5">
-                    <AlertCircle className="h-4 w-4 text-destructive" />
-                    <span className="text-xs text-muted-foreground">Overdue</span>
-                  </div>
-                  <div className="text-xl md:text-2xl font-bold text-destructive">{overdueBills.length}</div>
-                </div>
-              </CardContent>
-            </Card>
-            
-            <Card className={cn(
-              "transition-all duration-300",
-              isPro && "glass-pro border-[hsl(45,100%,60%)]/20 hover:shadow-pro-glow"
-            )}>
-              <CardContent className="p-3 md:p-4">
-                <div className="space-y-1.5">
-                  <div className="flex items-center gap-1.5">
-                    <Clock className="h-4 w-4 text-yellow-600" />
-                    <span className="text-xs text-muted-foreground">Due Soon</span>
-                  </div>
-                  <div className="text-xl md:text-2xl font-bold text-yellow-600">{billsDueIn7Days.length}</div>
-                </div>
-              </CardContent>
-            </Card>
-            
-            <Card className={cn(
-              "transition-all duration-300",
-              isPro && "glass-pro border-[hsl(45,100%,60%)]/20 hover:shadow-pro-glow"
-            )}>
-              <CardContent className="p-3 md:p-4">
-                <div className="space-y-1.5">
-                  <div className="flex items-center gap-1.5">
-                    <CheckCircle className="h-4 w-4 text-green-600" />
-                    <span className="text-xs text-muted-foreground">Paid</span>
-                  </div>
-                  <div className="text-xl md:text-2xl font-bold text-green-600">{paidBills.length}</div>
-                </div>
-              </CardContent>
-            </Card>
+          {/* Header with Profile */}
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className={cn(
+                "text-2xl md:text-3xl font-bold transition-colors duration-300",
+                isPro ? "pro-gradient-text" : "text-foreground"
+              )}>
+                Dashboard
+              </h1>
+              <p className="text-sm text-muted-foreground mt-1">
+                {profile?.full_name || user?.email?.split('@')[0] || 'Welcome back'}
+              </p>
+            </div>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={handleRetryAll}
+              disabled={loading || billsLoading}
+              className={cn(
+                "transition-colors duration-300",
+                isPro && "hover:bg-[hsl(45,100%,60%)]/10"
+              )}
+            >
+              <RefreshCw className={`h-5 w-5 ${(loading || billsLoading) ? 'animate-spin' : ''}`} />
+            </Button>
           </div>
+
+          {/* Premium Stat Cards with Sparklines */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
+            <StatCardWithSparkline
+              title="Active Bills"
+              value={activeBills.length}
+              icon={FileText}
+              sparklineData={activeSparkline}
+              iconColor="text-primary"
+              gradientFrom="from-primary/10"
+              gradientTo="to-primary/5"
+              isPro={isPro}
+              trendValue={plan === 'free' ? `${bills.length}/${billLimit}` : undefined}
+            />
+            <StatCardWithSparkline
+              title="Overdue"
+              value={overdueBills.length}
+              icon={AlertCircle}
+              sparklineData={overdueSparkline}
+              iconColor="text-destructive"
+              gradientFrom="from-destructive/10"
+              gradientTo="to-destructive/5"
+              isPro={isPro}
+              trend={overdueBills.length > 0 ? 'down' : 'neutral'}
+            />
+            <StatCardWithSparkline
+              title="Due Soon"
+              value={billsDueIn7Days.length}
+              icon={Clock}
+              sparklineData={dueSoonSparkline}
+              iconColor="text-yellow-600"
+              gradientFrom="from-yellow-600/10"
+              gradientTo="to-yellow-600/5"
+              isPro={isPro}
+              trendValue="Next 7 days"
+            />
+            <StatCardWithSparkline
+              title="Paid"
+              value={paidBills.length}
+              icon={CheckCircle}
+              sparklineData={paidSparkline}
+              iconColor="text-green-600"
+              gradientFrom="from-green-600/10"
+              gradientTo="to-green-600/5"
+              isPro={isPro}
+              trend="up"
+            />
+          </div>
+
+          {/* Analytics Section */}
+          {bills.length > 0 && (
+            <DashboardAnalytics bills={bills} isPro={isPro} />
+          )}
 
           {/* Plan Limit Warnings */}
           <div className="space-y-2">
@@ -476,9 +452,12 @@ const Dashboard = () => {
             />
           </div>
 
-          {/* Bills Due Today */}
+          {/* Bills Due Today Alert */}
           {billsDueToday.length > 0 && (
-            <Card className="border-yellow-200 bg-yellow-50/50">
+            <Card className={cn(
+              "border-yellow-200 bg-yellow-50/50 glass transition-all duration-300",
+              isPro && "glass-pro border-[hsl(45,100%,60%)]/40"
+            )}>
               <CardHeader className="pb-3">
                 <CardTitle className="flex items-center gap-2 text-yellow-800 text-base">
                   <Calendar className="h-4 w-4" />
@@ -487,7 +466,7 @@ const Dashboard = () => {
               </CardHeader>
               <CardContent className="space-y-2">
                 {billsDueToday.map((bill) => (
-                  <div key={bill.id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-3 bg-white rounded-[10px] border border-yellow-100">
+                  <div key={bill.id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-3 bg-white/80 glass rounded-xl border border-yellow-100">
                     <div className="flex-1 min-w-0">
                       <div className="font-medium text-sm text-foreground truncate">{bill.name}</div>
                       <div className="text-xs text-muted-foreground">
@@ -497,7 +476,10 @@ const Dashboard = () => {
                     <Button 
                       size="sm" 
                       onClick={() => toggleBillStatus(bill)}
-                      className="w-full sm:w-auto shrink-0"
+                      className={cn(
+                        "w-full sm:w-auto shrink-0",
+                        isPro && "variant-pro"
+                      )}
                     >
                       Mark as Paid
                     </Button>
@@ -507,142 +489,18 @@ const Dashboard = () => {
             </Card>
           )}
 
-          {/* Quick Actions */}
+          {/* Recent Bills Table */}
           <Card className={cn(
-            "transition-all duration-300",
-            isPro && "glass-pro border-[hsl(45,100%,60%)]/20"
+            "glass border-border/50 shadow-glass transition-all duration-300",
+            isPro && "glass-pro border-[hsl(45,100%,60%)]/30 shadow-pro-strong"
           )}>
-            <CardHeader className="pb-3">
+            <CardHeader>
               <CardTitle className={cn(
-                "text-base transition-colors duration-300",
+                "transition-colors duration-300",
                 isPro && "pro-gradient-text"
               )}>
-                Quick Actions
+                Recent Bills
               </CardTitle>
-            </CardHeader>
-            <CardContent className="grid grid-cols-1 sm:grid-cols-2 gap-2 md:gap-3">
-              <Button 
-                onClick={() => {
-                  if (!canAddBill(bills.length)) {
-                    setShowUpgradeModal(true);
-                  } else {
-                    navigate('/bills');
-                  }
-                }}
-                className={cn(
-                  "h-auto p-3 justify-start transition-all duration-300",
-                  isPro && "glass-pro hover:border-[hsl(45,100%,60%)]/40 hover:shadow-pro-glow"
-                )}
-                variant="outline"
-              >
-                <div className="flex items-center gap-2.5 w-full">
-                  <Plus className={cn(
-                    "h-5 w-5 shrink-0 transition-colors duration-300",
-                    isPro ? "text-[hsl(45,100%,60%)]" : "text-primary"
-                  )} />
-                  <div className="text-left flex-1 min-w-0">
-                    <div className="font-medium text-sm flex items-center gap-1.5">
-                      Add New Bill
-                      {!canAddBill(bills.length) && (
-                        <Crown className="h-3 w-3 text-yellow-500 shrink-0" />
-                      )}
-                    </div>
-                    <div className="text-xs text-muted-foreground truncate">
-                      {canAddBill(bills.length) 
-                        ? 'Create a new bill entry'
-                        : 'Upgrade for unlimited'
-                      }
-                    </div>
-                  </div>
-                </div>
-              </Button>
-              
-              <Button 
-                onClick={() => navigate('/bills')}
-                className="h-auto p-3 justify-start"
-                variant="outline"
-              >
-                <div className="flex items-center gap-2.5">
-                  <FileText className="h-5 w-5 text-primary shrink-0" />
-                  <div className="text-left">
-                    <div className="font-medium text-sm">Manage Bills</div>
-                    <div className="text-xs text-muted-foreground">View and edit all</div>
-                  </div>
-                </div>
-              </Button>
-              
-              <Button 
-                onClick={() => navigate('/analytics')}
-                className="h-auto p-3 justify-start"
-                variant="outline"
-              >
-                <div className="flex items-center gap-2.5">
-                  <BarChart3 className="h-5 w-5 text-primary shrink-0" />
-                  <div className="text-left">
-                    <div className="font-medium text-sm flex items-center gap-1.5">
-                      Analytics
-                      {plan === 'free' && (
-                        <Crown className="h-3 w-3 text-yellow-500 shrink-0" />
-                      )}
-                    </div>
-                    <div className="text-xs text-muted-foreground">
-                      {plan === 'pro' ? 'Financial insights' : 'Basic analytics'}
-                    </div>
-                  </div>
-                </div>
-              </Button>
-              
-              <Button 
-                onClick={() => navigate('/settings')}
-                className="h-auto p-3 justify-start"
-                variant="outline"
-              >
-                <div className="flex items-center gap-2.5">
-                  <Settings className="h-5 w-5 text-primary shrink-0" />
-                  <div className="text-left">
-                    <div className="font-medium text-sm">Settings</div>
-                    <div className="text-xs text-muted-foreground">Manage preferences</div>
-                  </div>
-                </div>
-              </Button>
-
-              <Button 
-                onClick={() => setShowExportImport(true)}
-                className="h-auto p-3 justify-start sm:col-span-2"
-                variant="outline"
-              >
-                <div className="flex items-center gap-2.5">
-                  <Download className="h-5 w-5 text-primary shrink-0" />
-                  <div className="text-left">
-                    <div className="font-medium text-sm">Export/Import</div>
-                    <div className="text-xs text-muted-foreground">Backup or import data</div>
-                  </div>
-                </div>
-              </Button>
-              
-              {/* Always show upgrade option for free users */}
-              {plan === 'free' && (
-                <UpgradeTrigger 
-                  className="h-auto p-3 justify-start sm:col-span-2"
-                  variant="default"
-                  trigger="general"
-                >
-                  <div className="flex items-center gap-2.5">
-                    <Crown className="h-5 w-5 text-white shrink-0" />
-                    <div className="text-left flex-1">
-                      <div className="font-medium text-sm text-white">Upgrade to Pro</div>
-                      <div className="text-xs text-white/90">₹99/mo • Unlimited bills & AI</div>
-                    </div>
-                  </div>
-                </UpgradeTrigger>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Recent Bills Table */}
-          <Card className="shadow-soft">
-            <CardHeader>
-              <CardTitle>Recent Bills</CardTitle>
             </CardHeader>
             <CardContent>
               {billsLoading ? (
@@ -752,83 +610,25 @@ const Dashboard = () => {
             currentBillCount={bills.length}
           />
 
-          {/* Profile Card */}
-          <Card className="shadow-soft">
-            <CardHeader>
-              <CardTitle className="flex items-center space-x-2">
-                <User className="h-5 w-5 text-primary" />
-                <span>Profile Information</span>
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {!isEditing ? (
-                <div className="space-y-4">
-                  <div className="flex items-center space-x-3">
-                    <Mail className="h-4 w-4 text-muted-foreground" />
-                    <span className="text-sm text-muted-foreground">Email:</span>
-                    <span className="font-medium">{user?.email}</span>
-                  </div>
-                  
-                  <div className="flex items-center space-x-3">
-                    <User className="h-4 w-4 text-muted-foreground" />
-                    <span className="text-sm text-muted-foreground">Full Name:</span>
-                    <span className="font-medium">{profile?.full_name || 'Not set'}</span>
-                  </div>
-                  
-                  <div className="flex items-center space-x-3">
-                    <Building className="h-4 w-4 text-muted-foreground" />
-                    <span className="text-sm text-muted-foreground">Company:</span>
-                    <span className="font-medium">{profile?.company || 'Not set'}</span>
-                  </div>
-                  
-                  <Button onClick={() => setIsEditing(true)} className="mt-4">
-                    Edit Profile
-                  </Button>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="fullName">Full Name</Label>
-                    <Input
-                      id="fullName"
-                      value={fullName}
-                      onChange={(e) => setFullName(e.target.value)}
-                      placeholder="Enter your full name"
-                    />
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="company">Company</Label>
-                    <Input
-                      id="company"
-                      value={company}
-                      onChange={(e) => setCompany(e.target.value)}
-                      placeholder="Enter your company name"
-                    />
-                  </div>
-                  
-                  <div className="flex space-x-2">
-                    <Button onClick={handleUpdateProfile} disabled={loading}>
-                      {loading ? 'Saving...' : 'Save Changes'}
-                    </Button>
-                    <Button 
-                      variant="outline" 
-                      onClick={() => {
-                        setIsEditing(false);
-                        setFullName(profile?.full_name || '');
-                        setCompany(profile?.company || '');
-                      }}
-                    >
-                      Cancel
-                    </Button>
-                  </div>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
         </div>
       </main>
+
+      {/* Floating Action Buttons */}
+      <FloatingActionButtons
+        onAddBill={() => {
+          if (!canAddBill(bills.length)) {
+            setShowUpgradeModal(true);
+          } else {
+            navigate('/bills');
+          }
+        }}
+        onExport={() => setShowExportImport(true)}
+        onSettings={() => navigate('/settings')}
+        onUpgrade={() => setShowUpgradeModal(true)}
+        canAddBill={canAddBill(bills.length)}
+        showUpgrade={plan === 'free'}
+        isPro={isPro}
+      />
 
       <EnhancedAIAssistantV2 
         bills={bills}
