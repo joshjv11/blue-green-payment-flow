@@ -917,6 +917,7 @@ export type Database = {
           is_reverse_charge: boolean | null
           notes: string | null
           payment_status: string
+          pdf_url: string | null
           place_of_supply: string | null
           sgst_amount: number | null
           supplier_address: string | null
@@ -947,6 +948,7 @@ export type Database = {
           is_reverse_charge?: boolean | null
           notes?: string | null
           payment_status?: string
+          pdf_url?: string | null
           place_of_supply?: string | null
           sgst_amount?: number | null
           supplier_address?: string | null
@@ -977,6 +979,7 @@ export type Database = {
           is_reverse_charge?: boolean | null
           notes?: string | null
           payment_status?: string
+          pdf_url?: string | null
           place_of_supply?: string | null
           sgst_amount?: number | null
           supplier_address?: string | null
@@ -1022,6 +1025,7 @@ export type Database = {
           is_reverse_charge: boolean | null
           notes: string | null
           payment_status: string
+          pdf_url: string | null
           place_of_supply: string | null
           sgst_amount: number | null
           tax_amount: number
@@ -1052,6 +1056,7 @@ export type Database = {
           is_reverse_charge?: boolean | null
           notes?: string | null
           payment_status?: string
+          pdf_url?: string | null
           place_of_supply?: string | null
           sgst_amount?: number | null
           tax_amount?: number
@@ -1082,6 +1087,7 @@ export type Database = {
           is_reverse_charge?: boolean | null
           notes?: string | null
           payment_status?: string
+          pdf_url?: string | null
           place_of_supply?: string | null
           sgst_amount?: number | null
           tax_amount?: number
