@@ -19,6 +19,8 @@ import Dashboard from './pages/Dashboard';
 import Bills from './pages/Bills';
 import Analytics from './pages/Analytics';
 import Settings from './pages/Settings';
+import Sales from './pages/Sales';
+import Purchases from './pages/Purchases';
 import Admin from './pages/Admin';
 import AdminUsers from './pages/AdminUsers';
 import AdminUserPlans from './pages/AdminUserPlans';
@@ -58,6 +60,22 @@ function AppRoutes() {
         } 
       />
       <Route 
+        path="/sales" 
+        element={
+          <ProtectedRoute>
+            <PageTransition><Sales /></PageTransition>
+          </ProtectedRoute>
+        } 
+      />
+      <Route 
+        path="/purchases" 
+        element={
+          <ProtectedRoute>
+            <PageTransition><Purchases /></PageTransition>
+          </ProtectedRoute>
+        } 
+      />
+      <Route
         path="/settings" 
         element={
           <ProtectedRoute>

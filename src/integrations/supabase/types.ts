@@ -458,6 +458,54 @@ export type Database = {
           },
         ]
       }
+      order_lines: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          order_id: string
+          order_type: Database["public"]["Enums"]["order_type"]
+          product_name: string
+          quantity: number
+          subtotal: number
+          tax_amount: number
+          tax_rate: number
+          total_amount: number
+          unit_price: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          order_id: string
+          order_type: Database["public"]["Enums"]["order_type"]
+          product_name: string
+          quantity?: number
+          subtotal?: number
+          tax_amount?: number
+          tax_rate?: number
+          total_amount?: number
+          unit_price?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          order_id?: string
+          order_type?: Database["public"]["Enums"]["order_type"]
+          product_name?: string
+          quantity?: number
+          subtotal?: number
+          tax_amount?: number
+          tax_rate?: number
+          total_amount?: number
+          unit_price?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       payment_access_log: {
         Row: {
           accessed_at: string | null
@@ -595,6 +643,118 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      purchase_orders: {
+        Row: {
+          amount_paid: number
+          created_at: string
+          grand_total: number
+          id: string
+          invoice_number: string
+          notes: string | null
+          payment_status: string
+          supplier_name: string
+          tax_amount: number
+          total_amount: number
+          transaction_date: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          amount_paid?: number
+          created_at?: string
+          grand_total?: number
+          id?: string
+          invoice_number: string
+          notes?: string | null
+          payment_status?: string
+          supplier_name: string
+          tax_amount?: number
+          total_amount?: number
+          transaction_date?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          amount_paid?: number
+          created_at?: string
+          grand_total?: number
+          id?: string
+          invoice_number?: string
+          notes?: string | null
+          payment_status?: string
+          supplier_name?: string
+          tax_amount?: number
+          total_amount?: number
+          transaction_date?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "purchase_orders_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sales_orders: {
+        Row: {
+          amount_paid: number
+          created_at: string
+          customer_name: string
+          grand_total: number
+          id: string
+          invoice_number: string
+          notes: string | null
+          payment_status: string
+          tax_amount: number
+          total_amount: number
+          transaction_date: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          amount_paid?: number
+          created_at?: string
+          customer_name: string
+          grand_total?: number
+          id?: string
+          invoice_number: string
+          notes?: string | null
+          payment_status?: string
+          tax_amount?: number
+          total_amount?: number
+          transaction_date?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          amount_paid?: number
+          created_at?: string
+          customer_name?: string
+          grand_total?: number
+          id?: string
+          invoice_number?: string
+          notes?: string | null
+          payment_status?: string
+          tax_amount?: number
+          total_amount?: number
+          transaction_date?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sales_orders_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       streak_history: {
         Row: {
@@ -1203,6 +1363,10 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: Json
       }
+      generate_invoice_number: {
+        Args: { p_order_type: string; p_user_id: string }
+        Returns: string
+      }
       get_user_stats: {
         Args: { target_user_id: string }
         Returns: {
@@ -1253,6 +1417,7 @@ export type Database = {
     Enums: {
       bill_status: "unpaid" | "paid" | "overdue"
       invoice_status: "pending" | "paid" | "overdue"
+      order_type: "sale" | "purchase"
       user_role: "owner" | "admin" | "member" | "viewer"
     }
     CompositeTypes: {
@@ -1383,6 +1548,7 @@ export const Constants = {
     Enums: {
       bill_status: ["unpaid", "paid", "overdue"],
       invoice_status: ["pending", "paid", "overdue"],
+      order_type: ["sale", "purchase"],
       user_role: ["owner", "admin", "member", "viewer"],
     },
   },
