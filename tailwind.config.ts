@@ -80,6 +80,10 @@ export default {
         'neumorphic': 'var(--shadow-neumorphic)',
         'pro-glow': 'var(--shadow-pro-glow)',
         'pro-strong': 'var(--shadow-pro-strong)',
+        'card-hover': 'var(--shadow-card-hover)',
+        'pro-hover': 'var(--shadow-pro-hover)',
+        'button-hover': 'var(--shadow-button-hover)',
+        'bounce': '0 4px 12px rgba(0, 0, 0, 0.15)',
       },
       backdropBlur: {
         'glass': '16px',
@@ -155,6 +159,24 @@ export default {
             transform: "translateX(100%)",
           }
         },
+        "bounce-subtle": {
+          "0%, 100%": {
+            transform: "scale(1)",
+          },
+          "50%": {
+            transform: "scale(0.95)",
+          }
+        },
+        "glow-pulse": {
+          "0%, 100%": {
+            opacity: "0.5",
+            boxShadow: "0 0 20px currentColor",
+          },
+          "50%": {
+            opacity: "1",
+            boxShadow: "0 0 40px currentColor",
+          }
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
@@ -163,6 +185,8 @@ export default {
         "pulse-slow": "pulse-slow 10s ease-in-out infinite",
         "heartbeat": "heartbeat 10s ease-in-out infinite",
         "shimmer": "shimmer 2s infinite",
+        "bounce-subtle": "bounce-subtle 0.5s ease-out",
+        "glow-pulse": "glow-pulse 2s ease-in-out infinite",
       },
     },
   },
