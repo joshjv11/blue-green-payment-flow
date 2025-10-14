@@ -342,28 +342,40 @@ export type Database = {
       }
       customers: {
         Row: {
+          address: string | null
           created_at: string
           email: string
           id: string
           name: string
+          party_gstin: string | null
+          party_state: string | null
+          party_state_code: string | null
           phone: string | null
           updated_at: string
           user_id: string
         }
         Insert: {
+          address?: string | null
           created_at?: string
           email: string
           id?: string
           name: string
+          party_gstin?: string | null
+          party_state?: string | null
+          party_state_code?: string | null
           phone?: string | null
           updated_at?: string
           user_id: string
         }
         Update: {
+          address?: string | null
           created_at?: string
           email?: string
           id?: string
           name?: string
+          party_gstin?: string | null
+          party_state?: string | null
+          party_state_code?: string | null
           phone?: string | null
           updated_at?: string
           user_id?: string
@@ -444,6 +456,27 @@ export type Database = {
           id?: string
           record_count?: number | null
           user_id?: string
+        }
+        Relationships: []
+      }
+      indian_states: {
+        Row: {
+          created_at: string
+          id: string
+          state_code: string
+          state_name: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          state_code: string
+          state_name: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          state_code?: string
+          state_name?: string
         }
         Relationships: []
       }
@@ -705,6 +738,7 @@ export type Database = {
       products: {
         Row: {
           created_at: string
+          default_gst_rate: number | null
           id: string
           name: string
           purchase_price: number
@@ -717,6 +751,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          default_gst_rate?: number | null
           id?: string
           name: string
           purchase_price?: number
@@ -729,6 +764,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          default_gst_rate?: number | null
           id?: string
           name?: string
           purchase_price?: number
@@ -744,11 +780,13 @@ export type Database = {
       profiles: {
         Row: {
           avatar_url: string | null
+          business_legal_name: string | null
           company: string | null
           company_address: string | null
           company_gstin: string | null
           company_pan: string | null
           company_state: string | null
+          company_state_code: string | null
           created_at: string
           email: string
           email_notifications_enabled: boolean | null
@@ -759,15 +797,18 @@ export type Database = {
           reminder_email: string | null
           short_id: string | null
           sms_notifications_enabled: boolean | null
+          tax_regime: string | null
           updated_at: string
         }
         Insert: {
           avatar_url?: string | null
+          business_legal_name?: string | null
           company?: string | null
           company_address?: string | null
           company_gstin?: string | null
           company_pan?: string | null
           company_state?: string | null
+          company_state_code?: string | null
           created_at?: string
           email: string
           email_notifications_enabled?: boolean | null
@@ -778,15 +819,18 @@ export type Database = {
           reminder_email?: string | null
           short_id?: string | null
           sms_notifications_enabled?: boolean | null
+          tax_regime?: string | null
           updated_at?: string
         }
         Update: {
           avatar_url?: string | null
+          business_legal_name?: string | null
           company?: string | null
           company_address?: string | null
           company_gstin?: string | null
           company_pan?: string | null
           company_state?: string | null
+          company_state_code?: string | null
           created_at?: string
           email?: string
           email_notifications_enabled?: boolean | null
@@ -797,6 +841,7 @@ export type Database = {
           reminder_email?: string | null
           short_id?: string | null
           sms_notifications_enabled?: boolean | null
+          tax_regime?: string | null
           updated_at?: string
         }
         Relationships: []
@@ -806,11 +851,14 @@ export type Database = {
           amount_paid: number
           cgst_amount: number | null
           created_at: string
+          due_date: string | null
+          eway_bill_no: string | null
           grand_total: number
           id: string
           igst_amount: number | null
           invoice_number: string
           is_igst: boolean | null
+          is_reverse_charge: boolean | null
           notes: string | null
           payment_status: string
           place_of_supply: string | null
@@ -820,6 +868,7 @@ export type Database = {
           supplier_name: string
           supplier_state: string | null
           tax_amount: number
+          terms_conditions: string | null
           total_amount: number
           transaction_date: string
           updated_at: string
@@ -829,11 +878,14 @@ export type Database = {
           amount_paid?: number
           cgst_amount?: number | null
           created_at?: string
+          due_date?: string | null
+          eway_bill_no?: string | null
           grand_total?: number
           id?: string
           igst_amount?: number | null
           invoice_number: string
           is_igst?: boolean | null
+          is_reverse_charge?: boolean | null
           notes?: string | null
           payment_status?: string
           place_of_supply?: string | null
@@ -843,6 +895,7 @@ export type Database = {
           supplier_name: string
           supplier_state?: string | null
           tax_amount?: number
+          terms_conditions?: string | null
           total_amount?: number
           transaction_date?: string
           updated_at?: string
@@ -852,11 +905,14 @@ export type Database = {
           amount_paid?: number
           cgst_amount?: number | null
           created_at?: string
+          due_date?: string | null
+          eway_bill_no?: string | null
           grand_total?: number
           id?: string
           igst_amount?: number | null
           invoice_number?: string
           is_igst?: boolean | null
+          is_reverse_charge?: boolean | null
           notes?: string | null
           payment_status?: string
           place_of_supply?: string | null
@@ -866,6 +922,7 @@ export type Database = {
           supplier_name?: string
           supplier_state?: string | null
           tax_amount?: number
+          terms_conditions?: string | null
           total_amount?: number
           transaction_date?: string
           updated_at?: string
@@ -890,16 +947,20 @@ export type Database = {
           customer_gstin: string | null
           customer_name: string
           customer_state: string | null
+          due_date: string | null
+          eway_bill_no: string | null
           grand_total: number
           id: string
           igst_amount: number | null
           invoice_number: string
           is_igst: boolean | null
+          is_reverse_charge: boolean | null
           notes: string | null
           payment_status: string
           place_of_supply: string | null
           sgst_amount: number | null
           tax_amount: number
+          terms_conditions: string | null
           total_amount: number
           transaction_date: string
           updated_at: string
@@ -913,16 +974,20 @@ export type Database = {
           customer_gstin?: string | null
           customer_name: string
           customer_state?: string | null
+          due_date?: string | null
+          eway_bill_no?: string | null
           grand_total?: number
           id?: string
           igst_amount?: number | null
           invoice_number: string
           is_igst?: boolean | null
+          is_reverse_charge?: boolean | null
           notes?: string | null
           payment_status?: string
           place_of_supply?: string | null
           sgst_amount?: number | null
           tax_amount?: number
+          terms_conditions?: string | null
           total_amount?: number
           transaction_date?: string
           updated_at?: string
@@ -936,16 +1001,20 @@ export type Database = {
           customer_gstin?: string | null
           customer_name?: string
           customer_state?: string | null
+          due_date?: string | null
+          eway_bill_no?: string | null
           grand_total?: number
           id?: string
           igst_amount?: number | null
           invoice_number?: string
           is_igst?: boolean | null
+          is_reverse_charge?: boolean | null
           notes?: string | null
           payment_status?: string
           place_of_supply?: string | null
           sgst_amount?: number | null
           tax_amount?: number
+          terms_conditions?: string | null
           total_amount?: number
           transaction_date?: string
           updated_at?: string
@@ -1529,6 +1598,10 @@ export type Database = {
           status_code: number
           user_id: string
         }[]
+      }
+      amount_to_words: {
+        Args: { amount: number }
+        Returns: string
       }
       award_streak_shield: {
         Args: {
