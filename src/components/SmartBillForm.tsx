@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { FloatingLabelInput } from '@/components/ui/floating-label-input';
+import { FloatingLabelTextarea } from '@/components/ui/floating-label-textarea';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
@@ -21,7 +23,9 @@ import {
   Loader2,
   Sparkles,
   Clock,
-  AlertTriangle
+  AlertTriangle,
+  Plus,
+  Save
 } from 'lucide-react';
 import { addDays, format, startOfMonth, addMonths } from 'date-fns';
 
@@ -234,40 +238,35 @@ const SmartBillForm = ({ formData, setFormData, onSubmit, editingBill }: SmartBi
 
       {/* Main Form */}
       <form onSubmit={onSubmit} className="space-y-6">
-        {/* Bill Name with Smart Detection */}
+        {/* Bill Name with Smart Detection - Floating Label */}
         <div className="space-y-2">
-          <Label htmlFor="name" className="flex items-center gap-2">
-            Bill Name *
-            <Lightbulb className="h-3 w-3 text-yellow-500" />
-          </Label>
-          <Input
+          <FloatingLabelInput
             id="name"
+            label="Bill Name *"
             value={formData.name}
             onChange={(e) => handleNameChange(e.target.value)}
-            placeholder="e.g., Electricity Bill, Internet Payment..."
+            placeholder="Bill Name *"
             required
           />
-          <p className="text-xs text-muted-foreground">
-            💡 Category will be auto-detected based on the name
+          <p className="text-xs text-muted-foreground flex items-center gap-1">
+            <Lightbulb className="h-3 w-3 text-yellow-500" />
+            Category will be auto-detected based on the name
           </p>
         </div>
 
-        {/* Amount with Smart Validation */}
+        {/* Amount with Smart Validation - Floating Label */}
         <div className="space-y-2">
-          <Label htmlFor="amount" className="flex items-center gap-2">
-            Amount (₹) *
-            <DollarSign className="h-3 w-3 text-green-500" />
-          </Label>
-          <Input
+          <FloatingLabelInput
             id="amount"
             type="number"
             step="0.01"
+            label="Amount (₹) *"
             value={formData.amount}
             onChange={(e) => {
               setFormData({ ...formData, amount: e.target.value });
               if (e.target.value) validateAmount(e.target.value);
             }}
-            placeholder="0.00"
+            placeholder="Amount (₹) *"
             required
           />
         </div>
@@ -449,21 +448,36 @@ const SmartBillForm = ({ formData, setFormData, onSubmit, editingBill }: SmartBi
           </Select>
         </div>
 
-        {/* Notes */}
+        {/* Notes - Floating Label */}
         <div className="space-y-2">
-          <Label htmlFor="notes">Notes (Optional)</Label>
-          <Textarea
+          <FloatingLabelTextarea
             id="notes"
+            label="Notes (Optional)"
             value={formData.notes}
             onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-            placeholder="Add any additional notes about this bill..."
+            placeholder="Notes (Optional)"
             rows={3}
           />
         </div>
 
-        {/* Submit Button */}
-        <Button type="submit" className="w-full" size="lg">
-          {editingBill ? 'Update Bill' : 'Add Bill'}
+        {/* Submit Button with Gradient */}
+        <Button 
+          type="submit" 
+          variant="gradient"
+          className="w-full" 
+          size="lg"
+        >
+          {editingBill ? (
+            <>
+              <Save className="h-5 w-5" />
+              Update Bill
+            </>
+          ) : (
+            <>
+              <Plus className="h-5 w-5" />
+              Add Bill
+            </>
+          )}
         </Button>
       </form>
     </div>

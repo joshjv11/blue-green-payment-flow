@@ -7,9 +7,10 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { FloatingLabelInput } from '@/components/ui/floating-label-input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import { Bell, Settings as SettingsIcon, Save, Mail, Download, Crown, Zap } from 'lucide-react';
+import { Bell, Settings as SettingsIcon, Save, Mail, Download, Crown, Zap, RotateCcw } from 'lucide-react';
 import ExportImport from '@/components/ExportImport';
 import { Navigation } from '@/components/Navigation';
 import FreemiumLimitCard from '@/components/FreemiumLimitCard';
@@ -72,14 +73,16 @@ const SettingsPage = () => {
         
         if (permission === 'granted') {
           toast({
-            title: "Notifications enabled",
+            title: "✅ Notifications Enabled!",
             description: "You'll receive notifications for bills due soon.",
+            duration: 4000,
           });
         } else {
           toast({
-            title: "Notifications denied",
+            title: "❌ Notifications Denied",
             description: "Please enable notifications in your browser settings.",
-            variant: "destructive"
+            variant: "destructive",
+            duration: 4000,
           });
         }
       } catch (error) {
@@ -103,8 +106,9 @@ const SettingsPage = () => {
   const saveSettings = () => {
     setSettings(tempSettings);
     toast({
-      title: "Settings saved",
-      description: "Your preferences have been updated successfully.",
+      title: "✅ Settings Saved Successfully!",
+      description: "Your preferences have been updated.",
+      duration: 4000,
     });
   };
 
@@ -135,8 +139,9 @@ const SettingsPage = () => {
       setLocalBills([...localBills, ...newBills]);
 
       toast({
-        title: "Bills imported successfully!",
+        title: "✅ Bills Imported Successfully!",
         description: `Added ${newBills.length} new bills to your account.`,
+        duration: 4000,
       });
     } catch (error: any) {
       toast({
@@ -320,11 +325,22 @@ const SettingsPage = () => {
 
         {/* Action Buttons */}
         <div className="flex gap-2 pt-2">
-          <Button onClick={saveSettings} className="flex-1">
-            <Save className="h-4 w-4 mr-1.5" />
-            Save
+          <Button 
+            onClick={saveSettings} 
+            variant="gradient"
+            className="flex-1"
+            size="lg"
+          >
+            <Save className="h-4 w-4" />
+            Save Settings
           </Button>
-          <Button onClick={resetSettings} variant="outline" className="px-4">
+          <Button 
+            onClick={resetSettings} 
+            variant="outline" 
+            size="lg"
+            className="px-6"
+          >
+            <RotateCcw className="h-4 w-4" />
             Reset
           </Button>
         </div>

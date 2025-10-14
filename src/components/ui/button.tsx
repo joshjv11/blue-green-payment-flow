@@ -9,13 +9,14 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        default: "bg-primary text-primary-foreground hover:bg-primary/90 hover:shadow-button-hover shadow-medium rounded-xl",
-        destructive: "bg-destructive text-destructive-foreground hover:bg-destructive/90 shadow-medium hover:shadow-strong rounded-xl",
+        default: "bg-primary text-primary-foreground hover:bg-primary/90 hover:shadow-button-hover shadow-medium rounded-xl hover:-translate-y-0.5",
+        gradient: "bg-gradient-to-r from-primary via-[hsl(250,95%,68%)] to-[hsl(260,95%,68%)] text-white hover:shadow-button-hover shadow-medium rounded-xl font-semibold hover:-translate-y-1 hover:scale-[1.02]",
+        destructive: "bg-destructive text-destructive-foreground hover:bg-destructive/90 shadow-medium hover:shadow-strong rounded-xl hover:-translate-y-0.5",
         outline: "border border-border/50 glass text-foreground hover:bg-secondary/50 hover:text-foreground shadow-soft hover:shadow-medium rounded-xl",
         secondary: "bg-secondary text-secondary-foreground hover:bg-secondary/80 shadow-soft hover:shadow-medium rounded-xl",
         ghost: "hover:bg-accent/10 hover:text-accent-foreground rounded-xl",
         link: "text-primary underline-offset-4 hover:underline",
-        pro: "bg-gradient-to-r from-[hsl(45,100%,60%)] to-[hsl(35,100%,55%)] text-[hsl(230,35%,7%)] hover:shadow-pro-glow shadow-pro-strong rounded-xl font-semibold shimmer",
+        pro: "bg-gradient-to-r from-[hsl(45,100%,60%)] to-[hsl(35,100%,55%)] text-[hsl(230,35%,7%)] hover:shadow-pro-glow shadow-pro-strong rounded-xl font-semibold shimmer hover:-translate-y-1",
       },
       size: {
         default: "h-11 px-5 py-2.5 md:h-10",

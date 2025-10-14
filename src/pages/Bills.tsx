@@ -323,10 +323,11 @@ const Bills = () => {
               console.error('❌ Auto-reminder scheduling error:', reminderError);
               // Don't throw error here - bill creation succeeded
             }
-          } else if (!editingBill) {
+          } else {
             toast({
-              title: "✅ Bill Added!",
+              title: "✅ Bill Added Successfully!",
               description: `${billData.name} added to your bills list`,
+              duration: 4000,
             });
           }
         }
@@ -345,8 +346,9 @@ const Bills = () => {
       // Only show success toast for edits (new bills handle their own toasts above)
       if (editingBill) {
         toast({
-          title: "✅ Bill Updated!",
-          description: `${billData.name} has been updated successfully`,
+          title: "✅ Bill Updated Successfully!",
+          description: `${billData.name} has been updated`,
+          duration: 4000,
         });
       }
 
@@ -430,8 +432,9 @@ const Bills = () => {
       }
       
       toast({
-        title: "✅ Bill Deleted!",
+        title: "✅ Bill Deleted Successfully!",
         description: "The bill has been removed from your list",
+        duration: 4000,
       });
       
       console.log('✅ Bill deleted successfully');
