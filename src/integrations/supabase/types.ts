@@ -630,6 +630,7 @@ export type Database = {
           product_id: string | null
           product_name: string
           quantity: number
+          rcm: boolean | null
           sgst_amount: number | null
           subtotal: number
           tax_amount: number
@@ -638,6 +639,7 @@ export type Database = {
           total_amount: number
           unit_price: number
           updated_at: string
+          zero_rated: boolean | null
         }
         Insert: {
           cgst_amount?: number | null
@@ -652,6 +654,7 @@ export type Database = {
           product_id?: string | null
           product_name: string
           quantity?: number
+          rcm?: boolean | null
           sgst_amount?: number | null
           subtotal?: number
           tax_amount?: number
@@ -660,6 +663,7 @@ export type Database = {
           total_amount?: number
           unit_price?: number
           updated_at?: string
+          zero_rated?: boolean | null
         }
         Update: {
           cgst_amount?: number | null
@@ -674,6 +678,7 @@ export type Database = {
           product_id?: string | null
           product_name?: string
           quantity?: number
+          rcm?: boolean | null
           sgst_amount?: number | null
           subtotal?: number
           tax_amount?: number
@@ -682,6 +687,7 @@ export type Database = {
           total_amount?: number
           unit_price?: number
           updated_at?: string
+          zero_rated?: boolean | null
         }
         Relationships: [
           {
@@ -901,6 +907,8 @@ export type Database = {
           created_at: string
           due_date: string | null
           eway_bill_no: string | null
+          fx_currency: string | null
+          fx_rate_to_base: number | null
           grand_total: number
           id: string
           igst_amount: number | null
@@ -916,6 +924,7 @@ export type Database = {
           supplier_name: string
           supplier_state: string | null
           tax_amount: number
+          tax_regime: string | null
           terms_conditions: string | null
           total_amount: number
           transaction_date: string
@@ -928,6 +937,8 @@ export type Database = {
           created_at?: string
           due_date?: string | null
           eway_bill_no?: string | null
+          fx_currency?: string | null
+          fx_rate_to_base?: number | null
           grand_total?: number
           id?: string
           igst_amount?: number | null
@@ -943,6 +954,7 @@ export type Database = {
           supplier_name: string
           supplier_state?: string | null
           tax_amount?: number
+          tax_regime?: string | null
           terms_conditions?: string | null
           total_amount?: number
           transaction_date?: string
@@ -955,6 +967,8 @@ export type Database = {
           created_at?: string
           due_date?: string | null
           eway_bill_no?: string | null
+          fx_currency?: string | null
+          fx_rate_to_base?: number | null
           grand_total?: number
           id?: string
           igst_amount?: number | null
@@ -970,6 +984,7 @@ export type Database = {
           supplier_name?: string
           supplier_state?: string | null
           tax_amount?: number
+          tax_regime?: string | null
           terms_conditions?: string | null
           total_amount?: number
           transaction_date?: string
@@ -997,6 +1012,8 @@ export type Database = {
           customer_state: string | null
           due_date: string | null
           eway_bill_no: string | null
+          fx_currency: string | null
+          fx_rate_to_base: number | null
           grand_total: number
           id: string
           igst_amount: number | null
@@ -1008,6 +1025,7 @@ export type Database = {
           place_of_supply: string | null
           sgst_amount: number | null
           tax_amount: number
+          tax_regime: string | null
           terms_conditions: string | null
           total_amount: number
           transaction_date: string
@@ -1024,6 +1042,8 @@ export type Database = {
           customer_state?: string | null
           due_date?: string | null
           eway_bill_no?: string | null
+          fx_currency?: string | null
+          fx_rate_to_base?: number | null
           grand_total?: number
           id?: string
           igst_amount?: number | null
@@ -1035,6 +1055,7 @@ export type Database = {
           place_of_supply?: string | null
           sgst_amount?: number | null
           tax_amount?: number
+          tax_regime?: string | null
           terms_conditions?: string | null
           total_amount?: number
           transaction_date?: string
@@ -1051,6 +1072,8 @@ export type Database = {
           customer_state?: string | null
           due_date?: string | null
           eway_bill_no?: string | null
+          fx_currency?: string | null
+          fx_rate_to_base?: number | null
           grand_total?: number
           id?: string
           igst_amount?: number | null
@@ -1062,6 +1085,7 @@ export type Database = {
           place_of_supply?: string | null
           sgst_amount?: number | null
           tax_amount?: number
+          tax_regime?: string | null
           terms_conditions?: string | null
           total_amount?: number
           transaction_date?: string
