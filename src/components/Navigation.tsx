@@ -1,5 +1,5 @@
 import { Button } from '@/components/ui/button';
-import { Home, FileText, BarChart3, Settings, Shield, DollarSign, ShoppingCart } from 'lucide-react';
+import { Home, FileText, BarChart3, Settings, Shield, DollarSign, ShoppingCart, Package } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { motion } from 'framer-motion';
@@ -41,6 +41,7 @@ export const Navigation = ({ className }: NavigationProps) => {
     { path: '/bills', icon: FileText, label: 'Bills' },
     { path: '/sales', icon: DollarSign, label: 'Sales' },
     { path: '/purchases', icon: ShoppingCart, label: 'Purchases' },
+    { path: '/inventory', icon: Package, label: 'Inventory' },
     { path: '/analytics', icon: BarChart3, label: 'Analytics' },
     { path: '/settings', icon: Settings, label: 'Settings' },
     ...(isAdmin ? [{ path: '/admin/users', icon: Shield, label: 'Admin' }] : []),

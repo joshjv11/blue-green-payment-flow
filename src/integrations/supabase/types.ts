@@ -411,6 +411,47 @@ export type Database = {
           },
         ]
       }
+      inventory_txns: {
+        Row: {
+          created_at: string
+          id: string
+          notes: string | null
+          order_id: string | null
+          product_id: string
+          quantity: number
+          reference_type: string | null
+          txn_type: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          notes?: string | null
+          order_id?: string | null
+          product_id: string
+          quantity: number
+          reference_type?: string | null
+          txn_type: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          notes?: string | null
+          order_id?: string | null
+          product_id?: string
+          quantity?: number
+          reference_type?: string | null
+          txn_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inventory_txns_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       invoices: {
         Row: {
           amount: number
@@ -465,6 +506,7 @@ export type Database = {
           id: string
           order_id: string
           order_type: Database["public"]["Enums"]["order_type"]
+          product_id: string | null
           product_name: string
           quantity: number
           subtotal: number
@@ -480,6 +522,7 @@ export type Database = {
           id?: string
           order_id: string
           order_type: Database["public"]["Enums"]["order_type"]
+          product_id?: string | null
           product_name: string
           quantity?: number
           subtotal?: number
@@ -495,6 +538,7 @@ export type Database = {
           id?: string
           order_id?: string
           order_type?: Database["public"]["Enums"]["order_type"]
+          product_id?: string | null
           product_name?: string
           quantity?: number
           subtotal?: number
@@ -504,7 +548,15 @@ export type Database = {
           unit_price?: number
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "order_lines_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       payment_access_log: {
         Row: {
@@ -593,6 +645,45 @@ export type Database = {
           user_phone?: string | null
           verified_at?: string | null
           verified_by?: string | null
+        }
+        Relationships: []
+      }
+      products: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          purchase_price: number
+          reorder_level: number
+          selling_price: number
+          sku: string
+          stock_qty: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          purchase_price?: number
+          reorder_level?: number
+          selling_price?: number
+          sku: string
+          stock_qty?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          purchase_price?: number
+          reorder_level?: number
+          selling_price?: number
+          sku?: string
+          stock_qty?: number
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }

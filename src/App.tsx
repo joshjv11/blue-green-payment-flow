@@ -21,6 +21,7 @@ import Analytics from './pages/Analytics';
 import Settings from './pages/Settings';
 import Sales from './pages/Sales';
 import Purchases from './pages/Purchases';
+import Inventory from './pages/Inventory';
 import Admin from './pages/Admin';
 import AdminUsers from './pages/AdminUsers';
 import AdminUserPlans from './pages/AdminUserPlans';
@@ -75,8 +76,16 @@ function AppRoutes() {
           </ProtectedRoute>
         } 
       />
+      <Route 
+        path="/inventory" 
+        element={
+          <ProtectedRoute>
+            <PageTransition><Inventory /></PageTransition>
+          </ProtectedRoute>
+        } 
+      />
       <Route
-        path="/settings" 
+        path="/settings"
         element={
           <ProtectedRoute>
             <PageTransition><Settings /></PageTransition>
