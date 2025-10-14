@@ -22,6 +22,7 @@ import Settings from './pages/Settings';
 import Sales from './pages/Sales';
 import Purchases from './pages/Purchases';
 import Inventory from './pages/Inventory';
+import GSTSummary from './pages/GSTSummary';
 import Admin from './pages/Admin';
 import AdminUsers from './pages/AdminUsers';
 import AdminUserPlans from './pages/AdminUserPlans';
@@ -81,6 +82,14 @@ function AppRoutes() {
         element={
           <ProtectedRoute>
             <PageTransition><Inventory /></PageTransition>
+          </ProtectedRoute>
+        } 
+      />
+      <Route 
+        path="/gst-summary" 
+        element={
+          <ProtectedRoute>
+            <PageTransition><GSTSummary /></PageTransition>
           </ProtectedRoute>
         } 
       />
