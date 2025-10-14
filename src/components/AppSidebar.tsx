@@ -33,7 +33,8 @@ const mainItems = [
 ];
 
 const secondaryItems = [
-  { title: "Reports", url: "/reports/tax", icon: BarChart3 },
+  { title: "Tax Reports", url: "/reports/tax", icon: Receipt },
+  { title: "Financial Reports", url: "/reports/financial", icon: BarChart3 },
   { title: "Exports", url: "/exports", icon: Download },
   { title: "Settings", url: "/settings", icon: Settings },
 ];

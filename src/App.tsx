@@ -29,6 +29,7 @@ import Exports from './pages/Exports';
 import Reports from './pages/Reports';
 import TaxSettings from './pages/TaxSettings';
 import Expenses from './pages/Expenses';
+import FinancialReports from './pages/FinancialReports';
 import Admin from './pages/Admin';
 import AdminUsers from './pages/AdminUsers';
 import AdminUserPlans from './pages/AdminUserPlans';
@@ -104,6 +105,14 @@ function AppRoutes() {
           element={
             <ProtectedRoute>
               <PageTransition><Reports /></PageTransition>
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/reports/financial" 
+          element={
+            <ProtectedRoute>
+              <PageTransition><FinancialReports /></PageTransition>
             </ProtectedRoute>
           } 
         />
