@@ -64,6 +64,8 @@ export default {
         'feature-gradient': 'var(--feature-gradient)',
         'premium-gradient': 'var(--premium-gradient)',
         'glass-gradient': 'var(--glass-gradient)',
+        'card-gradient': 'var(--card-gradient)',
+        'auth-gradient': 'var(--auth-gradient)',
       },
       boxShadow: {
         'soft': 'var(--shadow-soft)',
@@ -72,6 +74,8 @@ export default {
         'premium-glow': 'var(--shadow-premium-glow)',
         'glass': 'var(--shadow-glass)',
         'float': 'var(--shadow-float)',
+        'glow': 'var(--shadow-glow)',
+        'neumorphic': 'var(--shadow-neumorphic)',
       },
       backdropBlur: {
         'glass': '16px',
@@ -83,6 +87,9 @@ export default {
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
+        xl: "calc(var(--radius) + 4px)",
+        "2xl": "calc(var(--radius) + 8px)",
+        card: "var(--radius-card)",
       },
       keyframes: {
         "accordion-down": {
