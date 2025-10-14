@@ -596,6 +596,85 @@ export type Database = {
         }
         Relationships: []
       }
+      streak_history: {
+        Row: {
+          broke_at: string
+          created_at: string
+          id: string
+          protection_method: string | null
+          streak_length: number
+          user_id: string
+          was_protected: boolean
+        }
+        Insert: {
+          broke_at?: string
+          created_at?: string
+          id?: string
+          protection_method?: string | null
+          streak_length: number
+          user_id: string
+          was_protected?: boolean
+        }
+        Update: {
+          broke_at?: string
+          created_at?: string
+          id?: string
+          protection_method?: string | null
+          streak_length?: number
+          user_id?: string
+          was_protected?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "streak_history_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      streak_shields: {
+        Row: {
+          created_at: string
+          earned_method: string
+          expires_at: string | null
+          id: string
+          is_active: boolean
+          shield_type: string
+          used_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          earned_method: string
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean
+          shield_type: string
+          used_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          earned_method?: string
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean
+          shield_type?: string
+          used_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "streak_shields_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       team_invitations: {
         Row: {
           accepted_at: string | null
@@ -904,13 +983,17 @@ export type Database = {
           current_level: number
           current_streak: number
           early_payments: number
+          has_streak_insurance: boolean
           id: string
           last_activity_date: string | null
+          last_streak_save_date: string | null
           late_payments: number
           longest_streak: number
           on_time_payments: number
+          streak_expires_at: string | null
           tier: string
           total_bills_paid: number
+          total_shields_used: number
           total_xp: number
           updated_at: string
           user_id: string
@@ -920,13 +1003,17 @@ export type Database = {
           current_level?: number
           current_streak?: number
           early_payments?: number
+          has_streak_insurance?: boolean
           id?: string
           last_activity_date?: string | null
+          last_streak_save_date?: string | null
           late_payments?: number
           longest_streak?: number
           on_time_payments?: number
+          streak_expires_at?: string | null
           tier?: string
           total_bills_paid?: number
+          total_shields_used?: number
           total_xp?: number
           updated_at?: string
           user_id: string
@@ -936,13 +1023,17 @@ export type Database = {
           current_level?: number
           current_streak?: number
           early_payments?: number
+          has_streak_insurance?: boolean
           id?: string
           last_activity_date?: string | null
+          last_streak_save_date?: string | null
           late_payments?: number
           longest_streak?: number
           on_time_payments?: number
+          streak_expires_at?: string | null
           tier?: string
           total_bills_paid?: number
+          total_shields_used?: number
           total_xp?: number
           updated_at?: string
           user_id?: string
@@ -1062,6 +1153,14 @@ export type Database = {
           user_id: string
         }[]
       }
+      award_streak_shield: {
+        Args: {
+          p_earned_method: string
+          p_shield_type: string
+          p_user_id: string
+        }
+        Returns: string
+      }
       award_xp: {
         Args: {
           p_action_type: string
@@ -1071,6 +1170,10 @@ export type Database = {
           p_xp_amount: number
         }
         Returns: Json
+      }
+      calculate_streak_expiration: {
+        Args: { p_last_activity_date: string }
+        Returns: string
       }
       calculate_user_level: {
         Args: { xp: number }
@@ -1126,6 +1229,10 @@ export type Database = {
         Args: { p_action: string; p_notes?: string; p_payment_id?: string }
         Returns: undefined
       }
+      purchase_streak_shield: {
+        Args: { p_shield_type: string; p_user_id: string; p_xp_cost: number }
+        Returns: Json
+      }
       require_payment_access_verification: {
         Args: Record<PropertyKey, never>
         Returns: boolean
@@ -1137,6 +1244,10 @@ export type Database = {
       set_user_active_status: {
         Args: { active_status: boolean; target_user_id: string }
         Returns: undefined
+      }
+      use_streak_shield: {
+        Args: { p_shield_type?: string; p_user_id: string }
+        Returns: Json
       }
     }
     Enums: {

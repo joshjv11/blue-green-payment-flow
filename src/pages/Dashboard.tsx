@@ -42,6 +42,9 @@ import { useRewards } from '@/hooks/useRewards';
 import { MobileLayout } from '@/components/MobileLayout';
 import { useDailyBonus } from '@/hooks/useDailyBonus';
 import { DailyBonusWheel } from '@/components/DailyBonusWheel';
+import { useStreakProtection } from '@/hooks/useStreakProtection';
+import { StreakCountdownBanner } from '@/components/StreakCountdownBanner';
+import { StreakShieldShop } from '@/components/StreakShieldShop';
 
 interface Bill {
   id: string;
@@ -67,9 +70,19 @@ const Dashboard = () => {
   const { plan, aiQueriesUsed, aiQueriesLimit, loading: planLoading } = useSupabasePlan();
   const { rewards, badges, loading: rewardsLoading, awardXP, updateStreak, checkAndAwardMilestoneBadges } = useRewards();
   const { canClaim: canClaimBonus, claimDailyBonus, loading: bonusLoading } = useDailyBonus();
+  const { 
+    timeUntilExpiry, 
+    formatTimeRemaining, 
+    isStreakInDanger, 
+    isCritical, 
+    getShieldCounts,
+    useShield,
+    purchaseShield
+  } = useStreakProtection();
   const [showCelebration, setShowCelebration] = useState(false);
   const [celebrationData, setCelebrationData] = useState<any>(null);
   const [showBonusWheel, setShowBonusWheel] = useState(false);
+  const [showShieldShop, setShowShieldShop] = useState(false);
   const [profile, setProfile] = useState<any>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [fullName, setFullName] = useState('');
@@ -494,6 +507,38 @@ const Dashboard = () => {
               icon="⚡"
               type="warning"
               isPro={isPro}
+            />
+          )}
+
+          {/* Streak Countdown Banner */}
+          {rewards && rewards.current_streak > 0 && isStreakInDanger() && (
+            <StreakCountdownBanner
+              streak={rewards.current_streak}
+              timeRemaining={formatTimeRemaining()}
+              isCritical={isCritical()}
+              isInDanger={isStreakInDanger()}
+              shieldCount={getShieldCounts().total}
+              onUseShield={async () => {
+                await useShield();
+                toast({
+                  title: 'Streak Protected!',
+                  description: 'Your streak has been saved',
+                });
+              }}
+              onBuyShield={() => setShowShieldShop(true)}
+            />
+          )}
+
+          {/* Shield Shop Modal */}
+          {rewards && (
+            <StreakShieldShop
+              open={showShieldShop}
+              onClose={() => setShowShieldShop(false)}
+              onPurchase={async (type) => {
+                await purchaseShield(type);
+              }}
+              currentXP={rewards.total_xp}
+              shieldCounts={getShieldCounts()}
             />
           )}
 
