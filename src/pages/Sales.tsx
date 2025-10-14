@@ -79,6 +79,7 @@ export default function Sales() {
   const [customerAddress, setCustomerAddress] = useState('');
   const [customerGstin, setCustomerGstin] = useState('');
   const [customerState, setCustomerState] = useState('');
+  const [customerCountry, setCustomerCountry] = useState('IN');
   const [customerId, setCustomerId] = useState<string | null>(null);
   const [invoiceNumber, setInvoiceNumber] = useState('');
   const [orderDate, setOrderDate] = useState<Date>(new Date());
@@ -256,10 +257,11 @@ export default function Sales() {
             .insert({
               user_id: user!.id,
               name: customerName.trim(),
+              email: null, // Optional field
               address: customerAddress || null,
               party_gstin: customerGstin || null,
               party_state: customerState || null,
-              email: '', // Required field, use empty string as default
+              country: customerCountry || 'IN',
             })
             .select('id')
             .single();
@@ -408,6 +410,7 @@ export default function Sales() {
     setCustomerAddress('');
     setCustomerGstin('');
     setCustomerState('');
+    setCustomerCountry('IN');
     setCustomerId(null);
     setOrderDate(new Date());
     setDueDate(undefined);
@@ -642,6 +645,29 @@ export default function Sales() {
                 <div>
                   <Label>Customer Name *</Label>
                   <Input value={customerName} onChange={e => setCustomerName(e.target.value)} required />
+                </div>
+                <div>
+                  <Label>Customer GSTIN / Tax ID</Label>
+                  <Input 
+                    value={customerGstin} 
+                    onChange={e => setCustomerGstin(e.target.value)} 
+                    placeholder="Optional"
+                  />
+                </div>
+                <div>
+                  <Label>Country</Label>
+                  <Select value={customerCountry} onValueChange={setCustomerCountry}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="IN">India</SelectItem>
+                      <SelectItem value="US">United States</SelectItem>
+                      <SelectItem value="GB">United Kingdom</SelectItem>
+                      <SelectItem value="AE">UAE</SelectItem>
+                      <SelectItem value="SG">Singapore</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
                 <div>
                   <Label>Invoice Number *</Label>

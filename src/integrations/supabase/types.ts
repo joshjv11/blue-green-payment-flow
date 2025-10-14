@@ -391,40 +391,49 @@ export type Database = {
       customers: {
         Row: {
           address: string | null
+          country: string | null
           created_at: string
-          email: string
+          email: string | null
           id: string
           name: string
           party_gstin: string | null
           party_state: string | null
           party_state_code: string | null
           phone: string | null
+          tax_id_label: string | null
+          tax_id_value: string | null
           updated_at: string
           user_id: string
         }
         Insert: {
           address?: string | null
+          country?: string | null
           created_at?: string
-          email: string
+          email?: string | null
           id?: string
           name: string
           party_gstin?: string | null
           party_state?: string | null
           party_state_code?: string | null
           phone?: string | null
+          tax_id_label?: string | null
+          tax_id_value?: string | null
           updated_at?: string
           user_id: string
         }
         Update: {
           address?: string | null
+          country?: string | null
           created_at?: string
-          email?: string
+          email?: string | null
           id?: string
           name?: string
           party_gstin?: string | null
           party_state?: string | null
           party_state_code?: string | null
           phone?: string | null
+          tax_id_label?: string | null
+          tax_id_value?: string | null
           updated_at?: string
           user_id?: string
         }
