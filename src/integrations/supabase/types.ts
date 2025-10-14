@@ -664,6 +664,42 @@ export type Database = {
         }
         Relationships: []
       }
+      user_badges: {
+        Row: {
+          badge_description: string | null
+          badge_icon: string | null
+          badge_id: string
+          badge_name: string
+          badge_tier: string | null
+          earned_at: string
+          id: string
+          user_id: string
+          xp_earned: number | null
+        }
+        Insert: {
+          badge_description?: string | null
+          badge_icon?: string | null
+          badge_id: string
+          badge_name: string
+          badge_tier?: string | null
+          earned_at?: string
+          id?: string
+          user_id: string
+          xp_earned?: number | null
+        }
+        Update: {
+          badge_description?: string | null
+          badge_icon?: string | null
+          badge_id?: string
+          badge_name?: string
+          badge_tier?: string | null
+          earned_at?: string
+          id?: string
+          user_id?: string
+          xp_earned?: number | null
+        }
+        Relationships: []
+      }
       user_plan_changes: {
         Row: {
           changed_at: string
@@ -739,6 +775,57 @@ export type Database = {
         }
         Relationships: []
       }
+      user_rewards: {
+        Row: {
+          created_at: string
+          current_level: number
+          current_streak: number
+          early_payments: number
+          id: string
+          last_activity_date: string | null
+          late_payments: number
+          longest_streak: number
+          on_time_payments: number
+          tier: string
+          total_bills_paid: number
+          total_xp: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          current_level?: number
+          current_streak?: number
+          early_payments?: number
+          id?: string
+          last_activity_date?: string | null
+          late_payments?: number
+          longest_streak?: number
+          on_time_payments?: number
+          tier?: string
+          total_bills_paid?: number
+          total_xp?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          current_level?: number
+          current_streak?: number
+          early_payments?: number
+          id?: string
+          last_activity_date?: string | null
+          late_payments?: number
+          longest_streak?: number
+          on_time_payments?: number
+          tier?: string
+          total_bills_paid?: number
+          total_xp?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_subscriptions: {
         Row: {
           auto_renew: boolean
@@ -786,6 +873,44 @@ export type Database = {
           },
         ]
       }
+      xp_transactions: {
+        Row: {
+          action_type: string
+          created_at: string
+          description: string | null
+          id: string
+          related_bill_id: string | null
+          user_id: string
+          xp_amount: number
+        }
+        Insert: {
+          action_type: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          related_bill_id?: string | null
+          user_id: string
+          xp_amount: number
+        }
+        Update: {
+          action_type?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          related_bill_id?: string | null
+          user_id?: string
+          xp_amount?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "xp_transactions_related_bill_id_fkey"
+            columns: ["related_bill_id"]
+            isOneToOne: false
+            referencedRelation: "bills"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -813,6 +938,24 @@ export type Database = {
           status_code: number
           user_id: string
         }[]
+      }
+      award_xp: {
+        Args: {
+          p_action_type: string
+          p_description?: string
+          p_related_bill_id?: string
+          p_user_id: string
+          p_xp_amount: number
+        }
+        Returns: Json
+      }
+      calculate_user_level: {
+        Args: { xp: number }
+        Returns: number
+      }
+      calculate_user_tier: {
+        Args: { level: number }
+        Returns: string
       }
       can_manage_team_members: {
         Args: { target_team_id: string }

@@ -13,19 +13,16 @@ import { useNotifications } from '@/hooks/useNotifications';
 import { useEmailReminders } from '@/hooks/useEmailReminders';
 import { supabase, isSupabaseConfigured } from '@/lib/supabase';
 import { useToast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 import { LogOut, User, Building, Mail, FileText, ArrowRight, Plus, DollarSign, Calendar, AlertCircle, CheckCircle, Clock, BarChart3, Settings, Download, Upload, Crown, RefreshCw } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { parseISO, differenceInDays, isBefore, isToday, isAfter, addDays, format } from 'date-fns';
-// Dashboard component with bills management
 import ExportImport from '@/components/ExportImport';
 import { useSupabasePlan } from '@/hooks/useSupabasePlan';
 import { Navigation } from '@/components/Navigation';
 import { usePaymentVerification } from '@/hooks/usePaymentVerification';
 import FreemiumLimitCard from '@/components/FreemiumLimitCard';
-import AIQueryCounter from '@/components/AIQueryCounter';
 import EnhancedAIAssistantV2 from '@/components/EnhancedAIAssistantV2';
-import PlanStatusCard from '@/components/PlanStatusCard';
-import UpgradeTrigger from '@/components/UpgradeTrigger';
 import UpgradeModal from '@/components/UpgradeModal';
 import AddPasskeyBanner from '@/components/auth/AddPasskeyBanner';
 import { useAnalytics } from '@/hooks/useAnalytics';
@@ -38,6 +35,12 @@ import { DashboardAnalytics } from '@/components/DashboardAnalytics';
 import { FloatingActionButtons } from '@/components/FloatingActionButtons';
 import { EmptyState } from '@/components/EmptyState';
 import { motion } from 'framer-motion';
+import { RewardProgressBar } from '@/components/RewardProgressBar';
+import { CelebrationAnimation } from '@/components/CelebrationAnimation';
+import { MotivationalBanner } from '@/components/MotivationalBanner';
+import { TierBadge } from '@/components/TierBadge';
+import { useRewards } from '@/hooks/useRewards';
+import { MobileLayout } from '@/components/MobileLayout';
 
 interface Bill {
   id: string;
@@ -61,6 +64,9 @@ const Dashboard = () => {
   const { plan: contextPlan } = usePlan();
   const isPro = contextPlan === 'pro';
   const { plan, aiQueriesUsed, aiQueriesLimit, loading: planLoading } = useSupabasePlan();
+  const { rewards, badges, loading: rewardsLoading, awardXP, updateStreak, checkAndAwardMilestoneBadges } = useRewards();
+  const [showCelebration, setShowCelebration] = useState(false);
+  const [celebrationData, setCelebrationData] = useState<any>(null);
   const [profile, setProfile] = useState<any>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [fullName, setFullName] = useState('');
@@ -247,15 +253,49 @@ const Dashboard = () => {
         setLocalBills(updatedBills);
       }
 
-      toast({
-        title: `Bill marked as ${newStatus}!`,
-      });
+        // Gamification logic
+        if (newStatus === 'paid' && rewards) {
+          const dueDate = parseISO(bill.due_date);
+          const today = new Date();
+          const daysEarly = differenceInDays(dueDate, today);
+          
+          let xpAmount = 5; // On-time
+          let description = 'Bill paid on time';
+          
+          if (daysEarly > 0) {
+            xpAmount = 10; // Early payment
+            description = `Bill paid ${daysEarly} days early`;
+          } else if (daysEarly < 0) {
+            xpAmount = -5; // Late payment
+            description = 'Bill paid late';
+          }
+
+          const result: any = await awardXP('bill_paid', xpAmount, description, bill.id);
+          await updateStreak(true, daysEarly);
+          await checkAndAwardMilestoneBadges();
+
+          // Show celebration
+          if (result) {
+            setCelebrationData({
+              xpAwarded: result.xp_awarded || xpAmount,
+              levelUp: result.level_up || false,
+              newLevel: result.new_level || rewards.current_level,
+            });
+            setShowCelebration(true);
+            setTimeout(() => setShowCelebration(false), 2000);
+        }
+
+        toast.success(`Bill marked as paid! +${xpAmount} XP`, {
+          description: daysEarly > 0 ? '🔥 Early payment bonus!' : 'Great job!',
+        });
+      } else {
+        toast.success(`Bill marked as ${newStatus}!`);
+      }
+
       await fetchBills();
     } catch (error: any) {
-      toast({
-        title: "Error updating bill status",
+      toast.error("Error updating bill status", {
         description: error.message,
-        variant: "destructive",
       });
     }
   };
@@ -349,29 +389,44 @@ const Dashboard = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background pb-20 md:pb-6">
-      <Navigation />
+    <MobileLayout>
+      <div className="min-h-screen bg-background pb-24 md:pb-6">
+        <Navigation />
 
-      {/* Main Content */}
-      <main className="container mx-auto px-3 py-4 md:px-4 md:py-6">
-        <div className="max-w-7xl mx-auto space-y-4 md:space-y-6">
+        {/* Main Content */}
+        <main className="container mx-auto px-4 md:px-4 py-6 md:py-6 space-y-5 md:space-y-6 max-w-7xl">
           {/* Passkey Banner */}
           {showPasskeyBanner && (
             <AddPasskeyBanner onDismiss={handlePasskeyBannerDismiss} />
           )}
 
-          {/* Header with Profile */}
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className={cn(
-                "text-2xl md:text-3xl font-bold transition-colors duration-300",
-                isPro ? "pro-gradient-text" : "text-foreground"
-              )}>
-                Dashboard
-              </h1>
-              <p className="text-sm text-muted-foreground mt-1">
-                {profile?.full_name || user?.email?.split('@')[0] || 'Welcome back'}
-              </p>
+          {/* Header with Tier Badge */}
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="flex items-center justify-between"
+          >
+            <div className="flex items-center gap-3">
+              <div>
+                <h1 className={cn(
+                  "text-3xl md:text-4xl font-black transition-colors duration-300",
+                  isPro ? "pro-gradient-text" : "text-foreground"
+                )}>
+                  Dashboard
+                </h1>
+                <div className="flex items-center gap-2 mt-1.5">
+                  <p className="text-sm text-muted-foreground">
+                    {profile?.full_name || user?.email?.split('@')[0] || 'Welcome back'}
+                  </p>
+                  {rewards && (
+                    <TierBadge 
+                      tier={rewards.tier} 
+                      level={rewards.current_level}
+                      variant="icon-only"
+                    />
+                  )}
+                </div>
+              </div>
             </div>
             <Button
               variant="ghost"
@@ -379,13 +434,42 @@ const Dashboard = () => {
               onClick={handleRetryAll}
               disabled={loading || billsLoading}
               className={cn(
-                "transition-colors duration-300",
+                "transition-colors duration-300 min-h-[44px] min-w-[44px]",
                 isPro && "hover:bg-[hsl(45,100%,60%)]/10"
               )}
             >
               <RefreshCw className={`h-5 w-5 ${(loading || billsLoading) ? 'animate-spin' : ''}`} />
             </Button>
-          </div>
+          </motion.div>
+
+          {/* Reward Progress Bar */}
+          {rewards && (
+            <RewardProgressBar
+              currentXP={rewards.total_xp}
+              currentLevel={rewards.current_level}
+              tier={rewards.tier}
+              streak={rewards.current_streak}
+              isPro={isPro}
+            />
+          )}
+
+          {/* Motivational Banner */}
+          {rewards && rewards.current_streak >= 3 && (
+            <MotivationalBanner
+              message={`🔥 ${rewards.current_streak}-day streak! Don't break it now!`}
+              type="streak"
+              isPro={isPro}
+            />
+          )}
+
+          {rewards && overdueBills.length > 0 && rewards.current_streak === 0 && (
+            <MotivationalBanner
+              message="⏰ Clear your overdue bills to start a new streak!"
+              icon="⚡"
+              type="warning"
+              isPro={isPro}
+            />
+          )}
 
           {/* Premium Stat Cards with Sparklines */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
@@ -611,41 +695,52 @@ const Dashboard = () => {
             currentBillCount={bills.length}
           />
 
-        </div>
-      </main>
+        </main>
 
-      {/* Floating Action Buttons */}
-      <FloatingActionButtons
-        onAddBill={() => {
-          if (!canAddBill(bills.length)) {
-            setShowUpgradeModal(true);
-          } else {
-            navigate('/bills');
-          }
-        }}
-        onExport={() => setShowExportImport(true)}
-        onSettings={() => navigate('/settings')}
-        onUpgrade={() => setShowUpgradeModal(true)}
-        canAddBill={canAddBill(bills.length)}
-        showUpgrade={plan === 'free'}
-        isPro={isPro}
-      />
+        {/* Floating Action Buttons */}
+        <FloatingActionButtons
+          onAddBill={() => {
+            if (!canAddBill(bills.length)) {
+              setShowUpgradeModal(true);
+            } else {
+              navigate('/bills');
+            }
+          }}
+          onExport={() => setShowExportImport(true)}
+          onSettings={() => navigate('/settings')}
+          onUpgrade={() => setShowUpgradeModal(true)}
+          canAddBill={canAddBill(bills.length)}
+          showUpgrade={plan === 'free'}
+          isPro={isPro}
+        />
 
-      <EnhancedAIAssistantV2 
-        bills={bills}
-        context="dashboard - managing bills and getting financial insights"
-      />
+        <EnhancedAIAssistantV2 
+          bills={bills}
+          context="dashboard - managing bills and getting financial insights"
+        />
 
-      {/* Upgrade Modal */}
-      <UpgradeModal
-        open={showUpgradeModal}
-        onOpenChange={setShowUpgradeModal}
-        currentBillCount={bills.length}
-        aiQueriesUsed={aiQueriesUsed}
-        aiQueriesLimit={aiQueriesLimit}
-        trigger="general"
-      />
-    </div>
+        {/* Celebration Animation */}
+        {celebrationData && (
+          <CelebrationAnimation
+            trigger={showCelebration}
+            xpAwarded={celebrationData.xpAwarded}
+            levelUp={celebrationData.levelUp}
+            newLevel={celebrationData.newLevel}
+            onComplete={() => setCelebrationData(null)}
+          />
+        )}
+
+        {/* Upgrade Modal */}
+        <UpgradeModal
+          open={showUpgradeModal}
+          onOpenChange={setShowUpgradeModal}
+          currentBillCount={bills.length}
+          aiQueriesUsed={aiQueriesUsed}
+          aiQueriesLimit={aiQueriesLimit}
+          trigger="general"
+        />
+      </div>
+    </MobileLayout>
   );
 };
 
