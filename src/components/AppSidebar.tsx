@@ -6,7 +6,8 @@ import {
   Package, 
   Download, 
   Settings,
-  Receipt
+  Receipt,
+  BarChart3
 } from "lucide-react";
 import { NavLink } from "react-router-dom";
 import {
@@ -30,7 +31,7 @@ const mainItems = [
 ];
 
 const secondaryItems = [
-  { title: "GST Summary", url: "/gst-summary", icon: Receipt },
+  { title: "Reports", url: "/reports/tax", icon: BarChart3 },
   { title: "Exports", url: "/exports", icon: Download },
   { title: "Settings", url: "/settings", icon: Settings },
 ];

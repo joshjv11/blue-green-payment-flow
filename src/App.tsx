@@ -26,12 +26,13 @@ import Purchases from './pages/Purchases';
 import Inventory from './pages/Inventory';
 import GSTSummary from './pages/GSTSummary';
 import Exports from './pages/Exports';
+import Reports from './pages/Reports';
+import TaxSettings from './pages/TaxSettings';
 import Admin from './pages/Admin';
 import AdminUsers from './pages/AdminUsers';
 import AdminUserPlans from './pages/AdminUserPlans';
 import AdminDbHealth from './pages/AdminDbHealth';
 import AdminLogs from './pages/AdminLogs';
-import TaxSettings from './pages/TaxSettings';
 import NotFound from './pages/NotFound';
 
 function AppRoutes() {
