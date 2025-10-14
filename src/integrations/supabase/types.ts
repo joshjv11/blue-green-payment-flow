@@ -501,49 +501,67 @@ export type Database = {
       }
       order_lines: {
         Row: {
+          cgst_amount: number | null
           created_at: string
           description: string | null
+          gst_rate: number | null
+          hsn_sac_code: string | null
           id: string
+          igst_amount: number | null
           order_id: string
           order_type: Database["public"]["Enums"]["order_type"]
           product_id: string | null
           product_name: string
           quantity: number
+          sgst_amount: number | null
           subtotal: number
           tax_amount: number
           tax_rate: number
+          taxable_amount: number | null
           total_amount: number
           unit_price: number
           updated_at: string
         }
         Insert: {
+          cgst_amount?: number | null
           created_at?: string
           description?: string | null
+          gst_rate?: number | null
+          hsn_sac_code?: string | null
           id?: string
+          igst_amount?: number | null
           order_id: string
           order_type: Database["public"]["Enums"]["order_type"]
           product_id?: string | null
           product_name: string
           quantity?: number
+          sgst_amount?: number | null
           subtotal?: number
           tax_amount?: number
           tax_rate?: number
+          taxable_amount?: number | null
           total_amount?: number
           unit_price?: number
           updated_at?: string
         }
         Update: {
+          cgst_amount?: number | null
           created_at?: string
           description?: string | null
+          gst_rate?: number | null
+          hsn_sac_code?: string | null
           id?: string
+          igst_amount?: number | null
           order_id?: string
           order_type?: Database["public"]["Enums"]["order_type"]
           product_id?: string | null
           product_name?: string
           quantity?: number
+          sgst_amount?: number | null
           subtotal?: number
           tax_amount?: number
           tax_rate?: number
+          taxable_amount?: number | null
           total_amount?: number
           unit_price?: number
           updated_at?: string
@@ -691,6 +709,10 @@ export type Database = {
         Row: {
           avatar_url: string | null
           company: string | null
+          company_address: string | null
+          company_gstin: string | null
+          company_pan: string | null
+          company_state: string | null
           created_at: string
           email: string
           email_notifications_enabled: boolean | null
@@ -706,6 +728,10 @@ export type Database = {
         Insert: {
           avatar_url?: string | null
           company?: string | null
+          company_address?: string | null
+          company_gstin?: string | null
+          company_pan?: string | null
+          company_state?: string | null
           created_at?: string
           email: string
           email_notifications_enabled?: boolean | null
@@ -721,6 +747,10 @@ export type Database = {
         Update: {
           avatar_url?: string | null
           company?: string | null
+          company_address?: string | null
+          company_gstin?: string | null
+          company_pan?: string | null
+          company_state?: string | null
           created_at?: string
           email?: string
           email_notifications_enabled?: boolean | null
@@ -738,13 +768,21 @@ export type Database = {
       purchase_orders: {
         Row: {
           amount_paid: number
+          cgst_amount: number | null
           created_at: string
           grand_total: number
           id: string
+          igst_amount: number | null
           invoice_number: string
+          is_igst: boolean | null
           notes: string | null
           payment_status: string
+          place_of_supply: string | null
+          sgst_amount: number | null
+          supplier_address: string | null
+          supplier_gstin: string | null
           supplier_name: string
+          supplier_state: string | null
           tax_amount: number
           total_amount: number
           transaction_date: string
@@ -753,13 +791,21 @@ export type Database = {
         }
         Insert: {
           amount_paid?: number
+          cgst_amount?: number | null
           created_at?: string
           grand_total?: number
           id?: string
+          igst_amount?: number | null
           invoice_number: string
+          is_igst?: boolean | null
           notes?: string | null
           payment_status?: string
+          place_of_supply?: string | null
+          sgst_amount?: number | null
+          supplier_address?: string | null
+          supplier_gstin?: string | null
           supplier_name: string
+          supplier_state?: string | null
           tax_amount?: number
           total_amount?: number
           transaction_date?: string
@@ -768,13 +814,21 @@ export type Database = {
         }
         Update: {
           amount_paid?: number
+          cgst_amount?: number | null
           created_at?: string
           grand_total?: number
           id?: string
+          igst_amount?: number | null
           invoice_number?: string
+          is_igst?: boolean | null
           notes?: string | null
           payment_status?: string
+          place_of_supply?: string | null
+          sgst_amount?: number | null
+          supplier_address?: string | null
+          supplier_gstin?: string | null
           supplier_name?: string
+          supplier_state?: string | null
           tax_amount?: number
           total_amount?: number
           transaction_date?: string
@@ -794,13 +848,21 @@ export type Database = {
       sales_orders: {
         Row: {
           amount_paid: number
+          cgst_amount: number | null
           created_at: string
+          customer_address: string | null
+          customer_gstin: string | null
           customer_name: string
+          customer_state: string | null
           grand_total: number
           id: string
+          igst_amount: number | null
           invoice_number: string
+          is_igst: boolean | null
           notes: string | null
           payment_status: string
+          place_of_supply: string | null
+          sgst_amount: number | null
           tax_amount: number
           total_amount: number
           transaction_date: string
@@ -809,13 +871,21 @@ export type Database = {
         }
         Insert: {
           amount_paid?: number
+          cgst_amount?: number | null
           created_at?: string
+          customer_address?: string | null
+          customer_gstin?: string | null
           customer_name: string
+          customer_state?: string | null
           grand_total?: number
           id?: string
+          igst_amount?: number | null
           invoice_number: string
+          is_igst?: boolean | null
           notes?: string | null
           payment_status?: string
+          place_of_supply?: string | null
+          sgst_amount?: number | null
           tax_amount?: number
           total_amount?: number
           transaction_date?: string
@@ -824,13 +894,21 @@ export type Database = {
         }
         Update: {
           amount_paid?: number
+          cgst_amount?: number | null
           created_at?: string
+          customer_address?: string | null
+          customer_gstin?: string | null
           customer_name?: string
+          customer_state?: string | null
           grand_total?: number
           id?: string
+          igst_amount?: number | null
           invoice_number?: string
+          is_igst?: boolean | null
           notes?: string | null
           payment_status?: string
+          place_of_supply?: string | null
+          sgst_amount?: number | null
           tax_amount?: number
           total_amount?: number
           transaction_date?: string
@@ -1378,7 +1456,19 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      gst_summary: {
+        Row: {
+          month: string | null
+          total_amount: number | null
+          total_cgst: number | null
+          total_igst: number | null
+          total_sgst: number | null
+          total_tax: number | null
+          transaction_type: string | null
+          user_id: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       add_sample_data_for_user: {
@@ -1421,6 +1511,18 @@ export type Database = {
           p_xp_amount: number
         }
         Returns: Json
+      }
+      calculate_gst_breakdown: {
+        Args: {
+          p_gst_rate: number
+          p_is_igst: boolean
+          p_taxable_amount: number
+        }
+        Returns: {
+          cgst: number
+          igst: number
+          sgst: number
+        }[]
       }
       calculate_streak_expiration: {
         Args: { p_last_activity_date: string }
