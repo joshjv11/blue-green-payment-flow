@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Plus, TrendingUp, DollarSign, FileText, Filter, Calendar as CalendarIcon, Download, Edit, Trash2 } from 'lucide-react';
+import { Plus, TrendingUp, DollarSign, FileText, Filter, Calendar as CalendarIcon, Download, Edit, Trash2, Loader2, AlertCircle, CheckCircle2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -8,6 +9,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Calendar } from '@/components/ui/calendar';
@@ -17,6 +20,8 @@ import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/lib/supabase';
 import { Navigation } from '@/components/Navigation';
 import { MobileLayout } from '@/components/MobileLayout';
+import { useBusinessSettings } from '@/hooks/useBusinessSettings';
+import { calculateLineTax, getCurrencySymbol, formatCurrency } from '@/utils/taxCalculations';
 import { cn } from '@/lib/utils';
 import { format, startOfMonth, endOfMonth } from 'date-fns';
 import { formatINR } from '@/utils/currency';
@@ -25,11 +30,17 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 interface OrderLine {
   id?: string;
   product_name: string;
-  description: string;
+  description?: string;
+  hsn_sac_code?: string;
   quantity: number;
   unit_price: number;
   tax_rate: number;
-  subtotal: number;
+  zero_rated: boolean;
+  rcm: boolean;
+  cgst_amount: number;
+  sgst_amount: number;
+  igst_amount: number;
+  taxable_amount: number;
   tax_amount: number;
   total_amount: number;
 }
@@ -50,27 +61,42 @@ interface SalesOrder {
 export default function Sales() {
   const { user } = useAuth();
   const { toast } = useToast();
+  const navigate = useNavigate();
+  const { settings, loading: settingsLoading } = useBusinessSettings();
   const [sales, setSales] = useState<SalesOrder[]>([]);
   const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [dateRange, setDateRange] = useState({ from: startOfMonth(new Date()), to: endOfMonth(new Date()) });
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [isIGST, setIsIGST] = useState(false);
   
   // Form state
   const [customerName, setCustomerName] = useState('');
+  const [customerAddress, setCustomerAddress] = useState('');
+  const [customerGstin, setCustomerGstin] = useState('');
+  const [customerState, setCustomerState] = useState('');
   const [invoiceNumber, setInvoiceNumber] = useState('');
   const [transactionDate, setTransactionDate] = useState<Date>(new Date());
+  const [dueDate, setDueDate] = useState<Date | undefined>();
   const [paymentStatus, setPaymentStatus] = useState<'paid' | 'unpaid' | 'partial'>('unpaid');
   const [amountPaid, setAmountPaid] = useState(0);
   const [notes, setNotes] = useState('');
   const [orderLines, setOrderLines] = useState<OrderLine[]>([{
     product_name: '',
     description: '',
+    hsn_sac_code: '',
     quantity: 1,
     unit_price: 0,
-    tax_rate: 0,
-    subtotal: 0,
+    tax_rate: 18,
+    zero_rated: false,
+    rcm: false,
+    cgst_amount: 0,
+    sgst_amount: 0,
+    igst_amount: 0,
+    taxable_amount: 0,
     tax_amount: 0,
     total_amount: 0,
   }]);
@@ -109,7 +135,7 @@ export default function Sales() {
   };
 
   const calculateTotals = () => {
-    const totalAmount = orderLines.reduce((sum, line) => sum + line.subtotal, 0);
+    const totalAmount = orderLines.reduce((sum, line) => sum + line.taxable_amount, 0);
     const taxAmount = orderLines.reduce((sum, line) => sum + line.tax_amount, 0);
     const grandTotal = totalAmount + taxAmount;
     return { totalAmount, taxAmount, grandTotal };
@@ -119,35 +145,54 @@ export default function Sales() {
     const newLines = [...orderLines];
     newLines[index] = { ...newLines[index], ...updates };
     
-    const qty = newLines[index].quantity;
-    const price = newLines[index].unit_price;
-    const taxRate = newLines[index].tax_rate;
+    const item = newLines[index];
+    const taxableAmount = item.quantity * item.unit_price;
     
-    const subtotal = qty * price;
-    const tax = subtotal * (taxRate / 100);
-    const total = subtotal + tax;
+    // Calculate tax using regime-aware logic
+    const taxBreakdown = calculateLineTax(
+      {
+        quantity: item.quantity,
+        unit_price: item.unit_price,
+        tax_rate: item.tax_rate,
+        zero_rated: item.zero_rated,
+        rcm: item.rcm,
+      },
+      settings.tax_regime,
+      isIGST
+    );
     
     newLines[index] = {
       ...newLines[index],
-      subtotal,
-      tax_amount: tax,
-      total_amount: total,
+      taxable_amount: taxableAmount,
+      cgst_amount: taxBreakdown.cgst,
+      sgst_amount: taxBreakdown.sgst,
+      igst_amount: taxBreakdown.igst,
+      tax_amount: taxBreakdown.total,
+      total_amount: taxableAmount + taxBreakdown.total,
     };
     
     setOrderLines(newLines);
+    setHasUnsavedChanges(true);
   };
 
   const addLine = () => {
     setOrderLines([...orderLines, {
       product_name: '',
       description: '',
+      hsn_sac_code: '',
       quantity: 1,
       unit_price: 0,
-      tax_rate: 0,
-      subtotal: 0,
+      tax_rate: 18,
+      zero_rated: false,
+      rcm: false,
+      cgst_amount: 0,
+      sgst_amount: 0,
+      igst_amount: 0,
+      taxable_amount: 0,
       tax_amount: 0,
       total_amount: 0,
     }]);
+    setHasUnsavedChanges(true);
   };
 
   const removeLine = (index: number) => {
@@ -164,19 +209,40 @@ export default function Sales() {
       return;
     }
 
-    const { totalAmount, taxAmount, grandTotal } = calculateTotals();
+    if (orderLines.some(line => !line.product_name.trim())) {
+      toast({ title: 'All line items must have a product name', variant: 'destructive' });
+      return;
+    }
+
+    setSubmitting(true);
 
     try {
+      const { totalAmount, taxAmount, grandTotal } = calculateTotals();
+      
+      // Aggregate tax amounts
+      const totalCGST = orderLines.reduce((sum, line) => sum + line.cgst_amount, 0);
+      const totalSGST = orderLines.reduce((sum, line) => sum + line.sgst_amount, 0);
+      const totalIGST = orderLines.reduce((sum, line) => sum + line.igst_amount, 0);
+
       const orderData = {
         user_id: user!.id,
         customer_name: customerName,
+        customer_address: customerAddress || null,
+        customer_gstin: customerGstin || null,
+        customer_state: customerState || null,
         invoice_number: invoiceNumber,
         transaction_date: format(transactionDate, 'yyyy-MM-dd'),
+        due_date: dueDate ? format(dueDate, 'yyyy-MM-dd') : null,
         total_amount: totalAmount,
         tax_amount: taxAmount,
+        cgst_amount: totalCGST,
+        sgst_amount: totalSGST,
+        igst_amount: totalIGST,
         grand_total: grandTotal,
         payment_status: paymentStatus,
         amount_paid: amountPaid,
+        is_igst: isIGST,
+        tax_regime: settings.tax_regime,
         notes: notes || null,
       };
 
@@ -186,57 +252,134 @@ export default function Sales() {
         const { error } = await supabase
           .from('sales_orders')
           .update(orderData)
-          .eq('id', editingId);
-        if (error) throw error;
+          .eq('id', editingId)
+          .eq('user_id', user!.id); // RLS safety
         
-        // Delete existing lines
-        await supabase.from('order_lines').delete().eq('order_id', editingId);
+        if (error) {
+          if (error.code === '42501') {
+            throw new Error('Permission denied: please ensure you\'re signed in and RLS policies allow updates for your user.');
+          }
+          throw error;
+        }
+        
+        // Delete existing lines and re-insert
+        await supabase.from('order_lines').delete().eq('order_id', editingId).eq('order_type', 'sale');
       } else {
         const { data, error } = await supabase
           .from('sales_orders')
           .insert(orderData)
           .select()
           .single();
-        if (error) throw error;
+        
+        if (error) {
+          console.error('❌ Sale insert error:', error);
+          if (error.code === '42501') {
+            throw new Error('Permission denied: please ensure you\'re signed in and RLS policies allow inserts for your user.');
+          }
+          if (error.code === '23505' && error.message.includes('invoice_number')) {
+            // Suggest next invoice number
+            const nextNum = invoiceNumber.replace(/\d+$/, (num) => String(Number(num) + 1));
+            throw new Error(`Invoice number ${invoiceNumber} already exists. Try: ${nextNum}`);
+          }
+          throw error;
+        }
         orderId = data.id;
       }
 
-      // Insert order lines
+      // Insert order lines with RLS-safe pattern
       const linesData = orderLines.map(line => ({
         order_id: orderId,
         order_type: 'sale' as const,
-        ...line,
+        product_name: line.product_name,
+        description: line.description || null,
+        hsn_sac_code: line.hsn_sac_code || null,
+        quantity: line.quantity,
+        unit_price: line.unit_price,
+        tax_rate: line.tax_rate,
+        zero_rated: line.zero_rated,
+        rcm: line.rcm,
+        taxable_amount: line.taxable_amount,
+        cgst_amount: line.cgst_amount,
+        sgst_amount: line.sgst_amount,
+        igst_amount: line.igst_amount,
+        tax_amount: line.tax_amount,
+        subtotal: line.taxable_amount,
+        total_amount: line.total_amount,
       }));
       
       const { error: linesError } = await supabase.from('order_lines').insert(linesData);
-      if (linesError) throw linesError;
+      if (linesError) {
+        console.error('❌ Line items insert error:', linesError);
+        if (linesError.code === '42501') {
+          throw new Error('Permission denied when saving line items. Please check RLS policies.');
+        }
+        throw linesError;
+      }
 
-      toast({ title: editingId ? 'Sale updated!' : 'Sale created!' });
+      // Fetch the completed order with computed totals
+      const { data: completedOrder } = await supabase
+        .from('sales_orders')
+        .select('*')
+        .eq('id', orderId)
+        .single();
+
+      console.log('✅ Sale saved:', completedOrder);
+
+      toast({ 
+        title: editingId ? 'Sale updated successfully!' : 'Sale created successfully!',
+        description: `Invoice ${invoiceNumber} has been saved.`,
+      });
+
+      setHasUnsavedChanges(false);
       resetForm();
       setShowForm(false);
       fetchSales();
+      
+      // Navigate to detail page
+      if (orderId) {
+        navigate(`/sales/${orderId}`);
+      }
     } catch (error: any) {
-      toast({ title: 'Error saving sale', description: error.message, variant: 'destructive' });
+      console.error('❌ Error saving sale:', error);
+      toast({ 
+        title: 'Failed to save sale', 
+        description: error.message || 'An unexpected error occurred',
+        variant: 'destructive' 
+      });
+    } finally {
+      setSubmitting(false);
     }
   };
 
   const resetForm = () => {
     setCustomerName('');
+    setCustomerAddress('');
+    setCustomerGstin('');
+    setCustomerState('');
     setTransactionDate(new Date());
+    setDueDate(undefined);
     setPaymentStatus('unpaid');
     setAmountPaid(0);
     setNotes('');
+    setIsIGST(false);
     setOrderLines([{
       product_name: '',
       description: '',
+      hsn_sac_code: '',
       quantity: 1,
       unit_price: 0,
-      tax_rate: 0,
-      subtotal: 0,
+      tax_rate: 18,
+      zero_rated: false,
+      rcm: false,
+      cgst_amount: 0,
+      sgst_amount: 0,
+      igst_amount: 0,
+      taxable_amount: 0,
       tax_amount: 0,
       total_amount: 0,
     }]);
     setEditingId(null);
+    setHasUnsavedChanges(false);
     generateInvoiceNumber();
   };
 
