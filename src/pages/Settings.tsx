@@ -15,6 +15,7 @@ import ExportImport from '@/components/ExportImport';
 import { Navigation } from '@/components/Navigation';
 import FreemiumLimitCard from '@/components/FreemiumLimitCard';
 import UpgradeModal from '@/components/UpgradeModal';
+import { BusinessSettings } from '@/components/BusinessSettings';
 
 import UserReminderSettings from '@/components/UserReminderSettings';
 import ReminderDashboard from '@/components/ReminderDashboard';
@@ -166,6 +167,9 @@ const SettingsPage = () => {
         </div>
 
         <div className="space-y-3 md:space-y-4">
+        {/* Business Settings */}
+        <BusinessSettings />
+        
         {/* Freemium Limit Card */}
         <FreemiumLimitCard
           type="ai"

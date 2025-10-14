@@ -2,6 +2,8 @@ import { forwardRef } from "react";
 import { format } from "date-fns";
 import { formatGSTIN } from "@/utils/gst";
 
+import { amountToWords } from "@/utils/amountToWords";
+
 interface InvoiceItem {
   product_name: string;
   hsn_sac_code?: string;
@@ -34,6 +36,10 @@ interface GSTInvoiceProps {
   grandTotal: number;
   isIGST: boolean;
   type: "sale" | "purchase";
+  reverseCharge?: boolean;
+  ewayBillNo?: string;
+  dueDate?: Date;
+  placeOfSupply?: string;
 }
 
 export const GSTInvoice = forwardRef<HTMLDivElement, GSTInvoiceProps>(
@@ -56,8 +62,13 @@ export const GSTInvoice = forwardRef<HTMLDivElement, GSTInvoiceProps>(
     grandTotal,
     isIGST,
     type,
+    reverseCharge,
+    ewayBillNo,
+    dueDate,
+    placeOfSupply,
   }, ref) => {
     const partyLabel = type === "sale" ? "Bill To (Customer)" : "Bill From (Supplier)";
+    const amountInWords = amountToWords(grandTotal);
 
     return (
       <div ref={ref} className="bg-white p-8 text-black" style={{ fontFamily: "Arial, sans-serif" }}>
@@ -87,6 +98,12 @@ export const GSTInvoice = forwardRef<HTMLDivElement, GSTInvoiceProps>(
             <p className="font-semibold mb-2">Invoice Details:</p>
             <p className="text-sm">Invoice No: <span className="font-bold">{invoiceNumber}</span></p>
             <p className="text-sm">Date: {format(invoiceDate, "dd/MM/yyyy")}</p>
+            {dueDate && <p className="text-sm">Due Date: {format(dueDate, "dd/MM/yyyy")}</p>}
+            {placeOfSupply && <p className="text-sm">Place of Supply: {placeOfSupply}</p>}
+            {reverseCharge && (
+              <p className="text-sm font-semibold text-red-600">Reverse Charge: YES</p>
+            )}
+            {ewayBillNo && <p className="text-sm">E-Way Bill: {ewayBillNo}</p>}
           </div>
           <div className="p-3">
             <p className="font-semibold mb-2">{partyLabel}:</p>
@@ -176,6 +193,10 @@ export const GSTInvoice = forwardRef<HTMLDivElement, GSTInvoiceProps>(
               <div className="p-2 text-right border-l border-black font-bold text-lg">
                 ₹{grandTotal.toFixed(2)}
               </div>
+            </div>
+            <div className="p-2 text-xs border-t border-black">
+              <span className="font-semibold">Amount in Words: </span>
+              {amountInWords}
             </div>
           </div>
         </div>
