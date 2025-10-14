@@ -28,6 +28,7 @@ import GSTSummary from './pages/GSTSummary';
 import Exports from './pages/Exports';
 import Reports from './pages/Reports';
 import TaxSettings from './pages/TaxSettings';
+import Expenses from './pages/Expenses';
 import Admin from './pages/Admin';
 import AdminUsers from './pages/AdminUsers';
 import AdminUserPlans from './pages/AdminUserPlans';
@@ -98,14 +99,22 @@ function AppRoutes() {
           </ProtectedRoute>
         } 
       />
-      <Route 
-        path="/reports/tax" 
-        element={
-          <ProtectedRoute>
-            <PageTransition><Reports /></PageTransition>
-          </ProtectedRoute>
-        } 
-      />
+        <Route 
+          path="/reports/tax" 
+          element={
+            <ProtectedRoute>
+              <PageTransition><Reports /></PageTransition>
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/expenses" 
+          element={
+            <ProtectedRoute>
+              <PageTransition><Expenses /></PageTransition>
+            </ProtectedRoute>
+          } 
+        />
       <Route 
         path="/exports"
         element={

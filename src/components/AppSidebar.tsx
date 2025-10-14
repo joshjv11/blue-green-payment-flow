@@ -7,7 +7,8 @@ import {
   Download, 
   Settings,
   Receipt,
-  BarChart3
+  BarChart3,
+  Wallet
 } from "lucide-react";
 import { NavLink } from "react-router-dom";
 import {
@@ -28,6 +29,7 @@ const mainItems = [
   { title: "Sales", url: "/sales", icon: ShoppingCart },
   { title: "Purchases", url: "/purchases", icon: ShoppingBag },
   { title: "Inventory", url: "/inventory", icon: Package },
+  { title: "Expenses", url: "/expenses", icon: Wallet },
 ];
 
 const secondaryItems = [

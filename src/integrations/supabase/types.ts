@@ -471,6 +471,48 @@ export type Database = {
           },
         ]
       }
+      expenses: {
+        Row: {
+          amount: number
+          attachment_url: string | null
+          category: string
+          created_at: string | null
+          date: string
+          gst: number | null
+          id: string
+          notes: string | null
+          updated_at: string | null
+          user_id: string
+          vendor: string
+        }
+        Insert: {
+          amount: number
+          attachment_url?: string | null
+          category: string
+          created_at?: string | null
+          date: string
+          gst?: number | null
+          id?: string
+          notes?: string | null
+          updated_at?: string | null
+          user_id: string
+          vendor: string
+        }
+        Update: {
+          amount?: number
+          attachment_url?: string | null
+          category?: string
+          created_at?: string | null
+          date?: string
+          gst?: number | null
+          id?: string
+          notes?: string | null
+          updated_at?: string | null
+          user_id?: string
+          vendor?: string
+        }
+        Relationships: []
+      }
       export_logs: {
         Row: {
           created_at: string
