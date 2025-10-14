@@ -102,14 +102,19 @@ export default function Exports() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      // Fetch sales orders with order lines
+      // Fetch sales orders with customer data via JOIN
       const { data: salesData, error: salesError } = await supabase
         .from("sales_orders")
         .select(`
+          id,
           invoice_number,
           transaction_date,
-          customer_name,
-          customer_gstin
+          customer_id,
+          customers!inner (
+            name,
+            party_gstin,
+            country
+          )
         `)
         .eq("user_id", user.id)
         .gte("transaction_date", format(dateFrom, "yyyy-MM-dd"))
@@ -120,20 +125,18 @@ export default function Exports() {
 
       // Fetch order lines for each sale
       const salesWithLines: SalesOrderExport[] = await Promise.all(
-        (salesData || []).map(async (sale) => {
+        (salesData || []).map(async (sale: any) => {
           const { data: lines } = await supabase
             .from("order_lines")
             .select("*")
             .eq("order_type", "sale")
-            .eq("order_id", (await supabase
-              .from("sales_orders")
-              .select("id")
-              .eq("invoice_number", sale.invoice_number)
-              .eq("user_id", user.id)
-              .single()).data?.id || "");
+            .eq("order_id", sale.id);
 
           return {
-            ...sale,
+            invoice_number: sale.invoice_number,
+            transaction_date: sale.transaction_date,
+            customer_name: sale.customers?.name || 'Unknown Customer',
+            customer_gstin: sale.customers?.party_gstin || null,
             order_lines: lines || [],
           };
         })
@@ -167,9 +170,11 @@ export default function Exports() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
+      // Purchases already have supplier_name denormalized, but we can still improve
       const { data: purchaseData, error: purchaseError } = await supabase
         .from("purchase_orders")
         .select(`
+          id,
           invoice_number,
           transaction_date,
           supplier_name,
@@ -183,20 +188,18 @@ export default function Exports() {
       if (purchaseError) throw purchaseError;
 
       const purchasesWithLines: PurchaseOrderExport[] = await Promise.all(
-        (purchaseData || []).map(async (purchase) => {
+        (purchaseData || []).map(async (purchase: any) => {
           const { data: lines } = await supabase
             .from("order_lines")
             .select("*")
             .eq("order_type", "purchase")
-            .eq("order_id", (await supabase
-              .from("purchase_orders")
-              .select("id")
-              .eq("invoice_number", purchase.invoice_number)
-              .eq("user_id", user.id)
-              .single()).data?.id || "");
+            .eq("order_id", purchase.id);
 
           return {
-            ...purchase,
+            invoice_number: purchase.invoice_number,
+            transaction_date: purchase.transaction_date,
+            supplier_name: purchase.supplier_name,
+            supplier_gstin: purchase.supplier_gstin || null,
             order_lines: lines || [],
           };
         })
