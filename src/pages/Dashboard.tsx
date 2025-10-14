@@ -31,6 +31,8 @@ import AddPasskeyBanner from '@/components/auth/AddPasskeyBanner';
 import { useAnalytics } from '@/hooks/useAnalytics';
 import { useLoadingWatchdog } from '@/hooks/useLoadingWatchdog';
 import { cancelAllQueries, refetchAllQueries } from '@/lib/query';
+import { usePlan } from '@/contexts/PlanContext';
+import { cn } from '@/lib/utils';
 
 interface Bill {
   id: string;
@@ -51,6 +53,8 @@ const Dashboard = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { track } = useAnalytics();
+  const { plan: contextPlan } = usePlan();
+  const isPro = contextPlan === 'pro';
   const { plan, aiQueriesUsed, aiQueriesLimit, loading: planLoading } = useSupabasePlan();
   const [profile, setProfile] = useState<any>(null);
   const [isEditing, setIsEditing] = useState(false);
@@ -332,16 +336,32 @@ const Dashboard = () => {
           )}
 
           {/* Profile & Plan Section - Mobile First */}
-          <Card>
+          <Card className={cn(
+            "transition-all duration-300",
+            isPro && "glass-pro border-[hsl(45,100%,60%)]/30 shadow-pro-strong shimmer"
+          )}>
             <CardContent className="p-4">
               <div className="flex items-start justify-between gap-3 mb-3">
                 <div className="flex-1 min-w-0">
-                  <h1 className="text-lg md:text-xl font-bold text-foreground truncate">
+                  <h1 className={cn(
+                    "text-lg md:text-xl font-bold truncate transition-colors duration-300",
+                    isPro ? "pro-gradient-text" : "text-foreground"
+                  )}>
                     {profile?.full_name || user?.email?.split('@')[0] || 'Welcome'}
                   </h1>
-                  <p className="text-xs md:text-sm text-muted-foreground truncate">{user?.email}</p>
+                  <p className={cn(
+                    "text-xs md:text-sm truncate transition-colors duration-300",
+                    isPro ? "text-foreground/90" : "text-muted-foreground"
+                  )}>
+                    {user?.email}
+                  </p>
                   {profile?.company && (
-                    <p className="text-xs text-muted-foreground mt-0.5">{profile.company}</p>
+                    <p className={cn(
+                      "text-xs mt-0.5 transition-colors duration-300",
+                      isPro ? "text-foreground/70" : "text-muted-foreground"
+                    )}>
+                      {profile.company}
+                    </p>
                   )}
                 </div>
                 <Button
@@ -349,7 +369,10 @@ const Dashboard = () => {
                   size="icon"
                   onClick={handleRetryAll}
                   disabled={loading || billsLoading}
-                  className="shrink-0"
+                  className={cn(
+                    "shrink-0 transition-colors duration-300",
+                    isPro && "hover:bg-[hsl(45,100%,60%)]/10"
+                  )}
                 >
                   <RefreshCw className={`h-4 w-4 ${(loading || billsLoading) ? 'animate-spin' : ''}`} />
                 </Button>
@@ -365,14 +388,25 @@ const Dashboard = () => {
 
           {/* Bill Statistics */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-3">
-            <Card>
+            <Card className={cn(
+              "transition-all duration-300",
+              isPro && "glass-pro border-[hsl(45,100%,60%)]/20 hover:shadow-pro-glow"
+            )}>
               <CardContent className="p-3 md:p-4">
                 <div className="space-y-1.5">
                   <div className="flex items-center gap-1.5">
-                    <FileText className="h-4 w-4 text-primary" />
+                    <FileText className={cn(
+                      "h-4 w-4 transition-colors duration-300",
+                      isPro ? "text-[hsl(45,100%,60%)]" : "text-primary"
+                    )} />
                     <span className="text-xs text-muted-foreground">Active</span>
                   </div>
-                  <div className="text-xl md:text-2xl font-bold text-foreground">{activeBills.length}</div>
+                  <div className={cn(
+                    "text-xl md:text-2xl font-bold transition-colors duration-300",
+                    isPro ? "pro-gradient-text" : "text-foreground"
+                  )}>
+                    {activeBills.length}
+                  </div>
                   {plan === 'free' && (
                     <div className="text-xs text-muted-foreground">
                       {bills.length}/{billLimit} bills
@@ -382,7 +416,10 @@ const Dashboard = () => {
               </CardContent>
             </Card>
             
-            <Card>
+            <Card className={cn(
+              "transition-all duration-300",
+              isPro && "glass-pro border-[hsl(45,100%,60%)]/20 hover:shadow-pro-glow"
+            )}>
               <CardContent className="p-3 md:p-4">
                 <div className="space-y-1.5">
                   <div className="flex items-center gap-1.5">
@@ -394,7 +431,10 @@ const Dashboard = () => {
               </CardContent>
             </Card>
             
-            <Card>
+            <Card className={cn(
+              "transition-all duration-300",
+              isPro && "glass-pro border-[hsl(45,100%,60%)]/20 hover:shadow-pro-glow"
+            )}>
               <CardContent className="p-3 md:p-4">
                 <div className="space-y-1.5">
                   <div className="flex items-center gap-1.5">
@@ -406,7 +446,10 @@ const Dashboard = () => {
               </CardContent>
             </Card>
             
-            <Card>
+            <Card className={cn(
+              "transition-all duration-300",
+              isPro && "glass-pro border-[hsl(45,100%,60%)]/20 hover:shadow-pro-glow"
+            )}>
               <CardContent className="p-3 md:p-4">
                 <div className="space-y-1.5">
                   <div className="flex items-center gap-1.5">
@@ -465,9 +508,17 @@ const Dashboard = () => {
           )}
 
           {/* Quick Actions */}
-          <Card>
+          <Card className={cn(
+            "transition-all duration-300",
+            isPro && "glass-pro border-[hsl(45,100%,60%)]/20"
+          )}>
             <CardHeader className="pb-3">
-              <CardTitle className="text-base">Quick Actions</CardTitle>
+              <CardTitle className={cn(
+                "text-base transition-colors duration-300",
+                isPro && "pro-gradient-text"
+              )}>
+                Quick Actions
+              </CardTitle>
             </CardHeader>
             <CardContent className="grid grid-cols-1 sm:grid-cols-2 gap-2 md:gap-3">
               <Button 
@@ -478,11 +529,17 @@ const Dashboard = () => {
                     navigate('/bills');
                   }
                 }}
-                className="h-auto p-3 justify-start"
+                className={cn(
+                  "h-auto p-3 justify-start transition-all duration-300",
+                  isPro && "glass-pro hover:border-[hsl(45,100%,60%)]/40 hover:shadow-pro-glow"
+                )}
                 variant="outline"
               >
                 <div className="flex items-center gap-2.5 w-full">
-                  <Plus className="h-5 w-5 text-primary shrink-0" />
+                  <Plus className={cn(
+                    "h-5 w-5 shrink-0 transition-colors duration-300",
+                    isPro ? "text-[hsl(45,100%,60%)]" : "text-primary"
+                  )} />
                   <div className="text-left flex-1 min-w-0">
                     <div className="font-medium text-sm flex items-center gap-1.5">
                       Add New Bill

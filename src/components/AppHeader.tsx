@@ -11,18 +11,34 @@ import {
   DropdownMenuTrigger 
 } from '@/components/ui/dropdown-menu';
 import { useAuth } from '@/hooks/useAuth';
+import { usePlan } from '@/contexts/PlanContext';
+import { ProBadge } from '@/components/ProBadge';
+import { cn } from '@/lib/utils';
 
 const AppHeader = () => {
   const { user, signOut } = useAuth();
+  const { plan } = usePlan();
+  const isPro = plan === 'pro';
 
   return (
-    <header className="border-b bg-card shadow-sm sticky top-0 z-50">
+    <header className={cn(
+      "border-b shadow-sm sticky top-0 z-50 transition-all duration-300",
+      isPro 
+        ? "bg-card/90 glass-pro border-[hsl(45,100%,60%)]/20 shadow-pro-glow backdrop-blur-xl" 
+        : "bg-card glass border-border/50"
+    )}>
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-14 sm:h-16">
           <div className="flex items-center space-x-3 sm:space-x-4">
             <Link to="/dashboard" className="flex items-center space-x-2">
-              <DollarSign className="h-6 w-6 sm:h-8 sm:w-8 text-primary" />
-              <span className="text-lg sm:text-xl font-bold text-foreground">
+              <DollarSign className={cn(
+                "h-6 w-6 sm:h-8 sm:w-8 transition-colors duration-300",
+                isPro ? "text-[hsl(45,100%,60%)]" : "text-primary"
+              )} />
+              <span className={cn(
+                "text-lg sm:text-xl font-bold transition-colors duration-300",
+                isPro ? "pro-gradient-text" : "text-foreground"
+              )}>
                 <span className="hidden sm:inline">InvoiceFlow</span>
                 <span className="sm:hidden">IF</span>
               </span>
@@ -32,14 +48,30 @@ const AppHeader = () => {
           <div className="flex items-center space-x-2 sm:space-x-4">
             {user && (
               <div className="hidden md:flex items-center space-x-2">
-                <Avatar className="h-7 w-7 sm:h-8 sm:w-8">
-                  <AvatarFallback className="bg-primary text-primary-foreground text-xs sm:text-sm">
+                <Avatar className={cn(
+                  "h-7 w-7 sm:h-8 sm:w-8 transition-all duration-300",
+                  isPro && "ring-2 ring-[hsl(45,100%,60%)]/30 shadow-pro-glow"
+                )}>
+                  <AvatarFallback className={cn(
+                    "text-xs sm:text-sm font-semibold transition-colors duration-300",
+                    isPro 
+                      ? "bg-gradient-to-br from-[hsl(45,100%,60%)] to-[hsl(35,100%,55%)] text-[hsl(230,35%,7%)]"
+                      : "bg-primary text-primary-foreground"
+                  )}>
                     {user.email?.[0]?.toUpperCase()}
                   </AvatarFallback>
                 </Avatar>
-                <span className="text-xs sm:text-sm text-muted-foreground max-w-32 truncate">
-                  {user.email}
-                </span>
+                <div className="flex flex-col">
+                  <div className="flex items-center gap-1.5">
+                    <span className={cn(
+                      "text-xs sm:text-sm max-w-32 truncate transition-colors duration-300",
+                      isPro ? "text-foreground font-medium" : "text-muted-foreground"
+                    )}>
+                      {user.email}
+                    </span>
+                    {isPro && <ProBadge variant="icon-only" />}
+                  </div>
+                </div>
               </div>
             )}
             
@@ -69,7 +101,10 @@ const AppHeader = () => {
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-56 mr-2">
                   <div className="px-2 py-2 border-b">
-                    <p className="text-sm font-medium truncate">{user?.email}</p>
+                    <div className="flex items-center gap-2">
+                      <p className="text-sm font-medium truncate">{user?.email}</p>
+                      {isPro && <ProBadge variant="icon-only" />}
+                    </div>
                   </div>
                   <DropdownMenuItem asChild>
                     <Link to="/dashboard" className="flex items-center">
@@ -116,7 +151,12 @@ const AppHeader = () => {
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
-                  <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                  <DropdownMenuLabel>
+                    <div className="flex items-center gap-2">
+                      <span>My Account</span>
+                      {isPro && <ProBadge variant="icon-only" />}
+                    </div>
+                  </DropdownMenuLabel>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem asChild>
                     <Link to="/settings">Settings</Link>

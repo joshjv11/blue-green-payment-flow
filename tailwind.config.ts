@@ -66,6 +66,8 @@ export default {
         'glass-gradient': 'var(--glass-gradient)',
         'card-gradient': 'var(--card-gradient)',
         'auth-gradient': 'var(--auth-gradient)',
+        'pro-gradient': 'var(--pro-gradient)',
+        'pro-glass': 'var(--pro-glass)',
       },
       boxShadow: {
         'soft': 'var(--shadow-soft)',
@@ -76,6 +78,8 @@ export default {
         'float': 'var(--shadow-float)',
         'glow': 'var(--shadow-glow)',
         'neumorphic': 'var(--shadow-neumorphic)',
+        'pro-glow': 'var(--shadow-pro-glow)',
+        'pro-strong': 'var(--shadow-pro-strong)',
       },
       backdropBlur: {
         'glass': '16px',

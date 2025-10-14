@@ -36,6 +36,11 @@ All colors MUST be HSL.
     --accent: 180 100% 60%;
     --accent-foreground: 230 35% 7%;
 
+    /* Pro/Premium - Golden Amber Accents */
+    --pro-gold: 45 100% 60%;
+    --pro-amber: 35 100% 55%;
+    --pro-glow: 45 100% 70%;
+
     /* Destructive */
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
@@ -55,6 +60,11 @@ All colors MUST be HSL.
     --glass-gradient: linear-gradient(135deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.02));
     --premium-border: linear-gradient(135deg, hsl(250 95% 68%), hsl(180 100% 60%));
     
+    /* Pro-Specific Gradients - Golden Amber */
+    --pro-gradient: linear-gradient(135deg, hsl(45 100% 60%) 0%, hsl(35 100% 55%) 50%, hsl(25 100% 50%) 100%);
+    --pro-glass: linear-gradient(135deg, rgba(255, 215, 0, 0.08), rgba(255, 165, 0, 0.04));
+    --pro-border: linear-gradient(135deg, hsl(45 100% 60%), hsl(35 100% 55%));
+    
     /* Glassmorphism & Neumorphism Shadows */
     --shadow-soft: 0 2px 20px rgba(0, 0, 0, 0.4);
     --shadow-medium: 0 8px 32px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.05) inset;
@@ -67,6 +77,10 @@ All colors MUST be HSL.
     --shadow-neumorphic: 
       8px 8px 16px rgba(0, 0, 0, 0.5),
       -4px -4px 12px rgba(255, 255, 255, 0.02);
+    
+    /* Pro-Specific Shadows */
+    --shadow-pro-glow: 0 0 40px hsl(45 100% 60% / 0.3), 0 0 80px hsl(35 100% 55% / 0.15);
+    --shadow-pro-strong: 0 8px 32px rgba(255, 215, 0, 0.2), 0 0 0 1px rgba(255, 215, 0, 0.1) inset;
     
     /* Transitions - Smooth & Premium */
     --transition-smooth: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
@@ -227,5 +241,55 @@ All colors MUST be HSL.
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
+  }
+
+  .pro-gradient-text {
+    background: linear-gradient(135deg, hsl(45 100% 60%), hsl(35 100% 55%));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .glass-pro {
+    background: linear-gradient(135deg, rgba(255, 215, 0, 0.08), rgba(255, 165, 0, 0.04));
+    backdrop-filter: blur(16px) saturate(180%);
+    -webkit-backdrop-filter: blur(16px) saturate(180%);
+    border: 1px solid rgba(255, 215, 0, 0.12);
+  }
+
+  .glow-pro {
+    box-shadow: 
+      0 0 40px hsl(45 100% 60% / 0.3),
+      0 0 80px hsl(35 100% 55% / 0.15);
+  }
+
+  .shimmer {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .shimmer::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      rgba(255, 215, 0, 0.3),
+      transparent
+    );
+    animation: shimmer 3s infinite;
+  }
+
+  @keyframes shimmer {
+    0% {
+      left: -100%;
+    }
+    100% {
+      left: 100%;
+    }
   }
 }
