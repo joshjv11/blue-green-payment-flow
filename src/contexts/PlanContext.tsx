@@ -3,7 +3,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
-export type UserPlan = 'free' | 'pro';
+export type UserPlan = 'free' | 'pro' | 'premium';
 
 interface PlanContextType {
   plan: UserPlan;
@@ -118,7 +118,7 @@ export const PlanProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const planData = await fetchPlanWithTimeout();
 
       if (planData) {
-        const userPlan: UserPlan = planData.plan === 'pro' || planData.plan === 'enterprise' ? 'pro' : 'free';
+        const userPlan: UserPlan = planData.plan === 'premium' ? 'premium' : planData.plan === 'pro' || planData.plan === 'enterprise' ? 'pro' : 'free';
         setPlan(userPlan);
         setAiQueriesUsed(planData.ai_queries_used || 0);
         setAiQueriesLimit(planData.ai_queries_limit || 3);
@@ -187,7 +187,8 @@ export const PlanProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
   }, []);
 
-  const isPro = plan === 'pro';
+  const isPro = plan === 'pro' || plan === 'premium';
+  const isPremium = plan === 'premium';
 
   const canAddBill = useCallback((currentCount: number) => {
     return isPro || currentCount < 5;
@@ -247,10 +248,34 @@ export const PlanProvider: React.FC<{ children: React.ReactNode }> = ({ children
   return <PlanContext.Provider value={value}>{children}</PlanContext.Provider>;
 };
 
+const rank = { free: 1, pro: 2, premium: 3 };
+
 export const usePlan = () => {
   const context = useContext(PlanContext);
   if (!context) {
     throw new Error('usePlan must be used within PlanProvider');
   }
-  return context;
+  
+  // Add hasPlan helper
+  const hasPlan = (required: 'free' | 'pro' | 'premium'): boolean => {
+    const planName = context.plan || 'free';
+    const userRank = rank[planName as keyof typeof rank] || rank.free;
+    const requiredRank = rank[required];
+    
+    // Free tier is always accessible
+    if (required === 'free') return true;
+    
+    // Check if plan meets rank requirement
+    return userRank >= requiredRank;
+  };
+  
+  return {
+    ...context,
+    hasPlan,
+    planName: context.plan || 'free',
+    isActive: true, // Plan is always active in current implementation
+    isFree: (context.plan || 'free') === 'free',
+    isPro: (context.plan || 'free') === 'pro',
+    isPremium: (context.plan || 'free') === 'premium',
+  };
 };

@@ -13,7 +13,6 @@ import { useToast } from "@/hooks/use-toast";
 import { PageTransition } from "@/components/PageTransition";
 import { Breadcrumb } from "@/components/Breadcrumb";
 import { BackToDashboard } from "@/components/BackToDashboard";
-import { PremiumGuard } from "@/components/PremiumGuard";
 
 interface Product {
   id: string;
@@ -155,9 +154,8 @@ export default function Inventory() {
   const inventoryValue = products.reduce((sum, p) => sum + (p.stock_qty * p.purchase_price), 0);
 
   return (
-    <PremiumGuard requiredPlan="premium" featureName="Inventory Management">
-      <PageTransition>
-      <div className="container mx-auto p-4 md:p-6 space-y-6">
+    <PageTransition>
+    <div className="container mx-auto p-4 md:p-6 space-y-6">
         <BackToDashboard />
         
         {/* Breadcrumb */}
@@ -423,8 +421,7 @@ export default function Inventory() {
             </table>
           </div>
         </Card>
-      </div>
-    </PageTransition>
-    </PremiumGuard>
+    </div>
+  </PageTransition>
   );
 }

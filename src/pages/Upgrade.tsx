@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Check, Crown, Zap, Rocket, X } from 'lucide-react';
-import { usePlanGating } from '@/hooks/usePlanGating';
+import { usePlan } from '@/contexts/PlanContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
@@ -24,7 +24,7 @@ const Upgrade = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { user } = useAuth();
-  const { plan, loading, fetchUserPlan } = usePlanGating();
+  const { planName: plan, loading, refreshPlan } = usePlan();
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<'pro' | 'premium' | null>(null);
   const [upgrading, setUpgrading] = useState(false);
@@ -55,7 +55,7 @@ const Upgrade = () => {
 
       if (error) throw error;
 
-      await fetchUserPlan();
+      await refreshPlan();
 
       toast({
         title: "Upgrade Successful! 🎉",

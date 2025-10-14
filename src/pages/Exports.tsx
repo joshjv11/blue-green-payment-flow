@@ -10,7 +10,7 @@ import { FileSpreadsheet, Download, Package, Calendar as CalendarIcon, FileText,
 import { useToast } from "@/hooks/use-toast";
 import { PageTransition } from "@/components/PageTransition";
 import { BackToDashboard } from "@/components/BackToDashboard";
-import { PremiumGuard } from "@/components/PremiumGuard";
+
 import { format, subMonths, startOfMonth, endOfMonth } from "date-fns";
 import { cn } from "@/lib/utils";
 import {
@@ -318,9 +318,8 @@ export default function Exports() {
   };
 
   return (
-    <PremiumGuard requiredPlan="premium" featureName="Exports & Reports">
-      <PageTransition>
-      <div className="container mx-auto p-4 md:p-6 space-y-6">
+    <PageTransition>
+    <div className="container mx-auto p-4 md:p-6 space-y-6">
         <BackToDashboard />
         
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
@@ -497,8 +496,7 @@ export default function Exports() {
             <p>• Export history is maintained for audit trail purposes</p>
           </CardContent>
         </Card>
-      </div>
-    </PageTransition>
-    </PremiumGuard>
+    </div>
+  </PageTransition>
   );
 }

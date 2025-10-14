@@ -34,9 +34,11 @@ import Upgrade from './pages/Upgrade';
 import Admin from './pages/Admin';
 import AdminUsers from './pages/AdminUsers';
 import AdminUserPlans from './pages/AdminUserPlans';
+import AdminPlans from './pages/AdminPlans';
 import AdminDbHealth from './pages/AdminDbHealth';
 import AdminLogs from './pages/AdminLogs';
 import NotFound from './pages/NotFound';
+import { RequirePlan } from './components/RequirePlan';
 
 function AppRoutes() {
   return (
@@ -73,7 +75,9 @@ function AppRoutes() {
         path="/sales" 
         element={
           <ProtectedRoute>
-            <PageTransition><Sales /></PageTransition>
+            <RequirePlan requiredPlan="pro" featureName="Sales Orders">
+              <PageTransition><Sales /></PageTransition>
+            </RequirePlan>
           </ProtectedRoute>
         } 
       />
@@ -81,7 +85,19 @@ function AppRoutes() {
         path="/purchases" 
         element={
           <ProtectedRoute>
-            <PageTransition><Purchases /></PageTransition>
+            <RequirePlan requiredPlan="pro" featureName="Purchase Orders">
+              <PageTransition><Purchases /></PageTransition>
+            </RequirePlan>
+          </ProtectedRoute>
+        } 
+      />
+      <Route 
+        path="/expenses" 
+        element={
+          <ProtectedRoute>
+            <RequirePlan requiredPlan="pro" featureName="Expense Management">
+              <PageTransition><Expenses /></PageTransition>
+            </RequirePlan>
           </ProtectedRoute>
         } 
       />
@@ -89,7 +105,9 @@ function AppRoutes() {
         path="/inventory" 
         element={
           <ProtectedRoute>
-            <PageTransition><Inventory /></PageTransition>
+            <RequirePlan requiredPlan="premium" featureName="Inventory Management">
+              <PageTransition><Inventory /></PageTransition>
+            </RequirePlan>
           </ProtectedRoute>
         } 
       />
@@ -97,39 +115,39 @@ function AppRoutes() {
         path="/gst-summary" 
         element={
           <ProtectedRoute>
-            <PageTransition><GSTSummary /></PageTransition>
+            <RequirePlan requiredPlan="premium" featureName="GST/VAT Summary">
+              <PageTransition><GSTSummary /></PageTransition>
+            </RequirePlan>
           </ProtectedRoute>
         } 
       />
-        <Route 
-          path="/reports/tax" 
-          element={
-            <ProtectedRoute>
+      <Route 
+        path="/reports/tax" 
+        element={
+          <ProtectedRoute>
+            <RequirePlan requiredPlan="premium" featureName="Tax Reports">
               <PageTransition><Reports /></PageTransition>
-            </ProtectedRoute>
-          } 
-        />
-        <Route 
-          path="/reports/financial" 
-          element={
-            <ProtectedRoute>
+            </RequirePlan>
+          </ProtectedRoute>
+        } 
+      />
+      <Route 
+        path="/reports/financial" 
+        element={
+          <ProtectedRoute>
+            <RequirePlan requiredPlan="premium" featureName="Financial Reports">
               <PageTransition><FinancialReports /></PageTransition>
-            </ProtectedRoute>
-          } 
-        />
-        <Route 
-          path="/expenses" 
-          element={
-            <ProtectedRoute>
-              <PageTransition><Expenses /></PageTransition>
-            </ProtectedRoute>
-          } 
-        />
+            </RequirePlan>
+          </ProtectedRoute>
+        } 
+      />
       <Route 
         path="/exports"
         element={
           <ProtectedRoute>
-            <PageTransition><Exports /></PageTransition>
+            <RequirePlan requiredPlan="premium" featureName="Exports">
+              <PageTransition><Exports /></PageTransition>
+            </RequirePlan>
           </ProtectedRoute>
         } 
       />
@@ -170,6 +188,14 @@ function AppRoutes() {
         element={
           <ProtectedRoute>
             <PageTransition><AdminUserPlans /></PageTransition>
+          </ProtectedRoute>
+        } 
+      />
+      <Route 
+        path="/admin/plans" 
+        element={
+          <ProtectedRoute>
+            <PageTransition><AdminPlans /></PageTransition>
           </ProtectedRoute>
         } 
       />

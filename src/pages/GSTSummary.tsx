@@ -7,7 +7,7 @@ import { FileText, Download, TrendingUp } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { PageTransition } from "@/components/PageTransition";
 import { BackToDashboard } from "@/components/BackToDashboard";
-import { PremiumGuard } from "@/components/PremiumGuard";
+
 import { format, startOfMonth, endOfMonth, subMonths } from "date-fns";
 
 interface GSTSummaryData {
@@ -124,9 +124,8 @@ export default function GSTSummary() {
   const totalTax = totalCGST + totalSGST + totalIGST;
 
   return (
-    <PremiumGuard requiredPlan="premium" featureName="GST/VAT Summary">
-      <PageTransition>
-      <div className="container mx-auto p-4 md:p-6 space-y-6">
+    <PageTransition>
+    <div className="container mx-auto p-4 md:p-6 space-y-6">
         <BackToDashboard />
         
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
@@ -271,8 +270,7 @@ export default function GSTSummary() {
             <p>• Ensure all invoice details match with GSTN portal data</p>
           </div>
         </Card>
-      </div>
-    </PageTransition>
-    </PremiumGuard>
+    </div>
+  </PageTransition>
   );
 }

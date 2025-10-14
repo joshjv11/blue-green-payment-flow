@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { PageTransition } from "@/components/PageTransition";
 import { Breadcrumb } from "@/components/Breadcrumb";
 import { BackToDashboard } from "@/components/BackToDashboard";
-import { PremiumGuard } from "@/components/PremiumGuard";
+
 import TaxSummary from "@/components/TaxSummary";
 import { useSupabasePlan } from "@/hooks/useSupabasePlan";
 import { Lock, Crown } from "lucide-react";
@@ -16,9 +16,8 @@ export default function Reports() {
   const { plan, hasAdvancedAnalytics } = useSupabasePlan();
 
   return (
-    <PremiumGuard requiredPlan="premium" featureName="Tax Reports">
-      <PageTransition>
-      <div className="container mx-auto p-4 md:p-6 space-y-6">
+    <PageTransition>
+    <div className="container mx-auto p-4 md:p-6 space-y-6">
         <BackToDashboard />
         <Breadcrumb items={[{ label: "Dashboard", href: "/dashboard" }, { label: "Reports" }]} />
 
@@ -106,7 +105,6 @@ export default function Reports() {
         aiQueriesLimit={3}
         trigger="general"
       />
-    </PageTransition>
-    </PremiumGuard>
+  </PageTransition>
   );
 }
