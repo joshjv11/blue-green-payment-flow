@@ -1,4 +1,5 @@
 import { useSupabasePlan, UserPlan } from './useSupabasePlan';
+import { usePremiumStatus } from './usePremiumStatus';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from './use-toast';
 
@@ -28,19 +29,26 @@ const FEATURE_ACCESS: Record<string, FeatureAccess> = {
 
 export const usePlanGating = () => {
   const planData = useSupabasePlan();
+  const premiumStatus = usePremiumStatus();
   const navigate = useNavigate();
   const { toast } = useToast();
 
   const checkAccess = (requiredPlan: UserPlan): boolean => {
     const rank = { free: 1, pro: 2, premium: 3 };
-    const userRank = rank[planData.plan];
+    const userRank = rank[premiumStatus.plan];
     const requiredRank = rank[requiredPlan];
+    
+    // Check if plan is active
+    if (!premiumStatus.isActive && requiredPlan !== 'free') {
+      return false;
+    }
+    
     return userRank >= requiredRank;
   };
 
   const hasFeatureAccess = (featureKey: string): boolean => {
     const feature = FEATURE_ACCESS[featureKey];
-    if (!feature) return true; // Unknown features are accessible by default
+    if (!feature) return true;
     return checkAccess(feature.requiredPlan);
   };
 
@@ -51,7 +59,7 @@ export const usePlanGating = () => {
     const hasAccess = checkAccess(feature.requiredPlan);
     
     if (!hasAccess) {
-      const planName = feature.requiredPlan === 'premium' ? 'Premium' : 'Pro';
+      const planName = feature.requiredPlan === 'premium' ? 'Premium (₹500/month)' : 'Pro (₹100/month)';
       toast({
         title: "Upgrade Required",
         description: `${feature.featureName} requires ${planName} plan. Redirecting to upgrade page...`,
@@ -72,6 +80,8 @@ export const usePlanGating = () => {
 
   return {
     ...planData,
+    ...premiumStatus,
+    plan: premiumStatus.plan,
     checkAccess,
     hasFeatureAccess,
     requireFeatureAccess,

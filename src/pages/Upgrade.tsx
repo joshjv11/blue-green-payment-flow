@@ -86,11 +86,12 @@ const Upgrade = () => {
   ];
 
   const freePlanMissing = [
-    'No bill scheduling',
-    'No sales orders',
+    'Limited to 5 bills only',
+    'Only 3 AI queries/month',
+    'No sales order tracking',
     'No inventory management',
     'No GST/VAT automation',
-    'No exports',
+    'No exports or reports',
   ];
 
   const proPlanFeatures = [
@@ -106,13 +107,14 @@ const Upgrade = () => {
 
   const premiumPlanFeatures = [
     'Everything in Pro',
-    'Full Inventory Management',
-    'GST & VAT Automation',
-    'Tally/CA-Ready Exports',
-    'Financial Reports (P&L, Balance Sheet)',
-    'Cash Flow Statements',
-    'Cash Flow Forecasts',
-    'Priority Support',
+    '⭐ Full Inventory Management',
+    '⭐ GST & VAT Automation',
+    '⭐ Tally/CA-Ready Exports',
+    '⭐ Financial Reports (P&L, Balance Sheet)',
+    '⭐ Cash Flow Statements',
+    '⭐ Cash Flow Forecasts',
+    '⭐ Tax Compliance Reports',
+    '⭐ Priority Support',
     'API Access (Coming Soon)',
   ];
 

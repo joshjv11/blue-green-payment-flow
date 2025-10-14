@@ -10,7 +10,8 @@ import {
   BarChart3,
   Wallet,
   Lock,
-  Crown
+  Crown,
+  Sparkles
 } from "lucide-react";
 import { NavLink } from "react-router-dom";
 import {
@@ -46,7 +47,7 @@ const secondaryItems = [
 
 export function AppSidebar() {
   const { open } = useSidebar();
-  const { hasFeatureAccess, plan } = usePlanGating();
+  const { hasFeatureAccess, plan, isPremium, isExpiringSoon, expiresAt } = usePlanGating();
 
   const getNavClassName = ({ isActive }: { isActive: boolean }, isLocked: boolean) =>
     isActive
@@ -58,6 +59,7 @@ export function AppSidebar() {
   const renderNavItem = (item: typeof mainItems[0]) => {
     const hasAccess = hasFeatureAccess(item.featureKey);
     const isLocked = !hasAccess;
+    const isPremiumFeature = item.requiredPlan === 'premium';
 
     const navContent = (
       <NavLink 
@@ -71,19 +73,23 @@ export function AppSidebar() {
           }
         }}
       >
-        <item.icon className="h-4 w-4" />
-        {open && (
-          <span className="flex items-center gap-2 flex-1">
-            {item.title}
-            {isLocked && <Lock className="h-3 w-3" />}
-          </span>
-        )}
-        {!open && isLocked && <Lock className="h-3 w-3 absolute right-1 top-1" />}
+        <div className="flex items-center gap-2 flex-1">
+          <item.icon className="h-4 w-4 flex-shrink-0" />
+          {open && (
+            <span className="flex items-center gap-2 flex-1">
+              {item.title}
+              {isPremiumFeature && (
+                <Sparkles className="h-3 w-3 text-purple-500" />
+              )}
+            </span>
+          )}
+        </div>
+        {isLocked && <Lock className="h-3 w-3" />}
       </NavLink>
     );
 
     if (isLocked) {
-      const planName = item.requiredPlan === 'premium' ? 'Premium' : 'Pro';
+      const planName = item.requiredPlan === 'premium' ? 'Premium (₹500/mo)' : 'Pro (₹100/mo)';
       return (
         <Tooltip key={item.title}>
           <TooltipTrigger asChild>
@@ -93,7 +99,7 @@ export function AppSidebar() {
           </TooltipTrigger>
           <TooltipContent side="right">
             <p className="font-medium">{item.title}</p>
-            <p className="text-xs text-muted-foreground">Requires {planName} plan</p>
+            <p className="text-xs text-muted-foreground">Requires {planName}</p>
           </TooltipContent>
         </Tooltip>
       );
@@ -102,15 +108,21 @@ export function AppSidebar() {
     return navContent;
   };
 
+  const getDaysRemaining = () => {
+    if (!expiresAt) return null;
+    const days = Math.ceil((new Date(expiresAt).getTime() - Date.now()) / (24 * 60 * 60 * 1000));
+    return days > 0 ? days : 0;
+  };
+
   return (
     <Sidebar collapsible="icon">
       <SidebarContent>
         {/* Plan Badge */}
         {open && (
           <div className="px-4 py-3 border-b">
-            <div className="flex items-center gap-2">
-              <Crown className="h-4 w-4 text-primary" />
-              <div className="flex-1">
+            <div className="flex items-center gap-2 mb-2">
+              <Crown className="h-4 w-4 text-primary flex-shrink-0" />
+              <div className="flex-1 min-w-0">
                 <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
                   Current Plan
                 </p>
@@ -124,16 +136,27 @@ export function AppSidebar() {
                       : ''
                   }
                 >
-                  {plan === 'premium' ? 'Premium' : plan === 'pro' ? 'Pro' : 'Free'}
+                  {plan === 'premium' ? 'Premium ⭐' : plan === 'pro' ? 'Pro' : 'Free'}
                 </Badge>
               </div>
             </div>
+            
+            {/* Expiry warning */}
+            {isExpiringSoon && expiresAt && (
+              <div className="text-xs text-orange-600 dark:text-orange-400 mt-2 p-2 bg-orange-50 dark:bg-orange-950/30 rounded">
+                <p className="font-medium">Expires in {getDaysRemaining()} days</p>
+                <NavLink to="/upgrade" className="text-primary hover:underline text-xs mt-1 inline-block">
+                  Renew Now →
+                </NavLink>
+              </div>
+            )}
+            
             {plan === 'free' && (
               <NavLink 
                 to="/upgrade" 
                 className="text-xs text-primary hover:underline mt-2 inline-block"
               >
-                Upgrade Now →
+                Upgrade to Premium →
               </NavLink>
             )}
           </div>
@@ -157,8 +180,9 @@ export function AppSidebar() {
         </SidebarGroup>
 
         <SidebarGroup>
-          <SidebarGroupLabel className="text-xs uppercase tracking-wider">
-            More
+          <SidebarGroupLabel className="text-xs uppercase tracking-wider flex items-center gap-2">
+            <span>Premium Features</span>
+            {!isPremium && <Sparkles className="h-3 w-3 text-purple-500" />}
           </SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>

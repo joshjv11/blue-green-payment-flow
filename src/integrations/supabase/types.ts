@@ -1712,6 +1712,33 @@ export type Database = {
         }
         Relationships: []
       }
+      user_is_premium: {
+        Row: {
+          expires_at: string | null
+          has_pro_access: boolean | null
+          is_active: boolean | null
+          is_premium: boolean | null
+          plan: string | null
+          user_id: string | null
+        }
+        Insert: {
+          expires_at?: string | null
+          has_pro_access?: never
+          is_active?: boolean | null
+          is_premium?: never
+          plan?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          expires_at?: string | null
+          has_pro_access?: never
+          is_active?: boolean | null
+          is_premium?: never
+          plan?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       user_plan_status: {
         Row: {
           is_active: boolean | null
@@ -1830,6 +1857,10 @@ export type Database = {
         Args: { _user_id: string }
         Returns: undefined
       }
+      deactivate_expired_plans: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
       generate_daily_reward: {
         Args: Record<PropertyKey, never>
         Returns: Json
@@ -1854,6 +1885,10 @@ export type Database = {
           _team_id: string
           _user_id: string
         }
+        Returns: boolean
+      }
+      is_subscription_expiring_soon: {
+        Args: Record<PropertyKey, never>
         Returns: boolean
       }
       is_system_admin: {

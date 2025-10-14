@@ -5,6 +5,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Navigation } from '@/components/Navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { BackToDashboard } from '@/components/BackToDashboard';
+import { PremiumGuard } from '@/components/PremiumGuard';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Download, FileSpreadsheet } from 'lucide-react';
@@ -179,8 +180,9 @@ const FinancialReports = () => {
   };
 
   if (!isPro) {
-    return (
-      <>
+  return (
+    <PremiumGuard requiredPlan="premium" featureName="Financial Reports">
+      <div className="min-h-screen bg-background">
         <Navigation />
         <div className="container mx-auto px-4 py-8">
           <BackToDashboard />
@@ -227,15 +229,18 @@ const FinancialReports = () => {
             open={showUpgradeModal}
             onOpenChange={setShowUpgradeModal}
           />
+          </div>
         </div>
-      </>
+      </div>
+    </PremiumGuard>
     );
   }
 
   return (
-    <>
-      <Navigation />
-      <div className="container mx-auto px-4 py-8 space-y-6">
+    <PremiumGuard requiredPlan="premium" featureName="Financial Reports">
+      <div className="min-h-screen bg-background">
+        <Navigation />
+        <div className="container mx-auto px-4 py-8 space-y-6">
         <BackToDashboard />
         
         {/* Header */}
@@ -292,8 +297,9 @@ const FinancialReports = () => {
             )}
           </TabsContent>
         </Tabs>
+        </div>
       </div>
-    </>
+    </PremiumGuard>
   );
 };
 
