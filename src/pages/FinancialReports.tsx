@@ -229,11 +229,10 @@ const FinancialReports = () => {
             open={showUpgradeModal}
             onOpenChange={setShowUpgradeModal}
           />
-          </div>
         </div>
       </div>
     </PremiumGuard>
-    );
+  );
   }
 
   return (
