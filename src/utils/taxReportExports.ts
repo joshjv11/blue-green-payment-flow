@@ -7,10 +7,8 @@ interface OrderData {
   invoice_number: string;
   customer_name?: string;
   supplier_name?: string;
-  customer_gstin?: string;
-  supplier_gstin?: string;
-  customer_address?: string;
-  supplier_address?: string;
+  billing_snapshot?: any;
+  shipping_snapshot?: any;
   total_amount: number;
   tax_amount: number;
   cgst_amount: number;
@@ -55,13 +53,14 @@ export function exportTaxReportCSV(
 
   // Add sales data
   salesData.forEach((sale) => {
+    const gstin = sale.billing_snapshot?.gstin || '';
     sale.order_lines?.forEach((line) => {
       rows.push([
         "Sale",
         format(new Date(sale.transaction_date), "dd-MMM-yyyy"),
         sale.invoice_number,
         sale.customer_name || "",
-        sale.customer_gstin || "",
+        gstin,
         line.product_name,
         line.hsn_sac_code || "",
         line.quantity.toString(),
@@ -78,13 +77,14 @@ export function exportTaxReportCSV(
 
   // Add purchase data
   purchaseData.forEach((purchase) => {
+    const gstin = purchase.shipping_snapshot?.gstin || '';
     purchase.order_lines?.forEach((line) => {
       rows.push([
         "Purchase",
         format(new Date(purchase.transaction_date), "dd-MMM-yyyy"),
         purchase.invoice_number,
         purchase.supplier_name || "",
-        purchase.supplier_gstin || "",
+        gstin,
         line.product_name,
         line.hsn_sac_code || "",
         line.quantity.toString(),
@@ -121,12 +121,14 @@ export function exportGSTR1CSV(salesData: OrderData[], settings: BusinessSetting
   const rows: string[][] = [];
 
   salesData.forEach((sale) => {
+    const address = sale.billing_snapshot?.address || '';
+    const gstin = sale.billing_snapshot?.gstin || '';
     rows.push([
       settings.business_tax_id_value || "",
       sale.invoice_number,
       format(new Date(sale.transaction_date), "dd-MMM-yyyy"),
       sale.grand_total.toFixed(2),
-      sale.customer_address || "",
+      address,
       "N",
       "Regular",
       "18", // This should be calculated from line items
@@ -251,12 +253,13 @@ export function exportGenericVATCSV(
 
   // Add sales
   salesData.forEach((sale) => {
+    const gstin = sale.billing_snapshot?.gstin || '';
     rows.push([
       "Sale",
       format(new Date(sale.transaction_date), "dd-MMM-yyyy"),
       sale.invoice_number,
       sale.customer_name || "",
-      sale.customer_gstin || "",
+      gstin,
       sale.total_amount.toFixed(2),
       "5", // Standard rate - should be calculated from lines
       sale.tax_amount.toFixed(2),
@@ -267,12 +270,13 @@ export function exportGenericVATCSV(
 
   // Add purchases
   purchaseData.forEach((purchase) => {
+    const gstin = purchase.shipping_snapshot?.gstin || '';
     rows.push([
       "Purchase",
       format(new Date(purchase.transaction_date), "dd-MMM-yyyy"),
       purchase.invoice_number,
       purchase.supplier_name || "",
-      purchase.supplier_gstin || "",
+      gstin,
       purchase.total_amount.toFixed(2),
       "5", // Standard rate - should be calculated from lines
       purchase.tax_amount.toFixed(2),

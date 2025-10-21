@@ -87,7 +87,7 @@ export interface SalesOrderExport {
   invoice_number: string;
   transaction_date: string;
   customer_name: string;
-  customer_gstin?: string;
+  billing_snapshot?: any;
   order_lines?: SalesOrderLine[];
 }
 
@@ -95,7 +95,7 @@ export interface PurchaseOrderExport {
   invoice_number: string;
   transaction_date: string;
   supplier_name: string;
-  supplier_gstin?: string;
+  shipping_snapshot?: any;
   order_lines?: SalesOrderLine[];
 }
 
@@ -105,6 +105,7 @@ export function convertSalesToTally(
   const items: TallyExportItem[] = [];
 
   sales.forEach((sale) => {
+    const gstin = sale.billing_snapshot?.gstin || '';
     if (sale.order_lines && sale.order_lines.length > 0) {
       sale.order_lines.forEach((line) => {
         items.push({
@@ -112,7 +113,7 @@ export function convertSalesToTally(
           voucherType: "Sales",
           invoiceNumber: sale.invoice_number,
           partyName: sale.customer_name,
-          gstin: sale.customer_gstin || "",
+          gstin: gstin,
           hsnSac: line.hsn_sac_code || "",
           taxRate: line.gst_rate,
           taxableValue: line.taxable_amount,
@@ -129,7 +130,7 @@ export function convertSalesToTally(
         voucherType: "Sales",
         invoiceNumber: sale.invoice_number,
         partyName: sale.customer_name,
-        gstin: sale.customer_gstin || "",
+        gstin: gstin,
         hsnSac: "",
         taxRate: 0,
         taxableValue: 0,
@@ -150,6 +151,7 @@ export function convertPurchasesToTally(
   const items: TallyExportItem[] = [];
 
   purchases.forEach((purchase) => {
+    const gstin = purchase.shipping_snapshot?.gstin || '';
     if (purchase.order_lines && purchase.order_lines.length > 0) {
       purchase.order_lines.forEach((line) => {
         items.push({
@@ -157,7 +159,7 @@ export function convertPurchasesToTally(
           voucherType: "Purchase",
           invoiceNumber: purchase.invoice_number,
           partyName: purchase.supplier_name,
-          gstin: purchase.supplier_gstin || "",
+          gstin: gstin,
           hsnSac: line.hsn_sac_code || "",
           taxRate: line.gst_rate,
           taxableValue: line.taxable_amount,
@@ -174,7 +176,7 @@ export function convertPurchasesToTally(
         voucherType: "Purchase",
         invoiceNumber: purchase.invoice_number,
         partyName: purchase.supplier_name,
-        gstin: purchase.supplier_gstin || "",
+        gstin: gstin,
         hsnSac: "",
         taxRate: 0,
         taxableValue: 0,

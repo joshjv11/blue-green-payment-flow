@@ -137,7 +137,7 @@ export default function Exports() {
             invoice_number: sale.invoice_number,
             transaction_date: sale.transaction_date,
             customer_name: sale.customers?.name || 'Unknown Customer',
-            customer_gstin: sale.customers?.party_gstin || null,
+            billing_snapshot: sale.billing_snapshot || { gstin: sale.customers?.party_gstin || null },
             order_lines: lines || [],
           };
         })

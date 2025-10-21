@@ -80,9 +80,11 @@ export default function Sales() {
   const [customerEmail, setCustomerEmail] = useState('');
   const [customerPhone, setCustomerPhone] = useState('');
   const [customerAddress, setCustomerAddress] = useState('');
-  const [customerGstin, setCustomerGstin] = useState('');
+  const [customerCity, setCustomerCity] = useState('');
   const [customerState, setCustomerState] = useState('');
+  const [customerPostalCode, setCustomerPostalCode] = useState('');
   const [customerCountry, setCustomerCountry] = useState('IN');
+  const [customerGstin, setCustomerGstin] = useState('');
   const [customerId, setCustomerId] = useState<string | null>(null);
   const [sendInvoiceByEmail, setSendInvoiceByEmail] = useState(false);
   const [invoiceNumber, setInvoiceNumber] = useState('');
@@ -327,6 +329,23 @@ export default function Sales() {
         }
       }
 
+      // Build billing snapshot with customer info
+      const billingSnapshot = {
+        name: customerName,
+        email: customerEmail || null,
+        phone: customerPhone || null,
+        address: customerAddress || null,
+        city: customerCity || null,
+        state: customerState || null,
+        postal_code: customerPostalCode || null,
+        country: customerCountry || 'India',
+        gstin: customerGstin || null,
+      };
+
+      // Determine if inter-state (IGST) based on GSTIN state codes or explicit state selection
+      // GSTIN first 2 digits = state code; if different from business, it's inter-state
+      const isInterState = isIGST; // Use the existing isIGST toggle for now
+      
       // Derive payment status based on amount paid
       const derivedStatus = amountPaid >= grandTotal ? 'paid' : 
                            amountPaid > 0 ? 'partial' : 'unpaid';
@@ -335,9 +354,7 @@ export default function Sales() {
         user_id: user!.id,
         customer_id: resolvedCustomerId,
         customer_name: customerName,
-        customer_address: customerAddress || null,
-        customer_gstin: customerGstin || null,
-        customer_state: customerState || null,
+        billing_snapshot: billingSnapshot,
         invoice_number: invoiceNumber,
         transaction_date: format(orderDate, 'yyyy-MM-dd'), // For backward compatibility
         order_date: format(orderDate, 'yyyy-MM-dd'),
@@ -348,13 +365,13 @@ export default function Sales() {
         subtotal: totalAmount, // Use subtotal column (sum of line items before tax)
         total_amount: totalAmount, // Legacy column, keep for backward compatibility
         tax_amount: taxAmount,
-        cgst_amount: totalCGST,
-        sgst_amount: totalSGST,
-        igst_amount: totalIGST,
+        cgst_amount: isInterState ? 0 : totalCGST,
+        sgst_amount: isInterState ? 0 : totalSGST,
+        igst_amount: isInterState ? totalIGST : 0,
         grand_total: grandTotal, // Final total including tax
         payment_status: derivedStatus, // Derive from amount_paid vs grand_total
         amount_paid: amountPaid,
-        is_igst: isIGST,
+        is_igst: isInterState,
         tax_regime: settings.tax_regime,
         notes: notes || null,
       };
@@ -469,9 +486,11 @@ export default function Sales() {
     setCustomerEmail('');
     setCustomerPhone('');
     setCustomerAddress('');
-    setCustomerGstin('');
+    setCustomerCity('');
     setCustomerState('');
+    setCustomerPostalCode('');
     setCustomerCountry('IN');
+    setCustomerGstin('');
     setCustomerId(null);
     setSendInvoiceByEmail(false);
     setOrderDate(new Date());
@@ -764,6 +783,38 @@ export default function Sales() {
                   <Input 
                     value={customerGstin} 
                     onChange={e => setCustomerGstin(e.target.value)} 
+                    placeholder="Optional"
+                  />
+                </div>
+                <div className="col-span-2">
+                  <Label>Address</Label>
+                  <Input 
+                    value={customerAddress} 
+                    onChange={e => setCustomerAddress(e.target.value)} 
+                    placeholder="Optional"
+                  />
+                </div>
+                <div>
+                  <Label>City</Label>
+                  <Input 
+                    value={customerCity} 
+                    onChange={e => setCustomerCity(e.target.value)} 
+                    placeholder="Optional"
+                  />
+                </div>
+                <div>
+                  <Label>State</Label>
+                  <Input 
+                    value={customerState} 
+                    onChange={e => setCustomerState(e.target.value)} 
+                    placeholder="Optional"
+                  />
+                </div>
+                <div>
+                  <Label>Postal Code</Label>
+                  <Input 
+                    value={customerPostalCode} 
+                    onChange={e => setCustomerPostalCode(e.target.value)} 
                     placeholder="Optional"
                   />
                 </div>

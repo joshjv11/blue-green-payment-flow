@@ -104,10 +104,13 @@ export function UniversalInvoiceForm({
       setInvoiceNumber(initialData.invoice_number || "");
       setTransactionDate(initialData.transaction_date || new Date().toISOString().split("T")[0]);
       setDueDate(initialData.due_date || "");
+      
+      // Extract from billing/shipping snapshot if available
+      const snapshot = type === "sale" ? initialData.billing_snapshot : initialData.shipping_snapshot;
       setPartyName(type === "sale" ? initialData.customer_name : initialData.supplier_name || "");
-      setPartyAddress(type === "sale" ? initialData.customer_address : initialData.supplier_address || "");
-      setPartyState(type === "sale" ? initialData.customer_state : initialData.supplier_state || "");
-      setPartyGstin(type === "sale" ? initialData.customer_gstin : initialData.supplier_gstin || "");
+      setPartyAddress(snapshot?.address || "");
+      setPartyState(snapshot?.state || "");
+      setPartyGstin(snapshot?.gstin || "");
       setFxCurrency(initialData.fx_currency || settings.currency);
       setFxRate(initialData.fx_rate_to_base || 1.0);
       setNotes(initialData.notes || "");
@@ -209,15 +212,21 @@ export function UniversalInvoiceForm({
         ...(type === "sale"
           ? {
               customer_name: partyName,
-              customer_address: partyAddress,
-              customer_state: partyState,
-              customer_gstin: partyGstin,
+              billing_snapshot: {
+                name: partyName,
+                address: partyAddress || null,
+                state: partyState || null,
+                gstin: partyGstin || null,
+              },
             }
           : {
               supplier_name: partyName,
-              supplier_address: partyAddress,
-              supplier_state: partyState,
-              supplier_gstin: partyGstin,
+              shipping_snapshot: {
+                name: partyName,
+                address: partyAddress || null,
+                state: partyState || null,
+                gstin: partyGstin || null,
+              },
             }),
         fx_currency: fxCurrency !== settings.base_currency ? fxCurrency : null,
         fx_rate_to_base: fxCurrency !== settings.base_currency ? fxRate : 1.0,

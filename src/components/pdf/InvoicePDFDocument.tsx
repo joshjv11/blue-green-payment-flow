@@ -148,12 +148,8 @@ interface InvoiceData {
   due_date?: string;
   customer_name?: string;
   supplier_name?: string;
-  customer_address?: string;
-  supplier_address?: string;
-  customer_gstin?: string;
-  supplier_gstin?: string;
-  customer_state?: string;
-  supplier_state?: string;
+  billing_snapshot?: any;
+  shipping_snapshot?: any;
   fx_currency?: string;
   fx_rate_to_base?: number;
   tax_regime: string;
@@ -202,10 +198,12 @@ interface PDFProps {
 }
 
 export function InvoicePDFDocument({ invoice, businessSettings, type }: PDFProps) {
+  // Extract party details from billing or shipping snapshot
+  const snapshot = type === "sale" ? invoice.billing_snapshot : invoice.shipping_snapshot;
   const partyName = type === "sale" ? invoice.customer_name : invoice.supplier_name;
-  const partyAddress = type === "sale" ? invoice.customer_address : invoice.supplier_address;
-  const partyTaxId = type === "sale" ? invoice.customer_gstin : invoice.supplier_gstin;
-  const partyState = type === "sale" ? invoice.customer_state : invoice.supplier_state;
+  const partyAddress = snapshot?.address || '';
+  const partyTaxId = snapshot?.gstin || '';
+  const partyState = snapshot?.state || '';
   
   const currency = invoice.fx_currency || businessSettings.currency;
   const symbol = getCurrencySymbol(currency);
