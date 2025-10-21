@@ -26,7 +26,7 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { usePlanGating } from "@/hooks/usePlanGating";
+import { useEntitlements } from "@/lib/useEntitlements";
 import { Badge } from "@/components/ui/badge";
 
 const mainItems = [
@@ -47,7 +47,20 @@ const secondaryItems = [
 
 export function AppSidebar() {
   const { open } = useSidebar();
-  const { hasFeatureAccess, plan, isPremium, isExpiringSoon, expiresAt } = usePlanGating();
+  const { plan, isPremium, loading, data } = useEntitlements();
+  
+  const hasFeatureAccess = (featureKey: string) => {
+    const item = [...mainItems, ...secondaryItems].find(i => i.featureKey === featureKey);
+    if (!item?.requiredPlan) return true;
+    if (item.requiredPlan === 'premium') return plan === 'premium';
+    if (item.requiredPlan === 'pro') return plan === 'pro' || plan === 'premium';
+    return true;
+  };
+  
+  const expiresAt = data?.current_period_end;
+  const isExpiringSoon = expiresAt 
+    ? new Date(expiresAt).getTime() - Date.now() < 7 * 24 * 60 * 60 * 1000 
+    : false;
 
   const getNavClassName = ({ isActive }: { isActive: boolean }, isLocked: boolean) =>
     isActive
@@ -113,6 +126,8 @@ export function AppSidebar() {
     const days = Math.ceil((new Date(expiresAt).getTime() - Date.now()) / (24 * 60 * 60 * 1000));
     return days > 0 ? days : 0;
   };
+
+  if (loading) return null;
 
   return (
     <Sidebar collapsible="icon">

@@ -11,14 +11,14 @@ import {
   DropdownMenuTrigger 
 } from '@/components/ui/dropdown-menu';
 import { useAuth } from '@/hooks/useAuth';
-import { usePlan } from '@/contexts/PlanContext';
+import { useEntitlements } from '@/lib/useEntitlements';
 import { ProBadge } from '@/components/ProBadge';
 import { cn } from '@/lib/utils';
 
 const AppHeader = () => {
   const { user, signOut } = useAuth();
-  const { plan } = usePlan();
-  const isPro = plan === 'pro';
+  const { plan, loading } = useEntitlements();
+  const isPro = !loading && (plan === 'pro' || plan === 'premium');
 
   return (
     <header className={cn(

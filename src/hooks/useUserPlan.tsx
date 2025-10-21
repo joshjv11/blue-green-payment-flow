@@ -1,5 +1,5 @@
-import { useLocalStorage } from './useLocalStorage';
 import { useAuth } from './useAuth';
+import { useEntitlements } from '@/lib/useEntitlements';
 
 export type UserPlan = 'free' | 'pro';
 
@@ -13,7 +13,8 @@ interface UserPlanData {
 
 export const useUserPlan = () => {
   const { user } = useAuth();
-  const [userPlan, setUserPlan] = useLocalStorage<UserPlan>(`user_plan_${user?.id}`, 'free');
+  const { plan: entitlementPlan } = useEntitlements();
+  const userPlan = (entitlementPlan === 'premium' ? 'pro' : entitlementPlan) as UserPlan;
 
   const getPlanData = (plan: UserPlan): UserPlanData => {
     switch (plan) {
@@ -45,11 +46,13 @@ export const useUserPlan = () => {
   };
 
   const upgradeToPro = () => {
-    setUserPlan('pro');
+    // Deprecated: Plan changes now handled via database
+    console.warn('upgradeToPro is deprecated. Use payment flow instead.');
   };
 
   const downgradeToFree = () => {
-    setUserPlan('free');
+    // Deprecated: Plan changes now handled via database
+    console.warn('downgradeToFree is deprecated. Use payment flow instead.');
   };
 
   return {
@@ -57,6 +60,6 @@ export const useUserPlan = () => {
     canAddBill,
     upgradeToPro,
     downgradeToFree,
-    setUserPlan
+    setUserPlan: () => console.warn('setUserPlan is deprecated')
   };
 };

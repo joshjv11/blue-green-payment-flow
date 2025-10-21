@@ -81,7 +81,15 @@ export type Database = {
           tokens_used?: number | null
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "ai_query_log_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "user_entitlements_v1"
+            referencedColumns: ["user_id"]
+          },
+        ]
       }
       app_logs: {
         Row: {
@@ -144,7 +152,15 @@ export type Database = {
           user_agent?: string | null
           user_id?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "app_logs_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "user_entitlements_v1"
+            referencedColumns: ["user_id"]
+          },
+        ]
       }
       bill_reminder_jobs: {
         Row: {
@@ -386,7 +402,15 @@ export type Database = {
           updated_at?: string | null
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "business_settings_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "user_entitlements_v1"
+            referencedColumns: ["user_id"]
+          },
+        ]
       }
       customers: {
         Row: {
@@ -523,7 +547,15 @@ export type Database = {
           user_id?: string
           vendor?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "expenses_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "user_entitlements_v1"
+            referencedColumns: ["user_id"]
+          },
+        ]
       }
       export_logs: {
         Row: {
@@ -559,7 +591,15 @@ export type Database = {
           record_count?: number | null
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "export_logs_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "user_entitlements_v1"
+            referencedColumns: ["user_id"]
+          },
+        ]
       }
       indian_states: {
         Row: {
@@ -623,6 +663,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "products"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inventory_txns_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "user_entitlements_v1"
+            referencedColumns: ["user_id"]
           },
         ]
       }
@@ -844,7 +891,22 @@ export type Database = {
           verified_at?: string | null
           verified_by?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "payment_transactions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "user_entitlements_v1"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "payment_transactions_verified_by_fkey"
+            columns: ["verified_by"]
+            isOneToOne: false
+            referencedRelation: "user_entitlements_v1"
+            referencedColumns: ["user_id"]
+          },
+        ]
       }
       products: {
         Row: {
@@ -886,7 +948,15 @@ export type Database = {
           updated_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "products_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "user_entitlements_v1"
+            referencedColumns: ["user_id"]
+          },
+        ]
       }
       profiles: {
         Row: {
@@ -955,7 +1025,15 @@ export type Database = {
           tax_regime?: string | null
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "profiles_id_fkey"
+            columns: ["id"]
+            isOneToOne: true
+            referencedRelation: "user_entitlements_v1"
+            referencedColumns: ["user_id"]
+          },
+        ]
       }
       purchase_orders: {
         Row: {
@@ -1311,6 +1389,13 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "team_invitations_invited_by_fkey"
+            columns: ["invited_by"]
+            isOneToOne: false
+            referencedRelation: "user_entitlements_v1"
+            referencedColumns: ["user_id"]
+          },
+          {
             foreignKeyName: "team_invitations_team_id_fkey"
             columns: ["team_id"]
             isOneToOne: false
@@ -1349,11 +1434,25 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "team_members_invited_by_fkey"
+            columns: ["invited_by"]
+            isOneToOne: false
+            referencedRelation: "user_entitlements_v1"
+            referencedColumns: ["user_id"]
+          },
+          {
             foreignKeyName: "team_members_team_id_fkey"
             columns: ["team_id"]
             isOneToOne: false
             referencedRelation: "teams"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "team_members_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "user_entitlements_v1"
+            referencedColumns: ["user_id"]
           },
         ]
       }
@@ -1382,7 +1481,15 @@ export type Database = {
           owner_id?: string
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "teams_owner_id_fkey"
+            columns: ["owner_id"]
+            isOneToOne: false
+            referencedRelation: "user_entitlements_v1"
+            referencedColumns: ["user_id"]
+          },
+        ]
       }
       temporary_unlocks: {
         Row: {
@@ -1459,7 +1566,15 @@ export type Database = {
           user_id?: string
           xp_earned?: number | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "user_badges_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "user_entitlements_v1"
+            referencedColumns: ["user_id"]
+          },
+        ]
       }
       user_collectibles: {
         Row: {
@@ -1584,7 +1699,15 @@ export type Database = {
           updated_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "user_plans_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "user_entitlements_v1"
+            referencedColumns: ["user_id"]
+          },
+        ]
       }
       user_rewards: {
         Row: {
@@ -1647,7 +1770,15 @@ export type Database = {
           updated_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "user_rewards_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "user_entitlements_v1"
+            referencedColumns: ["user_id"]
+          },
+        ]
       }
       user_subscriptions: {
         Row: {
@@ -1694,6 +1825,13 @@ export type Database = {
             referencedRelation: "payment_transactions"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "user_subscriptions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "user_entitlements_v1"
+            referencedColumns: ["user_id"]
+          },
         ]
       }
       xp_transactions: {
@@ -1732,6 +1870,13 @@ export type Database = {
             referencedRelation: "bills"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "xp_transactions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "user_entitlements_v1"
+            referencedColumns: ["user_id"]
+          },
         ]
       }
     }
@@ -1745,6 +1890,17 @@ export type Database = {
           total_sgst: number | null
           total_tax: number | null
           transaction_type: string | null
+          user_id: string | null
+        }
+        Relationships: []
+      }
+      user_entitlements_v1: {
+        Row: {
+          current_period_end: string | null
+          is_enterprise: boolean | null
+          is_premium: boolean | null
+          plan: string | null
+          subscription_status: boolean | null
           user_id: string | null
         }
         Relationships: []
@@ -1774,7 +1930,15 @@ export type Database = {
           plan?: string | null
           user_id?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "user_plans_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "user_entitlements_v1"
+            referencedColumns: ["user_id"]
+          },
+        ]
       }
       user_plan_status: {
         Row: {
@@ -1801,7 +1965,15 @@ export type Database = {
           plan?: string | null
           user_id?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "user_plans_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "user_entitlements_v1"
+            referencedColumns: ["user_id"]
+          },
+        ]
       }
       user_plan_view: {
         Row: {
@@ -1840,7 +2012,15 @@ export type Database = {
           user_id?: string | null
           valid_until?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "user_plans_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "user_entitlements_v1"
+            referencedColumns: ["user_id"]
+          },
+        ]
       }
     }
     Functions: {

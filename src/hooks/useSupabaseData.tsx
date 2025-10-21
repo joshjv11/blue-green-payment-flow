@@ -165,21 +165,7 @@ export const useSupabaseData = () => {
         }
       }
 
-      // Sync user plan from localStorage
-      const localPlanKey = `user_plan_${user.id}`;
-      const localPlan = localStorage.getItem(localPlanKey);
-      
-      if (localPlan) {
-        const plan = JSON.parse(localPlan);
-        await supabase
-          .from('user_plans')
-          .upsert({
-            user_id: user.id,
-            plan: plan,
-          });
-        
-        localStorage.removeItem(localPlanKey);
-      }
+      // Plan sync removed - now handled by user_entitlements_v1 view
 
     } catch (error: any) {
       console.error('Error syncing data:', error);
