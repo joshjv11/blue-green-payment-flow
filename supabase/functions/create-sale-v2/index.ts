@@ -253,7 +253,7 @@ serve(async (req) => {
     const allowedKeys = new Set([
       'user_id', 'customer_id', 'billing_snapshot', 'subtotal',
       'cgst_amount', 'sgst_amount', 'igst_amount', 'tax_amount',
-      'grand_total', 'amount_paid', 'balance_due', 'status',
+      'grand_total', 'amount_paid', 'balance_due', 'payment_status',
       'transaction_date', 'invoice_number', 'notes'
     ]);
 
@@ -269,7 +269,7 @@ serve(async (req) => {
       grand_total,
       amount_paid,
       balance_due,
-      status: "unpaid",
+      payment_status: "unpaid",
       transaction_date: formattedOrderDate,
       invoice_number: invoice_number || null,
       notes: notes || null,
@@ -283,7 +283,7 @@ serve(async (req) => {
     const { data: saleData, error: saleError } = await supabase
       .from("sales_orders")
       .insert(filteredPayload)
-      .select("id, invoice_number, grand_total, balance_due, status")
+      .select("id, invoice_number, grand_total, balance_due, payment_status")
       .single();
 
     if (saleError) {

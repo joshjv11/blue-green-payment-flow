@@ -92,7 +92,7 @@ export default function SalesV2() {
         throw new Error("Not authenticated");
       }
 
-      const response = await supabase.functions.invoke("create-sale-v2", {
+      const { data, error } = await supabase.functions.invoke("create-sale-v2", {
         body: {
           customer: {
             name: customerName,
@@ -119,27 +119,42 @@ export default function SalesV2() {
         },
       });
 
-      if (response.error) {
-        throw response.error;
+      if (error) {
+        console.error("Error invoking function:", error);
+        toast({
+          title: "Error",
+          description: error.message || "Failed to create sale. Please try again.",
+          variant: "destructive",
+        });
+        return;
       }
 
-      const { data, error } = response;
-      if (error || !data?.success) {
-        throw new Error(data?.error || "Failed to create sale");
+      // Check if response indicates an error
+      if (data && !data.ok) {
+        console.error("Sale creation failed:", data);
+        const errorMsg = data.message || "Failed to create sale";
+        const detailsMsg = data.details ? ` (${data.details})` : '';
+        const hintMsg = data.hint ? ` Hint: ${data.hint}` : '';
+        const codeMsg = data.code ? ` Code: ${data.code}` : '';
+        toast({
+          title: `Error at ${data.stage || 'unknown stage'}`,
+          description: `${errorMsg}${detailsMsg}${hintMsg}${codeMsg}`,
+          variant: "destructive",
+        });
+        return;
       }
 
       toast({
-        title: "Sale created",
-        description: `Invoice ${data.data.invoice_number} created successfully`,
+        title: "Success",
+        description: `Sale created! Invoice: ${data?.data?.invoice_number || invoiceNumber}`,
       });
 
-      // Reset form or navigate
       navigate("/sales");
     } catch (error: any) {
-      console.error("Error creating sale:", error);
+      console.error("Unexpected error:", error);
       toast({
-        title: "Error creating sale",
-        description: error.message,
+        title: "Error",
+        description: error.message || "An unexpected error occurred.",
         variant: "destructive",
       });
     } finally {
