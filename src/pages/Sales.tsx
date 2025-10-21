@@ -526,15 +526,17 @@ export default function Sales() {
           amount_paid: grandTotal,
           payment_status: 'paid'
         })
-        .eq('id', id);
+        .eq('id', id)
+        .eq('user_id', user!.id);
       
       if (error) throw error;
-      toast({ title: 'Marked as paid', description: 'Sale payment status updated' });
+      toast({ title: 'Sale marked as paid', description: `Amount: ${formatINR(grandTotal)}` });
       fetchSales();
     } catch (error: any) {
       toast({ title: 'Error updating payment', description: error.message, variant: 'destructive' });
     }
   };
+
 
   const getStats = () => {
     const thisMonth = sales.filter(s => {
