@@ -13,6 +13,7 @@ import ProtectedRoute from '@/components/ProtectedRoute';
 import DebugInfo from '@/components/DebugInfo';
 import MobileOptimizer from '@/components/MobileOptimizer';
 import { PageTransition } from '@/components/PageTransition';
+import ReturnHomeButton from '@/components/ui/ReturnHomeButton';
 import Index from './pages/Index';
 import Auth from './pages/Auth';
 import Terms from './pages/Terms';
@@ -259,7 +260,8 @@ function AppLayout({ children }: { children: React.ReactNode }) {
             <SidebarTrigger />
             <div className="flex-1" />
           </header>
-          <main className="flex-1">
+          <main className="flex-1 relative">
+            <ReturnHomeButton />
             {children}
           </main>
         </div>
