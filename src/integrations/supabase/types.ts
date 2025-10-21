@@ -1061,6 +1061,7 @@ export type Database = {
       sales_orders: {
         Row: {
           amount_paid: number
+          balance_due: number | null
           cgst_amount: number | null
           created_at: string
           customer_address: string | null
@@ -1082,6 +1083,7 @@ export type Database = {
           pdf_url: string | null
           place_of_supply: string | null
           sgst_amount: number | null
+          subtotal: number
           tax_amount: number
           tax_regime: string | null
           terms_conditions: string | null
@@ -1092,6 +1094,7 @@ export type Database = {
         }
         Insert: {
           amount_paid?: number
+          balance_due?: number | null
           cgst_amount?: number | null
           created_at?: string
           customer_address?: string | null
@@ -1113,6 +1116,7 @@ export type Database = {
           pdf_url?: string | null
           place_of_supply?: string | null
           sgst_amount?: number | null
+          subtotal?: number
           tax_amount?: number
           tax_regime?: string | null
           terms_conditions?: string | null
@@ -1123,6 +1127,7 @@ export type Database = {
         }
         Update: {
           amount_paid?: number
+          balance_due?: number | null
           cgst_amount?: number | null
           created_at?: string
           customer_address?: string | null
@@ -1144,6 +1149,7 @@ export type Database = {
           pdf_url?: string | null
           place_of_supply?: string | null
           sgst_amount?: number | null
+          subtotal?: number
           tax_amount?: number
           tax_regime?: string | null
           terms_conditions?: string | null

@@ -327,6 +327,10 @@ export default function Sales() {
         }
       }
 
+      // Derive payment status based on amount paid
+      const derivedStatus = amountPaid >= grandTotal ? 'paid' : 
+                           amountPaid > 0 ? 'partial' : 'unpaid';
+      
       const orderData = {
         user_id: user!.id,
         customer_id: resolvedCustomerId,
@@ -335,18 +339,20 @@ export default function Sales() {
         customer_gstin: customerGstin || null,
         customer_state: customerState || null,
         invoice_number: invoiceNumber,
+        transaction_date: format(orderDate, 'yyyy-MM-dd'), // For backward compatibility
         order_date: format(orderDate, 'yyyy-MM-dd'),
         due_date: dueDate ? format(dueDate, 'yyyy-MM-dd') : null,
         currency: currency || settings.currency,
         fx_currency: fxCurrency || currency || settings.currency,
         fx_rate_to_base: fxRate,
-        total_amount: totalAmount,
+        subtotal: totalAmount, // Use subtotal column (sum of line items before tax)
+        total_amount: totalAmount, // Legacy column, keep for backward compatibility
         tax_amount: taxAmount,
         cgst_amount: totalCGST,
         sgst_amount: totalSGST,
         igst_amount: totalIGST,
-        grand_total: grandTotal,
-        status: status,
+        grand_total: grandTotal, // Final total including tax
+        payment_status: derivedStatus, // Derive from amount_paid vs grand_total
         amount_paid: amountPaid,
         is_igst: isIGST,
         tax_regime: settings.tax_regime,
@@ -509,6 +515,24 @@ export default function Sales() {
       fetchSales();
     } catch (error: any) {
       toast({ title: 'Error deleting sale', description: error.message, variant: 'destructive' });
+    }
+  };
+
+  const handleMarkPaid = async (id: string, grandTotal: number) => {
+    try {
+      const { error } = await supabase
+        .from('sales_orders')
+        .update({ 
+          amount_paid: grandTotal,
+          payment_status: 'paid'
+        })
+        .eq('id', id);
+      
+      if (error) throw error;
+      toast({ title: 'Marked as paid', description: 'Sale payment status updated' });
+      fetchSales();
+    } catch (error: any) {
+      toast({ title: 'Error updating payment', description: error.message, variant: 'destructive' });
     }
   };
 
@@ -678,6 +702,17 @@ export default function Sales() {
                         </TableCell>
                         <TableCell>
                           <div className="flex gap-2">
+                            {sale.payment_status !== 'paid' && (
+                              <Button 
+                                size="sm" 
+                                variant="outline"
+                                onClick={() => handleMarkPaid(sale.id, sale.grand_total)}
+                                className="gap-1"
+                              >
+                                <CheckCircle2 className="w-3 h-3" />
+                                Mark Paid
+                              </Button>
+                            )}
                             <Button size="sm" variant="ghost" onClick={() => handleDelete(sale.id)}>
                               <Trash2 className="w-4 h-4" />
                             </Button>
