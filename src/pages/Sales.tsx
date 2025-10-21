@@ -241,29 +241,33 @@ export default function Sales() {
       const totalSGST = orderLines.reduce((sum, line) => sum + line.sgst_amount, 0);
       const totalIGST = orderLines.reduce((sum, line) => sum + line.igst_amount, 0);
 
+      // Normalize empty strings to null for database operations
+      const normalizedEmail = customerEmail?.trim() || null;
+      const normalizedPhone = customerPhone?.trim() || null;
+      
       // Resolve or create customer using flexible matching
       let resolvedCustomerId = customerId;
       if (!resolvedCustomerId) {
         let existingCustomer = null;
 
         // Priority 1: Match by email if provided
-        if (customerEmail?.trim()) {
+        if (normalizedEmail) {
           const { data } = await supabase
             .from('customers')
             .select('id')
             .eq('user_id', user!.id)
-            .ilike('email', customerEmail.trim())
+            .ilike('email', normalizedEmail)
             .maybeSingle();
           existingCustomer = data;
         }
 
         // Priority 2: Match by phone if no email match
-        if (!existingCustomer && customerPhone?.trim()) {
+        if (!existingCustomer && normalizedPhone) {
           const { data } = await supabase
             .from('customers')
             .select('id')
             .eq('user_id', user!.id)
-            .eq('phone', customerPhone.trim())
+            .eq('phone', normalizedPhone)
             .maybeSingle();
           existingCustomer = data;
         }
@@ -286,28 +290,32 @@ export default function Sales() {
           await supabase
             .from('customers')
             .update({
-              email: customerEmail?.trim() || null,
-              phone: customerPhone?.trim() || null,
-              address: customerAddress || null,
-              party_gstin: customerGstin || null,
-              party_state: customerState || null,
+              email: normalizedEmail,
+              phone: normalizedPhone,
+              address: customerAddress?.trim() || null,
+              party_gstin: customerGstin?.trim() || null,
+              party_state: customerState?.trim() || null,
               country: customerCountry || 'IN',
             })
             .eq('id', existingCustomer.id);
         } else {
-          // Create new customer
+          // Create new customer - explicitly omit email/phone if null
+          const customerData: any = {
+            user_id: user!.id,
+            name: customerName.trim(),
+            address: customerAddress?.trim() || null,
+            party_gstin: customerGstin?.trim() || null,
+            party_state: customerState?.trim() || null,
+            country: customerCountry || 'IN',
+          };
+          
+          // Only include email/phone if they have values
+          if (normalizedEmail) customerData.email = normalizedEmail;
+          if (normalizedPhone) customerData.phone = normalizedPhone;
+          
           const { data: newCustomer, error: customerError } = await supabase
             .from('customers')
-            .insert({
-              user_id: user!.id,
-              name: customerName.trim(),
-              email: customerEmail?.trim() || null,
-              phone: customerPhone?.trim() || null,
-              address: customerAddress || null,
-              party_gstin: customerGstin || null,
-              party_state: customerState || null,
-              country: customerCountry || 'IN',
-            })
+            .insert(customerData)
             .select('id')
             .single();
 
