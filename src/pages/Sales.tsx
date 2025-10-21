@@ -77,11 +77,14 @@ export default function Sales() {
   
   // Form state
   const [customerName, setCustomerName] = useState('');
+  const [customerEmail, setCustomerEmail] = useState('');
+  const [customerPhone, setCustomerPhone] = useState('');
   const [customerAddress, setCustomerAddress] = useState('');
   const [customerGstin, setCustomerGstin] = useState('');
   const [customerState, setCustomerState] = useState('');
   const [customerCountry, setCustomerCountry] = useState('IN');
   const [customerId, setCustomerId] = useState<string | null>(null);
+  const [sendInvoiceByEmail, setSendInvoiceByEmail] = useState(false);
   const [invoiceNumber, setInvoiceNumber] = useState('');
   const [orderDate, setOrderDate] = useState<Date>(new Date());
   const [dueDate, setDueDate] = useState<Date | undefined>();
@@ -238,19 +241,59 @@ export default function Sales() {
       const totalSGST = orderLines.reduce((sum, line) => sum + line.sgst_amount, 0);
       const totalIGST = orderLines.reduce((sum, line) => sum + line.igst_amount, 0);
 
-      // Resolve or create customer
+      // Resolve or create customer using flexible matching
       let resolvedCustomerId = customerId;
       if (!resolvedCustomerId) {
-        // Check if customer exists by name
-        const { data: existingCustomer } = await supabase
-          .from('customers')
-          .select('id')
-          .eq('user_id', user!.id)
-          .eq('name', customerName.trim())
-          .maybeSingle();
+        let existingCustomer = null;
+
+        // Priority 1: Match by email if provided
+        if (customerEmail?.trim()) {
+          const { data } = await supabase
+            .from('customers')
+            .select('id')
+            .eq('user_id', user!.id)
+            .ilike('email', customerEmail.trim())
+            .maybeSingle();
+          existingCustomer = data;
+        }
+
+        // Priority 2: Match by phone if no email match
+        if (!existingCustomer && customerPhone?.trim()) {
+          const { data } = await supabase
+            .from('customers')
+            .select('id')
+            .eq('user_id', user!.id)
+            .eq('phone', customerPhone.trim())
+            .maybeSingle();
+          existingCustomer = data;
+        }
+
+        // Priority 3: Match by name as fallback
+        if (!existingCustomer) {
+          const { data } = await supabase
+            .from('customers')
+            .select('id')
+            .eq('user_id', user!.id)
+            .eq('name', customerName.trim())
+            .maybeSingle();
+          existingCustomer = data;
+        }
 
         if (existingCustomer) {
           resolvedCustomerId = existingCustomer.id;
+          
+          // Update existing customer with new info if provided
+          await supabase
+            .from('customers')
+            .update({
+              email: customerEmail?.trim() || null,
+              phone: customerPhone?.trim() || null,
+              address: customerAddress || null,
+              party_gstin: customerGstin || null,
+              party_state: customerState || null,
+              country: customerCountry || 'IN',
+            })
+            .eq('id', existingCustomer.id);
         } else {
           // Create new customer
           const { data: newCustomer, error: customerError } = await supabase
@@ -258,7 +301,8 @@ export default function Sales() {
             .insert({
               user_id: user!.id,
               name: customerName.trim(),
-              email: null, // Optional field
+              email: customerEmail?.trim() || null,
+              phone: customerPhone?.trim() || null,
               address: customerAddress || null,
               party_gstin: customerGstin || null,
               party_state: customerState || null,
@@ -408,11 +452,14 @@ export default function Sales() {
 
   const resetForm = () => {
     setCustomerName('');
+    setCustomerEmail('');
+    setCustomerPhone('');
     setCustomerAddress('');
     setCustomerGstin('');
     setCustomerState('');
     setCustomerCountry('IN');
     setCustomerId(null);
+    setSendInvoiceByEmail(false);
     setOrderDate(new Date());
     setDueDate(undefined);
     setCurrency(settings.currency);
@@ -650,6 +697,24 @@ export default function Sales() {
                   <Input value={customerName} onChange={e => setCustomerName(e.target.value)} required />
                 </div>
                 <div>
+                  <Label>Customer Email {sendInvoiceByEmail && '*'}</Label>
+                  <Input 
+                    type="email"
+                    value={customerEmail} 
+                    onChange={e => setCustomerEmail(e.target.value)} 
+                    placeholder="Optional"
+                    required={sendInvoiceByEmail}
+                  />
+                </div>
+                <div>
+                  <Label>Phone / WhatsApp</Label>
+                  <Input 
+                    value={customerPhone} 
+                    onChange={e => setCustomerPhone(e.target.value)} 
+                    placeholder="Optional"
+                  />
+                </div>
+                <div>
                   <Label>Customer GSTIN / Tax ID</Label>
                   <Input 
                     value={customerGstin} 
@@ -671,6 +736,18 @@ export default function Sales() {
                       <SelectItem value="SG">Singapore</SelectItem>
                     </SelectContent>
                   </Select>
+                </div>
+                <div className="col-span-2">
+                  <div className="flex items-center space-x-2">
+                    <Checkbox 
+                      id="sendEmail" 
+                      checked={sendInvoiceByEmail} 
+                      onCheckedChange={(checked) => setSendInvoiceByEmail(checked as boolean)} 
+                    />
+                    <Label htmlFor="sendEmail" className="text-sm cursor-pointer">
+                      Send invoice by email (requires customer email)
+                    </Label>
+                  </div>
                 </div>
                 <div>
                   <Label>Invoice Number *</Label>
