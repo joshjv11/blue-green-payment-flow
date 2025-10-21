@@ -24,6 +24,7 @@ import Settings from './pages/Settings';
 import Sales from './pages/Sales';
 import SalesV2 from './pages/SalesV2';
 import Purchases from './pages/Purchases';
+import PurchasesV2 from './pages/PurchasesV2';
 import Inventory from './pages/Inventory';
 import GSTSummary from './pages/GSTSummary';
 import Exports from './pages/Exports';
@@ -98,6 +99,16 @@ function AppRoutes() {
           <ProtectedRoute>
             <RequirePlan requiredPlan="pro" featureName="Purchase Orders">
               <PageTransition><Purchases /></PageTransition>
+            </RequirePlan>
+          </ProtectedRoute>
+        } 
+      />
+      <Route 
+        path="/purchases-v2"
+        element={
+          <ProtectedRoute>
+            <RequirePlan requiredPlan="pro" featureName="Purchase Orders">
+              <PageTransition><PurchasesV2 /></PageTransition>
             </RequirePlan>
           </ProtectedRoute>
         } 

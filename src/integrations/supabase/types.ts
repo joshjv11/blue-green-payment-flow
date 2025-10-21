@@ -402,6 +402,7 @@ export type Database = {
           phone: string | null
           tax_id_label: string | null
           tax_id_value: string | null
+          type: string | null
           updated_at: string
           user_id: string
         }
@@ -418,6 +419,7 @@ export type Database = {
           phone?: string | null
           tax_id_label?: string | null
           tax_id_value?: string | null
+          type?: string | null
           updated_at?: string
           user_id: string
         }
@@ -434,6 +436,7 @@ export type Database = {
           phone?: string | null
           tax_id_label?: string | null
           tax_id_value?: string | null
+          type?: string | null
           updated_at?: string
           user_id?: string
         }
@@ -970,13 +973,17 @@ export type Database = {
           is_igst: boolean | null
           is_reverse_charge: boolean | null
           notes: string | null
+          order_date: string | null
           payment_status: string
           pdf_url: string | null
           place_of_supply: string | null
           sgst_amount: number | null
+          status: string | null
           supplier_address: string | null
           supplier_gstin: string | null
+          supplier_id: string | null
           supplier_name: string
+          supplier_snapshot: Json | null
           supplier_state: string | null
           tax_amount: number
           tax_regime: string | null
@@ -1001,13 +1008,17 @@ export type Database = {
           is_igst?: boolean | null
           is_reverse_charge?: boolean | null
           notes?: string | null
+          order_date?: string | null
           payment_status?: string
           pdf_url?: string | null
           place_of_supply?: string | null
           sgst_amount?: number | null
+          status?: string | null
           supplier_address?: string | null
           supplier_gstin?: string | null
+          supplier_id?: string | null
           supplier_name: string
+          supplier_snapshot?: Json | null
           supplier_state?: string | null
           tax_amount?: number
           tax_regime?: string | null
@@ -1032,13 +1043,17 @@ export type Database = {
           is_igst?: boolean | null
           is_reverse_charge?: boolean | null
           notes?: string | null
+          order_date?: string | null
           payment_status?: string
           pdf_url?: string | null
           place_of_supply?: string | null
           sgst_amount?: number | null
+          status?: string | null
           supplier_address?: string | null
           supplier_gstin?: string | null
+          supplier_id?: string | null
           supplier_name?: string
+          supplier_snapshot?: Json | null
           supplier_state?: string | null
           tax_amount?: number
           tax_regime?: string | null
@@ -1049,6 +1064,13 @@ export type Database = {
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "purchase_orders_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "purchase_orders_user_id_fkey"
             columns: ["user_id"]
