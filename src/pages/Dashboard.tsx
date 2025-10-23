@@ -102,7 +102,7 @@ const Dashboard = () => {
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [showPasskeyBanner, setShowPasskeyBanner] = useState(false);
   const { billLimit, canAddBill, canMakeAIQuery, getAIQueriesRemaining } = useSupabasePlan();
-  const { isPremium } = useEntitlements();
+  const { isPremium, loading: entitlementsLoading } = useEntitlements();
   
   // Premium Analytics State
   const [analyticsLoading, setAnalyticsLoading] = useState(false);
@@ -263,7 +263,7 @@ const Dashboard = () => {
   };
 
   const fetchAnalytics = async () => {
-    if (!isPremium) return; // Only fetch analytics for premium users
+    if (entitlementsLoading || !isPremium) return; // Only fetch analytics for premium users
     
     try {
       setAnalyticsLoading(true);
@@ -676,6 +676,16 @@ const Dashboard = () => {
               {/* Upcoming Bills */}
               <UpcomingBills bills={upcomingBillsData} loading={analyticsLoading} />
             </div>
+          ) : entitlementsLoading ? (
+            <Card className="border-border/50">
+              <CardContent className="pt-6">
+                <div className="text-center space-y-4">
+                  <Skeleton className="w-12 h-12 mx-auto rounded-full" />
+                  <Skeleton className="h-6 w-48 mx-auto" />
+                  <Skeleton className="h-4 w-64 mx-auto" />
+                </div>
+              </CardContent>
+            </Card>
           ) : (
             <Card className="border-border/50 bg-gradient-to-br from-purple-500/10 to-blue-500/10">
               <CardContent className="pt-6">
