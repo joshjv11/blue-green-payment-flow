@@ -101,7 +101,7 @@ export type Database = {
           error_name: string | null
           event: string
           id: string
-          ip: unknown | null
+          ip: unknown
           level: string
           message: string | null
           request_id: string | null
@@ -121,7 +121,7 @@ export type Database = {
           error_name?: string | null
           event: string
           id?: string
-          ip?: unknown | null
+          ip?: unknown
           level: string
           message?: string | null
           request_id?: string | null
@@ -141,7 +141,7 @@ export type Database = {
           error_name?: string | null
           event?: string
           id?: string
-          ip?: unknown | null
+          ip?: unknown
           level?: string
           message?: string | null
           request_id?: string | null
@@ -276,6 +276,13 @@ export type Database = {
             columns: ["bill_id"]
             isOneToOne: false
             referencedRelation: "bills"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bill_reminders_bill_id_fkey"
+            columns: ["bill_id"]
+            isOneToOne: false
+            referencedRelation: "upcoming_bills_v1"
             referencedColumns: ["id"]
           },
           {
@@ -1871,6 +1878,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "xp_transactions_related_bill_id_fkey"
+            columns: ["related_bill_id"]
+            isOneToOne: false
+            referencedRelation: "upcoming_bills_v1"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "xp_transactions_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
@@ -1881,6 +1895,16 @@ export type Database = {
       }
     }
     Views: {
+      dashboard_summary_v1: {
+        Row: {
+          net_profit: number | null
+          total_expenses: number | null
+          total_purchases: number | null
+          total_sales: number | null
+          user_id: string | null
+        }
+        Relationships: []
+      }
       gst_summary: {
         Row: {
           month: string | null
@@ -1893,6 +1917,112 @@ export type Database = {
           user_id: string | null
         }
         Relationships: []
+      }
+      inventory_value_v1: {
+        Row: {
+          sku_count: number | null
+          total_inventory_value: number | null
+          user_id: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "products_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "user_entitlements_v1"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
+      monthly_aggregates_v1: {
+        Row: {
+          expenses_total: number | null
+          purchases_total: number | null
+          sales_total: number | null
+          tx_month: string | null
+          user_id: string | null
+        }
+        Relationships: []
+      }
+      top_customers_v1: {
+        Row: {
+          customer_name: string | null
+          invoice_count: number | null
+          total_amount: number | null
+          user_id: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sales_orders_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      top_vendors_v1: {
+        Row: {
+          bill_count: number | null
+          total_amount: number | null
+          user_id: string | null
+          vendor_name: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "purchase_orders_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      unified_transactions_v1: {
+        Row: {
+          amount: number | null
+          kind: string | null
+          ref_id: string | null
+          tx_date: string | null
+          tx_month: string | null
+          user_id: string | null
+        }
+        Relationships: []
+      }
+      upcoming_bills_v1: {
+        Row: {
+          amount: number | null
+          bill_name: string | null
+          due_date: string | null
+          id: string | null
+          status: Database["public"]["Enums"]["bill_status"] | null
+          user_id: string | null
+        }
+        Insert: {
+          amount?: never
+          bill_name?: string | null
+          due_date?: string | null
+          id?: string | null
+          status?: Database["public"]["Enums"]["bill_status"] | null
+          user_id?: string | null
+        }
+        Update: {
+          amount?: never
+          bill_name?: string | null
+          due_date?: string | null
+          id?: string | null
+          status?: Database["public"]["Enums"]["bill_status"] | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bills_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_entitlements_v1: {
         Row: {
@@ -2047,10 +2177,7 @@ export type Database = {
           user_id: string
         }[]
       }
-      amount_to_words: {
-        Args: { amount: number }
-        Returns: string
-      }
+      amount_to_words: { Args: { amount: number }; Returns: string }
       award_streak_shield: {
         Args: {
           p_earned_method: string
@@ -2085,18 +2212,9 @@ export type Database = {
         Args: { p_last_activity_date: string }
         Returns: string
       }
-      calculate_user_level: {
-        Args: { xp: number }
-        Returns: number
-      }
-      calculate_user_tier: {
-        Args: { level: number }
-        Returns: string
-      }
-      can_claim_daily_bonus: {
-        Args: { p_user_id: string }
-        Returns: boolean
-      }
+      calculate_user_level: { Args: { xp: number }; Returns: number }
+      calculate_user_tier: { Args: { level: number }; Returns: string }
+      can_claim_daily_bonus: { Args: { p_user_id: string }; Returns: boolean }
       can_manage_team_members: {
         Args: { target_team_id: string }
         Returns: boolean
@@ -2105,28 +2223,19 @@ export type Database = {
         Args: { target_team_id: string; target_user_id: string }
         Returns: boolean
       }
-      check_plan_access: {
-        Args: { required_plan: string }
-        Returns: boolean
-      }
+      check_plan_access: { Args: { required_plan: string }; Returns: boolean }
       create_default_user_plan: {
         Args: { _user_id: string }
         Returns: undefined
       }
-      deactivate_expired_plans: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
-      }
-      generate_daily_reward: {
-        Args: Record<PropertyKey, never>
-        Returns: Json
-      }
+      deactivate_expired_plans: { Args: never; Returns: undefined }
+      generate_daily_reward: { Args: never; Returns: Json }
       generate_invoice_number: {
         Args: { p_order_type: string; p_user_id: string }
         Returns: string
       }
       get_user_plan: {
-        Args: Record<PropertyKey, never>
+        Args: never
         Returns: {
           credits_remaining: number
           is_active: boolean
@@ -2152,14 +2261,8 @@ export type Database = {
         }
         Returns: boolean
       }
-      is_subscription_expiring_soon: {
-        Args: Record<PropertyKey, never>
-        Returns: boolean
-      }
-      is_system_admin: {
-        Args: { user_id?: string }
-        Returns: boolean
-      }
+      is_subscription_expiring_soon: { Args: never; Returns: boolean }
+      is_system_admin: { Args: { user_id?: string }; Returns: boolean }
       log_payment_access: {
         Args: { p_action: string; p_notes?: string; p_payment_id?: string }
         Returns: undefined
@@ -2168,10 +2271,7 @@ export type Database = {
         Args: { p_shield_type: string; p_user_id: string; p_xp_cost: number }
         Returns: Json
       }
-      require_payment_access_verification: {
-        Args: Record<PropertyKey, never>
-        Returns: boolean
-      }
+      require_payment_access_verification: { Args: never; Returns: boolean }
       schedule_manual_reminder: {
         Args: { p_bill_id: string; p_days_before?: number }
         Returns: string

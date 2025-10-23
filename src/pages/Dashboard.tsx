@@ -45,6 +45,13 @@ import { DailyBonusWheel } from '@/components/DailyBonusWheel';
 import { useStreakProtection } from '@/hooks/useStreakProtection';
 import { StreakCountdownBanner } from '@/components/StreakCountdownBanner';
 import { StreakShieldShop } from '@/components/StreakShieldShop';
+import { useEntitlements } from '@/lib/useEntitlements';
+import * as analytics from '@/lib/analytics';
+import { DashboardKPIs } from '@/components/analytics/DashboardKPIs';
+import { MonthlyChart } from '@/components/analytics/MonthlyChart';
+import { TopLists } from '@/components/analytics/TopLists';
+import { InventoryValueCard } from '@/components/analytics/InventoryValueCard';
+import { UpcomingBills } from '@/components/analytics/UpcomingBills';
 
 interface Bill {
   id: string;
@@ -95,6 +102,16 @@ const Dashboard = () => {
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [showPasskeyBanner, setShowPasskeyBanner] = useState(false);
   const { billLimit, canAddBill, canMakeAIQuery, getAIQueriesRemaining } = useSupabasePlan();
+  const { isPremium } = useEntitlements();
+  
+  // Premium Analytics State
+  const [analyticsLoading, setAnalyticsLoading] = useState(false);
+  const [dashboardSummary, setDashboardSummary] = useState<analytics.DashboardSummary | null>(null);
+  const [monthlyData, setMonthlyData] = useState<analytics.MonthlyAggregate[]>([]);
+  const [topCustomers, setTopCustomers] = useState<analytics.TopCustomer[]>([]);
+  const [topVendors, setTopVendors] = useState<analytics.TopVendor[]>([]);
+  const [upcomingBillsData, setUpcomingBillsData] = useState<analytics.UpcomingBill[]>([]);
+  const [inventoryValue, setInventoryValue] = useState<analytics.InventoryValue | null>(null);
   
   // Initialize notifications, email reminders, and payment verification
   useNotifications();
@@ -115,6 +132,7 @@ const Dashboard = () => {
       await refetchAllQueries();
       await fetchProfile();
       await fetchBills();
+      await fetchAnalytics();
       toast({
         title: 'Refreshed',
         description: 'Dashboard data has been reloaded',
@@ -132,6 +150,7 @@ const Dashboard = () => {
     if (user) {
       fetchProfile();
       fetchBills();
+      fetchAnalytics(); // Fetch premium analytics
       
       // Check if we should show the passkey banner
       const checkPasskeySupport = async () => {
@@ -240,6 +259,33 @@ const Dashboard = () => {
       console.error('Error fetching bills:', error);
     } finally {
       setBillsLoading(false);
+    }
+  };
+
+  const fetchAnalytics = async () => {
+    if (!isPremium) return; // Only fetch analytics for premium users
+    
+    try {
+      setAnalyticsLoading(true);
+      const [summary, monthly, customers, vendors, upcoming, inventory] = await Promise.all([
+        analytics.getDashboardSummary(),
+        analytics.getMonthlyAggregates(),
+        analytics.getTopCustomers(5),
+        analytics.getTopVendors(5),
+        analytics.getUpcomingBills(10),
+        analytics.getInventoryValue(),
+      ]);
+      
+      setDashboardSummary(summary);
+      setMonthlyData(monthly);
+      setTopCustomers(customers);
+      setTopVendors(vendors);
+      setUpcomingBillsData(upcoming);
+      setInventoryValue(inventory);
+    } catch (error) {
+      console.error('Error fetching analytics:', error);
+    } finally {
+      setAnalyticsLoading(false);
     }
   };
 
@@ -593,6 +639,61 @@ const Dashboard = () => {
           {/* Analytics Section */}
           {bills.length > 0 && (
             <DashboardAnalytics bills={bills} isPro={isPro} />
+          )}
+
+          {/* Premium Analytics Section */}
+          {isPremium ? (
+            <div className="space-y-6">
+              <div className="flex items-center justify-between">
+                <h2 className="text-2xl font-bold flex items-center gap-2">
+                  <BarChart3 className="w-6 h-6 text-purple-500" />
+                  Premium Analytics
+                </h2>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={fetchAnalytics}
+                  disabled={analyticsLoading}
+                >
+                  <RefreshCw className={cn("w-4 h-4", analyticsLoading && "animate-spin")} />
+                </Button>
+              </div>
+              
+              {/* KPI Cards */}
+              <DashboardKPIs summary={dashboardSummary} loading={analyticsLoading} />
+              
+              {/* Charts and Lists Grid */}
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <MonthlyChart data={monthlyData} loading={analyticsLoading} />
+                <TopLists 
+                  customers={topCustomers} 
+                  vendors={topVendors} 
+                  loading={analyticsLoading} 
+                />
+                <InventoryValueCard inventory={inventoryValue} loading={analyticsLoading} />
+              </div>
+              
+              {/* Upcoming Bills */}
+              <UpcomingBills bills={upcomingBillsData} loading={analyticsLoading} />
+            </div>
+          ) : (
+            <Card className="border-border/50 bg-gradient-to-br from-purple-500/10 to-blue-500/10">
+              <CardContent className="pt-6">
+                <div className="text-center space-y-4">
+                  <BarChart3 className="w-12 h-12 text-purple-500 mx-auto" />
+                  <div>
+                    <h3 className="text-xl font-semibold mb-2">Unlock Premium Analytics</h3>
+                    <p className="text-muted-foreground mb-4">
+                      Get detailed insights with KPI cards, monthly trends, top customers/vendors, inventory tracking, and upcoming bills
+                    </p>
+                  </div>
+                  <Button onClick={() => setShowUpgradeModal(true)} size="lg" className="gap-2">
+                    <Crown className="w-4 h-4" />
+                    Upgrade to Premium
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
           )}
 
           {/* Plan Limit Warnings */}
