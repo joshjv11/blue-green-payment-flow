@@ -642,7 +642,17 @@ const Dashboard = () => {
           )}
 
           {/* Premium Analytics Section */}
-          {isPremium ? (
+          {entitlementsLoading ? (
+            <Card className="border-border/50">
+              <CardContent className="pt-6">
+                <div className="text-center space-y-4">
+                  <Skeleton className="w-12 h-12 mx-auto rounded-full" />
+                  <Skeleton className="h-6 w-48 mx-auto" />
+                  <Skeleton className="h-4 w-64 mx-auto" />
+                </div>
+              </CardContent>
+            </Card>
+          ) : isPremium ? (
             <div className="space-y-6">
               <div className="flex items-center justify-between">
                 <h2 className="text-2xl font-bold flex items-center gap-2">
@@ -676,16 +686,6 @@ const Dashboard = () => {
               {/* Upcoming Bills */}
               <UpcomingBills bills={upcomingBillsData} loading={analyticsLoading} />
             </div>
-          ) : entitlementsLoading ? (
-            <Card className="border-border/50">
-              <CardContent className="pt-6">
-                <div className="text-center space-y-4">
-                  <Skeleton className="w-12 h-12 mx-auto rounded-full" />
-                  <Skeleton className="h-6 w-48 mx-auto" />
-                  <Skeleton className="h-4 w-64 mx-auto" />
-                </div>
-              </CardContent>
-            </Card>
           ) : (
             <Card className="border-border/50 bg-gradient-to-br from-purple-500/10 to-blue-500/10">
               <CardContent className="pt-6">
