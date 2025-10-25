@@ -26,15 +26,48 @@ export function useEntitlements() {
           return;
         }
         
-        const { data: entitlements, error: fetchError } = await supabase
-          .from('user_entitlements_v1')
+        // Query user_plans table directly instead of view
+        const { data: userPlan, error: fetchError } = await supabase
+          .from('user_plans')
           .select('*')
           .eq('user_id', user.id)
           .maybeSingle();
         
         if (fetchError) throw fetchError;
-        setData(entitlements as Entitlements);
+        
+        if (userPlan) {
+          // Check if plan is active
+          const isActive = userPlan.is_active && (!userPlan.expires_at || new Date(userPlan.expires_at) > new Date());
+          const plan = userPlan.plan || 'free';
+          
+          console.log('📊 useEntitlements:', {
+            plan,
+            isActive,
+            expires_at: userPlan.expires_at,
+            is_active: userPlan.is_active
+          });
+          
+          setData({
+            user_id: user.id,
+            plan: plan,
+            is_premium: (plan === 'premium' || plan === 'pro') && isActive,
+            is_enterprise: plan === 'enterprise' && isActive,
+            subscription_status: isActive,
+            current_period_end: userPlan.expires_at,
+          });
+        } else {
+          // No plan found - set free plan
+          setData({
+            user_id: user.id,
+            plan: 'free',
+            is_premium: false,
+            is_enterprise: false,
+            subscription_status: null,
+            current_period_end: null,
+          });
+        }
       } catch (e: any) {
+        console.error('❌ useEntitlements error:', e);
         setError(e?.message ?? String(e));
         // Fallback to free plan on error
         setData({

@@ -142,7 +142,12 @@ export const PlanProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setPlan(userPlan);
         setAiQueriesUsed(planData.ai_queries_used || 0);
         setAiQueriesLimit(planData.ai_queries_limit || 3);
-        console.log('✅ Plan refreshed:', userPlan);
+        console.log('✅ Plan refreshed:', {
+          userPlan,
+          rawPlanFromDB: planData.plan,
+          isActive: planData.is_active,
+          expiresAt: planData.expires_at
+        });
       } else {
         // Create default plan if none exists
         const { error } = await supabase.rpc('create_default_user_plan', { _user_id: user.id });
@@ -281,6 +286,15 @@ export const usePlan = () => {
     const planName = context.plan || 'free';
     const userRank = rank[planName as keyof typeof rank] || rank.free;
     const requiredRank = rank[required];
+    
+    console.log('🔐 Plan Check:', {
+      userPlan: planName,
+      userRank,
+      required,
+      requiredRank,
+      hasAccess: userRank >= requiredRank,
+      loading: context.loading
+    });
     
     // Free tier is always accessible
     if (required === 'free') return true;

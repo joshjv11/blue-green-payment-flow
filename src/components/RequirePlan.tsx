@@ -20,16 +20,30 @@ export const RequirePlan = ({
   const { hasPlan, loading, plan } = usePlan();
 
   useEffect(() => {
-    if (loading) return;
+    if (loading) {
+      console.log('⏳ RequirePlan: Still loading, waiting...');
+      return;
+    }
+
+    console.log('🔒 RequirePlan Check:', {
+      requiredPlan,
+      featureName,
+      userPlan: plan,
+      loading
+    });
 
     // Always allow access if plan check fails to prevent white screens
     try {
       const hasAccess = hasPlan(requiredPlan);
+      
+      console.log('🔑 Access Check Result:', hasAccess);
 
       if (!hasAccess) {
         const planName = requiredPlan === 'premium' 
           ? 'Premium (₹500/month)' 
           : 'Pro (₹100/month)';
+        
+        console.log('❌ Access Denied - Redirecting to upgrade');
         
         toast({
           title: "Upgrade Required",
@@ -40,6 +54,8 @@ export const RequirePlan = ({
         setTimeout(() => {
           navigate('/upgrade', { replace: true });
         }, 1500);
+      } else {
+        console.log('✅ Access Granted');
       }
     } catch (error) {
       console.error('[RequirePlan] Error checking plan access:', error);
