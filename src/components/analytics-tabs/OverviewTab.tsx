@@ -1,158 +1,197 @@
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { TrendingUp, TrendingDown, DollarSign, Users, ShoppingCart, Package } from 'lucide-react';
-import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
-import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
+import { DollarSign, TrendingUp, Package, Users, ShoppingCart, RotateCw, Diamond, Wallet, UserCheck } from 'lucide-react';
+import { KPICard } from '@/components/analytics/KPICard';
+import { useKPIData } from '@/hooks/useKPIData';
+import { formatINR } from '@/utils/currency';
 
 const OverviewTab = () => {
-  // Mock data for demonstration
-  const kpiData = [
-    { label: 'Total Revenue', value: '₹2,45,680', change: '+12.5%', trend: 'up', icon: DollarSign },
-    { label: 'Active Customers', value: '342', change: '+8.2%', trend: 'up', icon: Users },
-    { label: 'Total Orders', value: '1,234', change: '-3.1%', trend: 'down', icon: ShoppingCart },
-    { label: 'Products Sold', value: '5,678', change: '+15.3%', trend: 'up', icon: Package },
-  ];
+  const { data, loading, error } = useKPIData();
 
-  const revenueData = [
-    { month: 'Jan', revenue: 45000 },
-    { month: 'Feb', revenue: 52000 },
-    { month: 'Mar', revenue: 48000 },
-    { month: 'Apr', revenue: 61000 },
-    { month: 'May', revenue: 55000 },
-    { month: 'Jun', revenue: 73000 },
-  ];
+  if (error) {
+    return (
+      <div className="text-center py-12">
+        <p className="text-destructive">Error loading KPI data: {error}</p>
+      </div>
+    );
+  }
 
-  const categoryData = [
-    { name: 'Electronics', value: 35, color: 'hsl(var(--chart-1))' },
-    { name: 'Clothing', value: 25, color: 'hsl(var(--chart-2))' },
-    { name: 'Food', value: 20, color: 'hsl(var(--chart-3))' },
-    { name: 'Books', value: 12, color: 'hsl(var(--chart-4))' },
-    { name: 'Others', value: 8, color: 'hsl(var(--chart-5))' },
-  ];
+  const calculateTrend = (current: number, previous: number): 'up' | 'down' | 'neutral' => {
+    if (current > previous * 1.05) return 'up';
+    if (current < previous * 0.95) return 'down';
+    return 'neutral';
+  };
+
+  const calculatePercentChange = (current: number, previous: number): string => {
+    if (previous === 0) return 'N/A';
+    const change = ((current - previous) / previous) * 100;
+    return `${change > 0 ? '+' : ''}${change.toFixed(1)}%`;
+  };
+
+  const getStatus = (trend: 'up' | 'down' | 'neutral', isReverse = false): 'success' | 'warning' | 'error' | 'neutral' => {
+    if (trend === 'neutral') return 'neutral';
+    if (isReverse) {
+      return trend === 'down' ? 'success' : 'error';
+    }
+    return trend === 'up' ? 'success' : 'error';
+  };
 
   return (
     <div className="space-y-6">
-      {/* KPI Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        {kpiData.map((kpi) => {
-          const Icon = kpi.icon;
-          return (
-            <Card key={kpi.label}>
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div className="flex-1">
-                    <p className="text-sm font-medium text-muted-foreground">{kpi.label}</p>
-                    <p className="text-2xl font-bold mt-2">{kpi.value}</p>
-                    <Badge
-                      variant="outline"
-                      className={`mt-2 ${
-                        kpi.trend === 'up'
-                          ? 'text-green-600 border-green-600'
-                          : 'text-red-600 border-red-600'
-                      }`}
-                    >
-                      {kpi.trend === 'up' ? (
-                        <TrendingUp className="h-3 w-3 mr-1" />
-                      ) : (
-                        <TrendingDown className="h-3 w-3 mr-1" />
-                      )}
-                      {kpi.change}
-                    </Badge>
-                  </div>
-                  <Icon className="h-8 w-8 text-muted-foreground" />
-                </div>
-              </CardContent>
-            </Card>
-          );
-        })}
+      {/* Row 1: Revenue, Gross Profit, Profit Margin */}
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+        <KPICard
+          label="Total Revenue"
+          value={data ? formatINR(data.totalRevenue.current) : '---'}
+          secondaryValue="Total sales this period"
+          comparison={data ? {
+            value: `${calculatePercentChange(data.totalRevenue.current, data.totalRevenue.previous)} vs last period`,
+            trend: calculateTrend(data.totalRevenue.current, data.totalRevenue.previous)
+          } : undefined}
+          icon={DollarSign}
+          tooltip="Total money earned from all sales in this period"
+          sparklineData={data?.totalRevenue.sparkline}
+          status={data ? getStatus(calculateTrend(data.totalRevenue.current, data.totalRevenue.previous)) : 'neutral'}
+          loading={loading}
+        />
+
+        <KPICard
+          label="Gross Profit"
+          value={data ? formatINR(data.grossProfit.current) : '---'}
+          secondaryValue={data ? `${data.grossProfit.margin.toFixed(1)}% margin` : '---'}
+          comparison={data ? {
+            value: `${calculatePercentChange(data.grossProfit.current, data.grossProfit.previous)} vs last period`,
+            trend: calculateTrend(data.grossProfit.current, data.grossProfit.previous)
+          } : undefined}
+          icon={TrendingUp}
+          tooltip="Revenue minus the cost of goods sold"
+          sparklineData={data?.grossProfit.sparkline}
+          status={data ? (
+            data.grossProfit.margin > 20 ? 'success' :
+            data.grossProfit.margin > 10 ? 'warning' : 'error'
+          ) : 'neutral'}
+          loading={loading}
+        />
+
+        <KPICard
+          label="Profit Margin"
+          value={data ? `${data.profitMargin.current.toFixed(1)}%` : '---'}
+          secondaryValue={data ? `vs ${data.profitMargin.previous.toFixed(1)}% last period` : '---'}
+          comparison={data ? {
+            value: `${(data.profitMargin.current - data.profitMargin.previous).toFixed(1)}% change`,
+            trend: calculateTrend(data.profitMargin.current, data.profitMargin.previous)
+          } : undefined}
+          icon={TrendingUp}
+          tooltip="Percentage of revenue that becomes profit"
+          sparklineData={data?.profitMargin.sparkline}
+          status={data ? (
+            data.profitMargin.current > 20 ? 'success' :
+            data.profitMargin.current > 10 ? 'warning' : 'error'
+          ) : 'neutral'}
+          loading={loading}
+        />
       </div>
 
-      {/* Revenue Trend */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Revenue Trend</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <ChartContainer
-            config={{
-              revenue: { label: 'Revenue', color: 'hsl(var(--primary))' },
-            }}
-            className="h-[300px]"
-          >
-            <LineChart data={revenueData}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="month" />
-              <YAxis />
-              <ChartTooltip content={<ChartTooltipContent />} />
-              <Line type="monotone" dataKey="revenue" stroke="var(--color-revenue)" strokeWidth={2} />
-            </LineChart>
-          </ChartContainer>
-        </CardContent>
-      </Card>
+      {/* Row 2: AOV, Units Sold, Inventory Turnover */}
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+        <KPICard
+          label="Average Order Value"
+          value={data ? formatINR(data.avgOrderValue.current) : '---'}
+          secondaryValue="Per transaction"
+          comparison={data ? {
+            value: `${calculatePercentChange(data.avgOrderValue.current, data.avgOrderValue.previous)} vs last period`,
+            trend: calculateTrend(data.avgOrderValue.current, data.avgOrderValue.previous)
+          } : undefined}
+          icon={ShoppingCart}
+          tooltip="Average money spent per customer order"
+          sparklineData={data?.avgOrderValue.sparkline}
+          status={data ? getStatus(calculateTrend(data.avgOrderValue.current, data.avgOrderValue.previous)) : 'neutral'}
+          loading={loading}
+        />
 
-      {/* Category Distribution */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>Sales by Category</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ChartContainer
-              config={{}}
-              className="h-[250px]"
-            >
-              <PieChart>
-                <Pie
-                  data={categoryData}
-                  cx="50%"
-                  cy="50%"
-                  outerRadius={80}
-                  fill="#8884d8"
-                  dataKey="value"
-                  label
-                >
-                  {categoryData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} />
-                  ))}
-                </Pie>
-                <ChartTooltip content={<ChartTooltipContent />} />
-              </PieChart>
-            </ChartContainer>
-          </CardContent>
-        </Card>
+        <KPICard
+          label="Total Units Sold"
+          value={data ? data.totalUnitsSold.current.toLocaleString() : '---'}
+          secondaryValue={data ? `~${Math.round(data.totalUnitsSold.avgPerDay)} per day` : '---'}
+          comparison={data ? {
+            value: `${calculatePercentChange(data.totalUnitsSold.current, data.totalUnitsSold.previous)} vs last period`,
+            trend: calculateTrend(data.totalUnitsSold.current, data.totalUnitsSold.previous)
+          } : undefined}
+          icon={Package}
+          tooltip="Total number of items/units sold this period"
+          sparklineData={data?.totalUnitsSold.sparkline}
+          status={data ? getStatus(calculateTrend(data.totalUnitsSold.current, data.totalUnitsSold.previous)) : 'neutral'}
+          loading={loading}
+        />
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Quick Insights</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div className="flex items-center justify-between p-3 border rounded-lg">
-                <div>
-                  <p className="text-sm font-medium">Best Performing Month</p>
-                  <p className="text-xs text-muted-foreground">June 2024</p>
-                </div>
-                <Badge variant="secondary">₹73,000</Badge>
-              </div>
-              
-              <div className="flex items-center justify-between p-3 border rounded-lg">
-                <div>
-                  <p className="text-sm font-medium">Average Order Value</p>
-                  <p className="text-xs text-muted-foreground">Last 30 days</p>
-                </div>
-                <Badge variant="secondary">₹1,234</Badge>
-              </div>
-              
-              <div className="flex items-center justify-between p-3 border rounded-lg">
-                <div>
-                  <p className="text-sm font-medium">Customer Retention</p>
-                  <p className="text-xs text-muted-foreground">Returning customers</p>
-                </div>
-                <Badge variant="secondary">68%</Badge>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+        <KPICard
+          label="Inventory Turnover"
+          value={data ? `${data.inventoryTurnover.current.toFixed(1)}x` : '---'}
+          secondaryValue={data ? `vs ${data.inventoryTurnover.previous.toFixed(1)}x last period` : '---'}
+          comparison={data ? {
+            value: `${calculatePercentChange(data.inventoryTurnover.current, data.inventoryTurnover.previous)} change`,
+            trend: calculateTrend(data.inventoryTurnover.current, data.inventoryTurnover.previous)
+          } : undefined}
+          icon={RotateCw}
+          tooltip="How many times inventory sells and is replaced in this period"
+          sparklineData={data?.inventoryTurnover.sparkline}
+          status={data ? (
+            data.inventoryTurnover.current > 4 ? 'success' :
+            data.inventoryTurnover.current > 2 ? 'warning' : 'error'
+          ) : 'neutral'}
+          loading={loading}
+        />
+      </div>
+
+      {/* Row 3: CLV, Cash Position, Active Customers */}
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+        <KPICard
+          label="Customer Lifetime Value"
+          value={data ? formatINR(data.customerLifetimeValue.current) : '---'}
+          secondaryValue={data ? `Median ${formatINR(data.customerLifetimeValue.median)}` : '---'}
+          comparison={undefined}
+          icon={Diamond}
+          tooltip="Average total revenue per customer over their lifetime with us"
+          sparklineData={data?.customerLifetimeValue.sparkline}
+          status="success"
+          loading={loading}
+        />
+
+        <KPICard
+          label="Cash Position"
+          value={data ? formatINR(data.cashPosition.current) : '---'}
+          secondaryValue={data ? `${data.cashPosition.change >= 0 ? '+' : ''}${formatINR(data.cashPosition.change)} change` : '---'}
+          comparison={data ? {
+            value: data.cashPosition.current >= 0 ? 'Positive flow' : 'Negative flow',
+            trend: data.cashPosition.current >= 0 ? 'up' : 'down'
+          } : undefined}
+          icon={Wallet}
+          tooltip="Net cash flow this period (sales received - purchases paid)"
+          sparklineData={data?.cashPosition.sparkline}
+          status={data ? (
+            data.cashPosition.current > 0 ? 'success' :
+            data.cashPosition.current > -10000 ? 'warning' : 'error'
+          ) : 'neutral'}
+          loading={loading}
+        />
+
+        <KPICard
+          label="Active Customers"
+          value={data ? data.activeCustomers.current.toString() : '---'}
+          secondaryValue={data ? `${data.activeCustomers.new} new, ${data.activeCustomers.returning} returning` : '---'}
+          comparison={data ? {
+            value: `${data.activeCustomers.new} new customers`,
+            trend: data.activeCustomers.new > 0 ? 'up' : 'neutral'
+          } : undefined}
+          icon={Users}
+          tooltip="Number of unique customers who made a purchase this period"
+          sparklineData={data?.activeCustomers.sparkline}
+          status={data ? getStatus(calculateTrend(data.activeCustomers.current, data.activeCustomers.current * 0.9)) : 'neutral'}
+          loading={loading}
+        />
+      </div>
+
+      {/* Note about CAC */}
+      <div className="text-sm text-muted-foreground italic">
+        Note: Customer Acquisition Cost (CAC) requires marketing expense tracking. Set up marketing data integration to view this metric.
       </div>
     </div>
   );
