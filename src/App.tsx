@@ -33,6 +33,7 @@ import Reports from './pages/Reports';
 import TaxSettings from './pages/TaxSettings';
 import Expenses from './pages/Expenses';
 import FinancialReports from './pages/FinancialReports';
+import AdvancedAnalyticsDashboard from './pages/AdvancedAnalyticsDashboard';
 import Upgrade from './pages/Upgrade';
 import Admin from './pages/Admin';
 import AdminUsers from './pages/AdminUsers';
@@ -71,6 +72,16 @@ function AppRoutes() {
         element={
           <ProtectedRoute>
             <PageTransition><Analytics /></PageTransition>
+          </ProtectedRoute>
+        } 
+      />
+      <Route 
+        path="/analytics/advanced" 
+        element={
+          <ProtectedRoute>
+            <RequirePlan requiredPlan="premium" featureName="Advanced Analytics Dashboard">
+              <PageTransition><AdvancedAnalyticsDashboard /></PageTransition>
+            </RequirePlan>
           </ProtectedRoute>
         } 
       />
