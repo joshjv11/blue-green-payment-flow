@@ -83,7 +83,6 @@ serve(async (req) => {
         .select("id")
         .eq("user_id", user.id)
         .eq("email", supplier.email)
-        .eq("type", "supplier")
         .maybeSingle();
       
       if (findError) {
@@ -107,7 +106,6 @@ serve(async (req) => {
         .select("id")
         .eq("user_id", user.id)
         .eq("phone", supplier.phone)
-        .eq("type", "supplier")
         .maybeSingle();
       
       if (findError) {
@@ -131,7 +129,6 @@ serve(async (req) => {
         .select("id")
         .eq("user_id", user.id)
         .eq("name", supplier.name)
-        .eq("type", "supplier")
         .maybeSingle();
       
       if (findError) {
@@ -162,7 +159,6 @@ serve(async (req) => {
           country: supplier.country || "India",
           tax_id_label: supplier.gstin ? "GSTIN" : null,
           tax_id_value: supplier.gstin || null,
-          type: "supplier",
         })
         .select("id")
         .single();
