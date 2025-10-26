@@ -82,6 +82,7 @@ serve(async (req) => {
         .select("id")
         .eq("user_id", user.id)
         .eq("email", customer.email)
+        .eq("type", "customer")
         .maybeSingle();
       
       if (findError) {
@@ -105,6 +106,7 @@ serve(async (req) => {
         .select("id")
         .eq("user_id", user.id)
         .eq("phone", customer.phone)
+        .eq("type", "customer")
         .maybeSingle();
       
       if (findError) {
@@ -128,6 +130,7 @@ serve(async (req) => {
         .select("id")
         .eq("user_id", user.id)
         .eq("name", customer.name)
+        .eq("type", "customer")
         .maybeSingle();
       
       if (findError) {
@@ -158,6 +161,7 @@ serve(async (req) => {
           country: customer.country || "India",
           tax_id_label: customer.gstin ? "GSTIN" : null,
           tax_id_value: customer.gstin || null,
+          type: "customer",
         })
         .select("id")
         .single();
@@ -249,19 +253,14 @@ serve(async (req) => {
     // Ensure order_date is YYYY-MM-DD format
     const formattedOrderDate = new Date(order_date ?? Date.now()).toISOString().slice(0, 10);
 
-    // Step 4: Insert sales_order with only allowed columns
-    const allowedKeys = new Set([
-      'user_id', 'customer_id', 'billing_snapshot', 'subtotal',
-      'cgst_amount', 'sgst_amount', 'igst_amount', 'tax_amount',
-      'grand_total', 'amount_paid', 'balance_due', 'payment_status',
-      'transaction_date', 'invoice_number', 'notes'
-    ]);
-
-    const salePayload: any = {
+    // Step 4: Insert sales_order matching the actual table schema
+    const salePayload = {
       user_id: user.id,
-      customer_id: customerId,
-      billing_snapshot: billingSnapshot,
+      customer_name: customer.name,
+      invoice_number: invoice_number || `INV-${Date.now()}`,
+      transaction_date: formattedOrderDate,
       subtotal,
+      total_amount: subtotal,
       cgst_amount,
       sgst_amount,
       igst_amount,
@@ -270,19 +269,16 @@ serve(async (req) => {
       amount_paid,
       balance_due,
       payment_status: "unpaid",
-      transaction_date: formattedOrderDate,
-      invoice_number: invoice_number || null,
       notes: notes || null,
+      customer_gstin: customer.gstin || null,
+      customer_address: customer.address || null,
+      customer_state: customer.state || null,
+      billing_snapshot: billingSnapshot,
     };
-
-    // Filter to only allowed keys
-    const filteredPayload = Object.fromEntries(
-      Object.entries(salePayload).filter(([k]) => allowedKeys.has(k))
-    );
 
     const { data: saleData, error: saleError } = await supabase
       .from("sales_orders")
-      .insert(filteredPayload)
+      .insert(salePayload)
       .select("id, invoice_number, grand_total, balance_due, payment_status")
       .single();
 
