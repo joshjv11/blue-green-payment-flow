@@ -46,7 +46,7 @@ serve(async (req) => {
         ok: false,
         stage: 'auth_header',
         message: 'Missing authorization header'
-      }), { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
     const supabase = createClient(
@@ -64,7 +64,7 @@ serve(async (req) => {
         message: userError?.message || 'Unauthorized',
         code: userError?.code,
         details: userError
-      }), { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
     const body: PurchaseRequest = await req.json();
@@ -95,7 +95,7 @@ serve(async (req) => {
           message: findError.message,
           details: findError.details,
           hint: findError.hint
-        }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+        }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
       }
       
       if (existing) supplierId = existing.id;
@@ -119,7 +119,7 @@ serve(async (req) => {
           message: findError.message,
           details: findError.details,
           hint: findError.hint
-        }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+        }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
       }
       
       if (existing) supplierId = existing.id;
@@ -143,7 +143,7 @@ serve(async (req) => {
           message: findError.message,
           details: findError.details,
           hint: findError.hint
-        }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+        }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
       }
       
       if (existing) supplierId = existing.id;
@@ -176,7 +176,7 @@ serve(async (req) => {
           message: supplierError.message,
           details: supplierError.details,
           hint: supplierError.hint
-        }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+        }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
       }
       supplierId = newSupplier.id;
     }
@@ -322,7 +322,7 @@ serve(async (req) => {
           tax_amount,
           grand_total
         }
-      }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
     return new Response(
