@@ -132,8 +132,8 @@ export default function PurchasesV2() {
         return;
       }
 
-      // Check if response indicates an error
-      if (data && !data.ok) {
+      // Check if response explicitly indicates an error
+      if (data && data.ok === false) {
         console.error("Purchase creation failed:", data);
         const errorMsg = data.message || "Failed to create purchase";
         const detailsMsg = data.details ? ` (${data.details})` : '';

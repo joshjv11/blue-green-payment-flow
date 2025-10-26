@@ -129,8 +129,8 @@ export default function SalesV2() {
         return;
       }
 
-      // Check if response indicates an error
-      if (data && !data.ok) {
+      // Check if response explicitly indicates an error
+      if (data && data.ok === false) {
         console.error("Sale creation failed:", data);
         const errorMsg = data.message || "Failed to create sale";
         const detailsMsg = data.details ? ` (${data.details})` : '';
