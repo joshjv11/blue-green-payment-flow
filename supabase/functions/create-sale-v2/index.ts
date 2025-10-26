@@ -283,7 +283,7 @@ serve(async (req) => {
       .single();
 
     if (saleError) {
-      console.error({ stage: 'insert_sale', error: saleError, payload: filteredPayload });
+      console.error({ stage: 'insert_sale', error: saleError });
       return new Response(JSON.stringify({
         ok: false,
         stage: 'insert_sale',

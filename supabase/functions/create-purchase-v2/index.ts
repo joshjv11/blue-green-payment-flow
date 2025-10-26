@@ -308,7 +308,7 @@ serve(async (req) => {
       .single();
 
     if (purchaseError) {
-      console.error({ stage: 'insert_purchase', error: purchaseError, payload: filteredPayload });
+      console.error({ stage: 'insert_purchase', error: purchaseError });
       return new Response(JSON.stringify({
         ok: false,
         stage: 'insert_purchase',
