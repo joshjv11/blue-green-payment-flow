@@ -433,7 +433,7 @@ export type Database = {
           phone: string | null
           tax_id_label: string | null
           tax_id_value: string | null
-          type: string | null
+          type: string
           updated_at: string
           user_id: string
         }
@@ -450,7 +450,7 @@ export type Database = {
           phone?: string | null
           tax_id_label?: string | null
           tax_id_value?: string | null
-          type?: string | null
+          type?: string
           updated_at?: string
           user_id: string
         }
@@ -467,7 +467,7 @@ export type Database = {
           phone?: string | null
           tax_id_label?: string | null
           tax_id_value?: string | null
-          type?: string | null
+          type?: string
           updated_at?: string
           user_id?: string
         }
