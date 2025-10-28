@@ -282,18 +282,22 @@ serve(async (req) => {
       invoice_number: invoice_number || `PO-${Date.now()}`,
       transaction_date: formattedOrderDate,
       order_date: formattedOrderDate,
+      subtotal,
       total_amount: subtotal,
       cgst_amount,
       sgst_amount,
       igst_amount,
+      is_igst: igst_amount > 0,
       tax_amount,
       grand_total,
       amount_paid,
       payment_status: "unpaid",
+      status: "unpaid",
       notes: notes || null,
       supplier_gstin: supplier.gstin || null,
       supplier_address: supplier.address || null,
       supplier_state: supplier.state || null,
+      place_of_supply: supplier.state || null,
       supplier_id: supplierId,
       supplier_snapshot: supplierSnapshot,
     };
@@ -322,10 +326,71 @@ serve(async (req) => {
       }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
+    // Step 5: Create order_lines entries (CRITICAL for Analytics profitability calculations)
+    const orderLinesPayload = items.map((item) => {
+      const quantity = n(item.quantity);
+      const unit_price = n(item.unit_price);
+      const discount = n(item.discount || 0);
+      const tax_rate = n(item.tax_rate);
+      
+      const itemSubtotal = Math.max(0, quantity * unit_price - discount);
+      const itemTaxableAmount = itemSubtotal;
+      
+      // Split tax based on isIntraState
+      let itemCgst = 0;
+      let itemSgst = 0;
+      let itemIgst = 0;
+      let itemTaxAmount = 0;
+      
+      if (isIndia && isIntraState) {
+        itemCgst = itemTaxableAmount * (tax_rate / 200);
+        itemSgst = itemTaxableAmount * (tax_rate / 200);
+        itemTaxAmount = itemCgst + itemSgst;
+      } else if (isIndia) {
+        itemIgst = itemTaxableAmount * (tax_rate / 100);
+        itemTaxAmount = itemIgst;
+      } else {
+        itemTaxAmount = itemTaxableAmount * (tax_rate / 100);
+      }
+      
+      const itemTotal = itemSubtotal + itemTaxAmount;
+      
+      return {
+        order_id: purchaseData.id,
+        order_type: "purchase",
+        product_name: item.description,
+        description: item.description,
+        quantity,
+        unit_price,
+        subtotal: itemSubtotal,
+        taxable_amount: itemTaxableAmount,
+        tax_rate,
+        gst_rate: tax_rate,
+        cgst_amount: itemCgst,
+        sgst_amount: itemSgst,
+        igst_amount: itemIgst,
+        tax_amount: itemTaxAmount,
+        total_amount: itemTotal,
+      };
+    });
+
+    const { error: linesError } = await supabase
+      .from("order_lines")
+      .insert(orderLinesPayload);
+
+    if (linesError) {
+      console.error({ stage: 'insert_order_lines', error: linesError });
+      // Don't fail the entire request, but log the error
+      console.warn('Purchase order created but order_lines failed. Analytics may be incomplete.');
+    }
+
     return new Response(
       JSON.stringify({
         ok: true,
-        data: purchaseData,
+        data: {
+          ...purchaseData,
+          line_items_created: !linesError,
+        },
       }),
       {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
