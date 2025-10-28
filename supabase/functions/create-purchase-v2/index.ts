@@ -80,7 +80,7 @@ serve(async (req) => {
     if (supplier.email) {
       const { data: existing, error: findError } = await supabase
         .from("customers")
-        .select("id, type")
+        .select("id")
         .eq("user_id", user.id)
         .eq("email", supplier.email)
         .maybeSingle();
@@ -97,13 +97,13 @@ serve(async (req) => {
         }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
       }
       
-      if (existing && existing.type === 'supplier') supplierId = existing.id;
+      if (existing) supplierId = existing.id;
     }
     
     if (!supplierId && supplier.phone) {
       const { data: existing, error: findError } = await supabase
         .from("customers")
-        .select("id, type")
+        .select("id")
         .eq("user_id", user.id)
         .eq("phone", supplier.phone)
         .maybeSingle();
@@ -120,13 +120,13 @@ serve(async (req) => {
         }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
       }
       
-      if (existing && existing.type === 'supplier') supplierId = existing.id;
+      if (existing) supplierId = existing.id;
     }
     
     if (!supplierId) {
       const { data: existing, error: findError } = await supabase
         .from("customers")
-        .select("id, type")
+        .select("id")
         .eq("user_id", user.id)
         .eq("name", supplier.name)
         .maybeSingle();
@@ -143,7 +143,7 @@ serve(async (req) => {
         }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
       }
       
-      if (existing && existing.type === 'supplier') supplierId = existing.id;
+      if (existing) supplierId = existing.id;
     }
 
     // Create supplier if not found

@@ -79,7 +79,7 @@ serve(async (req) => {
     if (customer.email) {
       const { data: existing, error: findError } = await supabase
         .from("customers")
-        .select("id, type")
+        .select("id")
         .eq("user_id", user.id)
         .eq("email", customer.email)
         .maybeSingle();
@@ -96,13 +96,13 @@ serve(async (req) => {
         }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
       }
       
-      if (existing && existing.type === 'customer') customerId = existing.id;
+      if (existing) customerId = existing.id;
     }
     
     if (!customerId && customer.phone) {
       const { data: existing, error: findError } = await supabase
         .from("customers")
-        .select("id, type")
+        .select("id")
         .eq("user_id", user.id)
         .eq("phone", customer.phone)
         .maybeSingle();
@@ -119,13 +119,13 @@ serve(async (req) => {
         }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
       }
       
-      if (existing && existing.type === 'customer') customerId = existing.id;
+      if (existing) customerId = existing.id;
     }
     
     if (!customerId) {
       const { data: existing, error: findError } = await supabase
         .from("customers")
-        .select("id, type")
+        .select("id")
         .eq("user_id", user.id)
         .eq("name", customer.name)
         .maybeSingle();
@@ -142,7 +142,7 @@ serve(async (req) => {
         }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
       }
       
-      if (existing && existing.type === 'customer') customerId = existing.id;
+      if (existing) customerId = existing.id;
     }
 
     // Create customer if not found
