@@ -6,6 +6,7 @@ import { getQueryClient } from '@/lib/query';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from '@/hooks/useAuth';
 import { PlanProvider } from '@/contexts/PlanContext';
+import { ThemeProvider } from 'next-themes';
 import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import { AppSidebar } from '@/components/AppSidebar';
 import ErrorBoundary from '@/components/ErrorBoundary';
@@ -284,21 +285,23 @@ function AppLayout({ children }: { children: React.ReactNode }) {
 const App = () => (
   <ErrorBoundary>
     <QueryClientProvider client={getQueryClient()}>
-      <AuthProvider>
-        <PlanProvider>
-          <TooltipProvider>
-            <Toaster />
-            <Sonner />
-            <DebugInfo />
-            <BrowserRouter>
-              <MobileOptimizer />
-              <AppLayout>
-                <AppRoutes />
-              </AppLayout>
-            </BrowserRouter>
-          </TooltipProvider>
-        </PlanProvider>
-      </AuthProvider>
+      <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+        <AuthProvider>
+          <PlanProvider>
+            <TooltipProvider>
+              <Toaster />
+              <Sonner />
+              <DebugInfo />
+              <BrowserRouter>
+                <MobileOptimizer />
+                <AppLayout>
+                  <AppRoutes />
+                </AppLayout>
+              </BrowserRouter>
+            </TooltipProvider>
+          </PlanProvider>
+        </AuthProvider>
+      </ThemeProvider>
     </QueryClientProvider>
   </ErrorBoundary>
 );

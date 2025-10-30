@@ -14,6 +14,7 @@ import { useEmailReminders } from '@/hooks/useEmailReminders';
 import { supabase, isSupabaseConfigured } from '@/lib/supabase';
 import { useToast } from '@/hooks/use-toast';
 import { LogOut, User, Building, Mail, FileText, ArrowRight, Plus, DollarSign, Calendar, AlertCircle, CheckCircle, Clock, BarChart3, Settings, Download, Upload, Crown, RefreshCw } from 'lucide-react';
+import { ThemeToggle } from '@/components/ThemeToggle';
 import { useNavigate } from 'react-router-dom';
 import { parseISO, differenceInDays, isBefore, isToday, isAfter, addDays, format } from 'date-fns';
 import ExportImport from '@/components/ExportImport';
@@ -467,7 +468,10 @@ const Dashboard = () => {
   return (
     <MobileLayout>
       <div className="min-h-screen bg-background pb-24 md:pb-6">
-        <Navigation />
+        <div className="flex items-center justify-between px-4 py-3 border-b border-border/50">
+          <Navigation />
+          <ThemeToggle />
+        </div>
         
         {/* Daily Bonus Wheel */}
         {showBonusWheel && (
