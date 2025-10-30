@@ -8,33 +8,33 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    /* Premium Background - Deep Navy to Violet Gradient Base */
-    --background: 230 35% 7%;
-    --foreground: 210 40% 98%;
+    /* Light Mode - Clean White & Blue */
+    --background: 0 0% 100%;
+    --foreground: 222 47% 11%;
 
-    /* Glass Cards with Subtle Transparency */
-    --card: 230 30% 12%;
-    --card-foreground: 210 40% 98%;
+    /* Cards - Pure White with Subtle Shadow */
+    --card: 0 0% 100%;
+    --card-foreground: 222 47% 11%;
 
-    --popover: 230 30% 12%;
-    --popover-foreground: 210 40% 98%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 47% 11%;
 
-    /* Primary - Vivid Violet-Blue */
-    --primary: 250 95% 68%;
+    /* Primary - Vibrant Blue */
+    --primary: 217 91% 60%;
     --primary-foreground: 0 0% 100%;
-    --primary-hover: 250 95% 75%;
+    --primary-hover: 217 91% 55%;
 
-    /* Secondary - Soft Slate Glass */
-    --secondary: 230 25% 18%;
-    --secondary-foreground: 210 40% 98%;
+    /* Secondary - Soft Gray-Blue */
+    --secondary: 210 40% 96%;
+    --secondary-foreground: 222 47% 11%;
 
-    /* Muted - Subtle Gray Tones */
-    --muted: 230 20% 20%;
-    --muted-foreground: 220 15% 65%;
+    /* Muted - Light Gray */
+    --muted: 210 40% 96%;
+    --muted-foreground: 215 16% 47%;
 
-    /* Accent - Teal Highlight */
-    --accent: 180 100% 60%;
-    --accent-foreground: 230 35% 7%;
+    /* Accent - Sky Blue */
+    --accent: 210 100% 96%;
+    --accent-foreground: 217 91% 60%;
 
     /* Pro/Premium - Golden Amber Accents */
     --pro-gold: 45 100% 60%;
@@ -45,44 +45,44 @@ All colors MUST be HSL.
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
 
-    /* Borders - Subtle Glass Effect */
-    --border: 230 25% 22%;
-    --input: 230 25% 22%;
-    --ring: 250 95% 68%;
-    --input-focus-glow: 250 95% 68%;
+    /* Borders - Light Gray */
+    --border: 214 32% 91%;
+    --input: 214 32% 91%;
+    --ring: 217 91% 60%;
+    --input-focus-glow: 217 91% 60%;
     
-    /* Premium Gradients - Navy → Deep Violet */
-    --hero-gradient: linear-gradient(135deg, hsl(230 45% 12%) 0%, hsl(260 50% 20%) 50%, hsl(280 40% 25%) 100%);
-    --feature-gradient: linear-gradient(180deg, hsl(230 35% 9%), hsl(230 30% 12%));
-    --card-gradient: linear-gradient(135deg, hsl(230 30% 14%) 0%, hsl(240 30% 16%) 100%);
-    --auth-gradient: linear-gradient(135deg, hsl(230 45% 12%) 0%, hsl(270 50% 25%) 100%);
-    --premium-gradient: linear-gradient(135deg, hsl(250 95% 68%) 0%, hsl(280 85% 65%) 50%, hsl(180 100% 60%) 100%);
-    --glass-gradient: linear-gradient(135deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.02));
-    --premium-border: linear-gradient(135deg, hsl(250 95% 68%), hsl(180 100% 60%));
+    /* Light Mode Gradients - Blue Tones */
+    --hero-gradient: linear-gradient(135deg, hsl(210 100% 97%) 0%, hsl(217 100% 95%) 50%, hsl(220 100% 93%) 100%);
+    --feature-gradient: linear-gradient(180deg, hsl(0 0% 100%), hsl(210 40% 98%));
+    --card-gradient: linear-gradient(135deg, hsl(0 0% 100%) 0%, hsl(210 40% 98%) 100%);
+    --auth-gradient: linear-gradient(135deg, hsl(210 100% 97%) 0%, hsl(217 91% 95%) 100%);
+    --premium-gradient: linear-gradient(135deg, hsl(217 91% 60%) 0%, hsl(210 100% 60%) 50%, hsl(200 100% 60%) 100%);
+    --glass-gradient: linear-gradient(135deg, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.7));
+    --premium-border: linear-gradient(135deg, hsl(217 91% 60%), hsl(200 100% 60%));
     
     /* Pro-Specific Gradients - Golden Amber */
     --pro-gradient: linear-gradient(135deg, hsl(45 100% 60%) 0%, hsl(35 100% 55%) 50%, hsl(25 100% 50%) 100%);
     --pro-glass: linear-gradient(135deg, rgba(255, 215, 0, 0.08), rgba(255, 165, 0, 0.04));
     --pro-border: linear-gradient(135deg, hsl(45 100% 60%), hsl(35 100% 55%));
     
-    /* Glassmorphism & Neumorphism Shadows - Enhanced */
-    --shadow-soft: 0 2px 20px rgba(0, 0, 0, 0.4);
-    --shadow-medium: 0 8px 32px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.05) inset;
-    --shadow-strong: 0 16px 48px rgba(0, 0, 0, 0.6);
-    --shadow-glow: 0 0 40px hsl(250 95% 68% / 0.3), 0 0 80px hsl(250 95% 68% / 0.15);
-    --shadow-button-hover: 0 8px 24px hsl(250 95% 68% / 0.4), 0 0 60px hsl(250 95% 68% / 0.2);
-    --shadow-premium-glow: 0 0 60px hsl(250 95% 68% / 0.4), 0 0 100px hsl(180 100% 60% / 0.2);
-    --shadow-glass: 0 8px 32px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.08) inset, 0 0 60px hsl(250 95% 68% / 0.05);
-    --shadow-float: 0 20px 60px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.06) inset, 0 0 80px hsl(250 95% 68% / 0.08);
+    /* Light Mode Shadows - Soft & Subtle */
+    --shadow-soft: 0 2px 8px rgba(0, 0, 0, 0.08);
+    --shadow-medium: 0 4px 16px rgba(0, 0, 0, 0.1);
+    --shadow-strong: 0 8px 32px rgba(0, 0, 0, 0.12);
+    --shadow-glow: 0 0 24px hsl(217 91% 60% / 0.2);
+    --shadow-button-hover: 0 4px 16px hsl(217 91% 60% / 0.3);
+    --shadow-premium-glow: 0 0 32px hsl(217 91% 60% / 0.25);
+    --shadow-glass: 0 4px 16px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.04) inset;
+    --shadow-float: 0 8px 32px rgba(0, 0, 0, 0.12), 0 0 0 1px rgba(0, 0, 0, 0.04) inset;
     --shadow-neumorphic: 
-      8px 8px 16px rgba(0, 0, 0, 0.5),
-      -4px -4px 12px rgba(255, 255, 255, 0.02);
-    --shadow-card-hover: 0 24px 80px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.1) inset, 0 0 100px hsl(250 95% 68% / 0.12);
+      6px 6px 12px rgba(0, 0, 0, 0.1),
+      -2px -2px 8px rgba(255, 255, 255, 0.8);
+    --shadow-card-hover: 0 12px 48px rgba(0, 0, 0, 0.15);
     
-    /* Pro-Specific Shadows - Enhanced */
-    --shadow-pro-glow: 0 0 40px hsl(45 100% 60% / 0.3), 0 0 80px hsl(35 100% 55% / 0.15), 0 4px 20px hsl(45 100% 60% / 0.2);
-    --shadow-pro-strong: 0 8px 32px rgba(255, 215, 0, 0.2), 0 0 0 1px rgba(255, 215, 0, 0.1) inset;
-    --shadow-pro-hover: 0 24px 80px rgba(255, 215, 0, 0.3), 0 0 0 1px rgba(255, 215, 0, 0.15) inset, 0 0 100px hsl(45 100% 60% / 0.2);
+    /* Pro-Specific Shadows */
+    --shadow-pro-glow: 0 0 24px hsl(45 100% 60% / 0.3);
+    --shadow-pro-strong: 0 8px 32px rgba(255, 215, 0, 0.2);
+    --shadow-pro-hover: 0 12px 48px rgba(255, 215, 0, 0.3);
     
     /* Transitions - Smooth & Premium */
     --transition-smooth: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
@@ -96,14 +96,14 @@ All colors MUST be HSL.
     --radius-button: 1rem;
     --radius-card: 1.5rem;
 
-    --sidebar-background: 230 30% 10%;
-    --sidebar-foreground: 210 40% 98%;
-    --sidebar-primary: 250 95% 68%;
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 222 47% 11%;
+    --sidebar-primary: 217 91% 60%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 230 25% 16%;
-    --sidebar-accent-foreground: 210 40% 98%;
-    --sidebar-border: 230 25% 20%;
-    --sidebar-ring: 250 95% 68%;
+    --sidebar-accent: 210 40% 96%;
+    --sidebar-accent-foreground: 222 47% 11%;
+    --sidebar-border: 214 32% 91%;
+    --sidebar-ring: 217 91% 60%;
   }
 
   .dark {
