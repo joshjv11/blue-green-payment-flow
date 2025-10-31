@@ -270,8 +270,6 @@ serve(async (req) => {
       notes: notes || null,
       customer_gstin: customer.gstin || null,
       customer_address: customer.address || null,
-      customer_state: customer.state || null,
-      place_of_supply: customer.state || null,
       billing_snapshot: billingSnapshot,
     };
 
