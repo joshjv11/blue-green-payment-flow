@@ -261,7 +261,6 @@ serve(async (req) => {
       cgst_amount,
       sgst_amount,
       igst_amount,
-      is_igst: igst_amount > 0,
       tax_amount,
       grand_total,
       amount_paid,
