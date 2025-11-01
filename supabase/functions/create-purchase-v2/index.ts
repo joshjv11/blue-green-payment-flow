@@ -293,7 +293,6 @@ serve(async (req) => {
       status: "unpaid",
       notes: notes || null,
       supplier_gstin: supplier.gstin || null,
-      supplier_address: supplier.address || null,
       supplier_state: supplier.state || null,
       supplier_id: supplierId,
       supplier_snapshot: supplierSnapshot,
