@@ -287,11 +287,9 @@ serve(async (req) => {
       cgst_amount,
       sgst_amount,
       igst_amount,
-      is_igst: igst_amount > 0,
       tax_amount,
       grand_total,
       amount_paid,
-      payment_status: "unpaid",
       status: "unpaid",
       notes: notes || null,
       supplier_gstin: supplier.gstin || null,
@@ -305,7 +303,7 @@ serve(async (req) => {
     const { data: purchaseData, error: purchaseError } = await supabase
       .from("purchase_orders")
       .insert(purchasePayload)
-      .select("id, invoice_number, grand_total, payment_status")
+      .select("id, invoice_number, grand_total, status")
       .single();
 
     if (purchaseError) {
