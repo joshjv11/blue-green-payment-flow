@@ -274,7 +274,7 @@ serve(async (req) => {
     const { data: saleData, error: saleError } = await supabase
       .from("sales_orders")
       .insert(salePayload)
-      .select("id, invoice_number, grand_total, balance_due, payment_status")
+      .select("id, invoice_number, grand_total, balance_due")
       .single();
 
     if (saleError) {
