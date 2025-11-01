@@ -295,7 +295,6 @@ serve(async (req) => {
       supplier_gstin: supplier.gstin || null,
       supplier_address: supplier.address || null,
       supplier_state: supplier.state || null,
-      place_of_supply: supplier.state || null,
       supplier_id: supplierId,
       supplier_snapshot: supplierSnapshot,
     };
