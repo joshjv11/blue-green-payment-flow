@@ -265,7 +265,6 @@ serve(async (req) => {
       grand_total,
       amount_paid,
       balance_due,
-      payment_status: "unpaid",
       notes: notes || null,
       customer_gstin: customer.gstin || null,
       customer_address: customer.address || null,
