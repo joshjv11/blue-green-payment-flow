@@ -292,8 +292,6 @@ serve(async (req) => {
       amount_paid,
       status: "unpaid",
       notes: notes || null,
-      supplier_gstin: supplier.gstin || null,
-      supplier_state: supplier.state || null,
       supplier_id: supplierId,
       supplier_snapshot: supplierSnapshot,
     };
