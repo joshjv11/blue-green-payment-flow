@@ -264,7 +264,6 @@ serve(async (req) => {
       tax_amount,
       grand_total,
       amount_paid,
-      balance_due,
       notes: notes || null,
       customer_gstin: customer.gstin || null,
       customer_address: customer.address || null,
