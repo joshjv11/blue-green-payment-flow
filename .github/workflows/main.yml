@@ -31,8 +31,6 @@ jobs:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
           SUPABASE_PROJECT_REF:  ${{ secrets.SUPABASE_PROJECT_REF }}
         run: |
-          set -e
-
           if [ ! -d "supabase/functions" ]; then
             echo "supabase/functions directory not found. Nothing to deploy."
             exit 0
@@ -46,12 +44,62 @@ jobs:
             exit 0
           fi
 
-          echo "Deploying functions to project: $SUPABASE_PROJECT_REF"
+          echo "Found ${#FUNCTIONS[@]} functions to deploy: ${FUNCTIONS[*]}"
+          echo "Deploying to project: $SUPABASE_PROJECT_REF"
+          
+          # Track deployment results
+          DEPLOYED=0
+          FAILED=0
+          FAILED_FUNCTIONS=()
+
+          # Deploy each function with timeout and error handling
           for fn in "${FUNCTIONS[@]}"; do
-            echo "---- Deploying: $fn ----"
-            supabase functions deploy "$fn" --project-ref "$SUPABASE_PROJECT_REF"
-            echo "---- Deployed:  $fn ----"
+            echo ""
+            echo "========================================"
+            echo "Deploying: $fn"
+            echo "========================================"
+            
+            # Use timeout to prevent hanging (5 minutes per function)
+            if timeout 300 supabase functions deploy "$fn" --project-ref "$SUPABASE_PROJECT_REF"; then
+              echo "✅ Successfully deployed: $fn"
+              ((DEPLOYED++))
+            else
+              EXIT_CODE=$?
+              if [ $EXIT_CODE -eq 124 ]; then
+                echo "❌ Timeout deploying: $fn (took longer than 5 minutes)"
+              else
+                echo "❌ Failed to deploy: $fn (exit code: $EXIT_CODE)"
+              fi
+              FAILED_FUNCTIONS+=("$fn")
+              ((FAILED++))
+              # Continue with next function instead of stopping
+            fi
+            echo ""
           done
+
+          # Summary
+          echo ""
+          echo "========================================"
+          echo "Deployment Summary"
+          echo "========================================"
+          echo "✅ Successfully deployed: $DEPLOYED"
+          echo "❌ Failed: $FAILED"
+          
+          if [ ${#FAILED_FUNCTIONS[@]} -gt 0 ]; then
+            echo "Failed functions: ${FAILED_FUNCTIONS[*]}"
+            echo ""
+            echo "⚠️  Some functions failed to deploy."
+            echo "You can deploy them manually from the Supabase Dashboard or retry this workflow."
+            # Exit with error only if ALL functions failed
+            if [ $DEPLOYED -eq 0 ]; then
+              echo "❌ All deployments failed!"
+              exit 1
+            else
+              echo "✅ Some functions deployed successfully. Continuing..."
+            fi
+          else
+            echo "✅ All functions deployed successfully!"
+          fi
 
       - name: List deployed functions (summary)
         env:

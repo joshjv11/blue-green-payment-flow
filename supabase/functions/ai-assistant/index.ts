@@ -47,8 +47,18 @@ serve(async (req) => {
     }
 
     // Get API keys from secrets - try Groq first (free), then OpenAI
+    // NOTE: Edge functions don't have access to VITE_ prefixed env vars - those are frontend only
+    // In Supabase secrets, set GROQ_API_KEY (without VITE_ prefix)
     const groqApiKey = Deno.env.get('GROQ_API_KEY');
     const openaiApiKey = Deno.env.get('OPENAI_API_KEY');
+    
+    // Log API key availability (without exposing keys)
+    console.log('🔑 API Key Check:', {
+      hasGroqKey: !!groqApiKey,
+      groqKeyLength: groqApiKey?.length || 0,
+      hasOpenAIKey: !!openaiApiKey,
+      openAIKeyLength: openaiApiKey?.length || 0
+    });
 
     // Prepare context for AI
     const billsContext = bills?.map((bill: any) => ({
@@ -78,40 +88,54 @@ Current context: ${context || 'General bill management assistance'}`;
 
     let aiResponse: string | null = null;
 
-    // Try Groq first (free, fast)
-    if (groqApiKey) {
-      try {
-        console.log('🆓 Attempting Groq API (free tier)...');
-        const groqResponse = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${groqApiKey}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            model: 'llama-3.1-8b-instant',
-            messages: [
-              { role: 'system', content: systemPrompt },
-              { role: 'user', content: message }
-            ],
-            max_tokens: 1000,
-            temperature: 0.7,
-          }),
-        });
+           // Try Groq first (free, fast)
+           if (groqApiKey) {
+             try {
+               console.log('🆓 Attempting Groq API (free tier)...');
+               const groqResponse = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+                 method: 'POST',
+                 headers: {
+                   'Authorization': `Bearer ${groqApiKey}`,
+                   'Content-Type': 'application/json',
+                 },
+                 body: JSON.stringify({
+                   model: 'llama-3.1-8b-instant',
+                   messages: [
+                     { role: 'system', content: systemPrompt },
+                     { role: 'user', content: message }
+                   ],
+                   max_tokens: 1000,
+                   temperature: 0.7,
+                 }),
+               });
 
-        if (groqResponse.ok) {
-          const groqData = await groqResponse.json();
-          aiResponse = groqData.choices?.[0]?.message?.content;
-          if (aiResponse) {
-            console.log('✅ Groq response received successfully');
-          }
-        } else {
-          console.warn('⚠️ Groq API error, trying OpenAI fallback');
-        }
-      } catch (groqError) {
-        console.warn('⚠️ Groq API failed, trying OpenAI:', groqError);
-      }
-    }
+               if (groqResponse.ok) {
+                 const groqData = await groqResponse.json();
+                 aiResponse = groqData.choices?.[0]?.message?.content;
+                 if (aiResponse) {
+                   console.log('✅ Groq response received successfully');
+                 } else {
+                   console.warn('⚠️ Groq returned OK but no response content', groqData);
+                 }
+               } else {
+                 const errorText = await groqResponse.text();
+                 console.error('⚠️ Groq API error:', {
+                   status: groqResponse.status,
+                   statusText: groqResponse.statusText,
+                   error: errorText.substring(0, 200)
+                 });
+                 console.warn('⚠️ Groq API error, trying OpenAI fallback');
+               }
+             } catch (groqError) {
+               console.error('⚠️ Groq API failed with exception:', {
+                 error: groqError instanceof Error ? groqError.message : String(groqError),
+                 errorType: groqError instanceof Error ? groqError.name : typeof groqError
+               });
+               console.warn('⚠️ Groq API failed, trying OpenAI');
+             }
+           } else {
+             console.warn('⚠️ Groq API key not found, skipping Groq');
+           }
 
     // Fallback to OpenAI if Groq failed or not configured
     if (!aiResponse && openaiApiKey) {

@@ -338,11 +338,20 @@ export const useAIAssistant = () => {
 
     try {
       // Get current session
-      const { data: { session } } = await supabase.auth.getSession();
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
       if (!session) {
-        console.error('❌ User not authenticated');
+        console.error('❌ User not authenticated', {
+          sessionError,
+          hasSession: !!session,
+          userId: session?.user?.id
+        });
         throw new Error('User not authenticated');
       }
+      
+      console.log('✅ User authenticated:', {
+        userId: session.user.id,
+        email: session.user.email
+      });
 
       // Try free AI APIs first, then paid options
       console.log('🤖 Trying free AI services first...');
@@ -418,16 +427,48 @@ export const useAIAssistant = () => {
       console.log('🤖 Calling AI assistant edge function...');
 
       // Call the Edge Function
-      const { data, error } = await supabase.functions.invoke('ai-assistant', {
-        body: {
-          message,
-          bills,
-          context
-        }
+      let response: any;
+      try {
+        response = await supabase.functions.invoke('ai-assistant', {
+          body: {
+            message,
+            bills,
+            context
+          }
+        });
+        console.log('🔍 Raw Supabase invoke response:', {
+          hasData: !!response.data,
+          hasError: !!response.error,
+          dataType: typeof response.data,
+          errorType: typeof response.error,
+          fullResponse: response
+        });
+      } catch (invokeError) {
+        console.error('❌ Supabase invoke threw exception:', invokeError);
+        throw invokeError;
+      }
+
+      const { data, error } = response || {};
+
+      // Log everything for debugging
+      console.log('📊 Edge function response breakdown:', {
+        hasData: !!data,
+        hasError: !!error,
+        data: data,
+        error: error,
+        dataIsString: typeof data === 'string',
+        errorIsString: typeof error === 'string',
+        dataKeys: data && typeof data === 'object' ? Object.keys(data) : [],
+        errorKeys: error && typeof error === 'object' ? Object.keys(error) : []
       });
 
       if (error) {
-        console.error('❌ Edge function error:', error);
+        console.error('❌ Edge function returned error:', {
+          error,
+          errorType: typeof error,
+          errorMessage: error?.message || error?.error || error,
+          errorString: String(error)
+        });
         
         // If we have a local API key, use it as fallback for ANY error
         if (openaiApiKey) {
@@ -456,20 +497,95 @@ export const useAIAssistant = () => {
         throw new Error(errorMsg);
       }
 
-      console.log('🤖 AI response received:', { success: data?.success, hasResponse: !!data?.response });
+      // Handle response - Supabase functions.invoke returns data directly
+      // Edge function returns: { response: string, success: true }
+      console.log('🤖 Processing edge function response:', { 
+        success: data?.success, 
+        hasResponse: !!data?.response,
+        responseType: typeof data?.response,
+        responseLength: data?.response?.length,
+        dataKeys: data && typeof data === 'object' ? Object.keys(data) : [],
+        dataType: typeof data,
+        isString: typeof data === 'string',
+        isNull: data === null,
+        isUndefined: data === undefined,
+        fullData: typeof data === 'object' ? JSON.stringify(data).substring(0, 1000) : String(data).substring(0, 500)
+      });
 
-      if (!data || !data.success) {
+      // Try to extract response from various formats
+      let aiResponse: string | null = null;
+
+      // Format 1: { response: string, success: true } - Standard format
+      if (data && typeof data === 'object' && 'response' in data) {
+        const response = data.response;
+        if (typeof response === 'string' && response.trim()) {
+          aiResponse = response;
+          console.log('✅ Found response in data.response');
+        }
+      }
+
+      // Format 2: Direct string response
+      if (!aiResponse && typeof data === 'string' && data.trim()) {
+        aiResponse = data;
+        console.log('✅ Found response as direct string');
+      }
+
+      // Format 3: { content: string }
+      if (!aiResponse && data && typeof data === 'object' && 'content' in data) {
+        const content = data.content;
+        if (typeof content === 'string' && content.trim()) {
+          aiResponse = content;
+          console.log('✅ Found response in data.content');
+        }
+      }
+
+      // Format 4: { data: { response: string } } - Nested format
+      if (!aiResponse && data && typeof data === 'object' && 'data' in data) {
+        const nested = data.data;
+        if (nested && typeof nested === 'object' && 'response' in nested) {
+          const nestedResponse = nested.response;
+          if (typeof nestedResponse === 'string' && nestedResponse.trim()) {
+            aiResponse = nestedResponse;
+            console.log('✅ Found response in data.data.response');
+          }
+        }
+      }
+
+      // If we found a response, use it
+      if (aiResponse && typeof aiResponse === 'string' && aiResponse.trim()) {
+        const aiMessage: ChatMessage = {
+          id: (Date.now() + 1).toString(),
+          role: 'assistant',
+          content: aiResponse,
+          timestamp: new Date()
+        };
+        setMessages(prev => [...prev, aiMessage]);
+        console.log('✅ AI message added from edge function');
+        return;
+      }
+
+      // Log what we got if no response found
+      console.error('❌ Could not extract response from edge function data:', {
+        data,
+        dataType: typeof data,
+        dataKeys: data && typeof data === 'object' ? Object.keys(data) : [],
+        dataString: String(data).substring(0, 500)
+      });
+
+      // If no response found, check for error or success=false
+      if (data?.error || (data && data.success === false)) {
         const errorMessage = data?.error || 'AI assistant request failed';
+        console.error('❌ Edge function error:', errorMessage, 'Full data:', data);
         
         // If we have a local API key, use it as fallback for ANY failure
         if (openaiApiKey) {
           console.log('🔄 Edge function returned error, trying fallback with local API key');
           try {
-            const aiResponse = await callOpenAIDirectly(message, bills, context, openaiApiKey);
+            const fallbackResponse = await callOpenAIDirectly(message, bills, context, openaiApiKey);
             const aiMessage: ChatMessage = {
               id: (Date.now() + 1).toString(),
               role: 'assistant',
-              content: aiResponse,
+              content: fallbackResponse,
               timestamp: new Date()
             };
             setMessages(prev => [...prev, aiMessage]);
@@ -484,16 +600,22 @@ export const useAIAssistant = () => {
         throw new Error(errorMessage);
       }
 
-      // Add AI response to chat
-      const aiMessage: ChatMessage = {
-        id: (Date.now() + 1).toString(),
-        role: 'assistant',
-        content: data.response,
-        timestamp: new Date()
-      };
-      setMessages(prev => [...prev, aiMessage]);
+      // If data exists but no response field - might be unexpected format
+      if (data && !aiResponse) {
+        console.error('❌ Edge function returned data but no response field:', {
+          data,
+          dataKeys: Object.keys(data),
+          dataSuccess: data.success,
+          dataResponse: data.response
+        });
+        throw new Error(`Unexpected response format from edge function. Received: ${JSON.stringify(data).substring(0, 200)}`);
+      }
 
-      console.log('✅ AI message added to chat successfully');
+      // No data at all
+      if (!data) {
+        console.error('❌ Edge function returned no data');
+        throw new Error('Edge function returned no data');
+      }
 
     } catch (error) {
       console.error('❌ Error sending message to AI assistant:', error);

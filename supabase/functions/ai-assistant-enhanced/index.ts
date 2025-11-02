@@ -49,10 +49,19 @@ serve(async (req) => {
       throw new Error('Unauthorized');
     }
 
+    // Get API keys - try Groq first (free), then OpenAI
+    // NOTE: Edge functions don't have access to VITE_ prefixed env vars - those are frontend only
+    // In Supabase secrets, set GROQ_API_KEY (without VITE_ prefix)
+    const groqApiKey = Deno.env.get('GROQ_API_KEY');
     const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
-    if (!openAIApiKey) {
-      throw new Error('OpenAI API key not configured');
-    }
+    
+    // Log API key availability (without exposing keys)
+    console.log('🔑 API Key Check:', {
+      hasGroqKey: !!groqApiKey,
+      groqKeyLength: groqApiKey?.length || 0,
+      hasOpenAIKey: !!openAIApiKey,
+      openAIKeyLength: openAIApiKey?.length || 0
+    });
 
     // Define system prompts based on task type
     const systemPrompts = {
@@ -70,31 +79,96 @@ serve(async (req) => {
       fullContext += `\n\nContext: ${context}`;
     }
 
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${openAIApiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'gpt-4o-mini',
-        messages: [
-          { role: 'system', content: fullContext },
-          { role: 'user', content: message }
-        ],
-        max_tokens: 1000,
-        temperature: 0.7,
-      }),
-    });
+    let aiResponse: string | null = null;
 
-    if (!response.ok) {
-      const errorData = await response.json();
-      console.error('OpenAI API Error:', errorData);
-      throw new Error(`OpenAI API error: ${response.status}`);
+    // Try Groq first (free, fast)
+    if (groqApiKey) {
+      try {
+        console.log('🆓 Attempting Groq API (free tier)...');
+        const groqResponse = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${groqApiKey}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            model: 'llama-3.1-8b-instant',
+            messages: [
+              { role: 'system', content: fullContext },
+              { role: 'user', content: message }
+            ],
+            max_tokens: 1000,
+            temperature: 0.7,
+          }),
+        });
+
+        if (groqResponse.ok) {
+          const groqData = await groqResponse.json();
+          aiResponse = groqData.choices?.[0]?.message?.content;
+          if (aiResponse) {
+            console.log('✅ Groq response received successfully');
+          } else {
+            console.warn('⚠️ Groq returned OK but no response content', groqData);
+          }
+        } else {
+          const errorText = await groqResponse.text();
+          console.error('⚠️ Groq API error:', {
+            status: groqResponse.status,
+            statusText: groqResponse.statusText,
+            error: errorText.substring(0, 200)
+          });
+          console.warn('⚠️ Groq API error, trying OpenAI fallback');
+        }
+      } catch (groqError) {
+        console.error('⚠️ Groq API failed with exception:', {
+          error: groqError instanceof Error ? groqError.message : String(groqError),
+          errorType: groqError instanceof Error ? groqError.name : typeof groqError
+        });
+        console.warn('⚠️ Groq API failed, trying OpenAI');
+      }
+    } else {
+      console.warn('⚠️ Groq API key not found, skipping Groq');
     }
 
-    const data = await response.json();
-    const aiResponse = data.choices[0].message.content;
+    // Fallback to OpenAI if Groq failed or not configured
+    if (!aiResponse && openAIApiKey) {
+      try {
+        console.log('🤖 Calling OpenAI API with model: gpt-4o-mini');
+        const response = await fetch('https://api.openai.com/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${openAIApiKey}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            model: 'gpt-4o-mini',
+            messages: [
+              { role: 'system', content: fullContext },
+              { role: 'user', content: message }
+            ],
+            max_tokens: 1000,
+            temperature: 0.7,
+          }),
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          console.error('OpenAI API Error:', errorData);
+          throw new Error(`OpenAI API error: ${response.status}`);
+        }
+
+        const data = await response.json();
+        aiResponse = data.choices[0].message.content;
+        console.log('✅ OpenAI response received successfully');
+      } catch (openaiError) {
+        console.error('❌ OpenAI API also failed:', openaiError);
+        throw new Error('Both Groq and OpenAI APIs failed');
+      }
+    }
+
+    if (!aiResponse) {
+      throw new Error('No API keys configured. Please set GROQ_API_KEY (or OPENAI_API_KEY) in Supabase Edge Functions secrets. Go to Project Settings > Edge Functions > Secrets.');
+    }
 
     // Log usage for the user (optional analytics)
     try {
