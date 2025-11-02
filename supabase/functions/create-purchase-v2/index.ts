@@ -278,7 +278,6 @@ serve(async (req) => {
     // Step 4: Insert purchase_order matching the actual table schema
     const purchasePayload = {
       user_id: user.id,
-      supplier_name: supplier.name,
       invoice_number: invoice_number || `PO-${Date.now()}`,
       transaction_date: formattedOrderDate,
       order_date: formattedOrderDate,
