@@ -103,19 +103,16 @@ export default function Exports() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      // Fetch sales orders with customer data via JOIN
+      // Fetch sales orders - customer data is denormalized
       const { data: salesData, error: salesError } = await supabase
         .from("sales_orders")
         .select(`
           id,
           invoice_number,
           transaction_date,
-          customer_id,
-          customers!inner (
-            name,
-            party_gstin,
-            country
-          )
+          customer_name,
+          customer_gstin,
+          billing_snapshot
         `)
         .eq("user_id", user.id)
         .gte("transaction_date", format(dateFrom, "yyyy-MM-dd"))
@@ -136,8 +133,8 @@ export default function Exports() {
           return {
             invoice_number: sale.invoice_number,
             transaction_date: sale.transaction_date,
-            customer_name: sale.customers?.name || 'Unknown Customer',
-            billing_snapshot: sale.billing_snapshot || { gstin: sale.customers?.party_gstin || null },
+            customer_name: sale.customer_name || 'Unknown Customer',
+            billing_snapshot: sale.billing_snapshot || { gstin: sale.customer_gstin || null },
             order_lines: lines || [],
           };
         })
