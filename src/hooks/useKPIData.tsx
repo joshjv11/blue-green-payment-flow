@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { startOfMonth, endOfMonth, subMonths, format } from 'date-fns';
+import { useAuth } from './useAuth';
 
 export interface KPIData {
   totalRevenue: { current: number; previous: number; sparkline: number[] };
@@ -15,15 +16,20 @@ export interface KPIData {
 }
 
 export function useKPIData(dateRange?: { start: Date; end: Date }) {
+  const { user } = useAuth();
   const [data, setData] = useState<KPIData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    fetchKPIData();
-  }, [dateRange]);
+    if (user) {
+      fetchKPIData();
+    }
+  }, [dateRange, user]);
 
   const fetchKPIData = async () => {
+    if (!user) return;
+
     try {
       setLoading(true);
       setError(null);
@@ -38,16 +44,19 @@ export function useKPIData(dateRange?: { start: Date; end: Date }) {
         supabase
           .from('sales_orders')
           .select('grand_total, transaction_date, customer_name, amount_paid')
+          .eq('user_id', user.id)
           .gte('transaction_date', format(currentStart, 'yyyy-MM-dd'))
           .lte('transaction_date', format(currentEnd, 'yyyy-MM-dd')),
         supabase
           .from('purchase_orders')
           .select('grand_total, transaction_date')
+          .eq('user_id', user.id)
           .gte('transaction_date', format(currentStart, 'yyyy-MM-dd'))
           .lte('transaction_date', format(currentEnd, 'yyyy-MM-dd')),
         supabase
           .from('sales_orders')
           .select('customer_name, grand_total, transaction_date')
+          .eq('user_id', user.id)
           .gte('transaction_date', format(currentStart, 'yyyy-MM-dd'))
           .lte('transaction_date', format(currentEnd, 'yyyy-MM-dd'))
       ]);
@@ -57,11 +66,13 @@ export function useKPIData(dateRange?: { start: Date; end: Date }) {
         supabase
           .from('sales_orders')
           .select('grand_total, transaction_date')
+          .eq('user_id', user.id)
           .gte('transaction_date', format(previousStart, 'yyyy-MM-dd'))
           .lte('transaction_date', format(previousEnd, 'yyyy-MM-dd')),
         supabase
           .from('purchase_orders')
           .select('grand_total, transaction_date')
+          .eq('user_id', user.id)
           .gte('transaction_date', format(previousStart, 'yyyy-MM-dd'))
           .lte('transaction_date', format(previousEnd, 'yyyy-MM-dd'))
       ]);
@@ -75,6 +86,7 @@ export function useKPIData(dateRange?: { start: Date; end: Date }) {
           return supabase
             .from('sales_orders')
             .select('grand_total')
+            .eq('user_id', user.id)
             .gte('transaction_date', format(monthStart, 'yyyy-MM-dd'))
             .lte('transaction_date', format(monthEnd, 'yyyy-MM-dd'));
         })
@@ -83,7 +95,8 @@ export function useKPIData(dateRange?: { start: Date; end: Date }) {
       // Fetch inventory data
       const { data: products } = await supabase
         .from('products')
-        .select('stock_qty, purchase_price, selling_price');
+        .select('stock_qty, purchase_price, selling_price')
+        .eq('user_id', user.id);
 
       // Calculate KPIs
       const currentRevenue = salesCurrent.data?.reduce((sum, s) => sum + Number(s.grand_total || 0), 0) || 0;
@@ -126,7 +139,8 @@ export function useKPIData(dateRange?: { start: Date; end: Date }) {
       // Customer Lifetime Value (average per customer)
       const { data: allSales } = await supabase
         .from('sales_orders')
-        .select('customer_name, grand_total');
+        .select('customer_name, grand_total')
+        .eq('user_id', user.id);
       
       const customerTotals = new Map<string, number>();
       allSales?.forEach(sale => {

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { startOfMonth, endOfMonth, subMonths, format } from 'date-fns';
+import { useAuth } from './useAuth';
 
 export interface SKUProfitability {
   sku: string;
@@ -35,6 +36,7 @@ export interface CategoryMargin {
 }
 
 export function useProfitabilityData(dateRange?: { start: Date; end: Date }) {
+  const { user } = useAuth();
   const [skuData, setSKUData] = useState<SKUProfitability[]>([]);
   const [abcData, setABCData] = useState<ABCAnalysis[]>([]);
   const [categoryData, setCategoryData] = useState<CategoryMargin[]>([]);
@@ -42,10 +44,14 @@ export function useProfitabilityData(dateRange?: { start: Date; end: Date }) {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    fetchProfitabilityData();
-  }, [dateRange]);
+    if (user) {
+      fetchProfitabilityData();
+    }
+  }, [dateRange, user]);
 
   const fetchProfitabilityData = async () => {
+    if (!user) return;
+
     try {
       setLoading(true);
       setError(null);
@@ -56,35 +62,61 @@ export function useProfitabilityData(dateRange?: { start: Date; end: Date }) {
       const previousEnd = subMonths(currentEnd, 1);
 
       // Fetch current period sales with product info
-      const { data: currentSales, error: salesError } = await supabase
-        .from('order_lines')
-        .select(`
-          product_id,
-          product_name,
-          quantity,
-          unit_price,
-          subtotal,
-          order_id,
-          order_type
-        `)
-        .eq('order_type', 'sale')
-        .gte('created_at', format(currentStart, 'yyyy-MM-dd'))
-        .lte('created_at', format(currentEnd, 'yyyy-MM-dd'));
+      // Note: order_lines don't have user_id, so we need to join with sales_orders
+      const { data: currentSalesOrders } = await supabase
+        .from('sales_orders')
+        .select('id')
+        .eq('user_id', user.id)
+        .gte('transaction_date', format(currentStart, 'yyyy-MM-dd'))
+        .lte('transaction_date', format(currentEnd, 'yyyy-MM-dd'));
 
-      if (salesError) throw salesError;
+      const currentOrderIds = currentSalesOrders?.map(o => o.id) || [];
+      
+      let currentSales: any[] = [];
+      if (currentOrderIds.length > 0) {
+        const { data, error: salesError } = await supabase
+          .from('order_lines')
+          .select(`
+            product_id,
+            product_name,
+            quantity,
+            unit_price,
+            subtotal,
+            order_id,
+            order_type
+          `)
+          .eq('order_type', 'sale')
+          .in('order_id', currentOrderIds);
+
+        if (salesError) throw salesError;
+        currentSales = data || [];
+      }
 
       // Fetch previous period sales
-      const { data: previousSales } = await supabase
-        .from('order_lines')
-        .select('product_id, subtotal')
-        .eq('order_type', 'sale')
-        .gte('created_at', format(previousStart, 'yyyy-MM-dd'))
-        .lte('created_at', format(previousEnd, 'yyyy-MM-dd'));
+      const { data: previousSalesOrders } = await supabase
+        .from('sales_orders')
+        .select('id')
+        .eq('user_id', user.id)
+        .gte('transaction_date', format(previousStart, 'yyyy-MM-dd'))
+        .lte('transaction_date', format(previousEnd, 'yyyy-MM-dd'));
+
+      const previousOrderIds = previousSalesOrders?.map(o => o.id) || [];
+      
+      let previousSales: any[] = [];
+      if (previousOrderIds.length > 0) {
+        const { data } = await supabase
+          .from('order_lines')
+          .select('product_id, subtotal')
+          .eq('order_type', 'sale')
+          .in('order_id', previousOrderIds);
+        previousSales = data || [];
+      }
 
       // Fetch all products with cost info
       const { data: products } = await supabase
         .from('products')
-        .select('id, sku, name, purchase_price, selling_price');
+        .select('id, sku, name, purchase_price, selling_price')
+        .eq('user_id', user.id);
 
       // Calculate profitability per SKU
       const productMap = new Map<string, SKUProfitability>();
