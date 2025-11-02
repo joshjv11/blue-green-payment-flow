@@ -45,8 +45,8 @@ const EXPENSE_CATEGORIES = [
 const Expenses = () => {
   const { user } = useAuth();
   const { toast } = useToast();
-  const { plan } = useSupabasePlan();
-  const isPro = plan === 'pro';
+  const { isPremium } = useSupabasePlan();
+  const isPro = isPremium;
   
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [filteredExpenses, setFilteredExpenses] = useState<Expense[]>([]);
