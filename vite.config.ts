@@ -27,6 +27,20 @@ export default defineConfig(({ mode }) => ({
           });
         },
       },
+      '/api/groq': {
+        target: 'https://api.groq.com',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api\/groq/, ''),
+        configure: (proxy, _options) => {
+          proxy.on('proxyReq', (proxyReq, req, res) => {
+            const apiKey = process.env.VITE_GROQ_API_KEY;
+            if (apiKey) {
+              proxyReq.setHeader('Authorization', `Bearer ${apiKey}`);
+              proxyReq.setHeader('Content-Type', 'application/json');
+            }
+          });
+        },
+      },
     },
   },
   plugins: [react(), mode === "development" && componentTagger()].filter(Boolean),

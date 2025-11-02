@@ -57,12 +57,29 @@ Current context: ${context || 'General bill management assistance'}`;
   }
 
   try {
-    const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+    // Check if we're in browser and API key is available
+    console.log('🔑 Groq API Key check:', { hasKey: !!apiKey, keyLength: apiKey?.length, env: import.meta.env.MODE });
+    
+    // Use proxy in production/development to avoid CORS issues
+    // In production, we'll fall back to Supabase edge function if proxy isn't available
+    const isDev = import.meta.env.DEV;
+    const apiUrl = isDev 
+      ? '/api/groq/openai/v1/chat/completions' // Use Vite proxy in dev
+      : 'https://api.groq.com/openai/v1/chat/completions'; // Direct call (will fail CORS, then fallback)
+    
+    const headers: HeadersInit = {
+      'Content-Type': 'application/json',
+    };
+    
+    // Only add Authorization header if using proxy (dev) or if direct call works
+    // In production, direct browser calls will fail CORS, so we skip auth and let it fallback
+    if (isDev || window.location.hostname === 'localhost') {
+      headers['Authorization'] = `Bearer ${apiKey}`;
+    }
+    
+    const response = await fetch(apiUrl, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${apiKey}`,
-      },
+      headers,
       body: JSON.stringify({
         model: 'llama-3.1-8b-instant', // Free, fast model
         messages: [
@@ -76,13 +93,33 @@ Current context: ${context || 'General bill management assistance'}`;
 
     if (!response.ok) {
       const errorText = await response.text();
-      throw new Error(`Groq API error: ${response.status} - ${errorText}`);
+      console.error('❌ Groq API error:', { status: response.status, error: errorText });
+      
+      // Handle CORS errors
+      if (response.status === 0 || errorText.includes('CORS') || errorText.includes('Failed to fetch')) {
+        throw new Error('CORS error: Groq API cannot be called directly from browser. Environment variable may not be loaded in production.');
+      }
+      
+      throw new Error(`Groq API error: ${response.status} - ${errorText.substring(0, 200)}`);
     }
 
     const data = await response.json();
-    return data.choices?.[0]?.message?.content || 'No response from AI';
+    const aiResponse = data.choices?.[0]?.message?.content;
+    
+    if (!aiResponse) {
+      throw new Error('No response content from Groq API');
+    }
+    
+    return aiResponse;
   } catch (error) {
-    console.warn('Groq API failed, trying alternative:', error);
+    console.error('❌ Groq API call failed:', error);
+    
+    // If it's a CORS or fetch error, provide helpful message
+    if (error instanceof TypeError || (error as Error).message.includes('fetch') || (error as Error).message.includes('CORS')) {
+      console.warn('⚠️ Direct browser call failed (likely CORS), will try Supabase edge function');
+      throw new Error('GROQ_CORS_ERROR'); // Special error code to trigger fallback
+    }
+    
     throw error;
   }
 }
@@ -313,6 +350,14 @@ export const useAIAssistant = () => {
       // 1. Try Groq (FREE, fast, recommended)
       try {
         console.log('🆓 Attempting Groq API (free tier)...');
+        console.log('🔍 Environment check:', { 
+          hasGroqKey: !!import.meta.env.VITE_GROQ_API_KEY,
+          groqKeyLength: import.meta.env.VITE_GROQ_API_KEY?.length || 0,
+          envMode: import.meta.env.MODE,
+          envDev: import.meta.env.DEV,
+          envProd: import.meta.env.PROD
+        });
+        
         const aiResponse = await callGroqAPI(message, bills, context);
         const aiMessage: ChatMessage = {
           id: (Date.now() + 1).toString(),
@@ -324,7 +369,13 @@ export const useAIAssistant = () => {
         console.log('✅ AI message added via Groq');
         return;
       } catch (groqError) {
-        console.warn('⚠️ Groq failed, trying Gemini:', groqError);
+        const errorMsg = groqError instanceof Error ? groqError.message : String(groqError);
+        console.warn('⚠️ Groq failed:', errorMsg);
+        
+        // If it's a CORS error or missing key, skip and try alternatives
+        if (errorMsg.includes('GROQ_CORS_ERROR') || errorMsg.includes('not configured')) {
+          console.warn('⚠️ Groq not available (CORS or missing key), trying alternatives...');
+        }
       }
       
       // 2. Try Google Gemini (FREE tier)
