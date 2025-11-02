@@ -8,7 +8,9 @@
     "build": "vite build",
     "build:dev": "vite build --mode development",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "deploy": "./deploy.sh",
+    "deploy:push": "git add -A && git commit -m 'Deploy: Auto-commit' && git push origin main"
   },
   "dependencies": {
     "@emailjs/browser": "^4.4.1",
