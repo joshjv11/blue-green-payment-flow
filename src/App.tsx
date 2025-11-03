@@ -25,6 +25,7 @@ import Analytics from './pages/Analytics';
 import Settings from './pages/Settings';
 import Sales from './pages/Sales';
 import SalesV2 from './pages/SalesV2';
+import WhatsAppDashboard from './pages/WhatsAppDashboard';
 import Purchases from './pages/Purchases';
 import PurchasesV2 from './pages/PurchasesV2';
 import Inventory from './pages/Inventory';
@@ -102,6 +103,16 @@ function AppRoutes() {
           <ProtectedRoute>
             <RequirePlan requiredPlan="pro" featureName="Sales Orders">
               <PageTransition><SalesV2 /></PageTransition>
+            </RequirePlan>
+          </ProtectedRoute>
+        } 
+      />
+      <Route 
+        path="/whatsapp" 
+        element={
+          <ProtectedRoute>
+            <RequirePlan requiredPlan="pro" featureName="WhatsApp Business Integration">
+              <PageTransition><WhatsAppDashboard /></PageTransition>
             </RequirePlan>
           </ProtectedRoute>
         } 

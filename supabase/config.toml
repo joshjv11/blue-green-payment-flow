@@ -54,3 +54,9 @@ verify_jwt = false
 
 [functions.run-reminders-due]
 verify_jwt = false
+
+[functions.send-whatsapp-message]
+verify_jwt = true
+
+[functions.generate-payment-link]
+verify_jwt = true

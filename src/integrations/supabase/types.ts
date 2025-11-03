@@ -419,6 +419,60 @@ export type Database = {
           },
         ]
       }
+      customer_whatsapp_preferences: {
+        Row: {
+          created_at: string
+          customer_id: string
+          gst_reminders: boolean
+          id: string
+          invoice_notifications: boolean
+          payment_reminders: boolean
+          preferred_language: string | null
+          updated_at: string
+          user_id: string
+          whatsapp_enabled: boolean
+        }
+        Insert: {
+          created_at?: string
+          customer_id: string
+          gst_reminders?: boolean
+          id?: string
+          invoice_notifications?: boolean
+          payment_reminders?: boolean
+          preferred_language?: string | null
+          updated_at?: string
+          user_id: string
+          whatsapp_enabled?: boolean
+        }
+        Update: {
+          created_at?: string
+          customer_id?: string
+          gst_reminders?: boolean
+          id?: string
+          invoice_notifications?: boolean
+          payment_reminders?: boolean
+          preferred_language?: string | null
+          updated_at?: string
+          user_id?: string
+          whatsapp_enabled?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customer_whatsapp_preferences_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: true
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "customer_whatsapp_preferences_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "user_entitlements_v1"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
       customers: {
         Row: {
           address: string | null
@@ -901,6 +955,118 @@ export type Database = {
           payment_transaction_id?: string | null
         }
         Relationships: []
+      }
+      payment_links: {
+        Row: {
+          amount: number
+          bill_id: string | null
+          created_at: string
+          currency: string
+          customer_id: string | null
+          expires_at: string | null
+          id: string
+          invoice_id: string | null
+          notes: string | null
+          paid_at: string | null
+          payment_gateway: string
+          payment_link_url: string | null
+          payment_proof_url: string | null
+          payment_reference: string | null
+          qr_code_url: string | null
+          sale_order_id: string | null
+          status: string
+          updated_at: string
+          upi_id: string | null
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          bill_id?: string | null
+          created_at?: string
+          currency?: string
+          customer_id?: string | null
+          expires_at?: string | null
+          id?: string
+          invoice_id?: string | null
+          notes?: string | null
+          paid_at?: string | null
+          payment_gateway: string
+          payment_link_url?: string | null
+          payment_proof_url?: string | null
+          payment_reference?: string | null
+          qr_code_url?: string | null
+          sale_order_id?: string | null
+          status?: string
+          updated_at?: string
+          upi_id?: string | null
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          bill_id?: string | null
+          created_at?: string
+          currency?: string
+          customer_id?: string | null
+          expires_at?: string | null
+          id?: string
+          invoice_id?: string | null
+          notes?: string | null
+          paid_at?: string | null
+          payment_gateway?: string
+          payment_link_url?: string | null
+          payment_proof_url?: string | null
+          payment_reference?: string | null
+          qr_code_url?: string | null
+          sale_order_id?: string | null
+          status?: string
+          updated_at?: string
+          upi_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payment_links_bill_id_fkey"
+            columns: ["bill_id"]
+            isOneToOne: false
+            referencedRelation: "bills"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payment_links_bill_id_fkey"
+            columns: ["bill_id"]
+            isOneToOne: false
+            referencedRelation: "upcoming_bills_v1"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payment_links_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payment_links_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "invoices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payment_links_sale_order_id_fkey"
+            columns: ["sale_order_id"]
+            isOneToOne: false
+            referencedRelation: "sales_orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payment_links_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "user_entitlements_v1"
+            referencedColumns: ["user_id"]
+          },
+        ]
       }
       payment_transactions: {
         Row: {
@@ -1901,6 +2067,171 @@ export type Database = {
             foreignKeyName: "user_subscriptions_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: true
+            referencedRelation: "user_entitlements_v1"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
+      whatsapp_broadcasts: {
+        Row: {
+          broadcast_name: string
+          completed_at: string | null
+          created_at: string
+          delivered_count: number
+          failed_count: number
+          id: string
+          message_template: string
+          recipient_count: number
+          scheduled_at: string | null
+          sent_count: number
+          started_at: string | null
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          broadcast_name: string
+          completed_at?: string | null
+          created_at?: string
+          delivered_count?: number
+          failed_count?: number
+          id?: string
+          message_template: string
+          recipient_count?: number
+          scheduled_at?: string | null
+          sent_count?: number
+          started_at?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          broadcast_name?: string
+          completed_at?: string | null
+          created_at?: string
+          delivered_count?: number
+          failed_count?: number
+          id?: string
+          message_template?: string
+          recipient_count?: number
+          scheduled_at?: string | null
+          sent_count?: number
+          started_at?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "whatsapp_broadcasts_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "user_entitlements_v1"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
+      whatsapp_messages: {
+        Row: {
+          created_at: string
+          customer_id: string | null
+          delivered_at: string | null
+          error_message: string | null
+          id: string
+          media_url: string | null
+          message_content: string
+          message_type: string
+          phone_number: string
+          read_at: string | null
+          related_bill_id: string | null
+          related_invoice_id: string | null
+          related_sale_id: string | null
+          sent_at: string | null
+          status: string
+          twilio_message_sid: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          customer_id?: string | null
+          delivered_at?: string | null
+          error_message?: string | null
+          id?: string
+          media_url?: string | null
+          message_content: string
+          message_type: string
+          phone_number: string
+          read_at?: string | null
+          related_bill_id?: string | null
+          related_invoice_id?: string | null
+          related_sale_id?: string | null
+          sent_at?: string | null
+          status?: string
+          twilio_message_sid?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          customer_id?: string | null
+          delivered_at?: string | null
+          error_message?: string | null
+          id?: string
+          media_url?: string | null
+          message_content?: string
+          message_type?: string
+          phone_number?: string
+          read_at?: string | null
+          related_bill_id?: string | null
+          related_invoice_id?: string | null
+          related_sale_id?: string | null
+          sent_at?: string | null
+          status?: string
+          twilio_message_sid?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "whatsapp_messages_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "whatsapp_messages_related_bill_id_fkey"
+            columns: ["related_bill_id"]
+            isOneToOne: false
+            referencedRelation: "bills"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "whatsapp_messages_related_bill_id_fkey"
+            columns: ["related_bill_id"]
+            isOneToOne: false
+            referencedRelation: "upcoming_bills_v1"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "whatsapp_messages_related_invoice_id_fkey"
+            columns: ["related_invoice_id"]
+            isOneToOne: false
+            referencedRelation: "invoices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "whatsapp_messages_related_sale_id_fkey"
+            columns: ["related_sale_id"]
+            isOneToOne: false
+            referencedRelation: "sales_orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "whatsapp_messages_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
             referencedRelation: "user_entitlements_v1"
             referencedColumns: ["user_id"]
           },
