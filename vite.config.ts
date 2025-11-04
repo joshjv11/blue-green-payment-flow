@@ -9,6 +9,7 @@ config();
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
+  root: process.cwd(),
   server: {
     host: "::",
     port: 8080,
