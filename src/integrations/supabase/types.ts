@@ -2136,6 +2136,7 @@ export type Database = {
           created_at: string
           customer_id: string | null
           delivered_at: string | null
+          direction: string | null
           error_message: string | null
           id: string
           media_url: string | null
@@ -2156,6 +2157,7 @@ export type Database = {
           created_at?: string
           customer_id?: string | null
           delivered_at?: string | null
+          direction?: string | null
           error_message?: string | null
           id?: string
           media_url?: string | null
@@ -2176,6 +2178,7 @@ export type Database = {
           created_at?: string
           customer_id?: string | null
           delivered_at?: string | null
+          direction?: string | null
           error_message?: string | null
           id?: string
           media_url?: string | null
