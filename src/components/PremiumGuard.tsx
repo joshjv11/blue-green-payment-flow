@@ -25,7 +25,7 @@ export const PremiumGuard = ({
     const hasAccess = requiredPlan === 'premium' ? isPremium : hasProAccess;
 
     if (!hasAccess || !isActive) {
-      const planName = requiredPlan === 'premium' ? 'Premium (₹500/month)' : 'Pro (₹100/month)';
+      const planName = requiredPlan === 'premium' ? 'Premium (₹999/month)' : 'Pro (₹100/month)';
       
       toast({
         title: "Upgrade Required",

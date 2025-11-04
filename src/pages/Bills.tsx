@@ -47,7 +47,9 @@ import PlanStatusCard from '@/components/PlanStatusCard';
 import UpgradeTrigger from '@/components/UpgradeTrigger';
 import { useIsMobile } from '@/hooks/use-mobile';
 import BillReminderManager from '@/components/BillReminderManager';
+import { BillReminderSettings } from '@/components/BillReminderSettings';
 import { formatINRCompact } from '@/utils/currency';
+import { MessageCircle } from 'lucide-react';
 import { logError, logInfo } from '@/lib/logger';
 import { useLoadingWatchdog } from '@/hooks/useLoadingWatchdog';
 import { cancelAllQueries, refetchAllQueries } from '@/lib/query';
@@ -117,7 +119,9 @@ const Bills = () => {
   const [reminderModalBill, setReminderModalBill] = useState<Bill | null>(null);
   const isMobile = useIsMobile();
   
-  const { plan, billLimit, canAddBill, loading: planLoading, aiQueriesUsed, aiQueriesLimit } = useSupabasePlan();
+  const planData = useSupabasePlan();
+  const { plan, billLimit, canAddBill, loading: planLoading, aiQueriesUsed, aiQueriesLimit } = planData;
+  const isPro = plan === 'pro' || plan === 'premium';
   
   // Initialize payment verification
   usePaymentVerification();
@@ -463,6 +467,38 @@ const Bills = () => {
     }
   };
 
+  const [schedulingReminder, setSchedulingReminder] = useState<string | null>(null);
+
+  const handleScheduleWhatsAppReminder = async (billId: string) => {
+    setSchedulingReminder(billId);
+    try {
+      const { data, error } = await supabase.functions.invoke('schedule-bill-reminders-enhanced', {
+        body: {
+          bill_id: billId,
+        },
+      });
+
+      if (error) throw error;
+
+      if (data.success) {
+        toast({
+          title: "WhatsApp Reminders Scheduled! ✅",
+          description: `${data.scheduled_count} reminder(s) created. Click the WhatsApp link when it's time!`,
+        });
+      } else {
+        throw new Error(data.error || 'Failed to schedule reminders');
+      }
+    } catch (error: any) {
+      toast({
+        title: "Scheduling Failed",
+        description: error.message || "Failed to schedule WhatsApp reminders",
+        variant: "destructive",
+      });
+    } finally {
+      setSchedulingReminder(null);
+    }
+  };
+
   const BillCard = ({ bill }: { bill: Bill }) => {
     const dueDate = new Date(bill.due_date);
     const today = new Date();
@@ -747,6 +783,21 @@ const Bills = () => {
                                     <Edit className="h-4 w-4 mr-1" />
                                     Edit
                                   </Button>
+                                  {isPro && (
+                                    <Button 
+                                      size="sm" 
+                                      variant="outline"
+                                      onClick={() => handleScheduleWhatsAppReminder(bill.id)}
+                                      disabled={schedulingReminder === bill.id}
+                                      title="Schedule WhatsApp Reminder"
+                                    >
+                                      {schedulingReminder === bill.id ? (
+                                        <Loader2 className="h-4 w-4 animate-spin" />
+                                      ) : (
+                                        <MessageCircle className="h-4 w-4" />
+                                      )}
+                                    </Button>
+                                  )}
                                   <Button 
                                     size="sm" 
                                     variant="outline"

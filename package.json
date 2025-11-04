@@ -10,7 +10,10 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "deploy": "./deploy.sh",
-    "deploy:push": "git add -A && git commit -m 'Deploy: Auto-commit' && git push origin main"
+    "deploy:push": "git add -A && git commit -m 'Deploy: Auto-commit' && git push origin main",
+    "deploy:vercel": "vercel --prod",
+    "deploy:vercel:preview": "vercel",
+    "deploy:quick": "git add -A && git commit -m 'Deploy: Quick deploy' && git push origin main"
   },
   "dependencies": {
     "@emailjs/browser": "^4.4.1",

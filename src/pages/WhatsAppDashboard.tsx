@@ -19,6 +19,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
 import { Skeleton } from '@/components/ui/skeleton';
 import { formatInvoiceForWhatsApp, formatInvoiceSummary, type SalesOrder as SalesOrderType, type OrderLine } from '@/utils/whatsappFormatter';
+import { EInvoiceButton } from '@/components/EInvoiceButton';
 
 interface SalesOrder {
   id: string;
@@ -66,10 +67,10 @@ export default function WhatsAppDashboard() {
   const loadData = async () => {
     setLoading(true);
     try {
-      // Load recent sales orders
+      // Load recent sales orders (including e-invoice fields)
       const { data: sales, error: salesError } = await supabase
         .from('sales_orders')
-        .select('*')
+        .select('*, irn, einvoice_status, eway_bill_no, qr_code_url, gstn_ack_no')
         .eq('user_id', user?.id)
         .order('created_at', { ascending: false })
         .limit(10);
@@ -335,7 +336,7 @@ export default function WhatsAppDashboard() {
                           {sale.customer_name} • ₹{sale.grand_total.toFixed(2)}
                         </div>
                       </div>
-                      <div className="flex gap-2">
+                      <div className="flex gap-2 flex-wrap">
                         <Button
                           size="sm"
                           variant="outline"
@@ -345,6 +346,14 @@ export default function WhatsAppDashboard() {
                           <Send className="h-3 w-3" />
                           Send
                         </Button>
+                        <EInvoiceButton
+                          salesOrderId={sale.id}
+                          irn={(sale as any).irn}
+                          einvoiceStatus={(sale as any).einvoice_status}
+                          ewayBillNo={(sale as any).eway_bill_no}
+                          qrCodeUrl={(sale as any).qr_code_url}
+                          onSuccess={() => loadData()}
+                        />
                       </div>
                     </div>
                   ))}

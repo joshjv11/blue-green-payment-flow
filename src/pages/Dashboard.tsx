@@ -53,6 +53,10 @@ import { MonthlyChart } from '@/components/analytics/MonthlyChart';
 import { TopLists } from '@/components/analytics/TopLists';
 import { InventoryValueCard } from '@/components/analytics/InventoryValueCard';
 import { UpcomingBills } from '@/components/analytics/UpcomingBills';
+import { SavingsGoalCard } from '@/components/SavingsGoalCard';
+import { EMICard } from '@/components/EMICard';
+import { Target, CreditCard, PieChart } from 'lucide-react';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 interface Bill {
   id: string;
@@ -104,6 +108,9 @@ const Dashboard = () => {
   const [showPasskeyBanner, setShowPasskeyBanner] = useState(false);
   const { billLimit, canAddBill, canMakeAIQuery, getAIQueriesRemaining } = useSupabasePlan();
   const { isPremium, loading: entitlementsLoading } = useEntitlements();
+  const [savingsGoals, setSavingsGoals] = useState<any[]>([]);
+  const [activeEMIs, setActiveEMIs] = useState<any[]>([]);
+  const [spendingAlert, setSpendingAlert] = useState<any>(null);
   
   // Premium Analytics State
   const [analyticsLoading, setAnalyticsLoading] = useState(false);
@@ -263,8 +270,79 @@ const Dashboard = () => {
     }
   };
 
+  // Load Pro features data
+  const loadProFeaturesData = async () => {
+    try {
+      if (!user) return;
+
+      // Load savings goals
+      const { data: goals } = await supabase
+        .from('savings_goals')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('is_completed', false)
+        .order('created_at', { ascending: false })
+        .limit(3);
+
+      setSavingsGoals(goals || []);
+
+      // Load active EMIs
+      const { data: emis } = await supabase
+        .from('emi_tracker')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('is_active', true)
+        .order('next_due_date', { ascending: true })
+        .limit(3);
+
+      setActiveEMIs(emis || []);
+
+      // Check for spending alerts
+      const today = new Date();
+      const currentMonthStart = new Date(today.getFullYear(), today.getMonth(), 1);
+      
+      const { data: expenses } = await supabase
+        .from('expenses')
+        .select('category, amount')
+        .eq('user_id', user.id)
+        .gte('expense_date', currentMonthStart.toISOString().split('T')[0]);
+
+      const { data: alerts } = await supabase
+        .from('spending_alerts')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('is_active', true);
+
+      if (alerts && expenses) {
+        const categorySpending: Record<string, number> = {};
+        expenses.forEach((e: any) => {
+          categorySpending[e.category] = (categorySpending[e.category] || 0) + parseFloat(e.amount || 0);
+        });
+
+        for (const alert of alerts) {
+          const currentSpending = categorySpending[alert.category] || 0;
+          const threshold = (alert.monthly_limit * alert.alert_threshold) / 100;
+          if (currentSpending >= threshold) {
+            setSpendingAlert(alert);
+            break;
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Error loading Pro features data:', error);
+    }
+  };
+
   const fetchAnalytics = async () => {
-    if (entitlementsLoading || !isPremium) return; // Only fetch analytics for premium users
+      if (entitlementsLoading) return; // Wait for entitlements to load
+      
+      // Load Pro features data (savings goals, EMIs) for Pro/Premium users
+      if (isPro || contextPlan === 'premium') {
+        loadProFeaturesData();
+      }
+    
+      // Only fetch Premium analytics (KPIs, charts, etc.) for Premium users
+      if (!isPremium) return;
     
     try {
       setAnalyticsLoading(true);
@@ -870,6 +948,86 @@ const Dashboard = () => {
                 ))}
               </CardContent>
             </Card>
+          )}
+
+          {/* Pro Features Widgets */}
+          {(isPro || contextPlan === 'premium') && (
+            <>
+              {/* Savings Goals Widget */}
+              {savingsGoals.length > 0 && (
+                <Card>
+                  <CardHeader>
+                    <div className="flex items-center justify-between">
+                      <CardTitle className="flex items-center gap-2">
+                        <Target className="h-5 w-5" />
+                        Savings Goals
+                      </CardTitle>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => navigate('/savings-goals')}
+                      >
+                        View All
+                      </Button>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      {savingsGoals.map((goal) => (
+                        <SavingsGoalCard key={goal.id} goal={goal} />
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* EMI Manager Widget */}
+              {activeEMIs.length > 0 && (
+                <Card>
+                  <CardHeader>
+                    <div className="flex items-center justify-between">
+                      <CardTitle className="flex items-center gap-2">
+                        <CreditCard className="h-5 w-5" />
+                        EMI & Debt Manager
+                      </CardTitle>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => navigate('/emi-manager')}
+                      >
+                        View All
+                      </Button>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      {activeEMIs.map((emi) => (
+                        <EMICard key={emi.id} emi={emi} />
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Spending Alert */}
+              {spendingAlert && (
+                <Alert variant="destructive">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertDescription>
+                    <strong>Spending Alert!</strong> You've exceeded {spendingAlert.alert_threshold}% of your {spendingAlert.category} spending limit this month.
+                    {' '}
+                    <Button
+                      variant="link"
+                      size="sm"
+                      className="p-0 h-auto"
+                      onClick={() => navigate('/spending-insights')}
+                    >
+                      View Details
+                    </Button>
+                  </AlertDescription>
+                </Alert>
+              )}
+            </>
           )}
 
           {/* AI Financial Coach (moved to top for visibility) */}

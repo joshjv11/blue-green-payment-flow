@@ -99,6 +99,13 @@ const Upgrade = () => {
     'Everything in Free',
     'Unlimited bills',
     'Unlimited AI queries',
+    '⭐ WhatsApp Bill Reminders (FREE - No Charges)',
+    '⭐ Never Miss a Payment (3-day, 1-day, Due Date reminders)',
+    '⭐ Savings Goals & Emergency Fund Tracker',
+    '⭐ EMI & Debt Manager (Track all loans & credit cards)',
+    '⭐ Spending Insights (Category-wise tracking)',
+    '⭐ Spending Alerts (WhatsApp alerts when you exceed limits)',
+    '⭐ Bill Payment Scheduling',
     'Bill scheduling',
     'Sales & Purchase Orders',
     'Custom business branding',
@@ -110,6 +117,19 @@ const Upgrade = () => {
     'Everything in Pro',
     '⭐ Full Inventory Management',
     '⭐ GST & VAT Automation',
+    '⭐ E-Invoicing (IRN Generation)',
+    '⭐ Direct Upload to GST Portal',
+    '⭐ E-way Bill Generation',
+    '⭐ QR Code for B2C Invoices',
+    '⭐ Auto-Status Sync from GSTN',
+    '⭐ Bulk E-Invoice (100+ invoices/day)',
+    '⭐ One-click GSTR-1 & GSTR-3B Generation',
+    '⭐ Auto-pull Data from Sales/Purchase Records',
+    '⭐ JSON Export Ready for GSTN Upload',
+    '⭐ ITC Reconciliation (Form 2A/2B)',
+    '⭐ Mismatch Alerts (Your Data vs GSTN)',
+    '⭐ AI-Powered HSN Code Suggestion',
+    '⭐ Complete Audit Trail for CA Review',
     '⭐ Tally/CA-Ready Exports',
     '⭐ Financial Reports (P&L, Balance Sheet)',
     '⭐ Cash Flow Statements',
@@ -252,7 +272,7 @@ const Upgrade = () => {
               </CardTitle>
               <CardDescription>Complete financial control</CardDescription>
               <div className="mt-4">
-                <span className="text-4xl font-bold">₹500</span>
+                <span className="text-4xl font-bold">₹999</span>
                 <span className="text-muted-foreground">/month</span>
               </div>
             </CardHeader>
@@ -293,7 +313,7 @@ const Upgrade = () => {
             </AlertDialogTitle>
             <AlertDialogDescription>
               You're about to upgrade to the {selectedPlan === 'premium' ? 'Premium' : 'Pro'} plan 
-              (₹{selectedPlan === 'premium' ? '500' : '100'}/month). 
+              (₹{selectedPlan === 'premium' ? '999' : '100'}/month). 
               Your plan will be active for 30 days from today.
               <br /><br />
               <strong>Note:</strong> This is a demo upgrade. In production, you would be redirected to a payment gateway.

@@ -209,7 +209,7 @@ export default function AdminPlans() {
                 <div className="flex items-center space-x-2">
                   <RadioGroupItem value="premium" id="premium" />
                   <Label htmlFor="premium" className="cursor-pointer">
-                    Premium - ₹500/month - Full access + Inventory, GST, Reports
+                    Premium - ₹999/month - Full access + Inventory, GST, Reports
                   </Label>
                 </div>
               </RadioGroup>

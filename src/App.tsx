@@ -15,6 +15,7 @@ import DebugInfo from '@/components/DebugInfo';
 import MobileOptimizer from '@/components/MobileOptimizer';
 import { PageTransition } from '@/components/PageTransition';
 import ReturnHomeButton from '@/components/ui/ReturnHomeButton';
+import { SecretAdminLock } from '@/components/SecretAdminLock';
 import Index from './pages/Index';
 import Auth from './pages/Auth';
 import Terms from './pages/Terms';
@@ -33,6 +34,11 @@ import GSTSummary from './pages/GSTSummary';
 import Exports from './pages/Exports';
 import Reports from './pages/Reports';
 import TaxSettings from './pages/TaxSettings';
+import EInvoiceSettings from './pages/EInvoiceSettings';
+import GSTRFiling from './pages/GSTRFiling';
+import SavingsGoals from './pages/SavingsGoals';
+import EMIManager from './pages/EMIManager';
+import SpendingInsights from './pages/SpendingInsights';
 import Expenses from './pages/Expenses';
 import FinancialReports from './pages/FinancialReports';
 import AdvancedAnalyticsDashboard from './pages/AdvancedAnalyticsDashboard';
@@ -94,7 +100,7 @@ function AppRoutes() {
         path="/sales" 
         element={
           <ProtectedRoute>
-            <RequirePlan requiredPlan="pro" featureName="Sales Orders">
+            <RequirePlan requiredPlan="premium" featureName="Sales Orders">
               <PageTransition><Sales /></PageTransition>
             </RequirePlan>
           </ProtectedRoute>
@@ -104,7 +110,7 @@ function AppRoutes() {
         path="/sales-v2" 
         element={
           <ProtectedRoute>
-            <RequirePlan requiredPlan="pro" featureName="Sales Orders">
+            <RequirePlan requiredPlan="premium" featureName="Sales Orders">
               <PageTransition><SalesV2 /></PageTransition>
             </RequirePlan>
           </ProtectedRoute>
@@ -124,7 +130,7 @@ function AppRoutes() {
         path="/purchases"
         element={
           <ProtectedRoute>
-            <RequirePlan requiredPlan="pro" featureName="Purchase Orders">
+            <RequirePlan requiredPlan="premium" featureName="Purchase Orders">
               <PageTransition><Purchases /></PageTransition>
             </RequirePlan>
           </ProtectedRoute>
@@ -134,7 +140,7 @@ function AppRoutes() {
         path="/purchases-v2"
         element={
           <ProtectedRoute>
-            <RequirePlan requiredPlan="pro" featureName="Purchase Orders">
+            <RequirePlan requiredPlan="premium" featureName="Purchase Orders">
               <PageTransition><PurchasesV2 /></PageTransition>
             </RequirePlan>
           </ProtectedRoute>
@@ -144,7 +150,7 @@ function AppRoutes() {
         path="/expenses" 
         element={
           <ProtectedRoute>
-            <RequirePlan requiredPlan="pro" featureName="Expense Management">
+            <RequirePlan requiredPlan="premium" featureName="Expense Management">
               <PageTransition><Expenses /></PageTransition>
             </RequirePlan>
           </ProtectedRoute>
@@ -221,6 +227,56 @@ function AppRoutes() {
         element={
           <ProtectedRoute>
             <PageTransition><TaxSettings /></PageTransition>
+          </ProtectedRoute>
+        } 
+      />
+      <Route
+        path="/settings/e-invoice"
+        element={
+          <ProtectedRoute>
+            <RequirePlan requiredPlan="premium" featureName="E-Invoice Settings">
+              <PageTransition><EInvoiceSettings /></PageTransition>
+            </RequirePlan>
+          </ProtectedRoute>
+        } 
+      />
+      <Route
+        path="/gstr-filing"
+        element={
+          <ProtectedRoute>
+            <RequirePlan requiredPlan="premium" featureName="GSTR Filing">
+              <PageTransition><GSTRFiling /></PageTransition>
+            </RequirePlan>
+          </ProtectedRoute>
+        } 
+      />
+      <Route
+        path="/savings-goals"
+        element={
+          <ProtectedRoute>
+            <RequirePlan requiredPlan="pro" featureName="Savings Goals">
+              <PageTransition><SavingsGoals /></PageTransition>
+            </RequirePlan>
+          </ProtectedRoute>
+        } 
+      />
+      <Route
+        path="/emi-manager"
+        element={
+          <ProtectedRoute>
+            <RequirePlan requiredPlan="pro" featureName="EMI Manager">
+              <PageTransition><EMIManager /></PageTransition>
+            </RequirePlan>
+          </ProtectedRoute>
+        } 
+      />
+      <Route
+        path="/spending-insights"
+        element={
+          <ProtectedRoute>
+            <RequirePlan requiredPlan="pro" featureName="Spending Insights">
+              <PageTransition><SpendingInsights /></PageTransition>
+            </RequirePlan>
           </ProtectedRoute>
         } 
       />
@@ -310,6 +366,7 @@ function AppLayout({ children }: { children: React.ReactNode }) {
           </header>
           <main className="flex-1 relative overflow-x-hidden">
             <ReturnHomeButton />
+            <SecretAdminLock />
             {children}
           </main>
         </div>

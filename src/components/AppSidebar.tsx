@@ -16,7 +16,9 @@ import {
   Brain,
   CreditCard,
   LogOut,
-  Shield
+  Shield,
+  Target,
+  PieChart
 } from "lucide-react";
 import { NavLink } from "react-router-dom";
 import {
@@ -42,10 +44,13 @@ const mainItems = [
   { title: "Bills", url: "/bills", icon: FileText, featureKey: "bills" },
   { title: "AI Coach", url: "/ai-coach", icon: Brain, featureKey: "ai-coach", isProminent: true, isNew: true },
   { title: "WhatsApp", url: "/whatsapp", icon: MessageCircle, featureKey: "whatsapp", requiredPlan: "pro" as const, isProminent: true },
-  { title: "Sales", url: "/sales", icon: ShoppingCart, featureKey: "sales", requiredPlan: "pro" as const },
-  { title: "Purchases", url: "/purchases", icon: ShoppingBag, featureKey: "purchases", requiredPlan: "pro" as const },
+  { title: "Savings Goals", url: "/savings-goals", icon: Target, featureKey: "savings-goals", requiredPlan: "pro" as const },
+  { title: "EMI Manager", url: "/emi-manager", icon: CreditCard, featureKey: "emi-manager", requiredPlan: "pro" as const },
+  { title: "Spending Insights", url: "/spending-insights", icon: PieChart, featureKey: "spending-insights", requiredPlan: "pro" as const },
+  { title: "Sales", url: "/sales", icon: ShoppingCart, featureKey: "sales", requiredPlan: "premium" as const },
+  { title: "Purchases", url: "/purchases", icon: ShoppingBag, featureKey: "purchases", requiredPlan: "premium" as const },
   { title: "Inventory", url: "/inventory", icon: Package, featureKey: "inventory", requiredPlan: "premium" as const },
-  { title: "Expenses", url: "/expenses", icon: Wallet, featureKey: "expenses" },
+  { title: "Expenses", url: "/expenses", icon: Wallet, featureKey: "expenses", requiredPlan: "premium" as const },
 ];
 
 const secondaryItems = [
@@ -153,7 +158,7 @@ export function AppSidebar() {
     );
 
     if (isLocked) {
-      const planName = item.requiredPlan === 'premium' ? 'Premium (₹500/mo)' : 'Pro (₹100/mo)';
+      const planName = item.requiredPlan === 'premium' ? 'Premium (₹999/mo)' : 'Pro (₹100/mo)';
       return (
         <Tooltip key={item.title}>
           <TooltipTrigger asChild>

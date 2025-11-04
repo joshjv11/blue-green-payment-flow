@@ -18,7 +18,7 @@ const Payment = () => {
   const { user } = useAuth();
   
   const planType = searchParams.get('plan') as 'pro' | 'premium' | null;
-  const amountMap = { pro: 100, premium: 500 } as const;
+  const amountMap = { pro: 100, premium: 999 } as const;
   const amount = planType ? amountMap[planType] : 0;
   const planName = planType === 'premium' ? 'Premium' : 'Pro';
   

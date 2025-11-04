@@ -40,7 +40,7 @@ export const RequirePlan = ({
 
       if (!hasAccess) {
         const planName = requiredPlan === 'premium' 
-          ? 'Premium (₹500/month)' 
+          ? 'Premium (₹999/month)' 
           : 'Pro (₹100/month)';
         
         console.log('❌ Access Denied - Redirecting to upgrade');
