@@ -11,7 +11,8 @@ import {
   Wallet,
   Lock,
   Crown,
-  Sparkles
+  Sparkles,
+  MessageCircle
 } from "lucide-react";
 import { NavLink } from "react-router-dom";
 import {
@@ -36,6 +37,7 @@ const mainItems = [
   { title: "Purchases", url: "/purchases", icon: ShoppingBag, featureKey: "purchases", requiredPlan: "pro" as const },
   { title: "Inventory", url: "/inventory", icon: Package, featureKey: "inventory", requiredPlan: "premium" as const },
   { title: "Expenses", url: "/expenses", icon: Wallet, featureKey: "expenses" },
+  { title: "WhatsApp", url: "/whatsapp", icon: MessageCircle, featureKey: "whatsapp", requiredPlan: "pro" as const },
 ];
 
 const secondaryItems = [
