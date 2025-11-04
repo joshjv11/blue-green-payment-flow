@@ -12,8 +12,9 @@ import {
 } from "@/components/ui/table";
 import AppNavigation from '@/components/AppNavigation';
 import { WhatsAppSendModal } from '@/components/WhatsAppSendModal';
+import { WhatsAppBroadcastModal } from '@/components/WhatsAppBroadcastModal';
 import { supabase } from '@/integrations/supabase/client';
-import { MessageCircle, Send, Link as LinkIcon, Clock, CheckCircle2, XCircle } from 'lucide-react';
+import { MessageCircle, Send, Link as LinkIcon, Clock, CheckCircle2, XCircle, Megaphone } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
 
@@ -42,6 +43,7 @@ export default function WhatsAppDashboard() {
   const [whatsappMessages, setWhatsappMessages] = useState<WhatsAppMessage[]>([]);
   const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
+  const [broadcastModalOpen, setBroadcastModalOpen] = useState(false);
   const [selectedSale, setSelectedSale] = useState<SalesOrder | null>(null);
 
   useEffect(() => {
@@ -141,6 +143,12 @@ export default function WhatsAppDashboard() {
             <p className="text-muted-foreground mt-1">
               Send invoices, payment links, and reminders directly via WhatsApp
             </p>
+          </div>
+          <div className="flex gap-2">
+            <Button onClick={() => setBroadcastModalOpen(true)} variant="outline" className="gap-2">
+              <Megaphone className="h-4 w-4" />
+              Broadcast
+            </Button>
           </div>
         </div>
 
@@ -317,6 +325,11 @@ export default function WhatsAppDashboard() {
           invoiceNumber={selectedSale.invoice_number}
         />
       )}
+
+      <WhatsAppBroadcastModal
+        open={broadcastModalOpen}
+        onOpenChange={setBroadcastModalOpen}
+      />
     </div>
   );
 }

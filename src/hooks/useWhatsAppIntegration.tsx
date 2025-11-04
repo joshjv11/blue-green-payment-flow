@@ -27,6 +27,7 @@ interface GeneratePaymentLinkParams {
 export const useWhatsAppIntegration = () => {
   const [isSending, setIsSending] = useState(false);
   const [isGeneratingLink, setIsGeneratingLink] = useState(false);
+  const [isBroadcasting, setIsBroadcasting] = useState(false);
 
   const sendWhatsAppMessage = async (params: SendWhatsAppMessageParams) => {
     setIsSending(true);
@@ -159,13 +160,48 @@ export const useWhatsAppIntegration = () => {
     });
   };
 
+  const sendBroadcast = async (
+    broadcastType: 'gst_reminder' | 'payment_reminder' | 'custom',
+    message: string,
+    customerIds?: string[]
+  ) => {
+    setIsBroadcasting(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('send-whatsapp-broadcast', {
+        body: { broadcastType, message, customerIds }
+      });
+
+      if (error) {
+        console.error('Broadcast error:', error);
+        toast.error('Failed to send broadcast');
+        return { success: false, error };
+      }
+
+      if (!data.success) {
+        toast.error(data.error || 'Failed to send broadcast');
+        return { success: false, error: data.error };
+      }
+
+      toast.success(`Broadcast sent to ${data.sent} customers! 📢`);
+      return { success: true, data };
+    } catch (error: any) {
+      console.error('Broadcast error:', error);
+      toast.error('Failed to send broadcast');
+      return { success: false, error };
+    } finally {
+      setIsBroadcasting(false);
+    }
+  };
+
   return {
     sendWhatsAppMessage,
     generatePaymentLink,
     sendInvoiceViaWhatsApp,
     sendPaymentReminder,
     sendPaymentLinkViaWhatsApp,
+    sendBroadcast,
     isSending,
-    isGeneratingLink
+    isGeneratingLink,
+    isBroadcasting
   };
 };
