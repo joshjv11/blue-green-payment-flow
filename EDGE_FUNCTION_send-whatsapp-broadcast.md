@@ -1,3 +1,18 @@
+# Edge Function: send-whatsapp-broadcast
+
+## Instructions:
+
+1. Go to Supabase Dashboard → **Edge Functions**
+2. Click **"Create a new function"** (or find existing `send-whatsapp-broadcast` and click "Edit")
+3. **Function Name:** `send-whatsapp-broadcast`
+4. **Copy and paste the code below** into the function editor
+5. Click **"Deploy"**
+
+---
+
+## Complete Code:
+
+```typescript
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.57.4';
 
@@ -10,7 +25,6 @@ interface BroadcastRequest {
   broadcastType: 'gst_reminder' | 'payment_reminder' | 'custom';
   message: string;
   customerIds?: string[];
-  manualPhoneNumbers?: string[];
   filters?: {
     hasUnpaidInvoices?: boolean;
     gstFilingDue?: boolean;
@@ -81,7 +95,7 @@ const handler = async (req: Request): Promise<Response> => {
     }
 
     const body: BroadcastRequest = await req.json();
-    const { broadcastType, message, customerIds, manualPhoneNumbers = [], filters } = body;
+    const { broadcastType, message, customerIds, filters } = body;
 
     // Get target customers
     let customersQuery = supabase
@@ -100,37 +114,7 @@ const handler = async (req: Request): Promise<Response> => {
       throw new Error('Failed to fetch customers');
     }
 
-    console.log(`📋 Found ${customers.length} customers from database`);
-
-    // Prepare manual recipients
-    const sanitizePhone = (input: string) => (input || '').replace(/\s+/g, '').trim();
-    const formatToE164 = (phone: string) => {
-      let p = sanitizePhone(phone);
-      if (!p) return '';
-      if (p.startsWith('+')) return p;
-      // Basic handling for India default if 10 digits
-      if (/^\d{10}$/.test(p)) return `+91${p}`;
-      // If leading 0 with 10-14 digits, strip the 0
-      if (/^0\d{10,14}$/.test(p)) return `+${p.substring(1)}`;
-      return `+${p}`; // last resort
-    };
-    const isValidE164 = (p: string) => /^\+[1-9]\d{1,14}$/.test(p);
-
-    const manualRecipients = manualPhoneNumbers
-      .map(formatToE164)
-      .filter((p) => {
-        const ok = isValidE164(p);
-        if (!ok) console.warn('⚠️ Skipping invalid manual phone number:', p);
-        return ok;
-      })
-      .map((p) => ({ id: null as string | null, name: p, phone: p, email: null as string | null }));
-
-    // Combine DB customers and manual recipients
-    const recipients = [
-      ...customers.map((c) => ({ id: c.id, name: c.name, phone: c.phone, email: c.email })),
-      ...manualRecipients,
-    ];
-    console.log(`👥 Total recipients: ${recipients.length} (db: ${customers.length}, manual: ${manualRecipients.length})`);
+    console.log(`📋 Found ${customers.length} customers for broadcast`);
 
     // Create broadcast record
     const { data: broadcast, error: broadcastError } = await supabase
@@ -139,7 +123,7 @@ const handler = async (req: Request): Promise<Response> => {
         user_id: user.id,
         broadcast_type: broadcastType,
         message_content: message,
-        total_recipients: recipients.length,
+        total_recipients: customers.length,
         status: 'in_progress'
       })
       .select()
@@ -157,9 +141,8 @@ const handler = async (req: Request): Promise<Response> => {
 
     let sentCount = 0;
     let failedCount = 0;
-    const whatsappLinks: { name?: string | null; phone: string; url: string }[] = [];
 
-    for (const customer of recipients) {
+    for (const customer of customers) {
       if (!customer.phone) continue;
 
       let formattedPhone = customer.phone.replace(/\s+/g, '');
@@ -168,15 +151,10 @@ const handler = async (req: Request): Promise<Response> => {
       }
 
       try {
-        // Personalize message FIRST
+        // Personalize message
         const personalizedMessage = message
-          .replace('{customer_name}', customer.name || '')
+          .replace('{customer_name}', customer.name)
           .replace('{customer_email}', customer.email || '');
-
-        // Build WhatsApp Web link (helps frontend show/open links)
-        const digitsOnly = formattedPhone.replace(/\D/g, '');
-        const waUrl = `https://wa.me/${digitsOnly}?text=${encodeURIComponent(personalizedMessage)}`;
-        whatsappLinks.push({ name: customer.name, phone: formattedPhone, url: waUrl });
 
         // Format the from phone number
         let formattedFromPhone = fromPhoneNumber.replace(/\s+/g, '').trim();
@@ -205,21 +183,19 @@ const handler = async (req: Request): Promise<Response> => {
           sentCount++;
           
           // Create message record
-          const insertPayload: Record<string, unknown> = {
-            user_id: user.id,
-            phone_number: formattedPhone,
-            message_type: broadcastType,
-            message_content: personalizedMessage,
-            broadcast_id: broadcast.id,
-            status: 'sent',
-            twilio_message_sid: twilioData.sid,
-            sent_at: new Date().toISOString()
-          };
-          if (customer.id) insertPayload.customer_id = customer.id;
-
           await supabase
             .from('whatsapp_messages')
-            .insert(insertPayload);
+            .insert({
+              user_id: user.id,
+              customer_id: customer.id,
+              phone_number: formattedPhone,
+              message_type: broadcastType,
+              message_content: personalizedMessage,
+              broadcast_id: broadcast.id,
+              status: 'sent',
+              twilio_message_sid: twilioData.sid,
+              sent_at: new Date().toISOString()
+            });
 
           console.log(`✅ Sent to ${customer.name}`);
         } else {
@@ -253,9 +229,7 @@ const handler = async (req: Request): Promise<Response> => {
       success: true,
       broadcast_id: broadcast.id,
       sent: sentCount,
-      failed: failedCount,
-      whatsappLinks,
-      totalLinks: whatsappLinks.length
+      failed: failedCount
     }), {
       status: 200,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }
@@ -274,3 +248,16 @@ const handler = async (req: Request): Promise<Response> => {
 };
 
 serve(handler);
+```
+
+---
+
+## Notes:
+
+- This function sends **broadcast messages** to multiple customers at once
+- It uses the user's WhatsApp number from their profile (if configured)
+- Falls back to system Twilio number if user hasn't set their number
+- Personalizes messages with `{customer_name}` and `{customer_email}` placeholders
+- Waits 1 second between each message to avoid rate limiting
+- Requires Twilio credentials in Supabase Secrets
+

@@ -1,3 +1,17 @@
+# Edge Function: send-whatsapp-message (FREE - No Twilio)
+
+## Instructions:
+
+1. Go to Supabase Dashboard → **Edge Functions**
+2. Find `send-whatsapp-message` and click **"Edit"**
+3. **Replace the entire code** with the code below
+4. Click **"Deploy"**
+
+---
+
+## Complete Code (FREE WhatsApp Web Solution):
+
+```typescript
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.57.4';
 
@@ -23,21 +37,12 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
-    console.log('🚀 Starting WhatsApp message send...');
+    console.log('🚀 Starting WhatsApp message send (FREE method)...');
 
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
-
-    // Get Twilio credentials
-    const TWILIO_ACCOUNT_SID = Deno.env.get('TWILIO_ACCOUNT_SID');
-    const TWILIO_AUTH_TOKEN = Deno.env.get('TWILIO_AUTH_TOKEN');
-    const TWILIO_PHONE_NUMBER = Deno.env.get('TWILIO_PHONE_NUMBER');
-
-    if (!TWILIO_ACCOUNT_SID || !TWILIO_AUTH_TOKEN) {
-      throw new Error('Twilio credentials not configured');
-    }
 
     // Get user from authorization header
     const authHeader = req.headers.get('Authorization');
@@ -69,23 +74,10 @@ const handler = async (req: Request): Promise<Response> => {
       console.error('Error fetching user profile:', profileError);
     }
 
-    // Use user's WhatsApp number if available, otherwise fall back to system number
-    const fromPhoneNumber = profile?.whatsapp_phone_number || TWILIO_PHONE_NUMBER;
-    
-    if (!fromPhoneNumber) {
-      return new Response(JSON.stringify({
-        success: false,
-        error: 'WhatsApp phone number not configured. Please add your WhatsApp number in Settings.'
-      }), {
-        status: 400,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      });
-    }
-
     const body: WhatsAppMessageRequest = await req.json();
-    const { phoneNumber, message, mediaUrl, messageType, customerId, invoiceId, billId, saleOrderId } = body;
+    const { phoneNumber, message, messageType, customerId, invoiceId, billId, saleOrderId } = body;
 
-    // Format phone number for WhatsApp (must include country code with +)
+    // Format phone number (remove spaces, leading zeros, add country code if needed)
     let formattedPhone = phoneNumber.replace(/\s+/g, '').trim();
     
     // Remove leading zeros
@@ -95,11 +87,9 @@ const handler = async (req: Request): Promise<Response> => {
     
     // If doesn't start with +, add country code
     if (!formattedPhone.startsWith('+')) {
-      // Check if it's a 10-digit Indian number
       if (/^[6-9]\d{9}$/.test(formattedPhone)) {
         formattedPhone = '+91' + formattedPhone;
       } else {
-        // Default to India for other cases
         formattedPhone = '+91' + formattedPhone;
       }
     }
@@ -116,7 +106,7 @@ const handler = async (req: Request): Promise<Response> => {
       });
     }
 
-    // Create record in database first
+    // Create record in database
     const { data: messageRecord, error: dbError } = await supabase
       .from('whatsapp_messages')
       .insert({
@@ -125,11 +115,11 @@ const handler = async (req: Request): Promise<Response> => {
         phone_number: formattedPhone,
         message_type: messageType,
         message_content: message,
-        media_url: mediaUrl,
         related_invoice_id: invoiceId,
         related_bill_id: billId,
         related_sale_id: saleOrderId,
-        status: 'pending'
+        status: 'pending',
+        direction: 'outgoing'
       })
       .select()
       .single();
@@ -141,77 +131,30 @@ const handler = async (req: Request): Promise<Response> => {
 
     console.log('📝 Message record created:', messageRecord.id);
 
-    // Send via Twilio WhatsApp API
-    const twilioUrl = `https://api.twilio.com/2010-04-01/Accounts/${TWILIO_ACCOUNT_SID}/Messages.json`;
-    const twilioAuth = btoa(`${TWILIO_ACCOUNT_SID}:${TWILIO_AUTH_TOKEN}`);
+    // Generate WhatsApp Web URL (FREE method - no API costs!)
+    // This opens WhatsApp Web with pre-filled number and message
+    const encodedMessage = encodeURIComponent(message);
+    const whatsappUrl = `https://wa.me/${formattedPhone.replace('+', '')}?text=${encodedMessage}`;
 
-    // Format the from phone number
-    let formattedFromPhone = fromPhoneNumber.replace(/\s+/g, '').trim();
-    if (!formattedFromPhone.startsWith('+')) {
-      formattedFromPhone = '+91' + formattedFromPhone;
-    }
-
-    const twilioBody = new URLSearchParams({
-      From: `whatsapp:${formattedFromPhone}`,
-      To: `whatsapp:${formattedPhone}`,
-      Body: message
-    });
-
-    if (mediaUrl) {
-      twilioBody.append('MediaUrl', mediaUrl);
-    }
-
-    console.log('📤 Sending to Twilio...');
-
-    const twilioResponse = await fetch(twilioUrl, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Basic ${twilioAuth}`,
-        'Content-Type': 'application/x-www-form-urlencoded'
-      },
-      body: twilioBody.toString()
-    });
-
-    const twilioData = await twilioResponse.json();
-
-    if (!twilioResponse.ok) {
-      console.error('❌ Twilio error:', twilioData);
-      
-      // Update message status to failed
-      await supabase
-        .from('whatsapp_messages')
-        .update({
-          status: 'failed',
-          error_message: twilioData.message || 'Failed to send message'
-        })
-        .eq('id', messageRecord.id);
-
-      return new Response(JSON.stringify({
-        success: false,
-        error: twilioData.message || 'Failed to send WhatsApp message'
-      }), {
-        status: 400,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      });
-    }
-
-    console.log('✅ Message sent via Twilio:', twilioData.sid);
-
-    // Update message with Twilio SID and status
+    // Update message record with WhatsApp URL
     await supabase
       .from('whatsapp_messages')
       .update({
-        twilio_message_sid: twilioData.sid,
-        status: twilioData.status === 'queued' ? 'queued' : 'sent',
-        sent_at: new Date().toISOString()
+        status: 'sent',
+        sent_at: new Date().toISOString(),
+        error_message: null
       })
       .eq('id', messageRecord.id);
+
+    console.log('✅ WhatsApp URL generated:', whatsappUrl);
 
     return new Response(JSON.stringify({
       success: true,
       messageId: messageRecord.id,
-      twilioSid: twilioData.sid,
-      status: twilioData.status
+      whatsappUrl: whatsappUrl,
+      status: 'sent',
+      message: 'WhatsApp link generated successfully. Open it to send the message.',
+      note: 'This is a FREE solution using WhatsApp Web. Click the link to send the message from your phone.'
     }), {
       status: 200,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }
@@ -220,8 +163,9 @@ const handler = async (req: Request): Promise<Response> => {
   } catch (error: any) {
     console.error('❌ WhatsApp message error:', error);
     return new Response(JSON.stringify({
+      success: false,
       error: error.message || 'Unknown error occurred',
-      details: 'Failed to send WhatsApp message'
+      details: 'Failed to process WhatsApp message'
     }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }
@@ -230,3 +174,25 @@ const handler = async (req: Request): Promise<Response> => {
 };
 
 serve(handler);
+```
+
+---
+
+## How This Works:
+
+1. **No Twilio needed** - 100% FREE
+2. **Generates WhatsApp Web link** - Opens WhatsApp with pre-filled message
+3. **User clicks link** - Opens on their phone/WhatsApp Web
+4. **Message is ready to send** - Just click send button
+
+## Benefits:
+
+- ✅ **100% FREE** - No API costs
+- ✅ **Uses your phone number** - Direct from WhatsApp
+- ✅ **No setup required** - Works immediately
+- ✅ **Privacy maintained** - Messages sent directly from your phone
+
+---
+
+**Note:** This generates a WhatsApp Web link. When the user clicks it, WhatsApp opens with the message pre-filled. They just need to click "Send" on their phone. This is the simplest free solution!
+

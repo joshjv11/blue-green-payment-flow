@@ -1,10 +1,12 @@
 import { NavLink, Link } from 'react-router-dom';
-import { LayoutDashboard, FileText, BarChart3, Settings, LogIn, LogOut } from 'lucide-react';
+import { LayoutDashboard, FileText, BarChart3, Settings, LogIn, LogOut, MessageCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/useAuth';
+import { usePlan } from '@/contexts/PlanContext';
 
 const AppNavigation = () => {
   const { user, signOut, loading } = useAuth();
+  const { isPro, isPremium } = usePlan();
 
   return (
     <>
@@ -49,6 +51,21 @@ const AppNavigation = () => {
           <BarChart3 className="h-4 w-4" />
           <span>Analytics</span>
         </NavLink>
+        {(isPro || isPremium) && (
+          <NavLink
+            to="/whatsapp"
+            className={({ isActive }) =>
+              `flex items-center space-x-2 px-2 py-1.5 rounded-md text-sm font-medium transition-colors ${
+                isActive
+                  ? 'bg-green-600 text-white'
+                  : 'bg-green-500 text-white hover:bg-green-600'
+              }`
+            }
+          >
+            <MessageCircle className="h-4 w-4" />
+            <span>WhatsApp</span>
+          </NavLink>
+        )}
         <NavLink
           to="/settings"
           className={({ isActive }) =>
@@ -108,6 +125,21 @@ const AppNavigation = () => {
                 <BarChart3 className="h-4 w-4 mb-0.5 flex-shrink-0" />
                 <span className="truncate">Stats</span>
               </NavLink>
+              {(isPro || isPremium) && (
+                <NavLink
+                  to="/whatsapp"
+                  className={({ isActive }) =>
+                    `flex flex-col items-center justify-center px-2 py-1.5 text-xs font-medium transition-colors rounded-md min-w-0 touch-manipulation active:scale-95 ${
+                      isActive
+                        ? 'text-white bg-green-600'
+                        : 'bg-green-500 text-white hover:bg-green-600'
+                    }`
+                  }
+                >
+                  <MessageCircle className="h-4 w-4 mb-0.5 flex-shrink-0" />
+                  <span className="truncate">WhatsApp</span>
+                </NavLink>
+              )}
               <NavLink
                 to="/settings"
                 className={({ isActive }) =>

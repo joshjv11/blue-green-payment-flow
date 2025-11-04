@@ -36,8 +36,11 @@ import TaxSettings from './pages/TaxSettings';
 import Expenses from './pages/Expenses';
 import FinancialReports from './pages/FinancialReports';
 import AdvancedAnalyticsDashboard from './pages/AdvancedAnalyticsDashboard';
+import AICoach from './pages/AICoach';
 import Upgrade from './pages/Upgrade';
+import Payment from './pages/Payment';
 import Admin from './pages/Admin';
+import AdminCMS from './pages/AdminCMS';
 import AdminUsers from './pages/AdminUsers';
 import AdminUserPlans from './pages/AdminUserPlans';
 import AdminPlans from './pages/AdminPlans';
@@ -158,6 +161,14 @@ function AppRoutes() {
         } 
       />
       <Route 
+        path="/ai-coach" 
+        element={
+          <ProtectedRoute>
+            <PageTransition><AICoach /></PageTransition>
+          </ProtectedRoute>
+        } 
+      />
+      <Route 
         path="/gst-summary" 
         element={
           <ProtectedRoute>
@@ -221,6 +232,20 @@ function AppRoutes() {
           </ProtectedRoute>
         } 
       />
+      <Route
+        path="/payment"
+        element={
+          <ProtectedRoute>
+            <PageTransition><Payment /></PageTransition>
+          </ProtectedRoute>
+        } 
+      />
+      <Route
+        path="/admin-cms"
+        element={
+          <PageTransition><AdminCMS /></PageTransition>
+        } 
+      />
       <Route 
         path="/admin"
         element={
@@ -278,12 +303,12 @@ function AppLayout({ children }: { children: React.ReactNode }) {
     <SidebarProvider defaultOpen={true}>
       <div className="flex min-h-screen w-full">
         <AppSidebar />
-        <div className="flex-1">
-          <header className="sticky top-0 z-50 h-14 flex items-center gap-2 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 px-4">
+        <div className="flex-1 flex flex-col min-w-0">
+          <header className="sticky top-0 z-50 h-14 md:h-16 flex items-center gap-2 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 px-3 md:px-4 safe-area-inset-top">
             <SidebarTrigger />
             <div className="flex-1" />
           </header>
-          <main className="flex-1 relative">
+          <main className="flex-1 relative overflow-x-hidden">
             <ReturnHomeButton />
             {children}
           </main>

@@ -13,7 +13,7 @@ import { useNotifications } from '@/hooks/useNotifications';
 import { useEmailReminders } from '@/hooks/useEmailReminders';
 import { supabase, isSupabaseConfigured } from '@/lib/supabase';
 import { useToast } from '@/hooks/use-toast';
-import { LogOut, User, Building, Mail, FileText, ArrowRight, Plus, DollarSign, Calendar, AlertCircle, CheckCircle, Clock, BarChart3, Settings, Download, Upload, Crown, RefreshCw } from 'lucide-react';
+import { LogOut, User, Building, Mail, FileText, ArrowRight, Plus, DollarSign, Calendar, AlertCircle, CheckCircle, Clock, BarChart3, Settings, Download, Upload, Crown, RefreshCw, MessageCircle, Send } from 'lucide-react';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { useNavigate } from 'react-router-dom';
 import { parseISO, differenceInDays, isBefore, isToday, isAfter, addDays, format } from 'date-fns';
@@ -517,18 +517,29 @@ const Dashboard = () => {
                 </div>
               </div>
             </div>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={handleRetryAll}
-              disabled={loading || billsLoading}
-              className={cn(
-                "transition-colors duration-300 min-h-[44px] min-w-[44px]",
-                isPro && "hover:bg-[hsl(45,100%,60%)]/10"
-              )}
-            >
-              <RefreshCw className={`h-5 w-5 ${(loading || billsLoading) ? 'animate-spin' : ''}`} />
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={handleRetryAll}
+                disabled={loading || billsLoading}
+                className={cn(
+                  "transition-colors duration-300 min-h-[44px] min-w-[44px]",
+                  isPro && "hover:bg-[hsl(45,100%,60%)]/10"
+                )}
+              >
+                <RefreshCw className={`h-5 w-5 ${(loading || billsLoading) ? 'animate-spin' : ''}`} />
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={signOut}
+                className="gap-2 text-muted-foreground hover:text-destructive"
+              >
+                <LogOut className="h-4 w-4" />
+                <span className="hidden sm:inline">Sign Out</span>
+              </Button>
+            </div>
           </motion.div>
 
           {/* Reward Progress Bar */}
@@ -639,6 +650,61 @@ const Dashboard = () => {
               trend="up"
             />
           </div>
+
+          {/* WhatsApp Integration Card - Extremely Visible */}
+          {(isPro || contextPlan === 'premium') && (
+            <Card className={cn(
+              "border-green-500/50 bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-950/30 dark:to-emerald-950/30 shadow-lg hover:shadow-xl transition-all duration-300",
+              isPro && "border-green-400/60 shadow-green-500/20"
+            )}>
+              <CardContent className="pt-6">
+                <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+                  <div className="flex items-center gap-4 flex-1">
+                    <div className={cn(
+                      "p-4 rounded-2xl bg-gradient-to-br from-green-500 to-emerald-600 shadow-lg",
+                      isPro && "shadow-green-500/50"
+                    )}>
+                      <MessageCircle className="h-8 w-8 text-white" />
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="text-2xl font-bold text-green-900 dark:text-green-100 mb-1">
+                        WhatsApp Business Integration
+                      </h3>
+                      <p className="text-green-700 dark:text-green-300 text-sm md:text-base">
+                        Send invoices, payment links, and reminders directly to your customers via WhatsApp
+                      </p>
+                      <div className="flex flex-wrap gap-2 mt-2">
+                        <Badge variant="outline" className="bg-white/80 text-green-700 border-green-300">
+                          <CheckCircle className="h-3 w-3 mr-1" />
+                          90%+ Open Rate
+                        </Badge>
+                        <Badge variant="outline" className="bg-white/80 text-green-700 border-green-300">
+                          <CheckCircle className="h-3 w-3 mr-1" />
+                          Instant Delivery
+                        </Badge>
+                        <Badge variant="outline" className="bg-white/80 text-green-700 border-green-300">
+                          <CheckCircle className="h-3 w-3 mr-1" />
+                          Payment Reminders
+                        </Badge>
+                      </div>
+                    </div>
+                  </div>
+                  <Button
+                    size="lg"
+                    onClick={() => navigate('/whatsapp')}
+                    className={cn(
+                      "bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white shadow-lg hover:shadow-xl transition-all duration-300 px-6 py-6 text-base font-semibold gap-2",
+                      isPro && "shadow-green-500/50"
+                    )}
+                  >
+                    <MessageCircle className="h-5 w-5" />
+                    Open WhatsApp Dashboard
+                    <ArrowRight className="h-5 w-5" />
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
           {/* Analytics Section */}
           {bills.length > 0 && (
@@ -806,6 +872,32 @@ const Dashboard = () => {
             </Card>
           )}
 
+          {/* AI Financial Coach (moved to top for visibility) */}
+          <EnhancedAIAssistantV2 
+            bills={bills}
+            context="dashboard - managing bills and getting financial insights"
+            trigger={
+              <div className="w-full">
+                <div className="flex items-start justify-between flex-col sm:flex-row gap-3 sm:gap-4 mb-2">
+                  <h2 className="text-2xl sm:text-3xl font-bold tracking-tight gradient-text">
+                    Make your business smarter with AI
+                  </h2>
+                </div>
+                <div className="flex items-center gap-3 sm:gap-4 flex-wrap">
+                  <button
+                    className="group bg-gradient-to-r from-purple-600 via-fuchsia-600 to-pink-600 text-white rounded-2xl px-6 sm:px-8 py-3 sm:py-4 text-base sm:text-lg font-semibold shadow-lg shadow-purple-500/25 hover:shadow-2xl hover:shadow-pink-500/30 transition-all duration-300 ease-out transform hover:-translate-y-0.5 hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-purple-400/40"
+                  >
+                    Start AI Coaching
+                    <span className="ml-2 inline-block transition-transform group-hover:translate-x-0.5">→</span>
+                  </button>
+                  <p className="text-sm sm:text-base text-muted-foreground">
+                    Get instant insights, smarter decisions, and faster growth.
+                  </p>
+                </div>
+              </div>
+            }
+          />
+
           {/* Recent Bills Table */}
           <Card className={cn(
             "glass border-border/50 shadow-glass transition-all duration-300",
@@ -920,13 +1012,6 @@ const Dashboard = () => {
             </Card>
           )}
 
-          {/* Upgrade Modal */}
-          <UpgradeModal 
-            open={showUpgradeModal}
-            onOpenChange={setShowUpgradeModal}
-            currentBillCount={bills.length}
-          />
-
         </main>
 
         {/* Floating Action Buttons */}
@@ -944,11 +1029,6 @@ const Dashboard = () => {
           canAddBill={canAddBill(bills.length)}
           showUpgrade={plan === 'free'}
           isPro={isPro}
-        />
-
-        <EnhancedAIAssistantV2 
-          bills={bills}
-          context="dashboard - managing bills and getting financial insights"
         />
 
         {/* Celebration Animation */}

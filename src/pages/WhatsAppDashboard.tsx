@@ -14,9 +14,11 @@ import AppNavigation from '@/components/AppNavigation';
 import { WhatsAppSendModal } from '@/components/WhatsAppSendModal';
 import { WhatsAppBroadcastModal } from '@/components/WhatsAppBroadcastModal';
 import { supabase } from '@/integrations/supabase/client';
-import { MessageCircle, Send, Link as LinkIcon, Clock, CheckCircle2, XCircle, Megaphone } from 'lucide-react';
+import { MessageCircle, Send, Link as LinkIcon, Clock, CheckCircle2, XCircle, Megaphone, Plus, TrendingUp, Phone } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
+import { Skeleton } from '@/components/ui/skeleton';
+import { formatInvoiceForWhatsApp, formatInvoiceSummary, type SalesOrder as SalesOrderType, type OrderLine } from '@/utils/whatsappFormatter';
 
 interface SalesOrder {
   id: string;
@@ -26,6 +28,13 @@ interface SalesOrder {
   transaction_date: string;
   payment_status: string;
   billing_snapshot: any;
+  subtotal?: number;
+  tax_amount?: number;
+  amount_paid?: number;
+  balance_due?: number;
+  customer_gstin?: string;
+  customer_address?: string;
+  notes?: string;
 }
 
 interface WhatsAppMessage {
@@ -45,6 +54,8 @@ export default function WhatsAppDashboard() {
   const [modalOpen, setModalOpen] = useState(false);
   const [broadcastModalOpen, setBroadcastModalOpen] = useState(false);
   const [selectedSale, setSelectedSale] = useState<SalesOrder | null>(null);
+  const [selectedSaleLines, setSelectedSaleLines] = useState<OrderLine[]>([]);
+  const [loadingSaleDetails, setLoadingSaleDetails] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -84,9 +95,32 @@ export default function WhatsAppDashboard() {
     }
   };
 
-  const handleSendInvoice = (sale: SalesOrder) => {
+  const handleSendInvoice = async (sale: SalesOrder) => {
     setSelectedSale(sale);
-    setModalOpen(true);
+    setLoadingSaleDetails(true);
+    
+    try {
+      // Fetch order lines for this sale
+      const { data: orderLines, error: linesError } = await supabase
+        .from('order_lines')
+        .select('*')
+        .eq('order_id', sale.id)
+        .eq('order_type', 'sale')
+        .order('created_at', { ascending: true });
+      
+      if (linesError) {
+        console.error('Error fetching order lines:', linesError);
+        toast.error('Failed to load invoice details');
+      } else {
+        setSelectedSaleLines(orderLines || []);
+      }
+    } catch (error) {
+      console.error('Error loading sale details:', error);
+      toast.error('Failed to load invoice details');
+    } finally {
+      setLoadingSaleDetails(false);
+      setModalOpen(true);
+    }
   };
 
   const getStatusIcon = (status: string) => {
@@ -123,29 +157,63 @@ export default function WhatsAppDashboard() {
     );
   };
 
-  const defaultMessage = selectedSale
-    ? `🧾 *Invoice Notification*\n\nInvoice No: ${selectedSale.invoice_number}\nAmount: ₹${selectedSale.grand_total.toFixed(2)}\nDate: ${new Date(selectedSale.transaction_date).toLocaleDateString('en-IN')}\n\nThank you for your business! 🙏`
-    : '';
+  // Generate formatted invoice message
+  const getDefaultMessage = () => {
+    if (!selectedSale) return '';
+    
+    try {
+      // Use full format if we have order lines, otherwise use summary
+      if (selectedSaleLines.length > 0) {
+        return formatInvoiceForWhatsApp(selectedSale as SalesOrderType, selectedSaleLines, 'sale');
+      } else {
+        return formatInvoiceSummary(selectedSale as SalesOrderType, 'sale');
+      }
+    } catch (error) {
+      console.error('Error formatting invoice message:', error);
+      // Fallback to simple message
+      return `🧾 Invoice ${selectedSale.invoice_number || 'N/A'}\nAmount: ₹${(selectedSale.grand_total || 0).toFixed(2)}\nThank you! 🙏`;
+    }
+  };
 
+  const defaultMessage = getDefaultMessage();
   const defaultPhone = selectedSale?.billing_snapshot?.phone || '';
 
   return (
     <div className="min-h-screen bg-background">
       <AppNavigation />
       
-      <div className="container mx-auto py-6 space-y-6">
-        <div className="flex items-center justify-between">
+      <div className="container mx-auto px-3 md:px-4 py-4 md:py-6 space-y-4 md:space-y-6 max-w-7xl">
+        {/* Header */}
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
           <div>
-            <h1 className="text-3xl font-bold flex items-center gap-2">
-              <MessageCircle className="h-8 w-8 text-green-600" />
-              WhatsApp Business
+            <h1 className="text-2xl md:text-3xl font-bold flex items-center gap-2 md:gap-3">
+              <div className="p-1.5 md:p-2 rounded-lg md:rounded-xl bg-gradient-to-br from-green-500 to-emerald-600">
+                <MessageCircle className="h-5 w-5 md:h-6 md:w-6 text-white" />
+              </div>
+              WhatsApp Messages
             </h1>
-            <p className="text-muted-foreground mt-1">
-              Send invoices, payment links, and reminders directly via WhatsApp
+            <p className="text-muted-foreground mt-1 md:mt-2 text-sm md:text-base">
+              Send private messages directly to your customers
             </p>
           </div>
-          <div className="flex gap-2">
-            <Button onClick={() => setBroadcastModalOpen(true)} variant="outline" className="gap-2">
+          <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+            <Button 
+              onClick={() => {
+                setSelectedSale(null);
+                setModalOpen(true);
+              }} 
+              className="gap-2 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 w-full sm:w-auto"
+              size="lg"
+            >
+              <Plus className="h-4 w-4" />
+              New Message
+            </Button>
+            <Button 
+              onClick={() => setBroadcastModalOpen(true)} 
+              variant="outline" 
+              className="gap-2 w-full sm:w-auto"
+              size="lg"
+            >
               <Megaphone className="h-4 w-4" />
               Broadcast
             </Button>
@@ -153,182 +221,241 @@ export default function WhatsAppDashboard() {
         </div>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <Card>
-            <CardHeader className="pb-2">
-              <CardDescription>Total Sent</CardDescription>
-              <CardTitle className="text-2xl">{whatsappMessages.length}</CardTitle>
-            </CardHeader>
-          </Card>
-          <Card>
-            <CardHeader className="pb-2">
-              <CardDescription>Delivered</CardDescription>
-              <CardTitle className="text-2xl text-green-600">
-                {whatsappMessages.filter(m => m.status === 'delivered' || m.status === 'read').length}
-              </CardTitle>
-            </CardHeader>
-          </Card>
-          <Card>
-            <CardHeader className="pb-2">
-              <CardDescription>Pending</CardDescription>
-              <CardTitle className="text-2xl text-yellow-600">
-                {whatsappMessages.filter(m => m.status === 'pending' || m.status === 'queued').length}
-              </CardTitle>
-            </CardHeader>
-          </Card>
-          <Card>
-            <CardHeader className="pb-2">
-              <CardDescription>Failed</CardDescription>
-              <CardTitle className="text-2xl text-destructive">
-                {whatsappMessages.filter(m => m.status === 'failed').length}
-              </CardTitle>
-            </CardHeader>
-          </Card>
-        </div>
+        {loading ? (
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
+            {[...Array(4)].map((_, i) => (
+              <Card key={i}>
+                <CardContent className="pt-4 md:pt-6">
+                  <Skeleton className="h-6 md:h-8 w-16 md:w-20 mb-2" />
+                  <Skeleton className="h-3 md:h-4 w-24 md:w-32" />
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
+            <Card className="border-green-200 bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-950/20 dark:to-emerald-950/20">
+              <CardContent className="pt-4 md:pt-6">
+                <div className="flex items-center justify-between">
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs md:text-sm font-medium text-muted-foreground">Total Sent</p>
+                    <p className="text-2xl md:text-3xl font-bold text-green-700 dark:text-green-400 mt-1">
+                      {whatsappMessages.length}
+                    </p>
+                  </div>
+                  <div className="p-2 md:p-3 rounded-lg bg-green-100 dark:bg-green-900/30 flex-shrink-0">
+                    <MessageCircle className="h-4 w-4 md:h-5 md:w-5 text-green-600 dark:text-green-400" />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+            <Card className="border-green-200 bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-950/20 dark:to-emerald-950/20">
+              <CardContent className="pt-4 md:pt-6">
+                <div className="flex items-center justify-between">
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs md:text-sm font-medium text-muted-foreground">Delivered</p>
+                    <p className="text-2xl md:text-3xl font-bold text-green-600 dark:text-green-400 mt-1">
+                      {whatsappMessages.filter(m => m.status === 'delivered' || m.status === 'read').length}
+                    </p>
+                  </div>
+                  <div className="p-2 md:p-3 rounded-lg bg-green-100 dark:bg-green-900/30 flex-shrink-0">
+                    <CheckCircle2 className="h-4 w-4 md:h-5 md:w-5 text-green-600 dark:text-green-400" />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="pt-4 md:pt-6">
+                <div className="flex items-center justify-between">
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs md:text-sm font-medium text-muted-foreground">Pending</p>
+                    <p className="text-2xl md:text-3xl font-bold text-yellow-600 dark:text-yellow-400 mt-1">
+                      {whatsappMessages.filter(m => m.status === 'pending' || m.status === 'queued').length}
+                    </p>
+                  </div>
+                  <div className="p-2 md:p-3 rounded-lg bg-yellow-100 dark:bg-yellow-900/30 flex-shrink-0">
+                    <Clock className="h-4 w-4 md:h-5 md:w-5 text-yellow-600 dark:text-yellow-400" />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="pt-4 md:pt-6">
+                <div className="flex items-center justify-between">
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs md:text-sm font-medium text-muted-foreground">Failed</p>
+                    <p className="text-2xl md:text-3xl font-bold text-red-600 dark:text-red-400 mt-1">
+                      {whatsappMessages.filter(m => m.status === 'failed').length}
+                    </p>
+                  </div>
+                  <div className="p-2 md:p-3 rounded-lg bg-red-100 dark:bg-red-900/30 flex-shrink-0">
+                    <XCircle className="h-4 w-4 md:h-5 md:w-5 text-red-600 dark:text-red-400" />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
 
-        {/* Recent Sales - Ready to Send */}
+        {/* Quick Actions */}
+        {salesOrders.length > 0 && (
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle>Quick Send</CardTitle>
+                  <CardDescription>Send invoices or payment links from recent sales</CardDescription>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              {loading ? (
+                <div className="space-y-3">
+                  {[...Array(3)].map((_, i) => (
+                    <Skeleton key={i} className="h-16 w-full" />
+                  ))}
+                </div>
+              ) : salesOrders.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  <Phone className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                  <p>No recent sales to send</p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {salesOrders.slice(0, 5).map((sale) => (
+                    <div key={sale.id} className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-3">
+                          <div className="font-medium">{sale.invoice_number}</div>
+                          <Badge variant={sale.payment_status === 'paid' ? 'default' : 'secondary'} className="text-xs">
+                            {sale.payment_status}
+                          </Badge>
+                        </div>
+                        <div className="text-sm text-muted-foreground mt-1">
+                          {sale.customer_name} • ₹{sale.grand_total.toFixed(2)}
+                        </div>
+                      </div>
+                      <div className="flex gap-2">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handleSendInvoice(sale)}
+                          className="gap-2"
+                        >
+                          <Send className="h-3 w-3" />
+                          Send
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Recent Messages */}
         <Card>
           <CardHeader>
-            <CardTitle>Recent Sales - Send via WhatsApp</CardTitle>
-            <CardDescription>Send invoice notifications and payment links to your customers</CardDescription>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle>Recent Messages</CardTitle>
+                <CardDescription>Your WhatsApp message history</CardDescription>
+              </div>
+              {whatsappMessages.length > 0 && (
+                <Badge variant="secondary" className="gap-1">
+                  <TrendingUp className="h-3 w-3" />
+                  {whatsappMessages.filter(m => m.status === 'delivered' || m.status === 'read').length} delivered
+                </Badge>
+              )}
+            </div>
           </CardHeader>
           <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Invoice #</TableHead>
-                  <TableHead>Customer</TableHead>
-                  <TableHead>Amount</TableHead>
-                  <TableHead>Date</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {salesOrders.map((sale) => (
-                  <TableRow key={sale.id}>
-                    <TableCell className="font-medium">{sale.invoice_number}</TableCell>
-                    <TableCell>{sale.customer_name}</TableCell>
-                    <TableCell>₹{sale.grand_total.toFixed(2)}</TableCell>
-                    <TableCell>{new Date(sale.transaction_date).toLocaleDateString('en-IN')}</TableCell>
-                    <TableCell>
-                      <Badge variant={sale.payment_status === 'paid' ? 'default' : 'secondary'}>
-                        {sale.payment_status}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-right space-x-2">
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => handleSendInvoice(sale)}
-                        className="gap-2"
-                      >
-                        <Send className="h-3 w-3" />
-                        Invoice
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="default"
-                        onClick={() => handleSendInvoice(sale)}
-                        className="gap-2"
-                      >
-                        <LinkIcon className="h-3 w-3" />
-                        Pay Link
-                      </Button>
-                    </TableCell>
-                  </TableRow>
+            {loading ? (
+              <div className="space-y-3">
+                {[...Array(5)].map((_, i) => (
+                  <Skeleton key={i} className="h-12 w-full" />
                 ))}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
-
-        {/* Recent WhatsApp Messages */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Recent WhatsApp Messages</CardTitle>
-            <CardDescription>Track your sent messages and their delivery status</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Phone Number</TableHead>
-                  <TableHead>Type</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Sent At</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {whatsappMessages.map((message) => (
-                  <TableRow key={message.id}>
-                    <TableCell className="font-mono">{message.phone_number}</TableCell>
-                    <TableCell>
-                      <Badge variant="outline">{message.message_type}</Badge>
-                    </TableCell>
-                    <TableCell>{getStatusBadge(message.status)}</TableCell>
-                    <TableCell>
-                      {message.sent_at 
-                        ? new Date(message.sent_at).toLocaleString('en-IN')
-                        : 'Not sent'}
-                    </TableCell>
-                  </TableRow>
+              </div>
+            ) : whatsappMessages.length === 0 ? (
+              <div className="text-center py-12">
+                <div className="p-4 rounded-full bg-muted w-16 h-16 mx-auto mb-4 flex items-center justify-center">
+                  <MessageCircle className="h-8 w-8 text-muted-foreground" />
+                </div>
+                <h3 className="font-semibold mb-2">No messages yet</h3>
+                <p className="text-sm text-muted-foreground mb-4">
+                  Start sending messages to your customers
+                </p>
+                <Button onClick={() => setModalOpen(true)} className="gap-2">
+                  <Plus className="h-4 w-4" />
+                  Send Your First Message
+                </Button>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {whatsappMessages.slice(0, 10).map((message) => (
+                  <div key={message.id} className="flex items-center justify-between p-3 border rounded-lg hover:bg-muted/30 transition-colors">
+                    <div className="flex items-center gap-3 flex-1 min-w-0">
+                      <div className="flex-shrink-0">
+                        {getStatusIcon(message.status)}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <span className="font-mono text-sm">{message.phone_number}</span>
+                          <Badge variant="outline" className="text-xs">
+                            {message.message_type}
+                          </Badge>
+                        </div>
+                        <div className="text-xs text-muted-foreground mt-1">
+                          {message.sent_at 
+                            ? new Date(message.sent_at).toLocaleString('en-IN', { 
+                                month: 'short', 
+                                day: 'numeric', 
+                                hour: '2-digit', 
+                                minute: '2-digit' 
+                              })
+                            : 'Not sent yet'}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex-shrink-0">
+                      {getStatusBadge(message.status)}
+                    </div>
+                  </div>
                 ))}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
-
-        {/* Feature Info */}
-        <Card className="border-green-200 bg-green-50 dark:bg-green-950/20">
-          <CardHeader>
-            <CardTitle className="text-green-900 dark:text-green-100">
-              Why WhatsApp for Business?
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ul className="space-y-2 text-sm text-green-800 dark:text-green-200">
-              <li className="flex items-center gap-2">
-                <CheckCircle2 className="h-4 w-4" />
-                <strong>90%+ Open Rate</strong> vs 15-20% for Email
-              </li>
-              <li className="flex items-center gap-2">
-                <CheckCircle2 className="h-4 w-4" />
-                Instant delivery to customer's most-used app
-              </li>
-              <li className="flex items-center gap-2">
-                <CheckCircle2 className="h-4 w-4" />
-                Send invoices, payment reminders, and payment links
-              </li>
-              <li className="flex items-center gap-2">
-                <CheckCircle2 className="h-4 w-4" />
-                Customers can reply with payment proof directly
-              </li>
-              <li className="flex items-center gap-2">
-                <CheckCircle2 className="h-4 w-4" />
-                Automated payment reminders 24hrs before due date
-              </li>
-            </ul>
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
 
-      {selectedSale && (
-        <WhatsAppSendModal
-          open={modalOpen}
-          onOpenChange={setModalOpen}
-          defaultPhone={defaultPhone}
-          defaultMessage={defaultMessage}
-          messageType="invoice"
-          invoiceId={selectedSale.id}
-          amount={selectedSale.grand_total}
-          invoiceNumber={selectedSale.invoice_number}
-        />
-      )}
+      <WhatsAppSendModal
+        open={modalOpen}
+        onOpenChange={(open) => {
+          setModalOpen(open);
+          if (!open) {
+            setSelectedSale(null);
+            setSelectedSaleLines([]);
+            loadData(); // Refresh data when modal closes
+          }
+        }}
+        defaultPhone={defaultPhone}
+        defaultMessage={defaultMessage}
+        messageType={selectedSale ? "invoice" : "custom"}
+        invoiceId={selectedSale?.id}
+        amount={selectedSale?.grand_total}
+        invoiceNumber={selectedSale?.invoice_number}
+        isLoading={loadingSaleDetails}
+      />
 
       <WhatsAppBroadcastModal
         open={broadcastModalOpen}
-        onOpenChange={setBroadcastModalOpen}
+        onOpenChange={(open) => {
+          setBroadcastModalOpen(open);
+          if (!open) {
+            loadData(); // Refresh data when modal closes
+          }
+        }}
       />
     </div>
   );

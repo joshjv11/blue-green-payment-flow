@@ -1,3 +1,18 @@
+# Edge Function: send-whatsapp-message
+
+## Instructions:
+
+1. Go to Supabase Dashboard → **Edge Functions**
+2. Click **"Create a new function"** (or find existing `send-whatsapp-message` and click "Edit")
+3. **Function Name:** `send-whatsapp-message`
+4. **Copy and paste the code below** into the function editor
+5. Click **"Deploy"**
+
+---
+
+## Complete Code:
+
+```typescript
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.57.4';
 
@@ -230,3 +245,15 @@ const handler = async (req: Request): Promise<Response> => {
 };
 
 serve(handler);
+```
+
+---
+
+## Notes:
+
+- This function sends **individual, private messages** to one phone number
+- It uses the user's WhatsApp number from their profile (if configured)
+- Falls back to system Twilio number if user hasn't set their number
+- Automatically formats phone numbers (removes leading zeros, adds country code)
+- Requires Twilio credentials in Supabase Secrets
+

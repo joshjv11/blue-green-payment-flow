@@ -18,7 +18,7 @@ import { BackToDashboard } from '@/components/BackToDashboard';
 import FreemiumLimitCard from '@/components/FreemiumLimitCard';
 import UpgradeModal from '@/components/UpgradeModal';
 import { BusinessSettings } from '@/components/BusinessSettings';
-
+import { WhatsAppSettings } from '@/components/WhatsAppSettings';
 import UserReminderSettings from '@/components/UserReminderSettings';
 import ReminderDashboard from '@/components/ReminderDashboard';
 
@@ -174,6 +174,9 @@ const SettingsPage = () => {
         <div className="space-y-3 md:space-y-4">
         {/* Business Settings */}
         <BusinessSettings />
+
+        {/* WhatsApp Settings */}
+        <WhatsAppSettings />
 
         {/* Tax Settings Link */}
         <Card 

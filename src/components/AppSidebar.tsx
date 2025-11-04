@@ -12,7 +12,11 @@ import {
   Lock,
   Crown,
   Sparkles,
-  MessageCircle
+  MessageCircle,
+  Brain,
+  CreditCard,
+  LogOut,
+  Shield
 } from "lucide-react";
 import { NavLink } from "react-router-dom";
 import {
@@ -29,15 +33,19 @@ import {
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useEntitlements } from "@/lib/useEntitlements";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { useAuth } from "@/hooks/useAuth";
+import { cn } from "@/lib/utils";
 
 const mainItems = [
   { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard, featureKey: "dashboard" },
   { title: "Bills", url: "/bills", icon: FileText, featureKey: "bills" },
+  { title: "AI Coach", url: "/ai-coach", icon: Brain, featureKey: "ai-coach", isProminent: true, isNew: true },
+  { title: "WhatsApp", url: "/whatsapp", icon: MessageCircle, featureKey: "whatsapp", requiredPlan: "pro" as const, isProminent: true },
   { title: "Sales", url: "/sales", icon: ShoppingCart, featureKey: "sales", requiredPlan: "pro" as const },
   { title: "Purchases", url: "/purchases", icon: ShoppingBag, featureKey: "purchases", requiredPlan: "pro" as const },
   { title: "Inventory", url: "/inventory", icon: Package, featureKey: "inventory", requiredPlan: "premium" as const },
   { title: "Expenses", url: "/expenses", icon: Wallet, featureKey: "expenses" },
-  { title: "WhatsApp", url: "/whatsapp", icon: MessageCircle, featureKey: "whatsapp", requiredPlan: "pro" as const },
 ];
 
 const secondaryItems = [
@@ -47,9 +55,14 @@ const secondaryItems = [
   { title: "Settings", url: "/settings", icon: Settings, featureKey: "settings" },
 ];
 
+const adminItems = [
+  { title: "Admin CMS", url: "/admin-cms", icon: Shield, featureKey: "admin-cms" },
+];
+
 export function AppSidebar() {
   const { open } = useSidebar();
   const { plan, isPremium, loading, data } = useEntitlements();
+  const { signOut } = useAuth();
   
   const hasFeatureAccess = (featureKey: string) => {
     const item = [...mainItems, ...secondaryItems].find(i => i.featureKey === featureKey);
@@ -75,12 +88,29 @@ export function AppSidebar() {
     const hasAccess = hasFeatureAccess(item.featureKey);
     const isLocked = !hasAccess;
     const isPremiumFeature = item.requiredPlan === 'premium';
+    const isProminent = (item as any).isProminent && hasAccess;
+    const isNew = (item as any).isNew && hasAccess;
+    const isAICoach = item.featureKey === 'ai-coach';
 
     const navContent = (
       <NavLink 
         to={isLocked ? "/upgrade" : item.url} 
         end 
-        className={(props) => getNavClassName(props, isLocked)}
+        className={(props) => {
+          const baseClass = getNavClassName(props, isLocked);
+          if (isAICoach && !isLocked) {
+            // AI Coach gets purple gradient styling
+            return props.isActive 
+              ? "bg-gradient-to-r from-purple-600 to-pink-600 text-white font-semibold border-l-2 border-purple-700"
+              : "bg-gradient-to-r from-purple-500/10 to-pink-500/10 text-purple-700 dark:text-purple-400 hover:from-purple-500/20 hover:to-pink-500/20 font-medium border-l-2 border-purple-500/30";
+          }
+          if (isProminent && !isLocked) {
+            return props.isActive 
+              ? "bg-green-600 text-white font-semibold border-l-2 border-green-700"
+              : "bg-green-500/10 text-green-700 dark:text-green-400 hover:bg-green-500/20 font-medium border-l-2 border-green-500/30";
+          }
+          return baseClass;
+        }}
         onClick={(e) => {
           if (isLocked) {
             e.preventDefault();
@@ -89,12 +119,31 @@ export function AppSidebar() {
         }}
       >
         <div className="flex items-center gap-2 flex-1">
-          <item.icon className="h-4 w-4 flex-shrink-0" />
+          <item.icon className={cn(
+            "h-4 w-4 flex-shrink-0", 
+            isAICoach && !isLocked && "text-purple-600 dark:text-purple-400",
+            isProminent && !isLocked && !isAICoach && "text-green-600 dark:text-green-400"
+          )} />
           {open && (
             <span className="flex items-center gap-2 flex-1">
               {item.title}
               {isPremiumFeature && (
                 <Sparkles className="h-3 w-3 text-purple-500" />
+              )}
+              {isNew && !isLocked && (
+                <Badge variant="outline" className={cn(
+                  "ml-auto text-xs px-1.5 py-0",
+                  isAICoach 
+                    ? "bg-gradient-to-r from-purple-600 to-pink-600 text-white border-0 animate-pulse"
+                    : "bg-green-500/20 text-green-700 dark:text-green-400 border-green-500/50"
+                )}>
+                  New
+                </Badge>
+              )}
+              {isProminent && !isLocked && !isNew && (
+                <Badge variant="outline" className="ml-auto bg-green-500/20 text-green-700 dark:text-green-400 border-green-500/50 text-xs px-1.5 py-0">
+                  New
+                </Badge>
               )}
             </span>
           )}
@@ -120,6 +169,22 @@ export function AppSidebar() {
       );
     }
 
+    // Add tooltip for AI Coach to entice users
+    if (isAICoach) {
+      return (
+        <Tooltip key={item.title}>
+          <TooltipTrigger asChild>
+            <div className="relative">
+              {navContent}
+            </div>
+          </TooltipTrigger>
+          <TooltipContent side="right">
+            <p className="text-xs">Make your business smarter using AI</p>
+          </TooltipContent>
+        </Tooltip>
+      );
+    }
+
     return navContent;
   };
 
@@ -132,11 +197,11 @@ export function AppSidebar() {
   if (loading) return null;
 
   return (
-    <Sidebar collapsible="icon">
-      <SidebarContent>
+    <Sidebar collapsible="offcanvas" className="md:collapsible-icon">
+      <SidebarContent className="overflow-y-auto">
         {/* Plan Badge */}
         {open && (
-          <div className="px-4 py-3 border-b">
+          <div className="px-3 md:px-4 py-2 md:py-3 border-b">
             <div className="flex items-center gap-2 mb-2">
               <Crown className="h-4 w-4 text-primary flex-shrink-0" />
               <div className="flex-1 min-w-0">
@@ -176,18 +241,52 @@ export function AppSidebar() {
                 Upgrade to Premium →
               </NavLink>
             )}
+            
+            {/* View Plans Button - Always visible */}
+            <NavLink to="/upgrade" className="block mt-3">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="w-full justify-start gap-2 text-xs"
+              >
+                <CreditCard className="h-3 w-3" />
+                {open ? 'View & Manage Plans' : 'Plans'}
+              </Button>
+            </NavLink>
+          </div>
+        )}
+        
+        {/* View Plans Button - When sidebar is collapsed */}
+        {!open && (
+          <div className="px-2 py-2 border-b">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <NavLink to="/upgrade">
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    className="w-full"
+                  >
+                    <CreditCard className="h-4 w-4" />
+                  </Button>
+                </NavLink>
+              </TooltipTrigger>
+              <TooltipContent side="right">
+                <p>View Plans</p>
+              </TooltipContent>
+            </Tooltip>
           </div>
         )}
 
         <SidebarGroup>
-          <SidebarGroupLabel className="text-xs uppercase tracking-wider">
+          <SidebarGroupLabel className="text-xs uppercase tracking-wider px-3 md:px-4 py-2">
             Main
           </SidebarGroupLabel>
           <SidebarGroupContent>
-            <SidebarMenu>
+            <SidebarMenu className="px-1">
               {mainItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild>
+                  <SidebarMenuButton asChild className="min-h-[44px] md:min-h-[36px]">
                     {renderNavItem(item)}
                   </SidebarMenuButton>
                 </SidebarMenuItem>
@@ -197,15 +296,15 @@ export function AppSidebar() {
         </SidebarGroup>
 
         <SidebarGroup>
-          <SidebarGroupLabel className="text-xs uppercase tracking-wider flex items-center gap-2">
+          <SidebarGroupLabel className="text-xs uppercase tracking-wider flex items-center gap-2 px-3 md:px-4 py-2">
             <span>Premium Features</span>
             {!isPremium && <Sparkles className="h-3 w-3 text-purple-500" />}
           </SidebarGroupLabel>
           <SidebarGroupContent>
-            <SidebarMenu>
+            <SidebarMenu className="px-1">
               {secondaryItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild>
+                  <SidebarMenuButton asChild className="min-h-[44px] md:min-h-[36px]">
                     {renderNavItem(item)}
                   </SidebarMenuButton>
                 </SidebarMenuItem>
@@ -213,6 +312,54 @@ export function AppSidebar() {
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
+
+        {/* Admin CMS Section */}
+        <SidebarGroup>
+          <SidebarGroupLabel className="text-xs uppercase tracking-wider flex items-center gap-2 px-3 md:px-4 py-2">
+            <Shield className="h-3 w-3" />
+            <span>Admin</span>
+          </SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu className="px-1">
+              {adminItems.map((item) => (
+                <SidebarMenuItem key={item.title}>
+                  <SidebarMenuButton asChild className="min-h-[44px] md:min-h-[36px]">
+                    <NavLink 
+                      to={item.url} 
+                      end 
+                      className={(props) => 
+                        props.isActive 
+                          ? "bg-primary/10 text-primary font-semibold border-l-2 border-primary"
+                          : "hover:bg-muted/50 text-muted-foreground hover:text-foreground"
+                      }
+                    >
+                      <div className="flex items-center gap-2 flex-1">
+                        <item.icon className="h-4 w-4 flex-shrink-0" />
+                        {open && <span>{item.title}</span>}
+                      </div>
+                    </NavLink>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
+        {/* Logout Button */}
+        <div className="mt-auto border-t pt-2 px-3 md:px-4 pb-2">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={signOut}
+            className={cn(
+              "w-full justify-start gap-2 text-xs text-muted-foreground hover:text-destructive",
+              !open && "justify-center px-2"
+            )}
+          >
+            <LogOut className="h-4 w-4 flex-shrink-0" />
+            {open && <span>Sign Out</span>}
+          </Button>
+        </div>
       </SidebarContent>
     </Sidebar>
   );

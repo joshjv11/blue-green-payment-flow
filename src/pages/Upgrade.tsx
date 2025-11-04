@@ -31,7 +31,8 @@ const Upgrade = () => {
 
   const handleUpgradeClick = (planType: 'pro' | 'premium') => {
     setSelectedPlan(planType);
-    setShowConfirmDialog(true);
+    // Navigate to payment page with plan parameter
+    navigate(`/payment?plan=${planType}`);
   };
 
   const handleConfirmUpgrade = async () => {
