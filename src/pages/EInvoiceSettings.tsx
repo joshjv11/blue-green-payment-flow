@@ -7,7 +7,8 @@ import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { usePlan } from '@/contexts/PlanContext';
 import { BackToDashboard } from '@/components/BackToDashboard';
-import { FileText, Lock, CheckCircle2, AlertCircle, ExternalLink, Loader2 } from 'lucide-react';
+import { FileText, Lock, CheckCircle2, AlertCircle, ExternalLink, Loader2, Shield, ArrowRight } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { PageTransition } from '@/components/PageTransition';
 import { PremiumGuard } from '@/components/PremiumGuard';
@@ -15,6 +16,7 @@ import { PremiumGuard } from '@/components/PremiumGuard';
 export default function EInvoiceSettings() {
   const { toast } = useToast();
   const { isPremium } = usePlan();
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [credentials, setCredentials] = useState({
@@ -93,15 +95,23 @@ export default function EInvoiceSettings() {
         throw new Error('Not authenticated');
       }
 
-      // In production, encrypt password before storing
-      // For now, storing as-is (should use proper encryption)
+      // Encrypt password before storing using Postgres function
+      const { data: enc, error: encErr } = await supabase.rpc('encrypt_gstn_password', {
+        password: credentials.password,
+        user_id: user.id,
+      });
+
+      if (encErr) {
+        throw encErr;
+      }
+
       const { error } = await supabase
         .from('gstn_credentials')
         .upsert({
           user_id: user.id,
           gstin: credentials.gstin.toUpperCase(),
           username: credentials.username,
-          password_encrypted: credentials.password, // TODO: Encrypt this
+          password_encrypted: enc as string,
           api_endpoint: credentials.api_endpoint,
           is_active: true,
           updated_at: new Date().toISOString(),
@@ -188,14 +198,24 @@ export default function EInvoiceSettings() {
         <div className="max-w-4xl mx-auto space-y-6">
           <BackToDashboard />
           
-          <div>
-            <h1 className="text-3xl font-bold mb-2 flex items-center gap-2">
-              <FileText className="h-8 w-8" />
-              E-Invoicing Settings
-            </h1>
-            <p className="text-muted-foreground">
-              Configure your GSTN credentials to enable automatic IRN generation, e-way bills, and direct upload to GST portal
-            </p>
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-bold mb-2 flex items-center gap-2">
+                <FileText className="h-8 w-8" />
+                E-Invoicing Settings
+              </h1>
+              <p className="text-muted-foreground">
+                Configure your GSTN credentials in 3 simple steps
+              </p>
+            </div>
+            <Button
+              onClick={() => navigate('/gst')}
+              variant="outline"
+              className="gap-2"
+            >
+              <Shield className="h-4 w-4" />
+              GST Dashboard
+            </Button>
           </div>
 
           <Alert>

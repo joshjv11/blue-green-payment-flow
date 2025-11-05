@@ -1,109 +1,129 @@
-import { supabase } from './supabase';
+import { supabase } from '@/lib/supabase';
 
-export interface DashboardSummary {
-  user_id: string;
-  total_sales: number;
-  total_purchases: number;
-  total_expenses: number;
-  net_profit: number;
+// Debounce utility to batch analytics events
+let analyticsQueue: Array<() => Promise<void>> = [];
+let debounceTimer: NodeJS.Timeout | null = null;
+const DEBOUNCE_DELAY = 2000; // 2 seconds
+
+const flushAnalyticsQueue = async () => {
+  if (analyticsQueue.length === 0) return;
+
+  const queue = [...analyticsQueue];
+  analyticsQueue = [];
+  debounceTimer = null;
+
+  // Execute all queued analytics calls
+  await Promise.allSettled(queue.map(fn => fn()));
+};
+
+/**
+ * Track feature usage for analytics
+ * Automatically batches events to reduce database load
+ */
+export async function trackFeatureUsage(
+  featureName: string,
+  actionType: 'view' | 'click' | 'submit' | 'export' | 'create' | 'send' = 'view',
+  metadata?: Record<string, any>
+) {
+  try {
+    // Get current user
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return; // Don't track for anonymous users
+
+    // Generate session ID if not exists
+    let sessionId = sessionStorage.getItem('analytics_session_id');
+    if (!sessionId) {
+      sessionId = `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      sessionStorage.setItem('analytics_session_id', sessionId);
+    }
+
+    // Create analytics event
+    const trackEvent = async () => {
+      const { error } = await supabase
+        .from('user_feature_usage')
+        .insert({
+          user_id: user.id,
+          feature_name: featureName,
+          action_type: actionType,
+          session_id: sessionId,
+          metadata: metadata || {},
+        });
+
+      if (error) {
+        console.error('Error tracking feature usage:', error);
+      }
+    };
+
+    // Add to queue
+    analyticsQueue.push(trackEvent);
+
+    // Reset debounce timer
+    if (debounceTimer) {
+      clearTimeout(debounceTimer);
+    }
+
+    debounceTimer = setTimeout(flushAnalyticsQueue, DEBOUNCE_DELAY);
+  } catch (error) {
+    console.error('Error in trackFeatureUsage:', error);
+  }
 }
 
-export interface MonthlyAggregate {
-  user_id: string;
-  tx_month: string;
-  sales_total: number;
-  purchases_total: number;
-  expenses_total: number;
+/**
+ * Track multiple feature usage events at once
+ */
+export async function trackFeatureUsageBatch(
+  events: Array<{
+    featureName: string;
+    actionType?: 'view' | 'click' | 'submit' | 'export' | 'create' | 'send';
+    metadata?: Record<string, any>;
+  }>
+) {
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+
+    let sessionId = sessionStorage.getItem('analytics_session_id');
+    if (!sessionId) {
+      sessionId = `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      sessionStorage.setItem('analytics_session_id', sessionId);
+    }
+
+    const trackEvents = async () => {
+      const inserts = events.map(event => ({
+        user_id: user.id,
+        feature_name: event.featureName,
+        action_type: event.actionType || 'view',
+        session_id: sessionId,
+        metadata: event.metadata || {},
+      }));
+
+      const { error } = await supabase
+        .from('user_feature_usage')
+        .insert(inserts);
+
+      if (error) {
+        console.error('Error tracking feature usage batch:', error);
+      }
+    };
+
+    analyticsQueue.push(trackEvents);
+
+    if (debounceTimer) {
+      clearTimeout(debounceTimer);
+    }
+
+    debounceTimer = setTimeout(flushAnalyticsQueue, DEBOUNCE_DELAY);
+  } catch (error) {
+    console.error('Error in trackFeatureUsageBatch:', error);
+  }
 }
 
-export interface TopCustomer {
-  user_id: string;
-  customer_name: string;
-  total_amount: number;
-  invoice_count: number;
-}
-
-export interface TopVendor {
-  user_id: string;
-  vendor_name: string;
-  total_amount: number;
-  bill_count: number;
-}
-
-export interface UpcomingBill {
-  user_id: string;
-  id: string;
-  bill_name: string;
-  amount: number;
-  due_date: string;
-  status: string;
-}
-
-export interface InventoryValue {
-  user_id: string;
-  total_inventory_value: number;
-  sku_count: number;
-}
-
-export async function getDashboardSummary(): Promise<DashboardSummary | null> {
-  const { data, error } = await supabase
-    .from('dashboard_summary_v1')
-    .select('*')
-    .maybeSingle();
-  
-  if (error) throw error;
-  return data;
-}
-
-export async function getMonthlyAggregates(): Promise<MonthlyAggregate[]> {
-  const { data, error } = await supabase
-    .from('monthly_aggregates_v1')
-    .select('*')
-    .order('tx_month', { ascending: true });
-  
-  if (error) throw error;
-  return data || [];
-}
-
-export async function getTopCustomers(limit = 5): Promise<TopCustomer[]> {
-  const { data, error } = await supabase
-    .from('top_customers_v1')
-    .select('*')
-    .order('total_amount', { ascending: false })
-    .limit(limit);
-  
-  if (error) throw error;
-  return data || [];
-}
-
-export async function getTopVendors(limit = 5): Promise<TopVendor[]> {
-  const { data, error } = await supabase
-    .from('top_vendors_v1')
-    .select('*')
-    .order('total_amount', { ascending: false })
-    .limit(limit);
-  
-  if (error) throw error;
-  return data || [];
-}
-
-export async function getUpcomingBills(limit = 10): Promise<UpcomingBill[]> {
-  const { data, error } = await supabase
-    .from('upcoming_bills_v1')
-    .select('*')
-    .order('due_date', { ascending: true })
-    .limit(limit);
-  
-  if (error) throw error;
-  return data || [];
-}
-
-export async function getInventoryValue(): Promise<InventoryValue | null> {
-  const { data, error } = await supabase
-    .from('inventory_value_v1')
-    .select('*')
-    .maybeSingle();
-  
-  if (error) throw error;
-  return data;
+// Flush queue on page unload
+if (typeof window !== 'undefined') {
+  window.addEventListener('beforeunload', () => {
+    if (debounceTimer) {
+      clearTimeout(debounceTimer);
+    }
+    flushAnalyticsQueue();
+  });
 }

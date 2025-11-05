@@ -49,6 +49,7 @@ const mainItems = [
   { title: "Spending Insights", url: "/spending-insights", icon: PieChart, featureKey: "spending-insights", requiredPlan: "pro" as const },
   { title: "Sales", url: "/sales", icon: ShoppingCart, featureKey: "sales", requiredPlan: "premium" as const },
   { title: "Purchases", url: "/purchases", icon: ShoppingBag, featureKey: "purchases", requiredPlan: "premium" as const },
+  { title: "GST Dashboard", url: "/gst", icon: Shield, featureKey: "gst", requiredPlan: "premium" as const, isProminent: true, isNew: true },
   { title: "Inventory", url: "/inventory", icon: Package, featureKey: "inventory", requiredPlan: "premium" as const },
   { title: "Expenses", url: "/expenses", icon: Wallet, featureKey: "expenses", requiredPlan: "premium" as const },
 ];

@@ -53,8 +53,23 @@ export const useWhatsAppIntegration = () => {
       if (!data.success) {
         const errorMessage = data.error || data.details || 'Failed to send message. Please check your WhatsApp number in Settings.';
         toast.error(errorMessage);
+        
+        // Track failed WhatsApp send
+        const { trackFeatureUsage } = await import('@/lib/analytics');
+        trackFeatureUsage('whatsapp', 'send', { 
+          success: false, 
+          error: errorMessage 
+        });
+        
         return { success: false, error: data.error || data.details };
       }
+
+      // Track successful WhatsApp send
+      const { trackFeatureUsage } = await import('@/lib/analytics');
+      trackFeatureUsage('whatsapp', 'send', { 
+        success: true, 
+        messageType: params.messageType 
+      });
 
       // If using FREE method (WhatsApp Web links), show the link
       if (data.whatsappUrl) {

@@ -56,21 +56,64 @@ serve(async (req) => {
 
     // Handle payment success
     if (event.event === 'payment_link.paid' || event.event === 'payment.captured') {
-      const paymentData = event.payload?.payment_link?.entity || event.payload?.payment?.entity;
-      const amount = paymentData?.amount ? paymentData.amount / 100 : 0; // Convert paise to rupees
-      const referenceId = paymentData?.reference_id || '';
-      const customerEmail = paymentData?.customer?.email || '';
-      
-      // Extract plan from reference_id (format: "pro-{userId}-{timestamp}" or "premium-{userId}-{timestamp}")
-      const planMatch = referenceId.match(/^(pro|premium)-/);
-      const planType = planMatch ? planMatch[1] : null;
-      const userId = referenceId.split('-')[1];
+      const paymentLinkEntity = event.payload?.payment_link?.entity;
+      const paymentEntity = event.payload?.payment?.entity;
+      const amountPaise = paymentLinkEntity?.amount || paymentEntity?.amount || 0;
+      const amount = amountPaise ? amountPaise / 100 : 0; // Convert paise to rupees
+      const referenceId = paymentLinkEntity?.reference_id || paymentEntity?.notes?.reference_id || '';
+      const razorpayLinkId = paymentLinkEntity?.id || paymentEntity?.payment_link_id || '';
 
+      // Try to find our payment_links record via provider reference id
+      let paymentLinkRecord = null;
+      if (razorpayLinkId) {
+        const { data: link, error: linkErr } = await supabaseClient
+          .from('payment_links')
+          .select('*')
+          .eq('payment_reference', razorpayLinkId)
+          .maybeSingle();
+        if (!linkErr) paymentLinkRecord = link;
+      }
+
+      // Fallback: try by referenceId if we encoded it in reference_id
+      if (!paymentLinkRecord && referenceId) {
+        const { data: link2 } = await supabaseClient
+          .from('payment_links')
+          .select('*')
+          .eq('notes', referenceId)
+          .maybeSingle();
+        if (link2) paymentLinkRecord = link2;
+      }
+
+      const userId = paymentLinkRecord?.user_id || (referenceId?.split('-')[1] || null);
+
+      // Insert/Update payment_transactions
+      if (userId) {
+        await supabaseClient
+          .from('payment_transactions')
+          .insert({
+            user_id: userId,
+            amount,
+            status: 'verified',
+            transaction_id: paymentEntity?.id || razorpayLinkId,
+            notes: `Razorpay webhook ${event.event}`,
+            created_at: new Date().toISOString(),
+          });
+      }
+
+      // Mark payment link as paid
+      if (paymentLinkRecord?.id) {
+        await supabaseClient
+          .from('payment_links')
+          .update({ status: 'paid', paid_at: new Date().toISOString() })
+          .eq('id', paymentLinkRecord.id);
+      }
+
+      // Optional: Activate plan if purchase reference encodes plan
+      const planMatch = referenceId?.match(/^(pro|premium)-/);
+      const planType = planMatch ? planMatch[1] : null;
       if (planType && userId) {
-        // Update user plan
         const expiresAt = new Date();
         expiresAt.setDate(expiresAt.getDate() + 30);
-
         await supabaseClient
           .from('user_plans')
           .upsert({
@@ -83,21 +126,6 @@ serve(async (req) => {
           }, {
             onConflict: 'user_id'
           });
-
-        // Send notification to admin
-        const ADMIN_EMAIL = "joshuavaz55@gmail.com";
-        const ADMIN_PHONE = "8828447880";
-        
-        console.log("📧 Email notification to admin:", {
-          to: ADMIN_EMAIL,
-          subject: `Payment Received - ${planType} Plan`,
-          body: `Payment of ₹${amount} received for ${planType} plan.\nUser: ${customerEmail || userId}\nTime: ${new Date().toLocaleString()}`
-        });
-
-        console.log("📱 SMS notification to admin:", {
-          to: ADMIN_PHONE,
-          message: `Payment: ₹${amount} for ${planType} plan from ${customerEmail || userId}`
-        });
       }
     }
 

@@ -98,8 +98,14 @@ serve(async (req) => {
         .single();
 
       if (credentials) {
-        // Download Form 2A/2B from GSTN (simplified - actual implementation needs GSTN API)
-        form2aData = await downloadForm2A2B(credentials, period);
+        // Decrypt password before calling GSTN
+        const { data: decrypted } = await supabaseClient.rpc('decrypt_gstn_password', {
+          encrypted_password: credentials.password_encrypted,
+          user_id: user.id,
+        });
+        const decCreds = { ...credentials, password: decrypted as string };
+        // Download Form 2A/2B from GSTN (placeholder -> real API integration later)
+        form2aData = await downloadForm2A2B(decCreds, period);
       }
     }
 
@@ -219,17 +225,75 @@ serve(async (req) => {
   }
 });
 
-// Download Form 2A/2B from GSTN (simplified - needs actual GSTN API integration)
+// Download Form 2A/2B from GSTN (basic implementation; replace endpoints per ASP/GSTN spec)
 async function downloadForm2A2B(credentials: any, period?: string): Promise<any[]> {
   try {
-    // This is a placeholder - actual implementation needs GSTN API
-    // Form 2A/2B contains auto-populated data from GSTN based on supplier filings
-    
-    // Simulated response - replace with actual GSTN API call
-    return [];
+    const apiBase = credentials.api_endpoint || 'https://einvoice.gst.gov.in';
+    const retPeriod = period || getCurrentPeriod();
+
+    // 1) Authenticate (example endpoint - adjust to your provider)
+    const authRes = await fetch(`${apiBase}/auth`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        username: credentials.username,
+        password: credentials.password,
+      }),
+    });
+
+    if (!authRes.ok) {
+      console.error('GSTN auth failed when downloading 2A/2B');
+      return [];
+    }
+
+    const auth = await authRes.json();
+    const token = auth.token;
+    if (!token) return [];
+
+    // 2) Fetch 2B (preferred for ITC)
+    const twoBRes = await fetch(
+      `${apiBase}/returns/gstr2b?ret_period=${encodeURIComponent(retPeriod)}&gstin=${encodeURIComponent(credentials.gstin)}`,
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+
+    if (!twoBRes.ok) {
+      console.error('GSTR-2B fetch failed');
+      return [];
+    }
+
+    const twoB = await twoBRes.json();
+    const b2b = twoB?.data?.docdata?.b2b || [];
+
+    // Normalize
+    const invoices: any[] = [];
+    for (const party of b2b) {
+      const supplierGstin = party.ctin;
+      for (const inv of party.inv || []) {
+        const taxAmount = (inv.itms || []).reduce((sum: number, item: any) => {
+          const d = item.itm_det || {};
+          return sum + (Number(d.iamt) || 0) + (Number(d.camt) || 0) + (Number(d.samt) || 0);
+        }, 0);
+        invoices.push({
+          invoice_number: inv.inum,
+          invoice_date: inv.idt,
+          supplier_gstin: supplierGstin,
+          tax_amount: taxAmount,
+          invoice_value: Number(inv.val) || 0,
+        });
+      }
+    }
+
+    return invoices;
   } catch (error) {
-    console.error("Error downloading Form 2A/2B:", error);
+    console.error('Error downloading Form 2A/2B:', error);
     return [];
   }
+}
+
+function getCurrentPeriod(): string {
+  const d = new Date();
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  return `${y}-${m}`;
 }
 

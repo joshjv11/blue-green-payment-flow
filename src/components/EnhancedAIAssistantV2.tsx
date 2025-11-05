@@ -8,6 +8,7 @@ import { MessageCircle, Send, Bot, Crown, Zap, AlertTriangle, Infinity } from 'l
 import { useSupabasePlan } from '@/hooks/useSupabasePlan';
 import { useAIAssistant } from '@/hooks/useAIAssistant';
 import { useToast } from '@/hooks/use-toast';
+import { trackFeatureUsage } from '@/lib/analytics';
 import AIQueryCounter from './AIQueryCounter';
 import UpgradeModal from './UpgradeModal';
 
@@ -91,6 +92,12 @@ const EnhancedAIAssistantV2 = ({ bills, context, trigger }: EnhancedAIAssistantV
       });
       
       await sendMessage(message, bills, enhancedContext);
+      
+      // Track AI query usage
+      trackFeatureUsage('ai_coach', 'view', { 
+        isPro,
+        billsCount: bills.length 
+      });
       
     } catch (error) {
       console.error('❌ Error sending message to AI:', error);

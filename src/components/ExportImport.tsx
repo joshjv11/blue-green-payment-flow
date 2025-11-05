@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useToast } from '@/hooks/use-toast';
+import { trackFeatureUsage } from '@/lib/analytics';
 import { Download, Upload, FileText, Database, AlertCircle, CheckCircle } from 'lucide-react';
 import { 
   exportBillsAsJSON, 
@@ -47,6 +48,9 @@ const ExportImport: React.FC<ExportImportProps> = ({ bills, onImportBills, userI
       const filename = `bills-export-${new Date().toISOString().split('T')[0]}.json`;
       downloadFile(jsonContent, filename, 'application/json');
       
+      // Track export
+      trackFeatureUsage('export', 'export', { format: 'json', count: bills.length });
+      
       toast({
         title: "Export successful",
         description: `Downloaded ${bills.length} bills as JSON`,
@@ -65,6 +69,9 @@ const ExportImport: React.FC<ExportImportProps> = ({ bills, onImportBills, userI
       const csvContent = exportBillsAsCSV(bills);
       const filename = `bills-export-${new Date().toISOString().split('T')[0]}.csv`;
       downloadFile(csvContent, filename, 'text/csv');
+      
+      // Track export
+      trackFeatureUsage('export', 'export', { format: 'csv', count: bills.length });
       
       toast({
         title: "Export successful",

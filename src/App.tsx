@@ -36,6 +36,7 @@ import Reports from './pages/Reports';
 import TaxSettings from './pages/TaxSettings';
 import EInvoiceSettings from './pages/EInvoiceSettings';
 import GSTRFiling from './pages/GSTRFiling';
+import GSTDashboard from './pages/GSTDashboard';
 import SavingsGoals from './pages/SavingsGoals';
 import EMIManager from './pages/EMIManager';
 import SpendingInsights from './pages/SpendingInsights';
@@ -227,6 +228,16 @@ function AppRoutes() {
         element={
           <ProtectedRoute>
             <PageTransition><TaxSettings /></PageTransition>
+          </ProtectedRoute>
+        } 
+      />
+      <Route
+        path="/gst"
+        element={
+          <ProtectedRoute>
+            <RequirePlan requiredPlan="premium" featureName="GST Dashboard">
+              <PageTransition><GSTDashboard /></PageTransition>
+            </RequirePlan>
           </ProtectedRoute>
         } 
       />

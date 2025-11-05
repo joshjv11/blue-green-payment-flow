@@ -100,9 +100,18 @@ serve(async (req) => {
       );
     }
 
-    // Decrypt password (in production, use proper encryption)
-    // For now, storing as plain text (should be encrypted in production)
-    const gstnPassword = credentials.password_encrypted;
+    // Decrypt password using Postgres RPC
+    const { data: decrypted, error: decErr } = await supabaseClient.rpc('decrypt_gstn_password', {
+      encrypted_password: credentials.password_encrypted,
+      user_id: user.id,
+    });
+    if (decErr || !decrypted) {
+      return new Response(
+        JSON.stringify({ error: "Failed to decrypt GSTN password" }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+    const gstnPassword = decrypted as string;
 
     // Prepare e-invoice payload according to GSTN API specification
     const einvoicePayload = prepareEInvoicePayload(salesOrder, credentials.gstin);

@@ -47,7 +47,7 @@ import { useStreakProtection } from '@/hooks/useStreakProtection';
 import { StreakCountdownBanner } from '@/components/StreakCountdownBanner';
 import { StreakShieldShop } from '@/components/StreakShieldShop';
 import { useEntitlements } from '@/lib/useEntitlements';
-import * as analytics from '@/lib/analytics';
+import { trackFeatureUsage } from '@/lib/analytics';
 import { DashboardKPIs } from '@/components/analytics/DashboardKPIs';
 import { MonthlyChart } from '@/components/analytics/MonthlyChart';
 import { TopLists } from '@/components/analytics/TopLists';

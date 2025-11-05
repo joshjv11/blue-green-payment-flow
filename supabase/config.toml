@@ -66,3 +66,12 @@ verify_jwt = false
 
 [functions.send-whatsapp-broadcast]
 verify_jwt = true
+
+[functions.auto-sync-einvoice-status]
+verify_jwt = false
+
+[[functions.auto-sync-einvoice-status.cron]]
+schedule = "0 * * * *"  # Every hour
+
+[functions.confirm-hsn]
+verify_jwt = true

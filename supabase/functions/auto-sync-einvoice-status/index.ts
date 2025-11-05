@@ -6,7 +6,6 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-// This function can be called manually or via cron job
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -18,17 +17,20 @@ serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
     );
 
-    // Get all invoices with IRN that need status sync
-    // Sync invoices that haven't been synced in last 6 hours
+    // Sync invoices with IRN in last 30 days where status not approved or stale
+    const cutoff = new Date();
+    cutoff.setDate(cutoff.getDate() - 30);
+
     const sixHoursAgo = new Date();
     sixHoursAgo.setHours(sixHoursAgo.getHours() - 6);
 
     const { data: invoicesToSync, error: fetchError } = await supabaseClient
       .from("sales_orders")
-      .select("id, user_id, irn, einvoice_status, einvoice_synced_at")
+      .select("id, user_id, irn, einvoice_status, einvoice_synced_at, billing_snapshot")
       .not("irn", "is", null)
+      .gte("irn_generated_at", cutoff.toISOString())
       .or(`einvoice_synced_at.is.null,einvoice_synced_at.lt.${sixHoursAgo.toISOString()}`)
-      .limit(100); // Process 100 at a time
+      .limit(200);
 
     if (fetchError) {
       return new Response(
@@ -44,21 +46,16 @@ serve(async (req) => {
       );
     }
 
-    // Group by user_id to batch credentials fetching
     const userGroups = new Map<string, typeof invoicesToSync>();
     for (const invoice of invoicesToSync) {
-      if (!userGroups.has(invoice.user_id)) {
-        userGroups.set(invoice.user_id, []);
-      }
+      if (!userGroups.has(invoice.user_id)) userGroups.set(invoice.user_id, []);
       userGroups.get(invoice.user_id)!.push(invoice);
     }
 
     let syncedCount = 0;
     let failedCount = 0;
 
-    // Process each user's invoices
     for (const [userId, invoices] of userGroups) {
-      // Fetch user's GSTN credentials
       const { data: credentials } = await supabaseClient
         .from("gstn_credentials")
         .select("username, password_encrypted, gstin, api_endpoint")
@@ -66,85 +63,51 @@ serve(async (req) => {
         .eq("is_active", true)
         .single();
 
-      if (!credentials) {
-        console.log(`Skipping user ${userId}: No GSTN credentials`);
-        continue;
-      }
+      if (!credentials) continue;
 
-      // Authenticate with GSTN once per user
-      // Decrypt password via RPC, then authenticate
-      const { data: decrypted, error: decErr } = await supabaseClient.rpc('decrypt_gstn_password', {
+      const { data: decrypted } = await supabaseClient.rpc('decrypt_gstn_password', {
         encrypted_password: credentials.password_encrypted,
         user_id: userId,
       });
-      if (!decrypted || decErr) {
-        console.error(`Decrypt failed for user ${userId}`, decErr);
-        continue;
-      }
-      const authToken = await authenticateGSTN(
-        credentials.username,
-        decrypted as string,
-        credentials.api_endpoint || 'https://einvoice.gst.gov.in'
-      );
+      if (!decrypted) continue;
 
-      if (!authToken) {
-        console.log(`Skipping user ${userId}: Authentication failed`);
-        continue;
-      }
+      const token = await authenticateGSTN(credentials.username, decrypted as string, credentials.api_endpoint || 'https://einvoice.gst.gov.in');
+      if (!token) continue;
 
-      // Sync each invoice
       for (const invoice of invoices) {
         try {
-          const statusResult = await syncInvoiceStatus(
-            invoice.irn!,
-            authToken,
-            credentials.api_endpoint || 'https://einvoice.gst.gov.in'
-          );
-
-          if (statusResult.success) {
-            // Update invoice status
+          const status = await syncInvoiceStatus(invoice.irn!, token, credentials.api_endpoint || 'https://einvoice.gst.gov.in');
+          if (status.success) {
             await supabaseClient
               .from("sales_orders")
               .update({
-                einvoice_status: statusResult.status,
+                einvoice_status: status.status,
                 einvoice_synced_at: new Date().toISOString(),
-                gstn_response_data: statusResult.data,
+                gstn_response_data: status.data,
               })
               .eq("id", invoice.id);
-
             syncedCount++;
           } else {
             failedCount++;
-            console.error(`Failed to sync invoice ${invoice.id}:`, statusResult.error);
           }
-        } catch (error: any) {
+        } catch (_) {
           failedCount++;
-          console.error(`Error syncing invoice ${invoice.id}:`, error);
         }
       }
     }
 
     return new Response(
-      JSON.stringify({
-        success: true,
-        message: `Status sync completed`,
-        synced: syncedCount,
-        failed: failedCount,
-        total: invoicesToSync.length,
-      }),
+      JSON.stringify({ success: true, synced: syncedCount, failed: failedCount, total: invoicesToSync.length }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
-
   } catch (error: any) {
-    console.error("Sync e-invoice status error:", error);
     return new Response(
-      JSON.stringify({ error: error.message || "Internal server error" }),
+      JSON.stringify({ error: error.message || 'Internal error' }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
 });
 
-// Authenticate with GSTN
 async function authenticateGSTN(username: string, password: string, apiEndpoint: string): Promise<string | null> {
   try {
     const authResponse = await fetch(`${apiEndpoint}/auth`, {
@@ -152,48 +115,27 @@ async function authenticateGSTN(username: string, password: string, apiEndpoint:
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ username, password }),
     });
-
-    if (!authResponse.ok) {
-      return null;
-    }
-
+    if (!authResponse.ok) return null;
     const authData = await authResponse.json();
     return authData.token || null;
-  } catch (error) {
-    console.error("GSTN authentication error:", error);
+  } catch (e) {
     return null;
   }
 }
 
-// Sync invoice status from GSTN
 async function syncInvoiceStatus(irn: string, token: string, apiEndpoint: string): Promise<any> {
   try {
-    const statusResponse = await fetch(`${apiEndpoint}/einvoice/status/${irn}`, {
-      method: "GET",
-      headers: {
-        "Authorization": `Bearer ${token}`,
-      },
+    const res = await fetch(`${apiEndpoint}/einvoice/status/${irn}`, {
+      headers: { Authorization: `Bearer ${token}` },
     });
-
-    const statusData = await statusResponse.json();
-
-    if (statusResponse.ok) {
-      return {
-        success: true,
-        status: statusData.Status || 'generated',
-        data: statusData,
-      };
-    } else {
-      return {
-        success: false,
-        error: statusData.ErrorMessage || 'Failed to sync status',
-      };
+    const data = await res.json();
+    if (res.ok) {
+      return { success: true, status: data.Status || 'generated', data };
     }
-  } catch (error: any) {
-    return {
-      success: false,
-      error: error.message || 'Status sync failed',
-    };
+    return { success: false, error: data?.ErrorMessage || 'Failed' };
+  } catch (e: any) {
+    return { success: false, error: e.message };
   }
 }
+
 

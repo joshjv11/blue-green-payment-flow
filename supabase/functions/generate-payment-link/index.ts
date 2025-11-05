@@ -62,6 +62,7 @@ const handler = async (req: Request): Promise<Response> => {
     let paymentLinkUrl = '';
     let qrCodeUrl = '';
     let upiId = '';
+    let providerReferenceId = '';
 
     // Generate payment link based on gateway
     if (gateway === 'upi') {
@@ -78,10 +79,50 @@ const handler = async (req: Request): Promise<Response> => {
       
       console.log('✅ UPI payment link generated');
     } else if (gateway === 'razorpay') {
-      // Placeholder for Razorpay integration
-      // In production, you would call Razorpay API here
-      paymentLinkUrl = `https://razorpay.com/payment-link/pl_${Date.now()}`;
-      console.log('✅ Razorpay payment link generated');
+      // Fully integrate Razorpay Payment Links
+      const keyId = Deno.env.get('RAZORPAY_KEY_ID');
+      const keySecret = Deno.env.get('RAZORPAY_KEY_SECRET');
+      if (!keyId || !keySecret) {
+        return new Response(JSON.stringify({ error: 'Razorpay keys not configured' }), {
+          status: 500,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+
+      // Build request payload
+      const referenceId = body.saleOrderId || body.invoiceId || body.billId || `generic-${user.id}-${Date.now()}`;
+      const payload = {
+        amount: Math.round(amount * 100), // paise
+        currency: currency || 'INR',
+        description: notes || 'Payment',
+        reference_id: referenceId,
+        notify: { sms: true, email: true },
+        reminder_enable: true,
+        accept_partial: false,
+      };
+
+      const basicAuth = btoa(`${keyId}:${keySecret}`);
+      const res = await fetch('https://api.razorpay.com/v1/payment_links', {
+        method: 'POST',
+        headers: {
+          Authorization: `Basic ${basicAuth}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(payload)
+      });
+
+      const rp = await res.json();
+      if (!res.ok) {
+        console.error('Razorpay error:', rp);
+        return new Response(JSON.stringify({ error: rp?.error || rp }), {
+          status: res.status,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+
+      paymentLinkUrl = rp?.short_url || rp?.url || '';
+      providerReferenceId = rp?.id || '';
+      console.log('✅ Razorpay payment link generated:', providerReferenceId);
     } else if (gateway === 'phonepe') {
       // Placeholder for PhonePe integration
       paymentLinkUrl = `https://phonepe.com/pay/${Date.now()}`;
@@ -113,7 +154,8 @@ const handler = async (req: Request): Promise<Response> => {
         upi_id: upiId || null,
         status: 'active',
         expires_at: expiresAt.toISOString(),
-        notes
+        notes,
+        payment_reference: providerReferenceId || null
       })
       .select()
       .single();
@@ -135,7 +177,8 @@ const handler = async (req: Request): Promise<Response> => {
         amount,
         currency,
         gateway,
-        expiresAt: expiresAt.toISOString()
+        expiresAt: expiresAt.toISOString(),
+        providerReferenceId
       }
     }), {
       status: 200,

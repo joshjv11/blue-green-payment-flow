@@ -15,6 +15,7 @@ import { supabase, isSupabaseConfigured } from '@/lib/supabase';
 import { useToast } from '@/hooks/use-toast';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
 import { useOfflineCache } from '@/hooks/useOfflineCache';
+import { trackFeatureUsage } from '@/lib/analytics';
 import SmartBillForm from '@/components/SmartBillForm';
 import ReminderSettingsModal from '@/components/ReminderSettingsModal';
 import { generateGoogleCalendarUrl, downloadICSFile } from '@/utils/calendar';
@@ -156,6 +157,8 @@ const Bills = () => {
 
   useEffect(() => {
     if (user) {
+      // Track bills page view
+      trackFeatureUsage('bills', 'view');
       fetchBills();
     }
   }, [user]);
@@ -310,6 +313,12 @@ const Bills = () => {
 
           // Cache the new bill for offline access
           addToCache([insertedBill]);
+          
+          // Track bill creation
+          trackFeatureUsage('bills', 'create', { 
+            category: billData.category,
+            amount: billData.amount 
+          });
           
           // Auto-schedule reminder for new bills
           if (insertedBill && billData.auto_reminder_enabled && billData.due_date) {

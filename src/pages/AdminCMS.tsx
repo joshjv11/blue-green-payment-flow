@@ -8,9 +8,13 @@ import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Shield, Lock, Users, CreditCard, Crown, Eye, EyeOff, CheckCircle, XCircle, Clock, Brain, Mail } from 'lucide-react';
+import { Shield, Lock, Users, CreditCard, Crown, Eye, EyeOff, CheckCircle, XCircle, Clock, Brain, Mail, Activity } from 'lucide-react';
 import { AIAssistant } from '@/components/admin/AIAssistant';
 import { EmailBroadcast } from '@/components/admin/EmailBroadcast';
+import { MetricCard } from '@/components/admin/MetricCard';
+import { FeatureUsageChart } from '@/components/admin/FeatureUsageChart';
+import { SecurityEventsTable } from '@/components/admin/SecurityEventsTable';
+import { UserInsightsTable } from '@/components/admin/UserInsightsTable';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { format } from 'date-fns';
@@ -33,6 +37,14 @@ const AdminCMS = () => {
   const [userPlans, setUserPlans] = useState<any[]>([]);
   const [loadingData, setLoadingData] = useState(false);
   
+  // System Health state
+  const [systemHealth, setSystemHealth] = useState<any>(null);
+  const [loadingHealth, setLoadingHealth] = useState(false);
+  
+  // Financial Metrics state
+  const [financialMetrics, setFinancialMetrics] = useState<any>(null);
+  const [loadingFinancial, setLoadingFinancial] = useState(false);
+  
   // Filter states
   const [userSearch, setUserSearch] = useState('');
   const [planSearch, setPlanSearch] = useState('');
@@ -44,8 +56,20 @@ const AdminCMS = () => {
     if (authStatus === 'true') {
       setIsAuthenticated(true);
       loadData();
+      loadSystemHealth();
+      loadFinancialMetrics();
     }
   }, []);
+
+  // Poll system health every 60 seconds
+  useEffect(() => {
+    if (!isAuthenticated) return;
+
+    loadSystemHealth();
+    const interval = setInterval(loadSystemHealth, 60000); // Poll every 60 seconds
+
+    return () => clearInterval(interval);
+  }, [isAuthenticated]);
 
   const handleLogin = () => {
     if (password === ADMIN_PASSWORD) {
@@ -63,6 +87,115 @@ const AdminCMS = () => {
         variant: 'destructive',
       });
       setPassword('');
+    }
+  };
+
+  const loadSystemHealth = async () => {
+    setLoadingHealth(true);
+    try {
+      // Try to fetch via RPC function first
+      const { data, error } = await supabase.rpc('get_admin_system_health');
+
+      if (error) {
+        // If RPC doesn't exist yet, try direct view query
+        const { data: viewData, error: viewError } = await supabase
+          .from('admin_system_health')
+          .select('*')
+          .limit(1)
+          .single();
+
+        if (viewError) {
+          console.error('Error loading system health:', viewError);
+          // Set default/fallback values
+          setSystemHealth({
+            errors_last_hour: 0,
+            avg_response_time_sec: 0,
+            db_size_mb: 0,
+            active_users_24h: 0,
+            whatsapp_failures_1h: 0,
+            stuck_payments: 0,
+            active_connections: 0,
+            total_connections: 0,
+          });
+          return;
+        }
+
+        if (viewData) {
+          setSystemHealth(viewData);
+        }
+        return;
+      }
+
+      // RPC returns array, get first item
+      if (data && data.length > 0) {
+        setSystemHealth(data[0]);
+      } else {
+        // Set default values if no data
+        setSystemHealth({
+          errors_last_hour: 0,
+          avg_response_time_sec: 0,
+          db_size_mb: 0,
+          active_users_24h: 0,
+          whatsapp_failures_1h: 0,
+          stuck_payments: 0,
+          active_connections: 0,
+          total_connections: 0,
+        });
+      }
+    } catch (error) {
+      console.error('Error loading system health:', error);
+      // Set fallback values on error
+      setSystemHealth({
+        errors_last_hour: 0,
+        avg_response_time_sec: 0,
+        db_size_mb: 0,
+        active_users_24h: 0,
+        whatsapp_failures_1h: 0,
+        stuck_payments: 0,
+        active_connections: 0,
+        total_connections: 0,
+      });
+    } finally {
+      setLoadingHealth(false);
+    }
+  };
+
+  const loadFinancialMetrics = async () => {
+    setLoadingFinancial(true);
+    try {
+      const { data, error } = await supabase.rpc('get_admin_financial_metrics');
+
+      if (error) {
+        // Fallback to direct view query
+        const { data: viewData, error: viewError } = await supabase
+          .from('admin_financial_metrics')
+          .select('*')
+          .limit(1)
+          .single();
+
+        if (viewError) {
+          console.error('Error loading financial metrics:', viewError);
+          setFinancialMetrics(null);
+          return;
+        }
+
+        if (viewData) {
+          setFinancialMetrics(viewData);
+        }
+        return;
+      }
+
+      // RPC returns array, get first item
+      if (data && data.length > 0) {
+        setFinancialMetrics(data[0]);
+      } else {
+        setFinancialMetrics(null);
+      }
+    } catch (error) {
+      console.error('Error loading financial metrics:', error);
+      setFinancialMetrics(null);
+    } finally {
+      setLoadingFinancial(false);
     }
   };
 
@@ -366,7 +499,7 @@ const AdminCMS = () => {
         </div>
 
         <Tabs defaultValue="payments" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-5">
+          <TabsList className="grid w-full grid-cols-6">
             <TabsTrigger value="payments" className="flex items-center gap-2">
               <CreditCard className="h-4 w-4" />
               Payments
@@ -378,6 +511,10 @@ const AdminCMS = () => {
             <TabsTrigger value="plans" className="flex items-center gap-2">
               <Crown className="h-4 w-4" />
               Manage Plans
+            </TabsTrigger>
+            <TabsTrigger value="system-health" className="flex items-center gap-2">
+              <Activity className="h-4 w-4" />
+              System Health
             </TabsTrigger>
             <TabsTrigger value="ai-assistant" className="flex items-center gap-2">
               <Brain className="h-4 w-4" />
@@ -684,6 +821,155 @@ const AdminCMS = () => {
                 )}
               </CardContent>
             </Card>
+          </TabsContent>
+
+          {/* System Health Tab */}
+          <TabsContent value="system-health" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Activity className="h-5 w-5" />
+                  System Health (Real-time)
+                </CardTitle>
+                <CardDescription>
+                  Live system metrics and performance indicators. Updates every 60 seconds.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {loadingHealth ? (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-2"></div>
+                    Loading system health metrics...
+                  </div>
+                ) : systemHealth ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <MetricCard
+                      label="Errors (1h)"
+                      value={systemHealth.errors_last_hour || 0}
+                      status={systemHealth.errors_last_hour > 10 ? 'critical' : systemHealth.errors_last_hour > 5 ? 'warning' : 'ok'}
+                    />
+                    <MetricCard
+                      label="Avg Response Time"
+                      value={`${(systemHealth.avg_response_time_sec || 0).toFixed(2)}s`}
+                      status={systemHealth.avg_response_time_sec > 2 ? 'warning' : systemHealth.avg_response_time_sec > 5 ? 'critical' : 'ok'}
+                    />
+                    <MetricCard
+                      label="Active Connections"
+                      value={systemHealth.active_connections || 0}
+                      status={systemHealth.active_connections > 400 ? 'critical' : systemHealth.active_connections > 200 ? 'warning' : 'ok'}
+                    />
+                    <MetricCard
+                      label="DB Size (MB)"
+                      value={Math.round(systemHealth.db_size_mb || 0).toLocaleString()}
+                      trend="up"
+                    />
+                    <MetricCard
+                      label="Active Users (24h)"
+                      value={systemHealth.active_users_24h || 0}
+                    />
+                    <MetricCard
+                      label="Stuck Payments"
+                      value={systemHealth.stuck_payments || 0}
+                      status={systemHealth.stuck_payments > 0 ? 'warning' : 'ok'}
+                    />
+                    <MetricCard
+                      label="WhatsApp Failures (1h)"
+                      value={systemHealth.whatsapp_failures_1h || 0}
+                      status={systemHealth.whatsapp_failures_1h > 10 ? 'critical' : systemHealth.whatsapp_failures_1h > 5 ? 'warning' : 'ok'}
+                    />
+                    <MetricCard
+                      label="Total Connections"
+                      value={systemHealth.total_connections || 0}
+                    />
+                  </div>
+                ) : (
+                  <div className="text-center py-8 text-muted-foreground">
+                    No system health data available
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+            
+            {/* Financial Metrics Card */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <CreditCard className="h-5 w-5" />
+                  Financial Metrics (Last 30 Days)
+                </CardTitle>
+                <CardDescription>
+                  Revenue, payment success rates, and plan distribution
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {loadingFinancial ? (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-2"></div>
+                    Loading financial metrics...
+                  </div>
+                ) : financialMetrics ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <MetricCard
+                      label="Total Revenue (30d)"
+                      value={`₹${(financialMetrics.total_revenue || 0).toLocaleString('en-IN', { maximumFractionDigits: 0 })}`}
+                      trend={financialMetrics.revenue_this_month > financialMetrics.revenue_last_month ? 'up' : 'down'}
+                    />
+                    <MetricCard
+                      label="Paying Users"
+                      value={financialMetrics.total_paying_users || 0}
+                    />
+                    <MetricCard
+                      label="Avg Payment"
+                      value={`₹${(financialMetrics.avg_payment_amount || 0).toLocaleString('en-IN', { maximumFractionDigits: 0 })}`}
+                    />
+                    <MetricCard
+                      label="Payment Success Rate"
+                      value={`${(financialMetrics.payment_success_rate || 0).toFixed(1)}%`}
+                      status={financialMetrics.payment_success_rate < 80 ? 'warning' : financialMetrics.payment_success_rate < 60 ? 'critical' : 'ok'}
+                    />
+                    <MetricCard
+                      label="Estimated MRR"
+                      value={`₹${(financialMetrics.estimated_mrr || 0).toLocaleString('en-IN', { maximumFractionDigits: 0 })}`}
+                      trend="up"
+                    />
+                    <MetricCard
+                      label="Revenue This Month"
+                      value={`₹${(financialMetrics.revenue_this_month || 0).toLocaleString('en-IN', { maximumFractionDigits: 0 })}`}
+                    />
+                    <MetricCard
+                      label="Pro Users"
+                      value={financialMetrics.pro_users || 0}
+                    />
+                    <MetricCard
+                      label="Premium Users"
+                      value={financialMetrics.premium_users || 0}
+                    />
+                    <MetricCard
+                      label="Free Users"
+                      value={financialMetrics.free_users || 0}
+                    />
+                    <MetricCard
+                      label="Inactive Users (30d)"
+                      value={financialMetrics.inactive_users_30d || 0}
+                      status={financialMetrics.inactive_users_30d > 50 ? 'warning' : 'ok'}
+                    />
+                  </div>
+                ) : (
+                  <div className="text-center py-8 text-muted-foreground">
+                    No financial metrics data available
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+            
+            {/* Feature Usage Chart */}
+            <FeatureUsageChart />
+            
+            {/* Security Events */}
+            <SecurityEventsTable />
+            
+            {/* User Insights */}
+            <UserInsightsTable />
           </TabsContent>
 
           {/* AI Assistant Tab */}
