@@ -13,6 +13,8 @@ import {
 import { useAuth } from '@/hooks/useAuth';
 import { useEntitlements } from '@/lib/useEntitlements';
 import { ProBadge } from '@/components/ProBadge';
+import { LanguageToggle } from '@/components/mobile/LanguageToggle';
+import { OfflineIndicator } from '@/components/mobile/OfflineIndicator';
 import { cn } from '@/lib/utils';
 
 const AppHeader = () => {
@@ -21,7 +23,9 @@ const AppHeader = () => {
   const isPro = !loading && (plan === 'pro' || plan === 'premium');
 
   return (
-    <header className={cn(
+    <>
+      <OfflineIndicator />
+      <header className={cn(
       "border-b shadow-sm sticky top-0 z-50 transition-all duration-300",
       isPro 
         ? "bg-card/90 glass-pro border-[hsl(45,100%,60%)]/20 shadow-pro-glow backdrop-blur-xl" 
@@ -92,13 +96,15 @@ const AppHeader = () => {
             
             {/* Mobile Menu - Show only when authenticated */}
             {user && (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="sm" className="lg:hidden h-8 w-8 p-0">
-                    <Menu className="h-4 w-4" />
-                    <span className="sr-only">Open menu</span>
-                  </Button>
-                </DropdownMenuTrigger>
+              <>
+                <LanguageToggle />
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="sm" className="lg:hidden h-12 w-12 p-0 min-h-[48px] min-w-[48px]">
+                      <Menu className="h-4 w-4" />
+                      <span className="sr-only">Open menu</span>
+                    </Button>
+                  </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-56 mr-2">
                   <div className="px-2 py-2 border-b">
                     <div className="flex items-center gap-2">
@@ -140,12 +146,13 @@ const AppHeader = () => {
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
+              </>
             )}
 
             {user && (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="sm" className="hidden lg:flex h-8 w-8 p-0">
+                  <Button variant="ghost" size="sm" className="hidden lg:flex h-12 w-12 p-0 min-h-[48px] min-w-[48px]">
                     <User className="h-4 w-4" />
                     <span className="sr-only">Account menu</span>
                   </Button>
@@ -172,6 +179,7 @@ const AppHeader = () => {
         </div>
       </div>
     </header>
+    </>
   );
 };
 

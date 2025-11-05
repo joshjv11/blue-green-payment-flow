@@ -19,10 +19,10 @@ const buttonVariants = cva(
         pro: "bg-gradient-to-r from-[hsl(45,100%,60%)] to-[hsl(35,100%,55%)] text-[hsl(230,35%,7%)] hover:shadow-pro-glow shadow-pro-strong rounded-xl font-semibold shimmer hover:-translate-y-1 hover:brightness-110",
       },
       size: {
-        default: "h-11 px-5 py-2.5 md:h-10",
-        sm: "h-10 px-4 text-xs md:h-9",
-        lg: "h-12 px-7 md:h-11",
-        icon: "h-11 w-11 md:h-10 md:w-10",
+        default: "h-12 px-5 py-2.5 md:h-10 min-h-[48px]", // 48px minimum for mobile
+        sm: "h-11 px-4 text-xs md:h-9 min-h-[48px]", // 48px minimum for mobile
+        lg: "h-14 px-7 md:h-11 min-h-[48px]", // 48px minimum for mobile
+        icon: "h-12 w-12 md:h-10 md:w-10 min-h-[48px] min-w-[48px]", // 48px minimum for mobile
       },
     },
     defaultVariants: {

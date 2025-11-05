@@ -8,7 +8,9 @@ import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Shield, Lock, Users, CreditCard, Crown, Eye, EyeOff, CheckCircle, XCircle, Clock } from 'lucide-react';
+import { Shield, Lock, Users, CreditCard, Crown, Eye, EyeOff, CheckCircle, XCircle, Clock, Brain, Mail } from 'lucide-react';
+import { AIAssistant } from '@/components/admin/AIAssistant';
+import { EmailBroadcast } from '@/components/admin/EmailBroadcast';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { format } from 'date-fns';
@@ -364,7 +366,7 @@ const AdminCMS = () => {
         </div>
 
         <Tabs defaultValue="payments" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3">
+          <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="payments" className="flex items-center gap-2">
               <CreditCard className="h-4 w-4" />
               Payments
@@ -376,6 +378,14 @@ const AdminCMS = () => {
             <TabsTrigger value="plans" className="flex items-center gap-2">
               <Crown className="h-4 w-4" />
               Manage Plans
+            </TabsTrigger>
+            <TabsTrigger value="ai-assistant" className="flex items-center gap-2">
+              <Brain className="h-4 w-4" />
+              AI Assistant
+            </TabsTrigger>
+            <TabsTrigger value="email-broadcast" className="flex items-center gap-2">
+              <Mail className="h-4 w-4" />
+              Email Broadcast
             </TabsTrigger>
           </TabsList>
 
@@ -674,6 +684,16 @@ const AdminCMS = () => {
                 )}
               </CardContent>
             </Card>
+          </TabsContent>
+
+          {/* AI Assistant Tab */}
+          <TabsContent value="ai-assistant" className="space-y-4">
+            <AIAssistant />
+          </TabsContent>
+
+          {/* Email Broadcast Tab */}
+          <TabsContent value="email-broadcast" className="space-y-4">
+            <EmailBroadcast />
           </TabsContent>
         </Tabs>
       </div>

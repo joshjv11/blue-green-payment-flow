@@ -14,6 +14,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { supabase, isSupabaseConfigured } from '@/lib/supabase';
 import { useToast } from '@/hooks/use-toast';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
+import { useOfflineCache } from '@/hooks/useOfflineCache';
 import SmartBillForm from '@/components/SmartBillForm';
 import ReminderSettingsModal from '@/components/ReminderSettingsModal';
 import { generateGoogleCalendarUrl, downloadICSFile } from '@/utils/calendar';
@@ -115,6 +116,7 @@ const Bills = () => {
   const [sortField, setSortField] = useState<keyof Bill>('due_date');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
   const [localBills, setLocalBills] = useLocalStorage<Bill[]>(`bills_${user?.id}`, []);
+  const { isOnline, addToCache, syncWithServer } = useOfflineCache();
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [reminderModalBill, setReminderModalBill] = useState<Bill | null>(null);
   const isMobile = useIsMobile();
@@ -183,11 +185,20 @@ const Bills = () => {
           }
         }
         
-        setBills(data || []);
-        console.log(`✅ Loaded ${data?.length || 0} bills successfully`);
+        const billsData = data || [];
+        setBills(billsData);
+        
+        // Cache bills for offline access (last 30)
+        if (billsData.length > 0) {
+          addToCache(billsData.slice(0, 30));
+        }
+        
+        console.log(`✅ Loaded ${billsData.length} bills successfully`);
       } else {
-        setBills(localBills);
-        console.log(`📱 Loaded ${localBills.length} bills from local storage`);
+        // Use cached bills if offline
+        const cachedBills = localBills.length > 0 ? localBills : [];
+        setBills(cachedBills);
+        console.log(`📱 Loaded ${cachedBills.length} bills from local storage (offline mode)`);
       }
     } catch (error: any) {
       console.error('❌ Error in fetchBills:', error);
@@ -297,6 +308,9 @@ const Bills = () => {
             }
           }
 
+          // Cache the new bill for offline access
+          addToCache([insertedBill]);
+          
           // Auto-schedule reminder for new bills
           if (insertedBill && billData.auto_reminder_enabled && billData.due_date) {
             try {

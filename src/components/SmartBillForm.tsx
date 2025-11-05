@@ -28,6 +28,11 @@ import {
   Save
 } from 'lucide-react';
 import { addDays, format, startOfMonth, addMonths } from 'date-fns';
+import { VoiceInput } from '@/components/mobile/VoiceInput';
+import { OCRScanner } from '@/components/mobile/OCRScanner';
+import { SmartDatePicker } from '@/components/mobile/SmartDatePicker';
+import { useLocalStorage } from '@/hooks/useLocalStorage';
+import { Locale, t } from '@/utils/locale';
 
 interface BillFormData {
   name: string;
@@ -121,6 +126,7 @@ const categoryDetection: Record<string, string> = {
 
 const SmartBillForm = ({ formData, setFormData, onSubmit, editingBill }: SmartBillFormProps) => {
   const { toast } = useToast();
+  const [locale] = useLocalStorage<Locale>('invoiceflow_locale', 'en-IN');
   const [smartSuggestions, setSmartSuggestions] = useState<string[]>([]);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
 
@@ -238,67 +244,76 @@ const SmartBillForm = ({ formData, setFormData, onSubmit, editingBill }: SmartBi
 
       {/* Main Form */}
       <form onSubmit={onSubmit} className="space-y-6">
-        {/* Bill Name with Smart Detection - Floating Label */}
+        {/* Bill Name with Smart Detection - Floating Label + Voice Input */}
         <div className="space-y-2">
-          <FloatingLabelInput
-            id="name"
-            label="Bill Name *"
-            value={formData.name}
-            onChange={(e) => handleNameChange(e.target.value)}
-            placeholder="Bill Name *"
-            required
-          />
+          <div className="flex gap-2">
+            <FloatingLabelInput
+              id="name"
+              label={t('bill_name', locale) + ' *'}
+              value={formData.name}
+              onChange={(e) => handleNameChange(e.target.value)}
+              placeholder={t('bill_name', locale) + ' *'}
+              required
+              className="flex-1 min-h-[48px]"
+            />
+            <VoiceInput
+              onTranscript={(text) => {
+                handleNameChange(text);
+                toast({
+                  title: 'Voice Input',
+                  description: 'Bill name updated from voice',
+                });
+              }}
+              language={locale}
+            />
+          </div>
           <p className="text-xs text-muted-foreground flex items-center gap-1">
             <Lightbulb className="h-3 w-3 text-yellow-500" />
             Category will be auto-detected based on the name
           </p>
         </div>
 
-        {/* Amount with Smart Validation - Floating Label */}
+        {/* Amount with Smart Validation - Floating Label + OCR Scanner */}
         <div className="space-y-2">
-          <FloatingLabelInput
-            id="amount"
-            type="number"
-            step="0.01"
-            label="Amount (₹) *"
-            value={formData.amount}
-            onChange={(e) => {
-              setFormData({ ...formData, amount: e.target.value });
-              if (e.target.value) validateAmount(e.target.value);
-            }}
-            placeholder="Amount (₹) *"
-            required
-          />
+          <div className="flex gap-2">
+            <FloatingLabelInput
+              id="amount"
+              type="number"
+              step="0.01"
+              label={t('amount', locale) + ' (₹) *'}
+              value={formData.amount}
+              onChange={(e) => {
+                setFormData({ ...formData, amount: e.target.value });
+                if (e.target.value) validateAmount(e.target.value);
+              }}
+              placeholder={t('amount', locale) + ' (₹) *'}
+              required
+              className="flex-1 min-h-[48px]"
+            />
+            <OCRScanner
+              onAmountDetected={(amount) => {
+                setFormData({ ...formData, amount: amount.toString() });
+                validateAmount(amount.toString());
+                toast({
+                  title: 'Amount Scanned',
+                  description: `₹${amount.toLocaleString('en-IN')} detected`,
+                });
+              }}
+            />
+          </div>
         </div>
 
         {/* Smart Due Date Selection */}
         <div className="space-y-3">
           <Label className="flex items-center gap-2">
-            Due Date *
+            {t('due_date', locale)} *
             <Calendar className="h-3 w-3 text-blue-500" />
           </Label>
           
-          <Input
-            type="date"
+          <SmartDatePicker
             value={formData.due_date}
-            onChange={(e) => setFormData({ ...formData, due_date: e.target.value })}
-            required
+            onChange={(date) => setFormData({ ...formData, due_date: date })}
           />
-          
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-            {dueDateSuggestions.map((suggestion) => (
-              <Button
-                key={suggestion.label}
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => setFormData({ ...formData, due_date: suggestion.date })}
-                className="text-xs"
-              >
-                {suggestion.label}
-              </Button>
-            ))}
-          </div>
         </div>
 
         {/* Category Selection */}
