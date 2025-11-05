@@ -25,11 +25,14 @@ import Bills from './pages/Bills';
 import Analytics from './pages/Analytics';
 import Settings from './pages/Settings';
 import Sales from './pages/Sales';
+import SalesList from './pages/SalesList';
 import SalesV2 from './pages/SalesV2';
 import WhatsAppDashboard from './pages/WhatsAppDashboard';
 import Purchases from './pages/Purchases';
 import PurchasesV2 from './pages/PurchasesV2';
+import PurchasesList from './pages/PurchasesList';
 import Inventory from './pages/Inventory';
+import InventoryLedger from './pages/InventoryLedger';
 import GSTSummary from './pages/GSTSummary';
 import Exports from './pages/Exports';
 import Reports from './pages/Reports';
@@ -42,7 +45,6 @@ import EMIManager from './pages/EMIManager';
 import SpendingInsights from './pages/SpendingInsights';
 import Expenses from './pages/Expenses';
 import FinancialReports from './pages/FinancialReports';
-import AdvancedAnalyticsDashboard from './pages/AdvancedAnalyticsDashboard';
 import AICoach from './pages/AICoach';
 import Upgrade from './pages/Upgrade';
 import Payment from './pages/Payment';
@@ -88,21 +90,21 @@ function AppRoutes() {
         } 
       />
       <Route 
-        path="/analytics/advanced" 
-        element={
-          <ProtectedRoute>
-            <RequirePlan requiredPlan="premium" featureName="Advanced Analytics Dashboard">
-              <PageTransition><AdvancedAnalyticsDashboard /></PageTransition>
-            </RequirePlan>
-          </ProtectedRoute>
-        } 
-      />
-      <Route 
         path="/sales" 
         element={
           <ProtectedRoute>
             <RequirePlan requiredPlan="premium" featureName="Sales Orders">
               <PageTransition><Sales /></PageTransition>
+            </RequirePlan>
+          </ProtectedRoute>
+        } 
+      />
+      <Route 
+        path="/sales-list" 
+        element={
+          <ProtectedRoute>
+            <RequirePlan requiredPlan="premium" featureName="Sales Orders">
+              <PageTransition><SalesList /></PageTransition>
             </RequirePlan>
           </ProtectedRoute>
         } 
@@ -138,6 +140,16 @@ function AppRoutes() {
         } 
       />
       <Route 
+        path="/purchases-list"
+        element={
+          <ProtectedRoute>
+            <RequirePlan requiredPlan="premium" featureName="Purchase Orders">
+              <PageTransition><PurchasesList /></PageTransition>
+            </RequirePlan>
+          </ProtectedRoute>
+        } 
+      />
+      <Route 
         path="/purchases-v2"
         element={
           <ProtectedRoute>
@@ -163,6 +175,16 @@ function AppRoutes() {
           <ProtectedRoute>
             <RequirePlan requiredPlan="premium" featureName="Inventory Management">
               <PageTransition><Inventory /></PageTransition>
+            </RequirePlan>
+          </ProtectedRoute>
+        } 
+      />
+      <Route 
+        path="/inventory-ledger" 
+        element={
+          <ProtectedRoute>
+            <RequirePlan requiredPlan="premium" featureName="Inventory Management">
+              <PageTransition><InventoryLedger /></PageTransition>
             </RequirePlan>
           </ProtectedRoute>
         } 

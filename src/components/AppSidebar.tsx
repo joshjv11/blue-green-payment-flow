@@ -18,7 +18,9 @@ import {
   LogOut,
   Shield,
   Target,
-  PieChart
+  PieChart,
+  ChevronRight,
+  Zap
 } from "lucide-react";
 import { NavLink } from "react-router-dom";
 import {
@@ -38,43 +40,64 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { cn } from "@/lib/utils";
+import { useState } from "react";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
-const mainItems = [
+// Core Features (Free)
+const coreItems = [
   { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard, featureKey: "dashboard" },
   { title: "Bills", url: "/bills", icon: FileText, featureKey: "bills" },
+  { title: "Analytics", url: "/analytics", icon: BarChart3, featureKey: "analytics" },
+];
+
+// Pro Features
+const proItems = [
   { title: "AI Coach", url: "/ai-coach", icon: Brain, featureKey: "ai-coach", isProminent: true, isNew: true },
   { title: "WhatsApp", url: "/whatsapp", icon: MessageCircle, featureKey: "whatsapp", requiredPlan: "pro" as const, isProminent: true },
   { title: "Savings Goals", url: "/savings-goals", icon: Target, featureKey: "savings-goals", requiredPlan: "pro" as const },
   { title: "EMI Manager", url: "/emi-manager", icon: CreditCard, featureKey: "emi-manager", requiredPlan: "pro" as const },
   { title: "Spending Insights", url: "/spending-insights", icon: PieChart, featureKey: "spending-insights", requiredPlan: "pro" as const },
+];
+
+// Premium Features - Business Operations
+const premiumBusinessItems = [
   { title: "Sales", url: "/sales", icon: ShoppingCart, featureKey: "sales", requiredPlan: "premium" as const },
   { title: "Purchases", url: "/purchases", icon: ShoppingBag, featureKey: "purchases", requiredPlan: "premium" as const },
-  { title: "GST Dashboard", url: "/gst", icon: Shield, featureKey: "gst", requiredPlan: "premium" as const, isProminent: true, isNew: true },
   { title: "Inventory", url: "/inventory", icon: Package, featureKey: "inventory", requiredPlan: "premium" as const },
   { title: "Expenses", url: "/expenses", icon: Wallet, featureKey: "expenses", requiredPlan: "premium" as const },
 ];
 
-const secondaryItems = [
+// Premium Features - GST & Compliance
+const premiumGSTItems = [
+  { title: "GST Dashboard", url: "/gst", icon: Shield, featureKey: "gst", requiredPlan: "premium" as const, isProminent: true, isNew: true },
+];
+
+// Premium Features - Reports & Exports
+const premiumReportsItems = [
   { title: "Tax Reports", url: "/reports/tax", icon: Receipt, featureKey: "reports/tax", requiredPlan: "premium" as const },
   { title: "Financial Reports", url: "/reports/financial", icon: BarChart3, featureKey: "reports/financial", requiredPlan: "premium" as const },
   { title: "Exports", url: "/exports", icon: Download, featureKey: "exports", requiredPlan: "premium" as const },
-  { title: "Settings", url: "/settings", icon: Settings, featureKey: "settings" },
 ];
 
 const adminItems = [
   { title: "Admin CMS", url: "/admin-cms", icon: Shield, featureKey: "admin-cms" },
+  { title: "Sales List", url: "/sales-list", icon: ShoppingCart, featureKey: "sales-list", requiredPlan: "premium" as const },
+  { title: "Purchases List", url: "/purchases-list", icon: ShoppingBag, featureKey: "purchases-list", requiredPlan: "premium" as const },
 ];
 
 export function AppSidebar() {
   const { open } = useSidebar();
-  const { plan, isPremium, loading, data } = useEntitlements();
+  const { plan, isPremium, isPro, loading, data } = useEntitlements();
   const { signOut } = useAuth();
+  const [proOpen, setProOpen] = useState(true);
+  const [premiumBusinessOpen, setPremiumBusinessOpen] = useState(false);
+  const [premiumGSTOpen, setPremiumGSTOpen] = useState(false);
+  const [premiumReportsOpen, setPremiumReportsOpen] = useState(false);
   
-  const hasFeatureAccess = (featureKey: string) => {
-    const item = [...mainItems, ...secondaryItems].find(i => i.featureKey === featureKey);
-    if (!item?.requiredPlan) return true;
-    if (item.requiredPlan === 'premium') return plan === 'premium';
-    if (item.requiredPlan === 'pro') return plan === 'pro' || plan === 'premium';
+  const hasFeatureAccess = (featureKey: string, requiredPlan?: "pro" | "premium") => {
+    if (!requiredPlan) return true;
+    if (requiredPlan === 'premium') return plan === 'premium';
+    if (requiredPlan === 'pro') return plan === 'pro' || plan === 'premium';
     return true;
   };
   
@@ -90,10 +113,11 @@ export function AppSidebar() {
       ? "opacity-50 cursor-not-allowed hover:bg-muted/30 text-muted-foreground"
       : "hover:bg-muted/50 text-muted-foreground hover:text-foreground";
 
-  const renderNavItem = (item: typeof mainItems[0]) => {
-    const hasAccess = hasFeatureAccess(item.featureKey);
+  const renderNavItem = (item: typeof coreItems[0] & { requiredPlan?: "pro" | "premium"; isProminent?: boolean; isNew?: boolean }) => {
+    const hasAccess = hasFeatureAccess(item.featureKey, item.requiredPlan);
     const isLocked = !hasAccess;
     const isPremiumFeature = item.requiredPlan === 'premium';
+    const isProFeature = item.requiredPlan === 'pro';
     const isProminent = (item as any).isProminent && hasAccess;
     const isNew = (item as any).isNew && hasAccess;
     const isAICoach = item.featureKey === 'ai-coach';
@@ -105,7 +129,6 @@ export function AppSidebar() {
         className={(props) => {
           const baseClass = getNavClassName(props, isLocked);
           if (isAICoach && !isLocked) {
-            // AI Coach gets purple gradient styling
             return props.isActive 
               ? "bg-gradient-to-r from-purple-600 to-pink-600 text-white font-semibold border-l-2 border-purple-700"
               : "bg-gradient-to-r from-purple-500/10 to-pink-500/10 text-purple-700 dark:text-purple-400 hover:from-purple-500/20 hover:to-pink-500/20 font-medium border-l-2 border-purple-500/30";
@@ -124,37 +147,46 @@ export function AppSidebar() {
           }
         }}
       >
-        <div className="flex items-center gap-2 flex-1">
+        <div className="flex items-center gap-2 flex-1 min-w-0">
           <item.icon className={cn(
             "h-4 w-4 flex-shrink-0", 
             isAICoach && !isLocked && "text-purple-600 dark:text-purple-400",
             isProminent && !isLocked && !isAICoach && "text-green-600 dark:text-green-400"
           )} />
           {open && (
-            <span className="flex items-center gap-2 flex-1">
-              {item.title}
+            <span className="flex items-center gap-1.5 flex-1 min-w-0">
+              <span className="truncate">{item.title}</span>
               {isPremiumFeature && (
-                <Sparkles className="h-3 w-3 text-purple-500" />
+                <Badge 
+                  variant="outline" 
+                  className="ml-auto shrink-0 h-4 px-1.5 text-[10px] font-semibold bg-gradient-to-r from-purple-500/20 to-pink-500/20 text-purple-600 dark:text-purple-400 border-purple-500/50"
+                >
+                  <Sparkles className="h-2.5 w-2.5 mr-0.5" />
+                  Premium
+                </Badge>
+              )}
+              {isProFeature && !isPremiumFeature && (
+                <Badge 
+                  variant="outline" 
+                  className="ml-auto shrink-0 h-4 px-1.5 text-[10px] font-semibold bg-blue-500/20 text-blue-600 dark:text-blue-400 border-blue-500/50"
+                >
+                  Pro
+                </Badge>
               )}
               {isNew && !isLocked && (
                 <Badge variant="outline" className={cn(
-                  "ml-auto text-xs px-1.5 py-0",
+                  "shrink-0 h-4 px-1.5 text-[10px]",
                   isAICoach 
-                    ? "bg-gradient-to-r from-purple-600 to-pink-600 text-white border-0 animate-pulse"
+                    ? "bg-gradient-to-r from-purple-600 to-pink-600 text-white border-0"
                     : "bg-green-500/20 text-green-700 dark:text-green-400 border-green-500/50"
                 )}>
-                  New
-                </Badge>
-              )}
-              {isProminent && !isLocked && !isNew && (
-                <Badge variant="outline" className="ml-auto bg-green-500/20 text-green-700 dark:text-green-400 border-green-500/50 text-xs px-1.5 py-0">
                   New
                 </Badge>
               )}
             </span>
           )}
         </div>
-        {isLocked && <Lock className="h-3 w-3" />}
+        {isLocked && <Lock className="h-3 w-3 shrink-0" />}
       </NavLink>
     );
 
@@ -175,7 +207,6 @@ export function AppSidebar() {
       );
     }
 
-    // Add tooltip for AI Coach to entice users
     if (isAICoach) {
       return (
         <Tooltip key={item.title}>
@@ -207,7 +238,7 @@ export function AppSidebar() {
       <SidebarContent className="overflow-y-auto">
         {/* Plan Badge */}
         {open && (
-          <div className="px-3 md:px-4 py-2 md:py-3 border-b">
+          <div className="px-3 md:px-4 py-3 border-b">
             <div className="flex items-center gap-2 mb-2">
               <Crown className="h-4 w-4 text-primary flex-shrink-0" />
               <div className="flex-1 min-w-0">
@@ -216,20 +247,20 @@ export function AppSidebar() {
                 </p>
                 <Badge 
                   variant={plan === 'premium' ? 'default' : plan === 'pro' ? 'secondary' : 'outline'}
-                  className={
+                  className={cn(
+                    "text-xs",
                     plan === 'premium' 
                       ? 'bg-gradient-to-r from-purple-600 to-pink-600' 
                       : plan === 'pro'
                       ? 'bg-gradient-to-r from-purple-600 to-blue-600'
                       : ''
-                  }
+                  )}
                 >
                   {plan === 'premium' ? 'Premium ⭐' : plan === 'pro' ? 'Pro' : 'Free'}
                 </Badge>
               </div>
             </div>
             
-            {/* Expiry warning */}
             {isExpiringSoon && expiresAt && (
               <div className="text-xs text-orange-600 dark:text-orange-400 mt-2 p-2 bg-orange-50 dark:bg-orange-950/30 rounded">
                 <p className="font-medium">Expires in {getDaysRemaining()} days</p>
@@ -248,7 +279,6 @@ export function AppSidebar() {
               </NavLink>
             )}
             
-            {/* View Plans Button - Always visible */}
             <NavLink to="/upgrade" className="block mt-3">
               <Button 
                 variant="outline" 
@@ -262,7 +292,6 @@ export function AppSidebar() {
           </div>
         )}
         
-        {/* View Plans Button - When sidebar is collapsed */}
         {!open && (
           <div className="px-2 py-2 border-b">
             <Tooltip>
@@ -284,13 +313,14 @@ export function AppSidebar() {
           </div>
         )}
 
+        {/* Core Features */}
         <SidebarGroup>
           <SidebarGroupLabel className="text-xs uppercase tracking-wider px-3 md:px-4 py-2">
-            Main
+            Core
           </SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu className="px-1">
-              {mainItems.map((item) => (
+              {coreItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild className="min-h-[44px] md:min-h-[36px]">
                     {renderNavItem(item)}
@@ -301,20 +331,178 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
 
+        {/* Pro Features - Collapsible */}
         <SidebarGroup>
-          <SidebarGroupLabel className="text-xs uppercase tracking-wider flex items-center gap-2 px-3 md:px-4 py-2">
-            <span>Premium Features</span>
-            {!isPremium && <Sparkles className="h-3 w-3 text-purple-500" />}
+          <Collapsible open={proOpen} onOpenChange={setProOpen} className="group/collapsible">
+            <CollapsibleTrigger asChild>
+              <SidebarGroupLabel className="text-xs uppercase tracking-wider flex items-center justify-between px-3 md:px-4 py-2 hover:bg-muted/50 cursor-pointer group">
+                <div className="flex items-center gap-2">
+                  <Zap className="h-3 w-3 text-blue-500" />
+                  <span>Pro Features</span>
+                  {!isPro && !isPremium && (
+                    <Badge variant="outline" className="h-4 px-1.5 text-[10px] bg-blue-500/20 text-blue-600 dark:text-blue-400 border-blue-500/50">
+                      Pro
+                    </Badge>
+                  )}
+                </div>
+                <ChevronRight className={cn(
+                  "h-3 w-3 transition-transform duration-200",
+                  proOpen && "rotate-90"
+                )} />
+              </SidebarGroupLabel>
+            </CollapsibleTrigger>
+            <CollapsibleContent>
+              <SidebarGroupContent>
+                <SidebarMenu className="px-1">
+                  {proItems.map((item) => (
+                    <SidebarMenuItem key={item.title}>
+                      <SidebarMenuButton asChild className="min-h-[44px] md:min-h-[36px]">
+                        {renderNavItem(item)}
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  ))}
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </CollapsibleContent>
+          </Collapsible>
+        </SidebarGroup>
+
+        {/* Premium Features - Business Operations - Collapsible */}
+        <SidebarGroup>
+          <Collapsible open={premiumBusinessOpen} onOpenChange={setPremiumBusinessOpen} className="group/collapsible">
+            <CollapsibleTrigger asChild>
+              <SidebarGroupLabel className="text-xs uppercase tracking-wider flex items-center justify-between px-3 md:px-4 py-2 hover:bg-muted/50 cursor-pointer group">
+                <div className="flex items-center gap-2">
+                  <Sparkles className="h-3 w-3 text-purple-500" />
+                  <span>Business</span>
+                  {!isPremium && (
+                    <Badge variant="outline" className="h-4 px-1.5 text-[10px] bg-gradient-to-r from-purple-500/20 to-pink-500/20 text-purple-600 dark:text-purple-400 border-purple-500/50">
+                      <Sparkles className="h-2.5 w-2.5 mr-0.5" />
+                      Premium
+                    </Badge>
+                  )}
+                </div>
+                <ChevronRight className={cn(
+                  "h-3 w-3 transition-transform duration-200",
+                  premiumBusinessOpen && "rotate-90"
+                )} />
+              </SidebarGroupLabel>
+            </CollapsibleTrigger>
+            <CollapsibleContent>
+              <SidebarGroupContent>
+                <SidebarMenu className="px-1">
+                  {premiumBusinessItems.map((item) => (
+                    <SidebarMenuItem key={item.title}>
+                      <SidebarMenuButton asChild className="min-h-[44px] md:min-h-[36px]">
+                        {renderNavItem(item)}
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  ))}
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </CollapsibleContent>
+          </Collapsible>
+        </SidebarGroup>
+
+        {/* Premium Features - GST & Compliance - Collapsible */}
+        <SidebarGroup>
+          <Collapsible open={premiumGSTOpen} onOpenChange={setPremiumGSTOpen} className="group/collapsible">
+            <CollapsibleTrigger asChild>
+              <SidebarGroupLabel className="text-xs uppercase tracking-wider flex items-center justify-between px-3 md:px-4 py-2 hover:bg-muted/50 cursor-pointer group">
+                <div className="flex items-center gap-2">
+                  <Shield className="h-3 w-3 text-purple-500" />
+                  <span>GST & Compliance</span>
+                  {!isPremium && (
+                    <Badge variant="outline" className="h-4 px-1.5 text-[10px] bg-gradient-to-r from-purple-500/20 to-pink-500/20 text-purple-600 dark:text-purple-400 border-purple-500/50">
+                      <Sparkles className="h-2.5 w-2.5 mr-0.5" />
+                      Premium
+                    </Badge>
+                  )}
+                </div>
+                <ChevronRight className={cn(
+                  "h-3 w-3 transition-transform duration-200",
+                  premiumGSTOpen && "rotate-90"
+                )} />
+              </SidebarGroupLabel>
+            </CollapsibleTrigger>
+            <CollapsibleContent>
+              <SidebarGroupContent>
+                <SidebarMenu className="px-1">
+                  {premiumGSTItems.map((item) => (
+                    <SidebarMenuItem key={item.title}>
+                      <SidebarMenuButton asChild className="min-h-[44px] md:min-h-[36px]">
+                        {renderNavItem(item)}
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  ))}
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </CollapsibleContent>
+          </Collapsible>
+        </SidebarGroup>
+
+        {/* Premium Features - Reports & Exports - Collapsible */}
+        <SidebarGroup>
+          <Collapsible open={premiumReportsOpen} onOpenChange={setPremiumReportsOpen} className="group/collapsible">
+            <CollapsibleTrigger asChild>
+              <SidebarGroupLabel className="text-xs uppercase tracking-wider flex items-center justify-between px-3 md:px-4 py-2 hover:bg-muted/50 cursor-pointer group">
+                <div className="flex items-center gap-2">
+                  <BarChart3 className="h-3 w-3 text-purple-500" />
+                  <span>Reports</span>
+                  {!isPremium && (
+                    <Badge variant="outline" className="h-4 px-1.5 text-[10px] bg-gradient-to-r from-purple-500/20 to-pink-500/20 text-purple-600 dark:text-purple-400 border-purple-500/50">
+                      <Sparkles className="h-2.5 w-2.5 mr-0.5" />
+                      Premium
+                    </Badge>
+                  )}
+                </div>
+                <ChevronRight className={cn(
+                  "h-3 w-3 transition-transform duration-200",
+                  premiumReportsOpen && "rotate-90"
+                )} />
+              </SidebarGroupLabel>
+            </CollapsibleTrigger>
+            <CollapsibleContent>
+              <SidebarGroupContent>
+                <SidebarMenu className="px-1">
+                  {premiumReportsItems.map((item) => (
+                    <SidebarMenuItem key={item.title}>
+                      <SidebarMenuButton asChild className="min-h-[44px] md:min-h-[36px]">
+                        {renderNavItem(item)}
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  ))}
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </CollapsibleContent>
+          </Collapsible>
+        </SidebarGroup>
+
+        {/* Settings */}
+        <SidebarGroup>
+          <SidebarGroupLabel className="text-xs uppercase tracking-wider px-3 md:px-4 py-2">
+            System
           </SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu className="px-1">
-              {secondaryItems.map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild className="min-h-[44px] md:min-h-[36px]">
-                    {renderNavItem(item)}
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild className="min-h-[44px] md:min-h-[36px]">
+                  <NavLink 
+                    to="/settings" 
+                    end 
+                    className={(props) => 
+                      props.isActive 
+                        ? "bg-primary/10 text-primary font-semibold border-l-2 border-primary"
+                        : "hover:bg-muted/50 text-muted-foreground hover:text-foreground"
+                    }
+                  >
+                    <div className="flex items-center gap-2 flex-1">
+                      <Settings className="h-4 w-4 flex-shrink-0" />
+                      {open && <span>Settings</span>}
+                    </div>
+                  </NavLink>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
@@ -327,26 +515,54 @@ export function AppSidebar() {
           </SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu className="px-1">
-              {adminItems.map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild className="min-h-[44px] md:min-h-[36px]">
-                    <NavLink 
-                      to={item.url} 
-                      end 
-                      className={(props) => 
-                        props.isActive 
-                          ? "bg-primary/10 text-primary font-semibold border-l-2 border-primary"
-                          : "hover:bg-muted/50 text-muted-foreground hover:text-foreground"
-                      }
-                    >
-                      <div className="flex items-center gap-2 flex-1">
-                        <item.icon className="h-4 w-4 flex-shrink-0" />
-                        {open && <span>{item.title}</span>}
-                      </div>
-                    </NavLink>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
+              {adminItems.map((item) => {
+                const hasAccess = hasFeatureAccess(item.featureKey, item.requiredPlan);
+                const isLocked = !hasAccess;
+                const isPremiumFeature = item.requiredPlan === 'premium';
+                
+                return (
+                  <SidebarMenuItem key={item.title}>
+                    <SidebarMenuButton asChild className="min-h-[44px] md:min-h-[36px]">
+                      <NavLink 
+                        to={isLocked ? "/upgrade" : item.url} 
+                        end 
+                        className={(props) => 
+                          props.isActive 
+                            ? "bg-primary/10 text-primary font-semibold border-l-2 border-primary"
+                            : isLocked
+                            ? "opacity-50 cursor-not-allowed hover:bg-muted/30 text-muted-foreground"
+                            : "hover:bg-muted/50 text-muted-foreground hover:text-foreground"
+                        }
+                        onClick={(e) => {
+                          if (isLocked) {
+                            e.preventDefault();
+                            window.location.href = '/upgrade';
+                          }
+                        }}
+                      >
+                        <div className="flex items-center gap-2 flex-1 min-w-0">
+                          <item.icon className="h-4 w-4 flex-shrink-0" />
+                          {open && (
+                            <span className="flex items-center gap-1.5 flex-1 min-w-0">
+                              <span className="truncate">{item.title}</span>
+                              {isPremiumFeature && (
+                                <Badge 
+                                  variant="outline" 
+                                  className="ml-auto shrink-0 h-4 px-1.5 text-[10px] font-semibold bg-gradient-to-r from-purple-500/20 to-pink-500/20 text-purple-600 dark:text-purple-400 border-purple-500/50"
+                                >
+                                  <Sparkles className="h-2.5 w-2.5 mr-0.5" />
+                                  Premium
+                                </Badge>
+                              )}
+                            </span>
+                          )}
+                        </div>
+                        {isLocked && <Lock className="h-3 w-3 shrink-0" />}
+                      </NavLink>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                );
+              })}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>

@@ -8,11 +8,14 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { Plus, Package, AlertTriangle, DollarSign, Edit2, Trash2, ShoppingCart, ShoppingBag, ChevronDown, FileText } from "lucide-react";
+import { Plus, Package, AlertTriangle, DollarSign, Edit2, Trash2, ShoppingCart, ShoppingBag, ChevronDown, FileText, TrendingUp, Clock, RefreshCw, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { PageTransition } from "@/components/PageTransition";
 import { Breadcrumb } from "@/components/Breadcrumb";
 import { BackToDashboard } from "@/components/BackToDashboard";
+import { useInventoryKpis, useStockTurnover, useReorderSuggestions } from "@/hooks/useInventoryData";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { subDays, format } from "date-fns";
 
 interface Product {
   id: string;
@@ -152,6 +155,14 @@ export default function Inventory() {
   const totalProducts = products.length;
   const lowStockItems = products.filter(p => p.stock_qty <= p.reorder_level).length;
   const inventoryValue = products.reduce((sum, p) => sum + (p.stock_qty * p.purchase_price), 0);
+  
+  // Enhanced analytics hooks
+  const { kpis: inventoryKpis, loading: kpisLoading } = useInventoryKpis();
+  const { turnover, loading: turnoverLoading } = useStockTurnover(
+    format(subDays(new Date(), 30), 'yyyy-MM-dd'),
+    format(new Date(), 'yyyy-MM-dd')
+  );
+  const { suggestions, loading: suggestionsLoading } = useReorderSuggestions(7, 1.65);
 
   return (
     <PageTransition>
@@ -314,12 +325,12 @@ export default function Inventory() {
         )}
 
         {/* Summary Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <Card className="p-6">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">Total Products</p>
-                <p className="text-3xl font-bold mt-2">{totalProducts}</p>
+                <p className="text-3xl font-bold mt-2">{inventoryKpis?.total_skus ?? totalProducts}</p>
               </div>
               <Package className="h-12 w-12 text-primary opacity-20" />
             </div>
@@ -328,8 +339,20 @@ export default function Inventory() {
           <Card className="p-6">
             <div className="flex items-center justify-between">
               <div>
+                <p className="text-sm text-muted-foreground">Inventory Value</p>
+                <p className="text-3xl font-bold mt-2">₹{((inventoryKpis?.total_value ?? inventoryValue) / 1000).toFixed(1)}K</p>
+                <p className="text-xs text-muted-foreground mt-1">Weighted Average</p>
+              </div>
+              <DollarSign className="h-12 w-12 text-primary opacity-20" />
+            </div>
+          </Card>
+          
+          <Card className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
                 <p className="text-sm text-muted-foreground">Low Stock Items</p>
-                <p className="text-3xl font-bold mt-2 text-destructive">{lowStockItems}</p>
+                <p className="text-3xl font-bold mt-2 text-destructive">{inventoryKpis?.low_stock_count ?? lowStockItems}</p>
+                <p className="text-xs text-muted-foreground mt-1">Critical: {inventoryKpis?.critical_count ?? 0}</p>
               </div>
               <AlertTriangle className="h-12 w-12 text-destructive opacity-20" />
             </div>
@@ -338,89 +361,187 @@ export default function Inventory() {
           <Card className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-muted-foreground">Inventory Value</p>
-                <p className="text-3xl font-bold mt-2">₹{inventoryValue.toLocaleString()}</p>
+                <p className="text-sm text-muted-foreground">Avg Turnover</p>
+                <p className="text-3xl font-bold mt-2">{inventoryKpis?.avg_turnover_days ? `${inventoryKpis.avg_turnover_days.toFixed(1)}d` : '-'}</p>
+                <p className="text-xs text-muted-foreground mt-1">Days to sell</p>
               </div>
-              <DollarSign className="h-12 w-12 text-primary opacity-20" />
+              <TrendingUp className="h-12 w-12 text-green-600 opacity-20" />
             </div>
           </Card>
         </div>
 
-        {/* Products Table */}
-        <Card>
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-muted/50">
-                <tr>
-                  <th className="text-left p-4">Product Name</th>
-                  <th className="text-left p-4">SKU</th>
-                  <th className="text-right p-4">Stock Qty</th>
-                  <th className="text-right p-4">Purchase Price</th>
-                  <th className="text-right p-4">Selling Price</th>
-                  <th className="text-right p-4">Stock Value</th>
-                  <th className="text-center p-4">Status</th>
-                  <th className="text-right p-4">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {loading ? (
-                  <tr>
-                    <td colSpan={8} className="text-center p-8 text-muted-foreground">
-                      Loading products...
-                    </td>
-                  </tr>
-                ) : products.length === 0 ? (
-                  <tr>
-                    <td colSpan={8} className="text-center p-8 text-muted-foreground">
-                      No products found. Add your first product to get started.
-                    </td>
-                  </tr>
-                ) : (
-                  products.map((product, index) => (
-                    <tr key={product.id} className={index % 2 === 0 ? "bg-background" : "bg-muted/20"}>
-                      <td className="p-4 font-medium">{product.name}</td>
-                      <td className="p-4 text-muted-foreground">{product.sku}</td>
-                      <td className="p-4 text-right">{product.stock_qty}</td>
-                      <td className="p-4 text-right">₹{product.purchase_price.toFixed(2)}</td>
-                      <td className="p-4 text-right">₹{product.selling_price.toFixed(2)}</td>
-                      <td className="p-4 text-right font-medium">
-                        ₹{(product.stock_qty * product.purchase_price).toFixed(2)}
-                      </td>
-                      <td className="p-4 text-center">
-                        {product.stock_qty <= product.reorder_level ? (
-                          <Badge variant="destructive" className="gap-1">
-                            <AlertTriangle className="h-3 w-3" />
-                            Low Stock
-                          </Badge>
-                        ) : (
-                          <Badge variant="default">In Stock</Badge>
-                        )}
-                      </td>
-                      <td className="p-4">
-                        <div className="flex justify-end gap-2">
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={() => handleEdit(product)}
-                          >
-                            <Edit2 className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={() => handleDelete(product.id)}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </td>
+        {/* Enhanced Analytics Tabs */}
+        <Tabs defaultValue="products" className="space-y-4">
+          <TabsList>
+            <TabsTrigger value="products">Products</TabsTrigger>
+            <TabsTrigger value="turnover">Stock Turnover</TabsTrigger>
+            <TabsTrigger value="reorder">Reorder Suggestions</TabsTrigger>
+            <TabsTrigger value="ledger" onClick={() => navigate('/inventory-ledger')}>Ledger</TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="products" className="space-y-4">
+            {/* Products Table */}
+            <Card>
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead className="bg-muted/50">
+                    <tr>
+                      <th className="text-left p-4">Product Name</th>
+                      <th className="text-left p-4">SKU</th>
+                      <th className="text-right p-4">Stock Qty</th>
+                      <th className="text-right p-4">Purchase Price</th>
+                      <th className="text-right p-4">Selling Price</th>
+                      <th className="text-right p-4">Stock Value</th>
+                      <th className="text-center p-4">Status</th>
+                      <th className="text-right p-4">Actions</th>
                     </tr>
-                  ))
+                  </thead>
+                  <tbody>
+                    {loading ? (
+                      <tr>
+                        <td colSpan={8} className="text-center p-8 text-muted-foreground">
+                          Loading products...
+                        </td>
+                      </tr>
+                    ) : products.length === 0 ? (
+                      <tr>
+                        <td colSpan={8} className="text-center p-8 text-muted-foreground">
+                          No products found. Add your first product to get started.
+                        </td>
+                      </tr>
+                    ) : (
+                      products.map((product, index) => (
+                        <tr key={product.id} className={index % 2 === 0 ? "bg-background" : "bg-muted/20"}>
+                          <td className="p-4 font-medium">{product.name}</td>
+                          <td className="p-4 text-muted-foreground">{product.sku}</td>
+                          <td className="p-4 text-right">{product.stock_qty}</td>
+                          <td className="p-4 text-right">₹{product.purchase_price.toFixed(2)}</td>
+                          <td className="p-4 text-right">₹{product.selling_price.toFixed(2)}</td>
+                          <td className="p-4 text-right font-medium">
+                            ₹{(product.stock_qty * product.purchase_price).toFixed(2)}
+                          </td>
+                          <td className="p-4 text-center">
+                            {product.stock_qty <= product.reorder_level ? (
+                              <Badge variant="destructive" className="gap-1">
+                                <AlertTriangle className="h-3 w-3" />
+                                Low Stock
+                              </Badge>
+                            ) : (
+                              <Badge variant="default">In Stock</Badge>
+                            )}
+                          </td>
+                          <td className="p-4">
+                            <div className="flex justify-end gap-2">
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => handleEdit(product)}
+                              >
+                                <Edit2 className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => handleDelete(product.id)}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </Card>
+          </TabsContent>
+          
+          <TabsContent value="turnover">
+            <Card>
+              <CardHeader>
+                <CardTitle>Stock Turnover Analysis</CardTitle>
+                <CardDescription>Sales velocity vs current stock levels (last 30 days)</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {turnoverLoading ? (
+                  <div className="flex items-center gap-2 text-muted-foreground"><Loader2 className="h-4 w-4 animate-spin" /> Loading...</div>
+                ) : turnover.length === 0 ? (
+                  <p className="text-muted-foreground">No turnover data available</p>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="w-full">
+                      <thead className="bg-muted/50">
+                        <tr>
+                          <th className="text-left p-3">Product</th>
+                          <th className="text-right p-3">Current Stock</th>
+                          <th className="text-right p-3">Sales (30d)</th>
+                          <th className="text-right p-3">Turnover Ratio</th>
+                          <th className="text-right p-3">Days of Inventory</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {turnover.slice(0, 20).map((item) => (
+                          <tr key={item.product_id} className="border-b">
+                            <td className="p-3 font-medium">{item.product_name}</td>
+                            <td className="p-3 text-right">{item.current_stock}</td>
+                            <td className="p-3 text-right">{item.sales_qty.toFixed(1)}</td>
+                            <td className="p-3 text-right">{item.turnover_ratio.toFixed(2)}x</td>
+                            <td className="p-3 text-right">{item.days_of_inventory ? `${item.days_of_inventory.toFixed(1)}d` : '-'}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
                 )}
-              </tbody>
-            </table>
-          </div>
-        </Card>
+              </CardContent>
+            </Card>
+          </TabsContent>
+          
+          <TabsContent value="reorder">
+            <Card>
+              <CardHeader>
+                <CardTitle>Reorder Suggestions</CardTitle>
+                <CardDescription>AI-powered reorder points based on demand forecasting</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {suggestionsLoading ? (
+                  <div className="flex items-center gap-2 text-muted-foreground"><Loader2 className="h-4 w-4 animate-spin" /> Loading...</div>
+                ) : suggestions.length === 0 ? (
+                  <p className="text-muted-foreground">No reorder suggestions at this time</p>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="w-full">
+                      <thead className="bg-muted/50">
+                        <tr>
+                          <th className="text-left p-3">Product</th>
+                          <th className="text-right p-3">Current</th>
+                          <th className="text-right p-3">Daily Demand</th>
+                          <th className="text-right p-3">Safety Stock</th>
+                          <th className="text-right p-3">Reorder Point</th>
+                          <th className="text-right p-3 font-semibold">Suggested Qty</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {suggestions.map((s) => (
+                          <tr key={s.product_id} className="border-b">
+                            <td className="p-3 font-medium">{s.product_name}</td>
+                            <td className="p-3 text-right">{s.current_stock}</td>
+                            <td className="p-3 text-right">{s.avg_daily_demand.toFixed(1)}</td>
+                            <td className="p-3 text-right">{s.safety_stock.toFixed(1)}</td>
+                            <td className="p-3 text-right">{s.reorder_point.toFixed(1)}</td>
+                            <td className="p-3 text-right font-semibold text-primary">{Math.ceil(s.suggested_order_qty)}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
+
     </div>
   </PageTransition>
   );

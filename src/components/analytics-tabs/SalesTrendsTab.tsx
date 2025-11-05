@@ -1,28 +1,34 @@
+import { useState, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Legend, AreaChart, Area } from 'recharts';
-import { TrendingUp, ShoppingCart, Clock, Target } from 'lucide-react';
+import { TrendingUp, ShoppingCart, Clock, Target, Loader2 } from 'lucide-react';
+import { useSalesData } from '@/hooks/useSalesData';
+import { startOfMonth, endOfMonth, subDays, format } from 'date-fns';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 
 const SalesTrendsTab = () => {
-  const salesData = [
-    { date: 'Mon', sales: 45, orders: 12, avgValue: 3750 },
-    { date: 'Tue', sales: 52, orders: 15, avgValue: 3467 },
-    { date: 'Wed', sales: 48, orders: 14, avgValue: 3429 },
-    { date: 'Thu', sales: 61, orders: 18, avgValue: 3389 },
-    { date: 'Fri', sales: 73, orders: 21, avgValue: 3476 },
-    { date: 'Sat', sales: 85, orders: 25, avgValue: 3400 },
-    { date: 'Sun', sales: 68, orders: 19, avgValue: 3579 },
-  ];
+  const [dateFrom, setDateFrom] = useState(format(subDays(new Date(), 30), 'yyyy-MM-dd'));
+  const [dateTo, setDateTo] = useState(format(new Date(), 'yyyy-MM-dd'));
+  const { kpis, trend, loading } = useSalesData(dateFrom, dateTo);
 
-  const productTrends = [
-    { product: 'Wireless Mouse', sales: 145, trend: '+23%', growth: 'up' },
-    { product: 'USB-C Cable', sales: 234, trend: '+45%', growth: 'up' },
-    { product: 'Keyboard', sales: 89, trend: '-12%', growth: 'down' },
-    { product: 'Monitor', sales: 56, trend: '+8%', growth: 'up' },
-    { product: 'Laptop Stand', sales: 78, trend: '+15%', growth: 'up' },
-  ];
+  const salesData = useMemo(() => {
+    if (!trend || trend.length === 0) return [];
+    return trend.map((t) => ({
+      date: format(new Date(t.d), 'MMM dd'),
+      sales: t.sales_amount / 1000, // Convert to K
+      orders: t.orders,
+      avgValue: t.orders > 0 ? t.sales_amount / t.orders : 0,
+    }));
+  }, [trend]);
 
+  const totalSales = useMemo(() => kpis.gmv / 1000, [kpis.gmv]);
+  const totalOrders = kpis.orders;
+  const avgOrderValue = kpis.avg_order_value;
+
+  // Hourly data placeholder (can be enhanced with actual hour extraction from transaction_date)
   const hourlyData = [
     { hour: '9AM', sales: 12 },
     { hour: '10AM', sales: 18 },
@@ -36,24 +42,32 @@ const SalesTrendsTab = () => {
     { hour: '6PM', sales: 52 },
   ];
 
-  const totalSales = salesData.reduce((sum, day) => sum + day.sales, 0);
-  const totalOrders = salesData.reduce((sum, day) => sum + day.orders, 0);
-  const avgOrderValue = totalSales / totalOrders;
-
   return (
     <div className="space-y-6">
+      {/* Date Range Filter */}
+      <Card>
+        <CardContent className="p-4">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+            <div>
+              <Label>From Date</Label>
+              <Input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} />
+            </div>
+            <div>
+              <Label>To Date</Label>
+              <Input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} />
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card>
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Weekly Sales</p>
-                <p className="text-2xl font-bold mt-2">₹{totalSales}K</p>
-                <Badge variant="outline" className="mt-2 text-green-600 border-green-600">
-                  <TrendingUp className="h-3 w-3 mr-1" />
-                  +18.2%
-                </Badge>
+                <p className="text-sm font-medium text-muted-foreground">Total Sales</p>
+                <p className="text-2xl font-bold mt-2">₹{totalSales.toFixed(1)}K</p>
               </div>
               <ShoppingCart className="h-8 w-8 text-blue-600" />
             </div>
@@ -88,8 +102,8 @@ const SalesTrendsTab = () => {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Peak Hour</p>
-                <p className="text-2xl font-bold mt-2">6 PM</p>
+                <p className="text-sm font-medium text-muted-foreground">Tax Collected</p>
+                <p className="text-2xl font-bold mt-2">₹{(kpis.tax / 1000).toFixed(1)}K</p>
               </div>
               <Clock className="h-8 w-8 text-orange-600" />
             </div>
@@ -103,7 +117,17 @@ const SalesTrendsTab = () => {
           <CardTitle>Daily Sales Trend</CardTitle>
         </CardHeader>
         <CardContent>
-          <ChartContainer
+          {loading ? (
+            <div className="flex items-center justify-center h-[300px] text-muted-foreground">
+              <Loader2 className="h-6 w-6 animate-spin mr-2" />
+              Loading sales data...
+            </div>
+          ) : salesData.length === 0 ? (
+            <div className="flex items-center justify-center h-[300px] text-muted-foreground">
+              No sales data available for the selected period
+            </div>
+          ) : (
+            <ChartContainer
             config={{
               sales: { label: 'Sales (₹K)', color: 'hsl(var(--chart-1))' },
               orders: { label: 'Orders', color: 'hsl(var(--chart-2))' },
@@ -121,35 +145,36 @@ const SalesTrendsTab = () => {
               <Area yAxisId="right" type="monotone" dataKey="orders" stroke="var(--color-orders)" fill="var(--color-orders)" fillOpacity={0.3} />
             </AreaChart>
           </ChartContainer>
+          )}
         </CardContent>
       </Card>
 
-      {/* Product Trends & Hourly Sales */}
+      {/* Hourly Sales */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card>
           <CardHeader>
-            <CardTitle>Top Product Trends</CardTitle>
+            <CardTitle>Sales Summary</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {productTrends.map((product) => (
-                <div key={product.product} className="flex items-center justify-between p-3 border rounded-lg">
-                  <div className="flex-1">
-                    <h4 className="font-medium">{product.product}</h4>
-                    <p className="text-sm text-muted-foreground">{product.sales} units sold</p>
-                  </div>
-                  <Badge
-                    variant="outline"
-                    className={
-                      product.growth === 'up'
-                        ? 'text-green-600 border-green-600'
-                        : 'text-red-600 border-red-600'
-                    }
-                  >
-                    {product.trend}
-                  </Badge>
+              <div className="flex items-center justify-between p-3 border rounded-lg">
+                <div className="flex-1">
+                  <h4 className="font-medium">Total Revenue</h4>
+                  <p className="text-sm text-muted-foreground">₹{kpis.gmv.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</p>
                 </div>
-              ))}
+              </div>
+              <div className="flex items-center justify-between p-3 border rounded-lg">
+                <div className="flex-1">
+                  <h4 className="font-medium">Total Orders</h4>
+                  <p className="text-sm text-muted-foreground">{kpis.orders} orders</p>
+                </div>
+              </div>
+              <div className="flex items-center justify-between p-3 border rounded-lg">
+                <div className="flex-1">
+                  <h4 className="font-medium">Average Order Value</h4>
+                  <p className="text-sm text-muted-foreground">₹{kpis.avg_order_value.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</p>
+                </div>
+              </div>
             </div>
           </CardContent>
         </Card>

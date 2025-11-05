@@ -48,11 +48,6 @@ import { StreakCountdownBanner } from '@/components/StreakCountdownBanner';
 import { StreakShieldShop } from '@/components/StreakShieldShop';
 import { useEntitlements } from '@/lib/useEntitlements';
 import { trackFeatureUsage } from '@/lib/analytics';
-import { DashboardKPIs } from '@/components/analytics/DashboardKPIs';
-import { MonthlyChart } from '@/components/analytics/MonthlyChart';
-import { TopLists } from '@/components/analytics/TopLists';
-import { InventoryValueCard } from '@/components/analytics/InventoryValueCard';
-import { UpcomingBills } from '@/components/analytics/UpcomingBills';
 import { SavingsGoalCard } from '@/components/SavingsGoalCard';
 import { EMICard } from '@/components/EMICard';
 import { Target, CreditCard, PieChart } from 'lucide-react';
@@ -112,15 +107,6 @@ const Dashboard = () => {
   const [activeEMIs, setActiveEMIs] = useState<any[]>([]);
   const [spendingAlert, setSpendingAlert] = useState<any>(null);
   
-  // Premium Analytics State
-  const [analyticsLoading, setAnalyticsLoading] = useState(false);
-  const [dashboardSummary, setDashboardSummary] = useState<analytics.DashboardSummary | null>(null);
-  const [monthlyData, setMonthlyData] = useState<analytics.MonthlyAggregate[]>([]);
-  const [topCustomers, setTopCustomers] = useState<analytics.TopCustomer[]>([]);
-  const [topVendors, setTopVendors] = useState<analytics.TopVendor[]>([]);
-  const [upcomingBillsData, setUpcomingBillsData] = useState<analytics.UpcomingBill[]>([]);
-  const [inventoryValue, setInventoryValue] = useState<analytics.InventoryValue | null>(null);
-  
   // Initialize notifications, email reminders, and payment verification
   useNotifications();
   useEmailReminders();
@@ -140,7 +126,6 @@ const Dashboard = () => {
       await refetchAllQueries();
       await fetchProfile();
       await fetchBills();
-      await fetchAnalytics();
       toast({
         title: 'Refreshed',
         description: 'Dashboard data has been reloaded',
@@ -158,7 +143,6 @@ const Dashboard = () => {
     if (user) {
       fetchProfile();
       fetchBills();
-      fetchAnalytics(); // Fetch premium analytics
       
       // Check if we should show the passkey banner
       const checkPasskeySupport = async () => {
@@ -334,38 +318,14 @@ const Dashboard = () => {
   };
 
   const fetchAnalytics = async () => {
-      if (entitlementsLoading) return; // Wait for entitlements to load
-      
-      // Load Pro features data (savings goals, EMIs) for Pro/Premium users
-      if (isPro || contextPlan === 'premium') {
-        loadProFeaturesData();
-      }
+    if (entitlementsLoading) return; // Wait for entitlements to load
     
-      // Only fetch Premium analytics (KPIs, charts, etc.) for Premium users
-      if (!isPremium) return;
-    
-    try {
-      setAnalyticsLoading(true);
-      const [summary, monthly, customers, vendors, upcoming, inventory] = await Promise.all([
-        analytics.getDashboardSummary(),
-        analytics.getMonthlyAggregates(),
-        analytics.getTopCustomers(5),
-        analytics.getTopVendors(5),
-        analytics.getUpcomingBills(10),
-        analytics.getInventoryValue(),
-      ]);
-      
-      setDashboardSummary(summary);
-      setMonthlyData(monthly);
-      setTopCustomers(customers);
-      setTopVendors(vendors);
-      setUpcomingBillsData(upcoming);
-      setInventoryValue(inventory);
-    } catch (error) {
-      console.error('Error fetching analytics:', error);
-    } finally {
-      setAnalyticsLoading(false);
+    // Load Pro features data (savings goals, EMIs) for Pro/Premium users
+    if (isPro || contextPlan === 'premium') {
+      loadProFeaturesData();
     }
+    
+    // Premium analytics moved to /analytics page
   };
 
   const handleUpdateProfile = async () => {
@@ -561,7 +521,7 @@ const Dashboard = () => {
         )}
 
         {/* Main Content */}
-        <main className="container mx-auto px-4 md:px-4 py-6 md:py-6 space-y-5 md:space-y-6 max-w-7xl">
+        <main className="container mx-auto px-4 md:px-6 py-6 md:py-8 space-y-6 md:space-y-8 max-w-7xl">
           {/* Passkey Banner */}
           {showPasskeyBanner && (
             <AddPasskeyBanner onDismiss={handlePasskeyBannerDismiss} />
@@ -571,17 +531,17 @@ const Dashboard = () => {
           <motion.div
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="flex items-center justify-between"
+            className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-2"
           >
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-4">
               <div>
                 <h1 className={cn(
-                  "text-3xl md:text-4xl font-black transition-colors duration-300",
+                  "text-3xl md:text-4xl font-bold transition-colors duration-300 tracking-tight",
                   isPro ? "pro-gradient-text" : "text-foreground"
                 )}>
                   Dashboard
                 </h1>
-                <div className="flex items-center gap-2 mt-1.5">
+                <div className="flex items-center gap-2.5 mt-2">
                   <p className="text-sm text-muted-foreground">
                     {profile?.full_name || user?.email?.split('@')[0] || 'Welcome back'}
                   </p>
@@ -595,24 +555,25 @@ const Dashboard = () => {
                 </div>
               </div>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2.5">
               <Button
-                variant="ghost"
-                size="icon"
+                variant="outline"
+                size="default"
                 onClick={handleRetryAll}
                 disabled={loading || billsLoading}
                 className={cn(
-                  "transition-colors duration-300 min-h-[44px] min-w-[44px]",
+                  "h-10 px-4 gap-2 transition-colors duration-300",
                   isPro && "hover:bg-[hsl(45,100%,60%)]/10"
                 )}
               >
-                <RefreshCw className={`h-5 w-5 ${(loading || billsLoading) ? 'animate-spin' : ''}`} />
+                <RefreshCw className={cn("h-4 w-4", (loading || billsLoading) && "animate-spin")} />
+                <span className="hidden sm:inline">Refresh</span>
               </Button>
               <Button
                 variant="ghost"
-                size="sm"
+                size="default"
                 onClick={signOut}
-                className="gap-2 text-muted-foreground hover:text-destructive"
+                className="h-10 px-4 gap-2 text-muted-foreground hover:text-destructive"
               >
                 <LogOut className="h-4 w-4" />
                 <span className="hidden sm:inline">Sign Out</span>
@@ -682,7 +643,7 @@ const Dashboard = () => {
           )}
 
           {/* Premium Stat Cards with Sparklines */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
             <StatCardWithSparkline
               title="Active Bills"
               value={activeBills.length}
@@ -729,54 +690,60 @@ const Dashboard = () => {
             />
           </div>
 
-          {/* WhatsApp Integration Card - Extremely Visible */}
+          {/* WhatsApp Integration Card */}
           {(isPro || contextPlan === 'premium') && (
-            <Card className={cn(
-              "border-green-500/50 bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-950/30 dark:to-emerald-950/30 shadow-lg hover:shadow-xl transition-all duration-300",
-              isPro && "border-green-400/60 shadow-green-500/20"
-            )}>
-              <CardContent className="pt-6">
-                <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-                  <div className="flex items-center gap-4 flex-1">
-                    <div className={cn(
-                      "p-4 rounded-2xl bg-gradient-to-br from-green-500 to-emerald-600 shadow-lg",
-                      isPro && "shadow-green-500/50"
-                    )}>
-                      <MessageCircle className="h-8 w-8 text-white" />
+            <Card className="border-border/50 hover:border-green-500/50 transition-all duration-300">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between gap-4">
+                  <div className="flex items-center gap-4 flex-1 min-w-0">
+                    <div className="p-3 rounded-xl bg-green-500/10 shrink-0">
+                      <MessageCircle className="h-6 w-6 text-green-600 dark:text-green-400" />
                     </div>
-                    <div className="flex-1">
-                      <h3 className="text-2xl font-bold text-green-900 dark:text-green-100 mb-1">
-                        WhatsApp Business Integration
-                      </h3>
-                      <p className="text-green-700 dark:text-green-300 text-sm md:text-base">
-                        Send invoices, payment links, and reminders directly to your customers via WhatsApp
+                    <div className="flex-1 min-w-0">
+                      <h3 className="text-lg font-semibold mb-1">WhatsApp Business</h3>
+                      <p className="text-sm text-muted-foreground">
+                        Send invoices and payment reminders via WhatsApp
                       </p>
-                      <div className="flex flex-wrap gap-2 mt-2">
-                        <Badge variant="outline" className="bg-white/80 text-green-700 border-green-300">
-                          <CheckCircle className="h-3 w-3 mr-1" />
-                          90%+ Open Rate
-                        </Badge>
-                        <Badge variant="outline" className="bg-white/80 text-green-700 border-green-300">
-                          <CheckCircle className="h-3 w-3 mr-1" />
-                          Instant Delivery
-                        </Badge>
-                        <Badge variant="outline" className="bg-white/80 text-green-700 border-green-300">
-                          <CheckCircle className="h-3 w-3 mr-1" />
-                          Payment Reminders
-                        </Badge>
-                      </div>
                     </div>
                   </div>
                   <Button
-                    size="lg"
+                    variant="outline"
+                    size="default"
                     onClick={() => navigate('/whatsapp')}
-                    className={cn(
-                      "bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white shadow-lg hover:shadow-xl transition-all duration-300 px-6 py-6 text-base font-semibold gap-2",
-                      isPro && "shadow-green-500/50"
-                    )}
+                    className="h-10 px-4 gap-2 shrink-0"
                   >
-                    <MessageCircle className="h-5 w-5" />
-                    Open WhatsApp Dashboard
+                    <MessageCircle className="h-4 w-4" />
+                    <span className="hidden sm:inline">Open</span>
+                    <ArrowRight className="h-4 w-4" />
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Analytics Section - Basic Only */}
+          {bills.length > 0 && (
+            <DashboardAnalytics bills={bills} isPro={isPro} />
+          )}
+
+          {/* Quick Link to Advanced Analytics */}
+          {isPremium && (
+            <Card className="border-purple-500/30 bg-gradient-to-r from-purple-500/10 via-blue-500/10 to-purple-500/10 cursor-pointer hover:border-purple-500/50 transition-all duration-300 hover:shadow-lg"
+                  onClick={() => navigate('/analytics?tab=overview')}>
+              <CardContent className="p-6 md:p-8">
+                <div className="flex items-center justify-between gap-4">
+                  <div className="flex items-center gap-4 flex-1">
+                    <div className="p-4 rounded-xl bg-gradient-to-br from-purple-500/20 to-blue-500/20 shrink-0">
+                      <BarChart3 className="h-6 w-6 text-purple-500" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h3 className="text-lg md:text-xl font-semibold mb-1.5">Advanced Analytics</h3>
+                      <p className="text-sm md:text-base text-muted-foreground">
+                        View detailed insights, profitability analysis, inventory tracking, and more
+                      </p>
+                    </div>
+                  </div>
+                  <Button variant="ghost" size="default" className="h-10 w-10 p-0 shrink-0">
                     <ArrowRight className="h-5 w-5" />
                   </Button>
                 </div>
@@ -784,88 +751,18 @@ const Dashboard = () => {
             </Card>
           )}
 
-          {/* Analytics Section */}
-          {bills.length > 0 && (
-            <DashboardAnalytics bills={bills} isPro={isPro} />
-          )}
-
-          {/* Premium Analytics Section */}
-          {entitlementsLoading ? (
-            <Card className="border-border/50">
-              <CardContent className="pt-6">
-                <div className="text-center space-y-4">
-                  <Skeleton className="w-12 h-12 mx-auto rounded-full" />
-                  <Skeleton className="h-6 w-48 mx-auto" />
-                  <Skeleton className="h-4 w-64 mx-auto" />
-                </div>
-              </CardContent>
-            </Card>
-          ) : isPremium ? (
-            <div className="space-y-6">
-              <div className="flex items-center justify-between">
-                <h2 className="text-2xl font-bold flex items-center gap-2">
-                  <BarChart3 className="w-6 h-6 text-purple-500" />
-                  Premium Analytics
-                </h2>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={fetchAnalytics}
-                  disabled={analyticsLoading}
-                >
-                  <RefreshCw className={cn("w-4 h-4", analyticsLoading && "animate-spin")} />
-                </Button>
-              </div>
-              
-              {/* KPI Cards */}
-              <DashboardKPIs summary={dashboardSummary} loading={analyticsLoading} />
-              
-              {/* Charts and Lists Grid */}
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <MonthlyChart data={monthlyData} loading={analyticsLoading} />
-                <TopLists 
-                  customers={topCustomers} 
-                  vendors={topVendors} 
-                  loading={analyticsLoading} 
-                />
-                <InventoryValueCard inventory={inventoryValue} loading={analyticsLoading} />
-              </div>
-              
-              {/* Upcoming Bills */}
-              <UpcomingBills bills={upcomingBillsData} loading={analyticsLoading} />
-            </div>
-          ) : (
-            <Card className="border-border/50 bg-gradient-to-br from-purple-500/10 to-blue-500/10">
-              <CardContent className="pt-6">
-                <div className="text-center space-y-4">
-                  <BarChart3 className="w-12 h-12 text-purple-500 mx-auto" />
-                  <div>
-                    <h3 className="text-xl font-semibold mb-2">Unlock Premium Analytics</h3>
-                    <p className="text-muted-foreground mb-4">
-                      Get detailed insights with KPI cards, monthly trends, top customers/vendors, inventory tracking, and upcoming bills
-                    </p>
-                  </div>
-                  <Button onClick={() => setShowUpgradeModal(true)} size="lg" className="gap-2">
-                    <Crown className="w-4 h-4" />
-                    Upgrade to Premium
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          )}
-
           {/* Plan Limit Warnings */}
-          <div className="space-y-2">
+          <div className="space-y-4">
             {/* Current Plan Display */}
             <Card className={cn(
-              "glass border-border/50 transition-all duration-300",
+              "border-border/50 transition-all duration-300",
               (contextPlan === 'pro' || contextPlan === 'premium') && "border-[hsl(45,100%,60%)]/30 bg-gradient-to-br from-[hsl(45,100%,60%)]/5 to-transparent"
             )}>
-              <CardContent className="pt-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between gap-4">
+                  <div className="flex items-center gap-4">
                     <div className={cn(
-                      "p-2 rounded-lg transition-colors",
+                      "p-3 rounded-xl transition-colors shrink-0",
                       (contextPlan === 'pro' || contextPlan === 'premium') ? "bg-[hsl(45,100%,60%)]/10" : "bg-primary/10"
                     )}>
                       <Crown className={cn(
@@ -874,13 +771,13 @@ const Dashboard = () => {
                       )} />
                     </div>
                     <div>
-                      <p className="text-sm text-muted-foreground">Current Plan</p>
+                      <p className="text-xs uppercase tracking-wider text-muted-foreground mb-1">Current Plan</p>
                       <p className={cn(
-                        "text-xl font-bold capitalize",
+                        "text-xl md:text-2xl font-bold capitalize",
                         (contextPlan === 'pro' || contextPlan === 'premium') && "pro-gradient-text"
                       )}>
                         {planLoading ? (
-                          <Skeleton className="h-6 w-20" />
+                          <Skeleton className="h-7 w-24" />
                         ) : (
                           contextPlan || plan || 'Free'
                         )}
@@ -891,8 +788,8 @@ const Dashboard = () => {
                     <Button
                       onClick={() => setShowUpgradeModal(true)}
                       variant="default"
-                      size="sm"
-                      className="gap-2"
+                      size="default"
+                      className="h-10 px-4 gap-2 shrink-0"
                     >
                       <Crown className="h-4 w-4" />
                       Upgrade
@@ -917,31 +814,31 @@ const Dashboard = () => {
           {/* Bills Due Today Alert */}
           {billsDueToday.length > 0 && (
             <Card className={cn(
-              "border-yellow-200 bg-yellow-50/50 glass transition-all duration-300",
-              isPro && "glass-pro border-[hsl(45,100%,60%)]/40"
+              "border-yellow-200 bg-yellow-50/50 dark:bg-yellow-950/20 transition-all duration-300",
+              isPro && "border-[hsl(45,100%,60%)]/40"
             )}>
-              <CardHeader className="pb-3">
-                <CardTitle className="flex items-center gap-2 text-yellow-800 text-base">
-                  <Calendar className="h-4 w-4" />
+              <CardHeader className="pb-4">
+                <CardTitle className="flex items-center gap-2.5 text-yellow-800 dark:text-yellow-200 text-lg font-semibold">
+                  <Calendar className="h-5 w-5" />
                   <span>Due Today ({billsDueToday.length})</span>
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-2">
+              <CardContent className="space-y-3">
                 {billsDueToday.map((bill) => (
-                  <div key={bill.id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-3 bg-white/80 glass rounded-xl border border-yellow-100">
+                  <div key={bill.id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 bg-white/80 dark:bg-background/80 rounded-xl border border-yellow-200 dark:border-yellow-800/50">
                     <div className="flex-1 min-w-0">
-                      <div className="font-medium text-sm text-foreground truncate">{bill.name}</div>
-                      <div className="text-xs text-muted-foreground">
+                      <div className="font-semibold text-sm md:text-base text-foreground truncate mb-1">{bill.name}</div>
+                      <div className="text-xs md:text-sm text-muted-foreground">
                         {formatINRCompact(bill.amount)} • {bill.category.charAt(0).toUpperCase() + bill.category.slice(1)}
                       </div>
                     </div>
                     <Button 
-                      size="sm" 
-                      variant="gradient"
+                      size="default" 
+                      variant="default"
                       onClick={() => toggleBillStatus(bill)}
-                      className="w-full sm:w-auto shrink-0"
+                      className="h-10 px-4 gap-2 w-full sm:w-auto shrink-0"
                     >
-                      <CheckCircle className="h-3 w-3 mr-1.5" />
+                      <CheckCircle className="h-4 w-4" />
                       Mark Paid
                     </Button>
                   </div>
@@ -956,23 +853,25 @@ const Dashboard = () => {
               {/* Savings Goals Widget */}
               {savingsGoals.length > 0 && (
                 <Card>
-                  <CardHeader>
+                  <CardHeader className="pb-4">
                     <div className="flex items-center justify-between">
-                      <CardTitle className="flex items-center gap-2">
+                      <CardTitle className="flex items-center gap-2.5 text-lg font-semibold">
                         <Target className="h-5 w-5" />
                         Savings Goals
                       </CardTitle>
                       <Button
                         variant="ghost"
-                        size="sm"
+                        size="default"
                         onClick={() => navigate('/savings-goals')}
+                        className="h-9 px-4 gap-2"
                       >
                         View All
+                        <ArrowRight className="h-4 w-4" />
                       </Button>
                     </div>
                   </CardHeader>
                   <CardContent>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
                       {savingsGoals.map((goal) => (
                         <SavingsGoalCard key={goal.id} goal={goal} />
                       ))}
@@ -984,23 +883,25 @@ const Dashboard = () => {
               {/* EMI Manager Widget */}
               {activeEMIs.length > 0 && (
                 <Card>
-                  <CardHeader>
+                  <CardHeader className="pb-4">
                     <div className="flex items-center justify-between">
-                      <CardTitle className="flex items-center gap-2">
+                      <CardTitle className="flex items-center gap-2.5 text-lg font-semibold">
                         <CreditCard className="h-5 w-5" />
                         EMI & Debt Manager
                       </CardTitle>
                       <Button
                         variant="ghost"
-                        size="sm"
+                        size="default"
                         onClick={() => navigate('/emi-manager')}
+                        className="h-9 px-4 gap-2"
                       >
                         View All
+                        <ArrowRight className="h-4 w-4" />
                       </Button>
                     </div>
                   </CardHeader>
                   <CardContent>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
                       {activeEMIs.map((emi) => (
                         <EMICard key={emi.id} emi={emi} />
                       ))}
@@ -1030,46 +931,51 @@ const Dashboard = () => {
             </>
           )}
 
-          {/* AI Financial Coach (moved to top for visibility) */}
-          <EnhancedAIAssistantV2 
-            bills={bills}
-            context="dashboard - managing bills and getting financial insights"
-            trigger={
-              <div className="w-full">
-                <div className="flex items-start justify-between flex-col sm:flex-row gap-3 sm:gap-4 mb-2">
-                  <h2 className="text-2xl sm:text-3xl font-bold tracking-tight gradient-text">
-                    Make your business smarter with AI
-                  </h2>
-                </div>
-                <div className="flex items-center gap-3 sm:gap-4 flex-wrap">
-                  <button
-                    className="group bg-gradient-to-r from-purple-600 via-fuchsia-600 to-pink-600 text-white rounded-2xl px-6 sm:px-8 py-3 sm:py-4 text-base sm:text-lg font-semibold shadow-lg shadow-purple-500/25 hover:shadow-2xl hover:shadow-pink-500/30 transition-all duration-300 ease-out transform hover:-translate-y-0.5 hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-purple-400/40"
-                  >
-                    Start AI Coaching
-                    <span className="ml-2 inline-block transition-transform group-hover:translate-x-0.5">→</span>
-                  </button>
-                  <p className="text-sm sm:text-base text-muted-foreground">
-                    Get instant insights, smarter decisions, and faster growth.
-                  </p>
-                </div>
-              </div>
-            }
-          />
+          {/* AI Financial Coach */}
+          <Card className="border-purple-500/30 bg-gradient-to-r from-purple-500/10 via-fuchsia-500/10 to-pink-500/10">
+            <CardContent className="p-6 md:p-8">
+              <EnhancedAIAssistantV2 
+                bills={bills}
+                context="dashboard - managing bills and getting financial insights"
+                trigger={
+                  <div className="w-full">
+                    <div className="flex items-start justify-between flex-col sm:flex-row gap-4 mb-4">
+                      <div>
+                        <h2 className="text-2xl md:text-3xl font-bold tracking-tight bg-gradient-to-r from-purple-600 via-fuchsia-600 to-pink-600 bg-clip-text text-transparent mb-2">
+                          Make your business smarter with AI
+                        </h2>
+                        <p className="text-sm md:text-base text-muted-foreground">
+                          Get instant insights, smarter decisions, and faster growth.
+                        </p>
+                      </div>
+                    </div>
+                    <Button
+                      size="lg"
+                      className="group h-12 px-6 md:px-8 text-base font-semibold bg-gradient-to-r from-purple-600 via-fuchsia-600 to-pink-600 text-white shadow-lg shadow-purple-500/25 hover:shadow-2xl hover:shadow-pink-500/30 transition-all duration-300 gap-2"
+                    >
+                      Start AI Coaching
+                      <ArrowRight className="h-5 w-5 transition-transform group-hover:translate-x-1" />
+                    </Button>
+                  </div>
+                }
+              />
+            </CardContent>
+          </Card>
 
           {/* Recent Bills Table */}
           <Card className={cn(
-            "glass border-border/50 shadow-glass transition-all duration-300",
-            isPro && "glass-pro border-[hsl(45,100%,60%)]/30 shadow-pro-strong"
+            "border-border/50 transition-all duration-300",
+            isPro && "border-[hsl(45,100%,60%)]/30"
           )}>
-            <CardHeader>
+            <CardHeader className="pb-4">
               <CardTitle className={cn(
-                "transition-colors duration-300",
+                "text-lg md:text-xl font-semibold transition-colors duration-300",
                 isPro && "pro-gradient-text"
               )}>
                 Recent Bills
               </CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="p-0">
               {billsLoading ? (
                 <div className="space-y-3">
                   {[...Array(5)].map((_, i) => (
@@ -1083,46 +989,46 @@ const Dashboard = () => {
                   ))}
                 </div>
               ) : bills.length === 0 ? (
-                <div className="text-center py-8">
-                  <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                  <h3 className="text-lg font-medium text-foreground mb-2">No bills yet</h3>
-                  <p className="text-muted-foreground mb-4">Get started by adding your first bill</p>
-                  <Button onClick={() => navigate('/bills')}>
-                    <Plus className="h-4 w-4 mr-2" />
+                <div className="text-center py-12 px-4">
+                  <FileText className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
+                  <h3 className="text-lg md:text-xl font-semibold text-foreground mb-2">No bills yet</h3>
+                  <p className="text-muted-foreground mb-6 text-sm md:text-base">Get started by adding your first bill</p>
+                  <Button onClick={() => navigate('/bills')} size="default" className="h-10 px-6 gap-2">
+                    <Plus className="h-4 w-4" />
                     Add Your First Bill
                   </Button>
                 </div>
               ) : (
-                <div className="overflow-x-auto -mx-4 sm:mx-0">
+                <div className="overflow-x-auto">
                   <div className="min-w-full inline-block align-middle">
-                    <Table className="min-w-[600px] sm:min-w-full">
+                    <Table className="min-w-[600px]">
                       <TableHeader>
-                        <TableRow>
-                          <TableHead className="text-xs sm:text-sm">Bill Name</TableHead>
-                          <TableHead className="text-xs sm:text-sm">Amount</TableHead>
-                          <TableHead className="text-xs sm:text-sm">Due Date</TableHead>
-                          <TableHead className="text-xs sm:text-sm">Status</TableHead>
-                          <TableHead className="text-xs sm:text-sm">Actions</TableHead>
+                        <TableRow className="border-b">
+                          <TableHead className="text-sm font-semibold h-12">Bill Name</TableHead>
+                          <TableHead className="text-sm font-semibold">Amount</TableHead>
+                          <TableHead className="text-sm font-semibold">Due Date</TableHead>
+                          <TableHead className="text-sm font-semibold">Status</TableHead>
+                          <TableHead className="text-sm font-semibold text-right">Actions</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
                         {bills.slice(0, 5).map((bill) => (
-                          <TableRow key={bill.id}>
-                            <TableCell className="font-medium text-xs sm:text-sm">{bill.name}</TableCell>
-                            <TableCell className="text-xs sm:text-sm">{formatINRCompact(bill.amount)}</TableCell>
-                            <TableCell className="text-xs sm:text-sm">{format(parseISO(bill.due_date), 'MMM dd, yyyy')}</TableCell>
-                            <TableCell>
-                              <Badge className={`${getBillStatusColor(bill)} text-xs`}>
+                          <TableRow key={bill.id} className="border-b hover:bg-muted/50 transition-colors">
+                            <TableCell className="font-medium text-sm py-4">{bill.name}</TableCell>
+                            <TableCell className="text-sm py-4">{formatINRCompact(bill.amount)}</TableCell>
+                            <TableCell className="text-sm py-4 text-muted-foreground">{format(parseISO(bill.due_date), 'MMM dd, yyyy')}</TableCell>
+                            <TableCell className="py-4">
+                              <Badge className={`${getBillStatusColor(bill)} text-xs px-2.5 py-1`}>
                                 {bill.status.charAt(0).toUpperCase() + bill.status.slice(1)}
                               </Badge>
                             </TableCell>
-                            <TableCell>
+                            <TableCell className="py-4 text-right">
                               <Button 
-                                size="sm" 
+                                size="default" 
                                 variant="outline"
                                 onClick={() => toggleBillStatus(bill)}
                                 disabled={bill.status === 'paid'}
-                                className="h-8 px-2 text-xs sm:h-9 sm:px-3 sm:text-sm"
+                                className="h-9 px-4 text-sm"
                               >
                                 {bill.status === 'paid' ? 'Paid' : 'Mark Paid'}
                               </Button>
@@ -1132,10 +1038,10 @@ const Dashboard = () => {
                       </TableBody>
                     </Table>
                     {bills.length > 5 && (
-                      <div className="text-center mt-4">
-                        <Button variant="outline" onClick={() => navigate('/bills')}>
+                      <div className="text-center p-6 border-t">
+                        <Button variant="outline" onClick={() => navigate('/bills')} size="default" className="h-10 px-6 gap-2">
                           View All Bills
-                          <ArrowRight className="h-4 w-4 ml-2" />
+                          <ArrowRight className="h-4 w-4" />
                         </Button>
                       </div>
                     )}
