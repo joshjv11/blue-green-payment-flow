@@ -11,17 +11,28 @@
     opacity: 1 !important;
   }
   
-  /* Ensure sidebar container is always visible */
+  /* Ensure sidebar container is always visible - override hidden md:block */
   .group.peer[data-state] {
     display: block !important;
     visibility: visible !important;
   }
   
-  /* Force sidebar inner div to be visible */
-  .group.peer[data-state] > div[data-sidebar="sidebar"] {
+  /* Force sidebar inner fixed div to be visible - override hidden md:flex */
+  .group.peer[data-state] > div.fixed {
     display: flex !important;
     visibility: visible !important;
     opacity: 1 !important;
+    left: 0 !important;
+  }
+  
+  /* Ensure sidebar is visible on all screen sizes */
+  @media (max-width: 768px) {
+    .group.peer[data-state] {
+      display: block !important;
+    }
+    .group.peer[data-state] > div.fixed {
+      display: flex !important;
+    }
   }
 }
 
