@@ -4,6 +4,7 @@ import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/lib/supabase';
 import { FileText, Loader2, CheckCircle2, XCircle, QrCode, Truck } from 'lucide-react';
 import { usePlan } from '@/contexts/PlanContext';
+import { useAutoSyncEInvoice } from '@/hooks/useAutoSyncEInvoice';
 import {
   Dialog,
   DialogContent,
