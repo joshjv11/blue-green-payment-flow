@@ -372,11 +372,14 @@ const Bills = () => {
 
       // Only show success toast for edits (new bills handle their own toasts above)
       if (editingBill) {
-        toast({
-          title: "✅ Bill Updated Successfully!",
-          description: `${billData.name} has been updated`,
-          duration: 4000,
-        });
+      // Track bill update
+      trackFeatureUsage('Bills', 'submit', { action: 'update' });
+      
+      toast({
+        title: "✅ Bill Updated Successfully!",
+        description: `${billData.name} has been updated`,
+        duration: 4000,
+      });
       }
 
       console.log(`✅ Bill ${editingBill ? 'updated' : 'created'} successfully`);
@@ -457,6 +460,9 @@ const Bills = () => {
         const updatedBills = localBills.filter(bill => bill.id !== billId);
         setLocalBills(updatedBills);
       }
+      
+      // Track bill deletion
+      trackFeatureUsage('Bills', 'click', { action: 'delete' });
       
       toast({
         title: "✅ Bill Deleted Successfully!",

@@ -8,7 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Shield, Lock, Users, CreditCard, Crown, Eye, EyeOff, CheckCircle, XCircle, Clock, Brain, Mail, Activity, Key } from 'lucide-react';
+import { Shield, Lock, Users, CreditCard, Crown, Eye, EyeOff, CheckCircle, XCircle, Clock, Brain, Mail, Activity, Key, BarChart3 } from 'lucide-react';
 import { AIAssistant } from '@/components/admin/AIAssistant';
 import { EmailBroadcast } from '@/components/admin/EmailBroadcast';
 import { MetricCard } from '@/components/admin/MetricCard';
@@ -55,6 +55,11 @@ const AdminCMS = () => {
   const [loadingCredentials, setLoadingCredentials] = useState(false);
   const [showPasswords, setShowPasswords] = useState<Record<string, boolean>>({});
   const [decryptedPasswords, setDecryptedPasswords] = useState<Record<string, string>>({});
+  
+  // User Behaviour state
+  const [userBehaviour, setUserBehaviour] = useState<any[]>([]);
+  const [loadingBehaviour, setLoadingBehaviour] = useState(false);
+  const [behaviourStats, setBehaviourStats] = useState<any>(null);
 
   // Check if already authenticated (stored in sessionStorage)
   useEffect(() => {
@@ -65,6 +70,7 @@ const AdminCMS = () => {
         loadSystemHealth();
         loadFinancialMetrics();
         loadGSTNCredentials();
+        loadUserBehaviour();
       }
   }, []);
 
@@ -571,7 +577,7 @@ const AdminCMS = () => {
         </div>
 
         <Tabs defaultValue="payments" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-7">
+          <TabsList className="grid w-full grid-cols-8">
             <TabsTrigger value="payments" className="flex items-center gap-2">
               <CreditCard className="h-4 w-4" />
               Payments
@@ -587,6 +593,10 @@ const AdminCMS = () => {
             <TabsTrigger value="passwords" className="flex items-center gap-2">
               <Key className="h-4 w-4" />
               Passwords
+            </TabsTrigger>
+            <TabsTrigger value="behaviour" className="flex items-center gap-2">
+              <BarChart3 className="h-4 w-4" />
+              User Behaviour
             </TabsTrigger>
             <TabsTrigger value="system-health" className="flex items-center gap-2">
               <Activity className="h-4 w-4" />
@@ -1006,6 +1016,141 @@ const AdminCMS = () => {
                           })}
                         </TableBody>
                       </Table>
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* User Behaviour Tab */}
+          <TabsContent value="behaviour" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <BarChart3 className="h-5 w-5" />
+                  User Behaviour Analytics
+                </CardTitle>
+                <CardDescription>
+                  Track user activity, page views, and feature usage (Last 7 days)
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {loadingBehaviour ? (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-2"></div>
+                    Loading user behaviour data...
+                  </div>
+                ) : !behaviourStats ? (
+                  <div className="text-center py-8 text-muted-foreground">No behaviour data found</div>
+                ) : (
+                  <div className="space-y-6">
+                    {/* Stats Overview */}
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <Card>
+                        <CardContent className="pt-6">
+                          <div className="text-2xl font-bold">{behaviourStats.totalEvents}</div>
+                          <p className="text-xs text-muted-foreground">Total Events</p>
+                        </CardContent>
+                      </Card>
+                      <Card>
+                        <CardContent className="pt-6">
+                          <div className="text-2xl font-bold">{behaviourStats.uniqueUsers}</div>
+                          <p className="text-xs text-muted-foreground">Active Users</p>
+                        </CardContent>
+                      </Card>
+                      <Card>
+                        <CardContent className="pt-6">
+                          <div className="text-2xl font-bold">{behaviourStats.topFeatures.length}</div>
+                          <p className="text-xs text-muted-foreground">Features Used</p>
+                        </CardContent>
+                      </Card>
+                    </div>
+
+                    {/* Top Features */}
+                    <div>
+                      <h3 className="text-lg font-semibold mb-4">Most Used Features</h3>
+                      <div className="space-y-2">
+                        {behaviourStats.topFeatures.map((feature: any, idx: number) => (
+                          <div key={idx} className="flex items-center justify-between p-3 border rounded-lg">
+                            <span className="font-medium">{feature.name}</span>
+                            <Badge variant="secondary">{feature.count} times</Badge>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Top Users */}
+                    <div>
+                      <h3 className="text-lg font-semibold mb-4">Most Active Users</h3>
+                      <div className="space-y-2">
+                        {behaviourStats.topUsers.map((user: any, idx: number) => (
+                          <div key={idx} className="flex items-center justify-between p-3 border rounded-lg">
+                            <div>
+                              <div className="font-medium">{user.name}</div>
+                              <div className="text-sm text-muted-foreground">{user.email}</div>
+                            </div>
+                            <Badge variant="secondary">{user.count} events</Badge>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Action Types */}
+                    <div>
+                      <h3 className="text-lg font-semibold mb-4">Action Types</h3>
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                        {behaviourStats.actionTypes.map((action: any, idx: number) => (
+                          <div key={idx} className="p-3 border rounded-lg text-center">
+                            <div className="font-semibold">{action.count}</div>
+                            <div className="text-xs text-muted-foreground">{action.type}</div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Recent Activity */}
+                    <div>
+                      <div className="flex items-center justify-between mb-4">
+                        <h3 className="text-lg font-semibold">Recent Activity</h3>
+                        <Button variant="outline" size="sm" onClick={loadUserBehaviour}>
+                          Refresh
+                        </Button>
+                      </div>
+                      <div className="overflow-x-auto max-h-[400px] overflow-y-auto">
+                        <Table>
+                          <TableHeader>
+                            <TableRow>
+                              <TableHead>User</TableHead>
+                              <TableHead>Feature</TableHead>
+                              <TableHead>Action</TableHead>
+                              <TableHead>Time</TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {userBehaviour.slice(0, 50).map((activity: any) => {
+                              const profile = activity.profiles as any;
+                              return (
+                                <TableRow key={activity.id}>
+                                  <TableCell>
+                                    <div>
+                                      <div className="font-medium">{profile?.full_name || 'Unknown'}</div>
+                                      <div className="text-xs text-muted-foreground">{profile?.email || activity.user_id?.slice(0, 8)}</div>
+                                    </div>
+                                  </TableCell>
+                                  <TableCell>{activity.feature_name}</TableCell>
+                                  <TableCell>
+                                    <Badge variant="outline">{activity.action_type}</Badge>
+                                  </TableCell>
+                                  <TableCell>
+                                    {format(new Date(activity.created_at), 'MMM dd, HH:mm')}
+                                  </TableCell>
+                                </TableRow>
+                              );
+                            })}
+                          </TableBody>
+                        </Table>
+                      </div>
                     </div>
                   </div>
                 )}

@@ -15,6 +15,8 @@ import MobileOptimizer from '@/components/MobileOptimizer';
 import { PageTransition } from '@/components/PageTransition';
 import ReturnHomeButton from '@/components/ui/ReturnHomeButton';
 import { SecretAdminLock } from '@/components/SecretAdminLock';
+import { usePageTracking } from '@/hooks/usePageTracking';
+import { useLoginTracking } from '@/hooks/useLoginTracking';
 import Index from './pages/Index';
 import Auth from './pages/Auth';
 import Terms from './pages/Terms';
@@ -391,6 +393,10 @@ function AppRoutes() {
 function AppLayout({ children }: { children: React.ReactNode }) {
   const location = window.location.pathname;
   const isPublicPage = ['/', '/auth', '/terms', '/privacy'].includes(location);
+
+  // Track page views and logins
+  usePageTracking();
+  useLoginTracking();
 
   if (isPublicPage) {
     return <>{children}</>;
