@@ -11,7 +11,6 @@ import { useSupabasePlan } from '@/hooks/useSupabasePlan';
 import { formatINR, formatINRCompact } from '@/utils/currency';
 import { usePaymentVerification } from '@/hooks/usePaymentVerification';
 import { useToast } from '@/hooks/use-toast';
-import { Navigation } from '@/components/Navigation';
 import { BackToDashboard } from '@/components/BackToDashboard';
 import { logError } from '@/lib/logger';
 import { 
@@ -308,7 +307,6 @@ const Analytics = () => {
   if (loading) {
     return (
       <div className="min-h-screen bg-background pb-20 md:pb-0">
-        <Navigation />
         <div className="container mx-auto px-4 py-8">
           <div className="space-y-6">
             <div className="space-y-2">
@@ -338,8 +336,6 @@ const Analytics = () => {
 
   return (
     <div className="min-h-screen bg-background pb-20 md:pb-0">
-      <Navigation />
-      
       <div className="container mx-auto px-3 py-4 md:px-4 md:py-6">
         <div className="max-w-7xl mx-auto space-y-4">
           <BackToDashboard />

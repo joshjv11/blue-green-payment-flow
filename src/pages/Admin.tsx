@@ -7,7 +7,6 @@ import { Button } from '@/components/ui/button';
 import { Shield, CreditCard, Users, TrendingUp, Database, Crown } from 'lucide-react';
 import PaymentVerificationDashboard from '@/components/PaymentVerificationDashboard';
 import AdminPlanManager from '@/components/AdminPlanManager';
-import { Navigation } from '@/components/Navigation';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/lib/supabase';
 
@@ -62,7 +61,6 @@ const Admin = () => {
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-background to-muted/20">
-        <Navigation />
         <div className="container mx-auto px-4 py-8">
           <div className="flex items-center justify-center min-h-[400px]">
             <Card className="w-full max-w-md">
@@ -83,7 +81,6 @@ const Admin = () => {
   if (!isAdmin) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-background to-muted/20">
-        <Navigation />
         <div className="container mx-auto px-4 py-8">
           <div className="flex items-center justify-center min-h-[400px]">
             <Card className="w-full max-w-md">
@@ -103,8 +100,6 @@ const Admin = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background to-muted/20">
-      <Navigation />
-      
       <div className="container mx-auto px-4 py-8">
         <div className="mb-8">
           <div className="flex items-center gap-2 mb-2">

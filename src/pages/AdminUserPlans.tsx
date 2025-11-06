@@ -10,7 +10,6 @@ import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTr
 import { useToast } from '@/hooks/use-toast';
 import { Search, History, Loader2, Shield } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { Navigation } from '@/components/Navigation';
 
 interface UserPlanData {
   user_id: string;
@@ -226,7 +225,6 @@ export default function AdminUserPlans() {
 
   return (
     <div className="min-h-screen bg-background pb-20 md:pb-0">
-      <Navigation />
       
       <div className="container mx-auto px-4 py-8 mt-16 md:mt-20">
         <motion.div

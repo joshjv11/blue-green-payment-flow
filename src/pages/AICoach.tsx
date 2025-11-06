@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import AppNavigation from '@/components/AppNavigation';
 import EnhancedAIAssistantV2 from '@/components/EnhancedAIAssistantV2';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/hooks/useAuth';
@@ -40,7 +39,6 @@ export default function AICoach() {
 
   return (
     <div className="min-h-screen bg-background">
-      <AppNavigation />
       
       <div className="container mx-auto px-3 md:px-4 py-4 md:py-8 max-w-6xl">
         {/* Header */}

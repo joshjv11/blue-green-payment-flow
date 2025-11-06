@@ -9,7 +9,6 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/lib/supabase";
 import { Loader2, Plus, Trash2 } from "lucide-react";
 import { useBusinessSettings } from "@/hooks/useBusinessSettings";
-import AppNavigation from "@/components/AppNavigation";
 
 interface LineItem {
   description: string;
@@ -164,7 +163,6 @@ export default function SalesV2() {
 
   return (
     <div className="min-h-screen bg-background">
-      <AppNavigation />
       
       <div className="container mx-auto py-6 space-y-6">
         <div className="flex items-center justify-between">

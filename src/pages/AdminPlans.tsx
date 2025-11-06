@@ -12,7 +12,6 @@ import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/lib/supabase';
-import { Navigation } from '@/components/Navigation';
 import { BackToDashboard } from '@/components/BackToDashboard';
 import { format } from 'date-fns';
 
@@ -166,7 +165,6 @@ export default function AdminPlans() {
 
   return (
     <div className="min-h-screen bg-background pb-24 md:pb-6">
-      <Navigation />
 
       <main className="container mx-auto px-4 py-6 space-y-6 max-w-5xl">
         <BackToDashboard />

@@ -6,7 +6,6 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from '@/components/ui/breadcrumb';
-import { Navigation } from '@/components/Navigation';
 import { BackToDashboard } from '@/components/BackToDashboard';
 import { useAuth } from '@/hooks/useAuth';
 import { useSupabasePlan } from '@/hooks/useSupabasePlan';
@@ -208,7 +207,6 @@ const AdvancedAnalyticsDashboard = () => {
   return (
     <RequirePlan requiredPlan="premium" featureName="Advanced Analytics Dashboard">
       <div className="min-h-screen bg-background pb-20 md:pb-0">
-        <Navigation />
         
         <div className="container mx-auto px-3 py-4 md:px-4 md:py-6">
           <div className="max-w-7xl mx-auto space-y-4">

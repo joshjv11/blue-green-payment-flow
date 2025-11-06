@@ -10,7 +10,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import AppNavigation from '@/components/AppNavigation';
 import { WhatsAppSendModal } from '@/components/WhatsAppSendModal';
 import { WhatsAppBroadcastModal } from '@/components/WhatsAppBroadcastModal';
 import { supabase } from '@/lib/supabase';
@@ -228,7 +227,6 @@ export default function WhatsAppDashboard() {
 
   return (
     <div className="min-h-screen bg-background">
-      <AppNavigation />
       
       <div className="container mx-auto px-3 md:px-4 py-4 md:py-6 space-y-4 md:space-y-6 max-w-7xl">
         {/* Header */}

@@ -13,7 +13,6 @@ import { exportExpensesToCSV, exportExpensesToPDF } from '@/utils/expenseExport'
 import { useSupabasePlan } from '@/hooks/useSupabasePlan';
 import UpgradeModal from '@/components/UpgradeModal';
 import { format, startOfMonth, endOfMonth } from 'date-fns';
-import { Navigation } from '@/components/Navigation';
 import { BackToDashboard } from '@/components/BackToDashboard';
 
 export interface Expense {
@@ -136,7 +135,6 @@ const Expenses = () => {
   if (!isPro) {
     return (
       <>
-        <Navigation />
         <div className="container mx-auto px-4 py-8">
           <BackToDashboard />
           <div className="max-w-3xl mx-auto">
@@ -183,7 +181,6 @@ const Expenses = () => {
 
   return (
     <>
-      <Navigation />
       <div className="container mx-auto px-4 py-8 space-y-6">
         <BackToDashboard />
         

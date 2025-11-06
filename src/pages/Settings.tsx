@@ -13,7 +13,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useToast } from '@/hooks/use-toast';
 import { Bell, Settings as SettingsIcon, Save, Mail, Download, Crown, Zap, RotateCcw, Globe, ChevronRight } from 'lucide-react';
 import ExportImport from '@/components/ExportImport';
-import { Navigation } from '@/components/Navigation';
 import { BackToDashboard } from '@/components/BackToDashboard';
 import FreemiumLimitCard from '@/components/FreemiumLimitCard';
 import UpgradeModal from '@/components/UpgradeModal';
@@ -158,8 +157,6 @@ const SettingsPage = () => {
 
   return (
     <div className="min-h-screen bg-background pb-20 md:pb-0">
-      <Navigation />
-      
       <div className="container mx-auto px-3 py-4 md:px-4 md:py-6 max-w-2xl">
         <BackToDashboard />
         

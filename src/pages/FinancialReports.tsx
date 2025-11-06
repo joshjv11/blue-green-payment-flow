@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/lib/supabase';
 import { useToast } from '@/hooks/use-toast';
-import { Navigation } from '@/components/Navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { BackToDashboard } from '@/components/BackToDashboard';
 
@@ -182,7 +181,6 @@ const FinancialReports = () => {
   if (!isPro) {
   return (
     <div className="min-h-screen bg-background">
-        <Navigation />
         <div className="container mx-auto px-4 py-8">
           <BackToDashboard />
           <div className="max-w-3xl mx-auto">
@@ -235,7 +233,6 @@ const FinancialReports = () => {
 
   return (
     <div className="min-h-screen bg-background">
-        <Navigation />
         <div className="container mx-auto px-4 py-8 space-y-6">
         <BackToDashboard />
         

@@ -19,7 +19,6 @@ import { useNavigate } from 'react-router-dom';
 import { parseISO, differenceInDays, isBefore, isToday, isAfter, addDays, format } from 'date-fns';
 import ExportImport from '@/components/ExportImport';
 import { useSupabasePlan } from '@/hooks/useSupabasePlan';
-import { Navigation } from '@/components/Navigation';
 import { usePaymentVerification } from '@/hooks/usePaymentVerification';
 import FreemiumLimitCard from '@/components/FreemiumLimitCard';
 import EnhancedAIAssistantV2 from '@/components/EnhancedAIAssistantV2';
@@ -532,10 +531,6 @@ const Dashboard = () => {
     <MobileLayout>
       <OnboardingTour />
       <div className="min-h-screen bg-background pb-24 md:pb-6">
-        <div className="flex items-center justify-between px-4 py-3 border-b border-border/50">
-          <Navigation />
-          <ThemeToggle />
-        </div>
         
         {/* Daily Bonus Wheel */}
         {showBonusWheel && (

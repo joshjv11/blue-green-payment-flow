@@ -43,7 +43,6 @@ import FreemiumLimitCard from '@/components/FreemiumLimitCard';
 import BillLimitBanner from '@/components/BillLimitBanner';
 import EnhancedAIAssistantV2 from '@/components/EnhancedAIAssistantV2';
 import { usePaymentVerification } from '@/hooks/usePaymentVerification';
-import { Navigation } from '@/components/Navigation';
 import { BackToDashboard } from '@/components/BackToDashboard';
 import PlanStatusCard from '@/components/PlanStatusCard';
 import UpgradeTrigger from '@/components/UpgradeTrigger';
@@ -622,7 +621,6 @@ const Bills = () => {
   if (loading) {
     return (
       <div className="min-h-screen bg-background">
-        <Navigation />
         <div className="container mx-auto px-4 py-8">
           <div className="space-y-6">
             <div className="space-y-2">
@@ -664,8 +662,6 @@ const Bills = () => {
 
   return (
     <div className="min-h-screen bg-background pb-20 md:pb-0">
-      <Navigation />
-
       <main className="container mx-auto px-3 py-4 md:px-4 md:py-6">
         <div className="max-w-6xl mx-auto space-y-3 md:space-y-4">
           <BackToDashboard />
