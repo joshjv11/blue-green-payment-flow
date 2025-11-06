@@ -397,12 +397,16 @@ function AppLayout({ children }: { children: React.ReactNode }) {
     return <>{children}</>;
   }
 
+  // Always render sidebar for protected routes - never hide it
   return (
     <SidebarProvider defaultOpen={true}>
-      <div className="flex min-h-screen w-full">
-        <AppSidebar />
-        <div className="flex-1 flex flex-col min-w-0">
-          <header className="sticky top-0 z-50 h-14 md:h-16 flex items-center gap-2 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 px-3 md:px-4 safe-area-inset-top">
+      <div className="flex min-h-screen w-full relative">
+        {/* Sidebar - Always rendered, never conditionally hidden */}
+        <div className="relative z-50">
+          <AppSidebar />
+        </div>
+        <div className="flex-1 flex flex-col min-w-0 relative">
+          <header className="sticky top-0 z-40 h-14 md:h-16 flex items-center gap-2 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 px-3 md:px-4 safe-area-inset-top">
             <SidebarTrigger />
             <div className="flex-1" />
           </header>

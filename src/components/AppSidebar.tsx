@@ -288,14 +288,36 @@ export function AppSidebar() {
     return days > 0 ? days : 0;
   };
 
-  if (loading) return null;
+  // Always render sidebar, show loading state instead of hiding
+  // This prevents sidebar from disappearing on deployments
 
   return (
-    <Sidebar collapsible="offcanvas" className="md:collapsible-icon border-r border-border/50 backdrop-blur-xl bg-sidebar/95">
+    <Sidebar 
+      collapsible="offcanvas" 
+      className="md:collapsible-icon border-r-2 border-border/60 backdrop-blur-xl bg-sidebar/98 shadow-2xl z-50"
+      style={{ 
+        position: 'relative',
+        minWidth: open ? '256px' : '64px',
+        width: open ? '256px' : '64px',
+        transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+        boxShadow: '2px 0 8px rgba(0, 0, 0, 0.1)'
+      }}
+    >
       <SidebarContent className="overflow-y-auto scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent">
         {/* Plan Badge */}
         <AnimatePresence>
-          {open && (
+          {loading ? (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="px-4 py-4 border-b border-border/50"
+            >
+              <div className="animate-pulse space-y-3">
+                <div className="h-4 bg-muted rounded w-3/4"></div>
+                <div className="h-8 bg-muted rounded w-1/2"></div>
+              </div>
+            </motion.div>
+          ) : open && (
             <motion.div
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
@@ -386,10 +408,21 @@ export function AppSidebar() {
                 </motion.div>
               </NavLink>
             </motion.div>
+          ) : !open && !loading && (
+            <div className="px-2 py-2 border-b">
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div className="w-10 h-10 rounded-lg bg-muted/50 animate-pulse"></div>
+                </TooltipTrigger>
+                <TooltipContent side="right">
+                  <p>Loading plan...</p>
+                </TooltipContent>
+              </Tooltip>
+            </div>
           )}
         </AnimatePresence>
         
-        {!open && (
+        {!open && !loading && (
           <div className="px-2 py-2 border-b">
             <Tooltip>
               <TooltipTrigger asChild>
