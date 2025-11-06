@@ -28,10 +28,24 @@ export const Navigation = ({ className }: NavigationProps) => {
     }
     
     try {
-      const { data } = await supabase.rpc('is_system_admin');
+      const { data, error } = await supabase.rpc('is_system_admin', { user_id: user.id });
+      if (error) {
+        // RPC function might not exist - fail silently
+        if (error.code === '42883' || error.code === 'PGRST204') {
+          setIsAdmin(false);
+          return;
+        }
+        throw error;
+      }
       setIsAdmin(!!data);
-    } catch (error) {
-      console.error('Error checking admin status:', error);
+    } catch (error: any) {
+      // Fail silently if function doesn't exist
+      if (error?.code === '42883' || error?.code === 'PGRST204' || error?.message?.includes('does not exist')) {
+        setIsAdmin(false);
+        return;
+      }
+      // Only log unexpected errors
+      console.warn('⚠️ Admin check failed:', error);
       setIsAdmin(false);
     }
   };

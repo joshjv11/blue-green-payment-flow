@@ -55,6 +55,7 @@ import AdminUserPlans from './pages/AdminUserPlans';
 import AdminPlans from './pages/AdminPlans';
 import AdminDbHealth from './pages/AdminDbHealth';
 import AdminLogs from './pages/AdminLogs';
+import ComponentPlayground from './pages/ComponentPlayground';
 import NotFound from './pages/NotFound';
 import { RequirePlan } from './components/RequirePlan';
 
@@ -374,6 +375,14 @@ function AppRoutes() {
             <PageTransition><AdminLogs /></PageTransition>
           </ProtectedRoute>
         } 
+      />
+      <Route
+        path="/component-playground"
+        element={
+          <ProtectedRoute>
+            <PageTransition><ComponentPlayground /></PageTransition>
+          </ProtectedRoute>
+        }
       />
       <Route path="*" element={<PageTransition><NotFound /></PageTransition>} />
     </Routes>

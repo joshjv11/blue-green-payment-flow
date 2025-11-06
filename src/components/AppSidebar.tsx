@@ -22,7 +22,7 @@ import {
   ChevronRight,
   Zap
 } from "lucide-react";
-import { NavLink } from "react-router-dom";
+import { NavLink, useLocation } from "react-router-dom";
 import {
   Sidebar,
   SidebarContent,
@@ -42,6 +42,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { motion, AnimatePresence } from "framer-motion";
 
 // Core Features (Free)
 const coreItems = [
@@ -89,10 +90,12 @@ export function AppSidebar() {
   const { open } = useSidebar();
   const { plan, isPremium, isPro, loading, data } = useEntitlements();
   const { signOut } = useAuth();
+  const location = useLocation();
   const [proOpen, setProOpen] = useState(true);
   const [premiumBusinessOpen, setPremiumBusinessOpen] = useState(false);
   const [premiumGSTOpen, setPremiumGSTOpen] = useState(false);
   const [premiumReportsOpen, setPremiumReportsOpen] = useState(false);
+  const [hoveredItem, setHoveredItem] = useState<string | null>(null);
   
   const hasFeatureAccess = (featureKey: string, requiredPlan?: "pro" | "premium") => {
     if (!requiredPlan) return true;
@@ -108,12 +111,12 @@ export function AppSidebar() {
 
   const getNavClassName = ({ isActive }: { isActive: boolean }, isLocked: boolean) =>
     isActive
-      ? "bg-primary/10 text-primary font-semibold border-l-2 border-primary"
+      ? "bg-gradient-to-r from-primary/15 via-primary/10 to-transparent text-primary font-semibold border-l-[3px] border-primary shadow-sm"
       : isLocked
-      ? "opacity-50 cursor-not-allowed hover:bg-muted/30 text-muted-foreground"
-      : "hover:bg-muted/50 text-muted-foreground hover:text-foreground";
+      ? "opacity-50 cursor-not-allowed hover:bg-muted/20 text-muted-foreground"
+      : "hover:bg-gradient-to-r hover:from-muted/60 hover:via-muted/40 hover:to-transparent text-muted-foreground hover:text-foreground transition-all duration-300";
 
-  const renderNavItem = (item: typeof coreItems[0] & { requiredPlan?: "pro" | "premium"; isProminent?: boolean; isNew?: boolean }) => {
+  const renderNavItem = (item: typeof coreItems[0] & { requiredPlan?: "pro" | "premium"; isProminent?: boolean; isNew?: boolean }, index: number = 0) => {
     const hasAccess = hasFeatureAccess(item.featureKey, item.requiredPlan);
     const isLocked = !hasAccess;
     const isPremiumFeature = item.requiredPlan === 'premium';
@@ -121,73 +124,127 @@ export function AppSidebar() {
     const isProminent = (item as any).isProminent && hasAccess;
     const isNew = (item as any).isNew && hasAccess;
     const isAICoach = item.featureKey === 'ai-coach';
+    const isActive = location.pathname === item.url || location.pathname.startsWith(item.url + '/');
+    const isHovered = hoveredItem === item.featureKey;
 
     const navContent = (
-      <NavLink 
-        to={isLocked ? "/upgrade" : item.url} 
-        end 
-        className={(props) => {
-          const baseClass = getNavClassName(props, isLocked);
-          if (isAICoach && !isLocked) {
-            return props.isActive 
-              ? "bg-gradient-to-r from-purple-600 to-pink-600 text-white font-semibold border-l-2 border-purple-700"
-              : "bg-gradient-to-r from-purple-500/10 to-pink-500/10 text-purple-700 dark:text-purple-400 hover:from-purple-500/20 hover:to-pink-500/20 font-medium border-l-2 border-purple-500/30";
-          }
-          if (isProminent && !isLocked) {
-            return props.isActive 
-              ? "bg-green-600 text-white font-semibold border-l-2 border-green-700"
-              : "bg-green-500/10 text-green-700 dark:text-green-400 hover:bg-green-500/20 font-medium border-l-2 border-green-500/30";
-          }
-          return baseClass;
-        }}
-        onClick={(e) => {
-          if (isLocked) {
-            e.preventDefault();
-            window.location.href = '/upgrade';
-          }
-        }}
+      <motion.div
+        initial={{ opacity: 0, x: -10 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ duration: 0.3, delay: index * 0.05 }}
+        onHoverStart={() => setHoveredItem(item.featureKey)}
+        onHoverEnd={() => setHoveredItem(null)}
+        className="relative"
       >
-        <div className="flex items-center gap-2 flex-1 min-w-0">
-          <item.icon className={cn(
-            "h-4 w-4 flex-shrink-0", 
-            isAICoach && !isLocked && "text-purple-600 dark:text-purple-400",
-            isProminent && !isLocked && !isAICoach && "text-green-600 dark:text-green-400"
-          )} />
-          {open && (
-            <span className="flex items-center gap-1.5 flex-1 min-w-0">
-              <span className="truncate">{item.title}</span>
-              {isPremiumFeature && (
-                <Badge 
-                  variant="outline" 
-                  className="ml-auto shrink-0 h-4 px-1.5 text-[10px] font-semibold bg-gradient-to-r from-purple-500/20 to-pink-500/20 text-purple-600 dark:text-purple-400 border-purple-500/50"
+        <NavLink 
+          to={isLocked ? "/upgrade" : item.url} 
+          end 
+          className={(props) => {
+            const baseClass = getNavClassName(props, isLocked);
+            if (isAICoach && !isLocked) {
+              return props.isActive 
+                ? "bg-gradient-to-r from-purple-600 via-pink-600 to-purple-600 text-white font-semibold border-l-[3px] border-purple-400 shadow-lg shadow-purple-500/30"
+                : "bg-gradient-to-r from-purple-500/10 via-pink-500/10 to-transparent text-purple-700 dark:text-purple-400 hover:from-purple-500/20 hover:via-pink-500/20 hover:to-transparent font-medium border-l-[3px] border-purple-500/30 hover:shadow-md hover:shadow-purple-500/10";
+            }
+            if (isProminent && !isLocked) {
+              return props.isActive 
+                ? "bg-gradient-to-r from-green-600 via-emerald-600 to-green-600 text-white font-semibold border-l-[3px] border-green-400 shadow-lg shadow-green-500/30"
+                : "bg-gradient-to-r from-green-500/10 via-emerald-500/10 to-transparent text-green-700 dark:text-green-400 hover:from-green-500/20 hover:via-emerald-500/20 hover:to-transparent font-medium border-l-[3px] border-green-500/30 hover:shadow-md hover:shadow-green-500/10";
+            }
+            return baseClass;
+          }}
+          onClick={(e) => {
+            if (isLocked) {
+              e.preventDefault();
+              window.location.href = '/upgrade';
+            }
+          }}
+        >
+          <div className="flex items-center gap-3 flex-1 min-w-0 px-3 py-2.5 rounded-lg transition-all duration-300 group/item">
+            <motion.div
+              animate={{
+                scale: isHovered ? 1.1 : 1,
+                rotate: isHovered ? (isAICoach ? 5 : 0) : 0,
+              }}
+              transition={{ duration: 0.2, ease: "easeOut" }}
+            >
+              <item.icon className={cn(
+                "h-4.5 w-4.5 flex-shrink-0 transition-all duration-300", 
+                isAICoach && !isLocked && "text-purple-600 dark:text-purple-400 group-hover/item:text-purple-700",
+                isProminent && !isLocked && !isAICoach && "text-green-600 dark:text-green-400 group-hover/item:text-green-700",
+                isActive && !isAICoach && !isProminent && "text-primary",
+                !isActive && !isAICoach && !isProminent && "text-muted-foreground group-hover/item:text-foreground"
+              )} />
+            </motion.div>
+            <AnimatePresence mode="wait">
+              {open && (
+                <motion.span
+                  initial={{ opacity: 0, width: 0 }}
+                  animate={{ opacity: 1, width: "auto" }}
+                  exit={{ opacity: 0, width: 0 }}
+                  transition={{ duration: 0.2 }}
+                  className="flex items-center gap-2 flex-1 min-w-0 overflow-hidden"
                 >
-                  <Sparkles className="h-2.5 w-2.5 mr-0.5" />
-                  Premium
-                </Badge>
+                  <span className="truncate font-medium text-sm">{item.title}</span>
+                  {isPremiumFeature && (
+                    <motion.div
+                      initial={{ scale: 0, opacity: 0 }}
+                      animate={{ scale: 1, opacity: 1 }}
+                      transition={{ delay: 0.1 }}
+                    >
+                      <Badge 
+                        variant="outline" 
+                        className="ml-auto shrink-0 h-5 px-2 text-[10px] font-semibold bg-gradient-to-r from-purple-500/20 via-pink-500/20 to-purple-500/20 text-purple-600 dark:text-purple-400 border-purple-500/50 backdrop-blur-sm"
+                      >
+                        <Sparkles className="h-2.5 w-2.5 mr-1 animate-pulse" />
+                        Premium
+                      </Badge>
+                    </motion.div>
+                  )}
+                  {isProFeature && !isPremiumFeature && (
+                    <motion.div
+                      initial={{ scale: 0, opacity: 0 }}
+                      animate={{ scale: 1, opacity: 1 }}
+                      transition={{ delay: 0.1 }}
+                    >
+                      <Badge 
+                        variant="outline" 
+                        className="ml-auto shrink-0 h-5 px-2 text-[10px] font-semibold bg-blue-500/20 text-blue-600 dark:text-blue-400 border-blue-500/50 backdrop-blur-sm"
+                      >
+                        Pro
+                      </Badge>
+                    </motion.div>
+                  )}
+                  {isNew && !isLocked && (
+                    <motion.div
+                      initial={{ scale: 0, opacity: 0 }}
+                      animate={{ scale: 1, opacity: 1 }}
+                      transition={{ delay: 0.15 }}
+                    >
+                      <Badge variant="outline" className={cn(
+                        "shrink-0 h-5 px-2 text-[10px] font-semibold backdrop-blur-sm",
+                        isAICoach 
+                          ? "bg-gradient-to-r from-purple-600 to-pink-600 text-white border-0 shadow-lg shadow-purple-500/30"
+                          : "bg-green-500/20 text-green-700 dark:text-green-400 border-green-500/50"
+                      )}>
+                        New
+                      </Badge>
+                    </motion.div>
+                  )}
+                </motion.span>
               )}
-              {isProFeature && !isPremiumFeature && (
-                <Badge 
-                  variant="outline" 
-                  className="ml-auto shrink-0 h-4 px-1.5 text-[10px] font-semibold bg-blue-500/20 text-blue-600 dark:text-blue-400 border-blue-500/50"
-                >
-                  Pro
-                </Badge>
-              )}
-              {isNew && !isLocked && (
-                <Badge variant="outline" className={cn(
-                  "shrink-0 h-4 px-1.5 text-[10px]",
-                  isAICoach 
-                    ? "bg-gradient-to-r from-purple-600 to-pink-600 text-white border-0"
-                    : "bg-green-500/20 text-green-700 dark:text-green-400 border-green-500/50"
-                )}>
-                  New
-                </Badge>
-              )}
-            </span>
-          )}
-        </div>
-        {isLocked && <Lock className="h-3 w-3 shrink-0" />}
-      </NavLink>
+            </AnimatePresence>
+            {isLocked && (
+              <motion.div
+                animate={{ rotate: isHovered ? [0, -10, 10, -10, 0] : 0 }}
+                transition={{ duration: 0.5 }}
+              >
+                <Lock className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+              </motion.div>
+            )}
+          </div>
+        </NavLink>
+      </motion.div>
     );
 
     if (isLocked) {
@@ -234,63 +291,103 @@ export function AppSidebar() {
   if (loading) return null;
 
   return (
-    <Sidebar collapsible="offcanvas" className="md:collapsible-icon">
-      <SidebarContent className="overflow-y-auto">
+    <Sidebar collapsible="offcanvas" className="md:collapsible-icon border-r border-border/50 backdrop-blur-xl bg-sidebar/95">
+      <SidebarContent className="overflow-y-auto scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent">
         {/* Plan Badge */}
-        {open && (
-          <div className="px-3 md:px-4 py-3 border-b">
-            <div className="flex items-center gap-2 mb-2">
-              <Crown className="h-4 w-4 text-primary flex-shrink-0" />
-              <div className="flex-1 min-w-0">
-                <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                  Current Plan
-                </p>
-                <Badge 
-                  variant={plan === 'premium' ? 'default' : plan === 'pro' ? 'secondary' : 'outline'}
-                  className={cn(
-                    "text-xs",
-                    plan === 'premium' 
-                      ? 'bg-gradient-to-r from-purple-600 to-pink-600' 
-                      : plan === 'pro'
-                      ? 'bg-gradient-to-r from-purple-600 to-blue-600'
-                      : ''
-                  )}
+        <AnimatePresence>
+          {open && (
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.3 }}
+              className="px-4 py-4 border-b border-border/50 bg-gradient-to-b from-sidebar/50 to-transparent"
+            >
+              <div className="flex items-center gap-3 mb-3">
+                <motion.div
+                  animate={{ rotate: [0, 10, -10, 0] }}
+                  transition={{ duration: 2, repeat: Infinity, repeatDelay: 3 }}
                 >
-                  {plan === 'premium' ? 'Premium ⭐' : plan === 'pro' ? 'Pro' : 'Free'}
-                </Badge>
+                  <Crown className="h-5 w-5 text-primary flex-shrink-0" />
+                </motion.div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1.5">
+                    Current Plan
+                  </p>
+                  <Badge 
+                    variant={plan === 'premium' ? 'default' : plan === 'pro' ? 'secondary' : 'outline'}
+                    className={cn(
+                      "text-xs font-semibold px-3 py-1 shadow-md backdrop-blur-sm",
+                      plan === 'premium' 
+                        ? 'bg-gradient-to-r from-purple-600 via-pink-600 to-purple-600 text-white border-0 shadow-purple-500/30' 
+                        : plan === 'pro'
+                        ? 'bg-gradient-to-r from-blue-600 via-purple-600 to-blue-600 text-white border-0 shadow-blue-500/30'
+                        : 'bg-muted/50 border-border/50'
+                    )}
+                  >
+                    {plan === 'premium' ? (
+                      <span className="flex items-center gap-1.5">
+                        <Sparkles className="h-3 w-3 animate-pulse" />
+                        Premium
+                      </span>
+                    ) : plan === 'pro' ? (
+                      <span className="flex items-center gap-1.5">
+                        <Zap className="h-3 w-3" />
+                        Pro
+                      </span>
+                    ) : (
+                      'Free'
+                    )}
+                  </Badge>
+                </div>
               </div>
-            </div>
-            
-            {isExpiringSoon && expiresAt && (
-              <div className="text-xs text-orange-600 dark:text-orange-400 mt-2 p-2 bg-orange-50 dark:bg-orange-950/30 rounded">
-                <p className="font-medium">Expires in {getDaysRemaining()} days</p>
-                <NavLink to="/upgrade" className="text-primary hover:underline text-xs mt-1 inline-block">
-                  Renew Now →
-                </NavLink>
-              </div>
-            )}
-            
-            {plan === 'free' && (
-              <NavLink 
-                to="/upgrade" 
-                className="text-xs text-primary hover:underline mt-2 inline-block"
-              >
-                Upgrade to Premium →
+              
+              {isExpiringSoon && expiresAt && (
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  className="text-xs text-orange-600 dark:text-orange-400 mt-2 p-2.5 bg-gradient-to-r from-orange-50 to-amber-50 dark:from-orange-950/30 dark:to-amber-950/30 rounded-lg border border-orange-200 dark:border-orange-800/50 backdrop-blur-sm"
+                >
+                  <p className="font-semibold">Expires in {getDaysRemaining()} days</p>
+                  <NavLink to="/upgrade" className="text-primary hover:underline text-xs mt-1 inline-block font-medium">
+                    Renew Now →
+                  </NavLink>
+                </motion.div>
+              )}
+              
+              {plan === 'free' && (
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.2 }}
+                >
+                  <NavLink 
+                    to="/upgrade" 
+                    className="text-xs text-primary hover:text-primary/80 font-medium mt-2 inline-block transition-colors"
+                  >
+                    Upgrade to Premium →
+                  </NavLink>
+                </motion.div>
+              )}
+              
+              <NavLink to="/upgrade" className="block mt-3">
+                <motion.div
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                >
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="w-full justify-start gap-2.5 text-xs font-medium h-9 border-border/50 bg-sidebar/50 hover:bg-sidebar/80 backdrop-blur-sm shadow-sm hover:shadow-md transition-all duration-300"
+                  >
+                    <CreditCard className="h-3.5 w-3.5" />
+                    View & Manage Plans
+                  </Button>
+                </motion.div>
               </NavLink>
-            )}
-            
-            <NavLink to="/upgrade" className="block mt-3">
-              <Button 
-                variant="outline" 
-                size="sm" 
-                className="w-full justify-start gap-2 text-xs"
-              >
-                <CreditCard className="h-3 w-3" />
-                {open ? 'View & Manage Plans' : 'Plans'}
-              </Button>
-            </NavLink>
-          </div>
-        )}
+            </motion.div>
+          )}
+        </AnimatePresence>
         
         {!open && (
           <div className="px-2 py-2 border-b">
@@ -315,15 +412,26 @@ export function AppSidebar() {
 
         {/* Core Features */}
         <SidebarGroup>
-          <SidebarGroupLabel className="text-xs uppercase tracking-wider px-3 md:px-4 py-2">
-            Core
-          </SidebarGroupLabel>
+          <AnimatePresence>
+            {open && (
+              <motion.div
+                initial={{ opacity: 0, y: -5 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -5 }}
+                transition={{ duration: 0.2 }}
+              >
+                <SidebarGroupLabel className="text-xs uppercase tracking-wider px-4 py-2.5 font-semibold text-muted-foreground/80">
+                  Core
+                </SidebarGroupLabel>
+              </motion.div>
+            )}
+          </AnimatePresence>
           <SidebarGroupContent>
-            <SidebarMenu className="px-1">
-              {coreItems.map((item) => (
+            <SidebarMenu className="px-2 space-y-1">
+              {coreItems.map((item, index) => (
                 <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild className="min-h-[44px] md:min-h-[36px]">
-                    {renderNavItem(item)}
+                  <SidebarMenuButton asChild className="min-h-[48px] p-0 bg-transparent hover:bg-transparent border-0">
+                    {renderNavItem(item, index)}
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}
@@ -335,34 +443,65 @@ export function AppSidebar() {
         <SidebarGroup>
           <Collapsible open={proOpen} onOpenChange={setProOpen} className="group/collapsible">
             <CollapsibleTrigger asChild>
-              <SidebarGroupLabel className="text-xs uppercase tracking-wider flex items-center justify-between px-3 md:px-4 py-2 hover:bg-muted/50 cursor-pointer group">
-                <div className="flex items-center gap-2">
-                  <Zap className="h-3 w-3 text-blue-500" />
-                  <span>Pro Features</span>
-                  {!isPro && !isPremium && (
-                    <Badge variant="outline" className="h-4 px-1.5 text-[10px] bg-blue-500/20 text-blue-600 dark:text-blue-400 border-blue-500/50">
-                      Pro
-                    </Badge>
-                  )}
-                </div>
-                <ChevronRight className={cn(
-                  "h-3 w-3 transition-transform duration-200",
-                  proOpen && "rotate-90"
-                )} />
-              </SidebarGroupLabel>
+              <motion.div
+                whileHover={{ x: 2 }}
+                whileTap={{ scale: 0.98 }}
+              >
+                <SidebarGroupLabel className="text-xs uppercase tracking-wider flex items-center justify-between px-4 py-2.5 hover:bg-muted/40 cursor-pointer group rounded-lg transition-all duration-300 font-semibold text-muted-foreground/80">
+                  <div className="flex items-center gap-2.5">
+                    <motion.div
+                      animate={{ rotate: proOpen ? 0 : [0, 5, -5, 0] }}
+                      transition={{ duration: 0.3 }}
+                    >
+                      <Zap className="h-3.5 w-3.5 text-blue-500" />
+                    </motion.div>
+                    {open && (
+                      <motion.span
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        className="flex items-center gap-2"
+                      >
+                        <span>Pro Features</span>
+                        {!isPro && !isPremium && (
+                          <Badge variant="outline" className="h-4 px-1.5 text-[10px] bg-blue-500/20 text-blue-600 dark:text-blue-400 border-blue-500/50 backdrop-blur-sm">
+                            Pro
+                          </Badge>
+                        )}
+                      </motion.span>
+                    )}
+                  </div>
+                  <motion.div
+                    animate={{ rotate: proOpen ? 90 : 0 }}
+                    transition={{ duration: 0.2 }}
+                  >
+                    <ChevronRight className="h-3.5 w-3.5" />
+                  </motion.div>
+                </SidebarGroupLabel>
+              </motion.div>
             </CollapsibleTrigger>
             <CollapsibleContent>
-              <SidebarGroupContent>
-                <SidebarMenu className="px-1">
-                  {proItems.map((item) => (
-                    <SidebarMenuItem key={item.title}>
-                      <SidebarMenuButton asChild className="min-h-[44px] md:min-h-[36px]">
-                        {renderNavItem(item)}
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                  ))}
-                </SidebarMenu>
-              </SidebarGroupContent>
+              <AnimatePresence>
+                {proOpen && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: "auto" }}
+                    exit={{ opacity: 0, height: 0 }}
+                    transition={{ duration: 0.3 }}
+                  >
+                    <SidebarGroupContent>
+                      <SidebarMenu className="px-2 space-y-1">
+                        {proItems.map((item, index) => (
+                          <SidebarMenuItem key={item.title}>
+                            <SidebarMenuButton asChild className="min-h-[48px] p-0 bg-transparent hover:bg-transparent border-0">
+                              {renderNavItem(item, index + coreItems.length)}
+                            </SidebarMenuButton>
+                          </SidebarMenuItem>
+                        ))}
+                      </SidebarMenu>
+                    </SidebarGroupContent>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </CollapsibleContent>
           </Collapsible>
         </SidebarGroup>
@@ -371,35 +510,69 @@ export function AppSidebar() {
         <SidebarGroup>
           <Collapsible open={premiumBusinessOpen} onOpenChange={setPremiumBusinessOpen} className="group/collapsible">
             <CollapsibleTrigger asChild>
-              <SidebarGroupLabel className="text-xs uppercase tracking-wider flex items-center justify-between px-3 md:px-4 py-2 hover:bg-muted/50 cursor-pointer group">
-                <div className="flex items-center gap-2">
-                  <Sparkles className="h-3 w-3 text-purple-500" />
-                  <span>Business</span>
-                  {!isPremium && (
-                    <Badge variant="outline" className="h-4 px-1.5 text-[10px] bg-gradient-to-r from-purple-500/20 to-pink-500/20 text-purple-600 dark:text-purple-400 border-purple-500/50">
-                      <Sparkles className="h-2.5 w-2.5 mr-0.5" />
-                      Premium
-                    </Badge>
-                  )}
-                </div>
-                <ChevronRight className={cn(
-                  "h-3 w-3 transition-transform duration-200",
-                  premiumBusinessOpen && "rotate-90"
-                )} />
-              </SidebarGroupLabel>
+              <motion.div
+                whileHover={{ x: 2 }}
+                whileTap={{ scale: 0.98 }}
+              >
+                <SidebarGroupLabel className="text-xs uppercase tracking-wider flex items-center justify-between px-4 py-2.5 hover:bg-muted/40 cursor-pointer group rounded-lg transition-all duration-300 font-semibold text-muted-foreground/80">
+                  <div className="flex items-center gap-2.5">
+                    <motion.div
+                      animate={{ 
+                        rotate: premiumBusinessOpen ? 0 : [0, 5, -5, 0],
+                        scale: premiumBusinessOpen ? 1 : [1, 1.1, 1]
+                      }}
+                      transition={{ duration: 0.3 }}
+                    >
+                      <Sparkles className="h-3.5 w-3.5 text-purple-500" />
+                    </motion.div>
+                    {open && (
+                      <motion.span
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        className="flex items-center gap-2"
+                      >
+                        <span>Business</span>
+                        {!isPremium && (
+                          <Badge variant="outline" className="h-4 px-1.5 text-[10px] bg-gradient-to-r from-purple-500/20 to-pink-500/20 text-purple-600 dark:text-purple-400 border-purple-500/50 backdrop-blur-sm">
+                            <Sparkles className="h-2.5 w-2.5 mr-0.5" />
+                            Premium
+                          </Badge>
+                        )}
+                      </motion.span>
+                    )}
+                  </div>
+                  <motion.div
+                    animate={{ rotate: premiumBusinessOpen ? 90 : 0 }}
+                    transition={{ duration: 0.2 }}
+                  >
+                    <ChevronRight className="h-3.5 w-3.5" />
+                  </motion.div>
+                </SidebarGroupLabel>
+              </motion.div>
             </CollapsibleTrigger>
             <CollapsibleContent>
-              <SidebarGroupContent>
-                <SidebarMenu className="px-1">
-                  {premiumBusinessItems.map((item) => (
-                    <SidebarMenuItem key={item.title}>
-                      <SidebarMenuButton asChild className="min-h-[44px] md:min-h-[36px]">
-                        {renderNavItem(item)}
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                  ))}
-                </SidebarMenu>
-              </SidebarGroupContent>
+              <AnimatePresence>
+                {premiumBusinessOpen && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: "auto" }}
+                    exit={{ opacity: 0, height: 0 }}
+                    transition={{ duration: 0.3 }}
+                  >
+                    <SidebarGroupContent>
+                      <SidebarMenu className="px-2 space-y-1">
+                        {premiumBusinessItems.map((item, index) => (
+                          <SidebarMenuItem key={item.title}>
+                            <SidebarMenuButton asChild className="min-h-[48px] p-0 bg-transparent hover:bg-transparent border-0">
+                              {renderNavItem(item, index + coreItems.length + proItems.length)}
+                            </SidebarMenuButton>
+                          </SidebarMenuItem>
+                        ))}
+                      </SidebarMenu>
+                    </SidebarGroupContent>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </CollapsibleContent>
           </Collapsible>
         </SidebarGroup>
@@ -408,35 +581,69 @@ export function AppSidebar() {
         <SidebarGroup>
           <Collapsible open={premiumGSTOpen} onOpenChange={setPremiumGSTOpen} className="group/collapsible">
             <CollapsibleTrigger asChild>
-              <SidebarGroupLabel className="text-xs uppercase tracking-wider flex items-center justify-between px-3 md:px-4 py-2 hover:bg-muted/50 cursor-pointer group">
-                <div className="flex items-center gap-2">
-                  <Shield className="h-3 w-3 text-purple-500" />
-                  <span>GST & Compliance</span>
-                  {!isPremium && (
-                    <Badge variant="outline" className="h-4 px-1.5 text-[10px] bg-gradient-to-r from-purple-500/20 to-pink-500/20 text-purple-600 dark:text-purple-400 border-purple-500/50">
-                      <Sparkles className="h-2.5 w-2.5 mr-0.5" />
-                      Premium
-                    </Badge>
-                  )}
-                </div>
-                <ChevronRight className={cn(
-                  "h-3 w-3 transition-transform duration-200",
-                  premiumGSTOpen && "rotate-90"
-                )} />
-              </SidebarGroupLabel>
+              <motion.div
+                whileHover={{ x: 2 }}
+                whileTap={{ scale: 0.98 }}
+              >
+                <SidebarGroupLabel className="text-xs uppercase tracking-wider flex items-center justify-between px-4 py-2.5 hover:bg-muted/40 cursor-pointer group rounded-lg transition-all duration-300 font-semibold text-muted-foreground/80">
+                  <div className="flex items-center gap-2.5">
+                    <motion.div
+                      animate={{ 
+                        rotate: premiumGSTOpen ? 0 : [0, 5, -5, 0],
+                        scale: premiumGSTOpen ? 1 : [1, 1.1, 1]
+                      }}
+                      transition={{ duration: 0.3 }}
+                    >
+                      <Shield className="h-3.5 w-3.5 text-purple-500" />
+                    </motion.div>
+                    {open && (
+                      <motion.span
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        className="flex items-center gap-2"
+                      >
+                        <span>GST & Compliance</span>
+                        {!isPremium && (
+                          <Badge variant="outline" className="h-4 px-1.5 text-[10px] bg-gradient-to-r from-purple-500/20 to-pink-500/20 text-purple-600 dark:text-purple-400 border-purple-500/50 backdrop-blur-sm">
+                            <Sparkles className="h-2.5 w-2.5 mr-0.5" />
+                            Premium
+                          </Badge>
+                        )}
+                      </motion.span>
+                    )}
+                  </div>
+                  <motion.div
+                    animate={{ rotate: premiumGSTOpen ? 90 : 0 }}
+                    transition={{ duration: 0.2 }}
+                  >
+                    <ChevronRight className="h-3.5 w-3.5" />
+                  </motion.div>
+                </SidebarGroupLabel>
+              </motion.div>
             </CollapsibleTrigger>
             <CollapsibleContent>
-              <SidebarGroupContent>
-                <SidebarMenu className="px-1">
-                  {premiumGSTItems.map((item) => (
-                    <SidebarMenuItem key={item.title}>
-                      <SidebarMenuButton asChild className="min-h-[44px] md:min-h-[36px]">
-                        {renderNavItem(item)}
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                  ))}
-                </SidebarMenu>
-              </SidebarGroupContent>
+              <AnimatePresence>
+                {premiumGSTOpen && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: "auto" }}
+                    exit={{ opacity: 0, height: 0 }}
+                    transition={{ duration: 0.3 }}
+                  >
+                    <SidebarGroupContent>
+                      <SidebarMenu className="px-2 space-y-1">
+                        {premiumGSTItems.map((item, index) => (
+                          <SidebarMenuItem key={item.title}>
+                            <SidebarMenuButton asChild className="min-h-[48px] p-0 bg-transparent hover:bg-transparent border-0">
+                              {renderNavItem(item, index + coreItems.length + proItems.length + premiumBusinessItems.length)}
+                            </SidebarMenuButton>
+                          </SidebarMenuItem>
+                        ))}
+                      </SidebarMenu>
+                    </SidebarGroupContent>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </CollapsibleContent>
           </Collapsible>
         </SidebarGroup>
@@ -445,62 +652,126 @@ export function AppSidebar() {
         <SidebarGroup>
           <Collapsible open={premiumReportsOpen} onOpenChange={setPremiumReportsOpen} className="group/collapsible">
             <CollapsibleTrigger asChild>
-              <SidebarGroupLabel className="text-xs uppercase tracking-wider flex items-center justify-between px-3 md:px-4 py-2 hover:bg-muted/50 cursor-pointer group">
-                <div className="flex items-center gap-2">
-                  <BarChart3 className="h-3 w-3 text-purple-500" />
-                  <span>Reports</span>
-                  {!isPremium && (
-                    <Badge variant="outline" className="h-4 px-1.5 text-[10px] bg-gradient-to-r from-purple-500/20 to-pink-500/20 text-purple-600 dark:text-purple-400 border-purple-500/50">
-                      <Sparkles className="h-2.5 w-2.5 mr-0.5" />
-                      Premium
-                    </Badge>
-                  )}
-                </div>
-                <ChevronRight className={cn(
-                  "h-3 w-3 transition-transform duration-200",
-                  premiumReportsOpen && "rotate-90"
-                )} />
-              </SidebarGroupLabel>
+              <motion.div
+                whileHover={{ x: 2 }}
+                whileTap={{ scale: 0.98 }}
+              >
+                <SidebarGroupLabel className="text-xs uppercase tracking-wider flex items-center justify-between px-4 py-2.5 hover:bg-muted/40 cursor-pointer group rounded-lg transition-all duration-300 font-semibold text-muted-foreground/80">
+                  <div className="flex items-center gap-2.5">
+                    <motion.div
+                      animate={{ 
+                        rotate: premiumReportsOpen ? 0 : [0, 5, -5, 0],
+                        scale: premiumReportsOpen ? 1 : [1, 1.1, 1]
+                      }}
+                      transition={{ duration: 0.3 }}
+                    >
+                      <BarChart3 className="h-3.5 w-3.5 text-purple-500" />
+                    </motion.div>
+                    {open && (
+                      <motion.span
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        className="flex items-center gap-2"
+                      >
+                        <span>Reports</span>
+                        {!isPremium && (
+                          <Badge variant="outline" className="h-4 px-1.5 text-[10px] bg-gradient-to-r from-purple-500/20 to-pink-500/20 text-purple-600 dark:text-purple-400 border-purple-500/50 backdrop-blur-sm">
+                            <Sparkles className="h-2.5 w-2.5 mr-0.5" />
+                            Premium
+                          </Badge>
+                        )}
+                      </motion.span>
+                    )}
+                  </div>
+                  <motion.div
+                    animate={{ rotate: premiumReportsOpen ? 90 : 0 }}
+                    transition={{ duration: 0.2 }}
+                  >
+                    <ChevronRight className="h-3.5 w-3.5" />
+                  </motion.div>
+                </SidebarGroupLabel>
+              </motion.div>
             </CollapsibleTrigger>
             <CollapsibleContent>
-              <SidebarGroupContent>
-                <SidebarMenu className="px-1">
-                  {premiumReportsItems.map((item) => (
-                    <SidebarMenuItem key={item.title}>
-                      <SidebarMenuButton asChild className="min-h-[44px] md:min-h-[36px]">
-                        {renderNavItem(item)}
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                  ))}
-                </SidebarMenu>
-              </SidebarGroupContent>
+              <AnimatePresence>
+                {premiumReportsOpen && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: "auto" }}
+                    exit={{ opacity: 0, height: 0 }}
+                    transition={{ duration: 0.3 }}
+                  >
+                    <SidebarGroupContent>
+                      <SidebarMenu className="px-2 space-y-1">
+                        {premiumReportsItems.map((item, index) => (
+                          <SidebarMenuItem key={item.title}>
+                            <SidebarMenuButton asChild className="min-h-[48px] p-0 bg-transparent hover:bg-transparent border-0">
+                              {renderNavItem(item, index + coreItems.length + proItems.length + premiumBusinessItems.length + premiumGSTItems.length)}
+                            </SidebarMenuButton>
+                          </SidebarMenuItem>
+                        ))}
+                      </SidebarMenu>
+                    </SidebarGroupContent>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </CollapsibleContent>
           </Collapsible>
         </SidebarGroup>
 
         {/* Settings */}
         <SidebarGroup>
-          <SidebarGroupLabel className="text-xs uppercase tracking-wider px-3 md:px-4 py-2">
-            System
-          </SidebarGroupLabel>
+          <AnimatePresence>
+            {open && (
+              <motion.div
+                initial={{ opacity: 0, y: -5 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -5 }}
+                transition={{ duration: 0.2 }}
+              >
+                <SidebarGroupLabel className="text-xs uppercase tracking-wider px-4 py-2.5 font-semibold text-muted-foreground/80">
+                  System
+                </SidebarGroupLabel>
+              </motion.div>
+            )}
+          </AnimatePresence>
           <SidebarGroupContent>
-            <SidebarMenu className="px-1">
+            <SidebarMenu className="px-2">
               <SidebarMenuItem>
-                <SidebarMenuButton asChild className="min-h-[44px] md:min-h-[36px]">
-                  <NavLink 
-                    to="/settings" 
-                    end 
-                    className={(props) => 
-                      props.isActive 
-                        ? "bg-primary/10 text-primary font-semibold border-l-2 border-primary"
-                        : "hover:bg-muted/50 text-muted-foreground hover:text-foreground"
-                    }
+                <SidebarMenuButton asChild className="min-h-[48px] p-0 bg-transparent hover:bg-transparent border-0">
+                  <motion.div
+                    initial={{ opacity: 0, x: -10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ duration: 0.3, delay: 0.1 }}
                   >
-                    <div className="flex items-center gap-2 flex-1">
-                      <Settings className="h-4 w-4 flex-shrink-0" />
-                      {open && <span>Settings</span>}
-                    </div>
-                  </NavLink>
+                    <NavLink 
+                      to="/settings" 
+                      end 
+                      className={(props) => 
+                        cn(
+                          "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-300",
+                          props.isActive 
+                            ? "bg-gradient-to-r from-primary/15 via-primary/10 to-transparent text-primary font-semibold border-l-[3px] border-primary shadow-sm"
+                            : "hover:bg-gradient-to-r hover:from-muted/60 hover:via-muted/40 hover:to-transparent text-muted-foreground hover:text-foreground"
+                        )
+                      }
+                    >
+                      <Settings className="h-4.5 w-4.5 flex-shrink-0" />
+                      <AnimatePresence>
+                        {open && (
+                          <motion.span
+                            initial={{ opacity: 0, width: 0 }}
+                            animate={{ opacity: 1, width: "auto" }}
+                            exit={{ opacity: 0, width: 0 }}
+                            transition={{ duration: 0.2 }}
+                            className="font-medium text-sm"
+                          >
+                            Settings
+                          </motion.span>
+                        )}
+                      </AnimatePresence>
+                    </NavLink>
+                  </motion.div>
                 </SidebarMenuButton>
               </SidebarMenuItem>
             </SidebarMenu>
@@ -509,56 +780,95 @@ export function AppSidebar() {
 
         {/* Admin CMS Section */}
         <SidebarGroup>
-          <SidebarGroupLabel className="text-xs uppercase tracking-wider flex items-center gap-2 px-3 md:px-4 py-2">
-            <Shield className="h-3 w-3" />
-            <span>Admin</span>
-          </SidebarGroupLabel>
+          <AnimatePresence>
+            {open && (
+              <motion.div
+                initial={{ opacity: 0, y: -5 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -5 }}
+                transition={{ duration: 0.2 }}
+              >
+                <SidebarGroupLabel className="text-xs uppercase tracking-wider flex items-center gap-2.5 px-4 py-2.5 font-semibold text-muted-foreground/80">
+                  <Shield className="h-3.5 w-3.5" />
+                  <span>Admin</span>
+                </SidebarGroupLabel>
+              </motion.div>
+            )}
+          </AnimatePresence>
           <SidebarGroupContent>
-            <SidebarMenu className="px-1">
-              {adminItems.map((item) => {
+            <SidebarMenu className="px-2 space-y-1">
+              {adminItems.map((item, index) => {
                 const hasAccess = hasFeatureAccess(item.featureKey, item.requiredPlan);
                 const isLocked = !hasAccess;
                 const isPremiumFeature = item.requiredPlan === 'premium';
                 
                 return (
                   <SidebarMenuItem key={item.title}>
-                    <SidebarMenuButton asChild className="min-h-[44px] md:min-h-[36px]">
-                      <NavLink 
-                        to={isLocked ? "/upgrade" : item.url} 
-                        end 
-                        className={(props) => 
-                          props.isActive 
-                            ? "bg-primary/10 text-primary font-semibold border-l-2 border-primary"
-                            : isLocked
-                            ? "opacity-50 cursor-not-allowed hover:bg-muted/30 text-muted-foreground"
-                            : "hover:bg-muted/50 text-muted-foreground hover:text-foreground"
-                        }
-                        onClick={(e) => {
-                          if (isLocked) {
-                            e.preventDefault();
-                            window.location.href = '/upgrade';
-                          }
-                        }}
+                    <SidebarMenuButton asChild className="min-h-[48px] p-0 bg-transparent hover:bg-transparent border-0">
+                      <motion.div
+                        initial={{ opacity: 0, x: -10 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ duration: 0.3, delay: (index + 1) * 0.05 }}
                       >
-                        <div className="flex items-center gap-2 flex-1 min-w-0">
-                          <item.icon className="h-4 w-4 flex-shrink-0" />
-                          {open && (
-                            <span className="flex items-center gap-1.5 flex-1 min-w-0">
-                              <span className="truncate">{item.title}</span>
-                              {isPremiumFeature && (
-                                <Badge 
-                                  variant="outline" 
-                                  className="ml-auto shrink-0 h-4 px-1.5 text-[10px] font-semibold bg-gradient-to-r from-purple-500/20 to-pink-500/20 text-purple-600 dark:text-purple-400 border-purple-500/50"
-                                >
-                                  <Sparkles className="h-2.5 w-2.5 mr-0.5" />
-                                  Premium
-                                </Badge>
-                              )}
-                            </span>
+                        <NavLink 
+                          to={isLocked ? "/upgrade" : item.url} 
+                          end 
+                          className={(props) => 
+                            cn(
+                              "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-300",
+                              props.isActive 
+                                ? "bg-gradient-to-r from-primary/15 via-primary/10 to-transparent text-primary font-semibold border-l-[3px] border-primary shadow-sm"
+                                : isLocked
+                                ? "opacity-50 cursor-not-allowed hover:bg-muted/20 text-muted-foreground"
+                                : "hover:bg-gradient-to-r hover:from-muted/60 hover:via-muted/40 hover:to-transparent text-muted-foreground hover:text-foreground"
+                            )
+                          }
+                          onClick={(e) => {
+                            if (isLocked) {
+                              e.preventDefault();
+                              window.location.href = '/upgrade';
+                            }
+                          }}
+                        >
+                          <item.icon className="h-4.5 w-4.5 flex-shrink-0" />
+                          <AnimatePresence>
+                            {open && (
+                              <motion.span
+                                initial={{ opacity: 0, width: 0 }}
+                                animate={{ opacity: 1, width: "auto" }}
+                                exit={{ opacity: 0, width: 0 }}
+                                transition={{ duration: 0.2 }}
+                                className="flex items-center gap-2 flex-1 min-w-0 overflow-hidden"
+                              >
+                                <span className="truncate font-medium text-sm">{item.title}</span>
+                                {isPremiumFeature && (
+                                  <motion.div
+                                    initial={{ scale: 0, opacity: 0 }}
+                                    animate={{ scale: 1, opacity: 1 }}
+                                    transition={{ delay: 0.1 }}
+                                  >
+                                    <Badge 
+                                      variant="outline" 
+                                      className="ml-auto shrink-0 h-5 px-2 text-[10px] font-semibold bg-gradient-to-r from-purple-500/20 via-pink-500/20 to-purple-500/20 text-purple-600 dark:text-purple-400 border-purple-500/50 backdrop-blur-sm"
+                                    >
+                                      <Sparkles className="h-2.5 w-2.5 mr-1 animate-pulse" />
+                                      Premium
+                                    </Badge>
+                                  </motion.div>
+                                )}
+                              </motion.span>
+                            )}
+                          </AnimatePresence>
+                          {isLocked && (
+                            <motion.div
+                              animate={{ rotate: hoveredItem === item.featureKey ? [0, -10, 10, -10, 0] : 0 }}
+                              transition={{ duration: 0.5 }}
+                            >
+                              <Lock className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                            </motion.div>
                           )}
-                        </div>
-                        {isLocked && <Lock className="h-3 w-3 shrink-0" />}
-                      </NavLink>
+                        </NavLink>
+                      </motion.div>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
                 );
@@ -568,20 +878,41 @@ export function AppSidebar() {
         </SidebarGroup>
 
         {/* Logout Button */}
-        <div className="mt-auto border-t pt-2 px-3 md:px-4 pb-2">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={signOut}
-            className={cn(
-              "w-full justify-start gap-2 text-xs text-muted-foreground hover:text-destructive",
-              !open && "justify-center px-2"
-            )}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.3 }}
+          className="mt-auto border-t border-border/50 pt-3 px-4 pb-4 bg-gradient-to-t from-sidebar/50 to-transparent"
+        >
+          <motion.div
+            whileHover={{ scale: 1.02, x: 2 }}
+            whileTap={{ scale: 0.98 }}
           >
-            <LogOut className="h-4 w-4 flex-shrink-0" />
-            {open && <span>Sign Out</span>}
-          </Button>
-        </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={signOut}
+              className={cn(
+                "w-full justify-start gap-3 text-sm font-medium text-muted-foreground hover:text-destructive hover:bg-destructive/10 h-10 rounded-lg transition-all duration-300",
+                !open && "justify-center px-2"
+              )}
+            >
+              <LogOut className="h-4 w-4 flex-shrink-0" />
+              <AnimatePresence>
+                {open && (
+                  <motion.span
+                    initial={{ opacity: 0, width: 0 }}
+                    animate={{ opacity: 1, width: "auto" }}
+                    exit={{ opacity: 0, width: 0 }}
+                    transition={{ duration: 0.2 }}
+                  >
+                    Sign Out
+                  </motion.span>
+                )}
+              </AnimatePresence>
+            </Button>
+          </motion.div>
+        </motion.div>
       </SidebarContent>
     </Sidebar>
   );

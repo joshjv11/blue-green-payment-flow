@@ -124,29 +124,77 @@ serve(async (req) => {
       let reconciliationStatus = "pending";
 
       if (form2aData) {
+        // First try exact match
         form2aMatch = form2aData.find((item: any) =>
           item.invoice_number === purchase.invoice_number &&
           item.invoice_date === purchase.transaction_date
         );
 
+        // If no exact match, try fuzzy matching
+        if (!form2aMatch) {
+          const { fuzzyMatchITC } = await import('./_shared/fuzzyMatch.ts');
+          
+          let bestMatch: any = null;
+          let bestConfidence = 0;
+
+          for (const item of form2aData) {
+            const match = fuzzyMatchITC(
+              {
+                invoice_number: purchase.invoice_number,
+                invoice_date: purchase.transaction_date,
+                tax_amount: parseFloat(purchase.tax_amount) || 0,
+                supplier_gstin: purchase.supplier_gstin,
+              },
+              {
+                invoice_number: item.invoice_number,
+                invoice_date: item.invoice_date,
+                tax_amount: parseFloat(item.tax_amount) || 0,
+                supplier_gstin: item.supplier_gstin,
+              },
+              {
+                invoiceNumberThreshold: 0.7, // More lenient for typos
+                amountTolerance: 1.0, // ₹1 tolerance for rounding
+                dateToleranceDays: 1, // 1 day tolerance for date format differences
+                minOverallConfidence: 0.7,
+              }
+            );
+
+            if (match.matched && match.confidence > bestConfidence) {
+              bestConfidence = match.confidence;
+              bestMatch = { ...item, match_confidence: match.confidence, match_type: match.matchType };
+            }
+          }
+
+          if (bestMatch) {
+            form2aMatch = bestMatch;
+            console.log(`✅ Fuzzy matched invoice ${purchase.invoice_number} with confidence ${bestConfidence.toFixed(2)}`);
+          }
+        }
+
         if (form2aMatch) {
           const form2aTax = parseFloat(form2aMatch.tax_amount) || 0;
           const purchaseTax = parseFloat(purchase.tax_amount) || 0;
+          const taxDifference = Math.abs(form2aTax - purchaseTax);
 
-          if (Math.abs(form2aTax - purchaseTax) < 0.01) {
-            reconciliationStatus = "matched";
+          // Use fuzzy matching for amount too (₹1 tolerance)
+          if (taxDifference <= 1.0) {
+            reconciliationStatus = form2aMatch.match_type === 'exact' ? "matched" : "matched"; // Both are matched, just note if fuzzy
           } else {
             reconciliationStatus = "mismatch";
-            mismatchReason = `Tax amount mismatch: Your data shows ₹${purchaseTax}, GSTN shows ₹${form2aTax}`;
+            mismatchReason = `Tax amount mismatch: Your data shows ₹${purchaseTax}, GSTN shows ₹${form2aTax} (Difference: ₹${taxDifference.toFixed(2)})`;
+            if (form2aMatch.match_type === 'fuzzy') {
+              mismatchReason += ` [Fuzzy matched with ${(form2aMatch.match_confidence * 100).toFixed(0)}% confidence]`;
+            }
             mismatches.push({
               purchase_id: purchase.id,
               invoice_number: purchase.invoice_number,
               mismatch_reason: mismatchReason,
+              match_confidence: form2aMatch.match_confidence,
             });
           }
         } else {
           reconciliationStatus = "missing";
-          mismatchReason = "Invoice not found in Form 2A/2B";
+          mismatchReason = "Invoice not found in Form 2A/2B (no exact or fuzzy match)";
           mismatches.push({
             purchase_id: purchase.id,
             invoice_number: purchase.invoice_number,

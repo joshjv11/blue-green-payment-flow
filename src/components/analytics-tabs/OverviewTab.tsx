@@ -1,7 +1,9 @@
-import { DollarSign, TrendingUp, Package, Users, ShoppingCart, RotateCw, Diamond, Wallet, UserCheck } from 'lucide-react';
+import { DollarSign, TrendingUp, Package, Users, ShoppingCart, RotateCw, Diamond, Wallet, UserCheck, BarChart3 } from 'lucide-react';
 import { KPICard } from '@/components/analytics/KPICard';
 import { useKPIData } from '@/hooks/useKPIData';
 import { formatINR } from '@/utils/currency';
+import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 
 const OverviewTab = () => {
   const { data, loading, error } = useKPIData();
@@ -9,7 +11,49 @@ const OverviewTab = () => {
   if (error) {
     return (
       <div className="text-center py-12">
-        <p className="text-destructive">Error loading KPI data: {error}</p>
+        <Card>
+          <CardContent className="pt-6">
+            <p className="text-destructive text-lg font-semibold mb-2">Error loading KPI data</p>
+            <p className="text-sm text-muted-foreground mb-6 max-w-md mx-auto">{error}</p>
+            <div className="flex gap-3 justify-center">
+              <Button onClick={() => window.location.reload()} variant="default">Retry</Button>
+              <Button onClick={() => window.location.href = '/sales'} variant="outline">
+                Go to Sales
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  // Show empty state if no data
+  if (!loading && data && 
+      data.totalRevenue.current === 0 && 
+      data.grossProfit.current === 0 && 
+      data.activeCustomers.current === 0) {
+    return (
+      <div className="text-center py-12">
+        <Card>
+          <CardContent className="pt-6">
+            <div className="text-muted-foreground py-8">
+              <BarChart3 className="h-12 w-12 mx-auto mb-4 opacity-50" />
+              <p className="text-lg font-semibold mb-2">No analytics data yet</p>
+              <p className="text-sm mb-6 max-w-md mx-auto">
+                Start tracking your business by creating sales orders and adding products to inventory. 
+                Once you have data, your analytics will appear here.
+              </p>
+              <div className="flex gap-3 justify-center">
+                <Button onClick={() => window.location.href = '/sales'} variant="default">
+                  Create Sales Order
+                </Button>
+                <Button onClick={() => window.location.href = '/inventory'} variant="outline">
+                  Add Products
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     );
   }

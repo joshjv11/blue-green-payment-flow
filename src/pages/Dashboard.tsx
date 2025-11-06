@@ -52,6 +52,9 @@ import { SavingsGoalCard } from '@/components/SavingsGoalCard';
 import { EMICard } from '@/components/EMICard';
 import { Target, CreditCard, PieChart } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { OnboardingTour } from '@/components/OnboardingTour';
+import { SwipeableBillCard } from '@/components/SwipeableBillCard';
+import { Locale, t } from '@/utils/locale';
 
 interface Bill {
   id: string;
@@ -523,8 +526,11 @@ const Dashboard = () => {
     localStorage.setItem('invoiceflow_passkey_banner_dismissed', 'true');
   };
 
+  const [locale] = useLocalStorage<Locale>('invoiceflow_locale', 'en-IN');
+
   return (
     <MobileLayout>
+      <OnboardingTour />
       <div className="min-h-screen bg-background pb-24 md:pb-6">
         <div className="flex items-center justify-between px-4 py-3 border-b border-border/50">
           <Navigation />
@@ -662,10 +668,10 @@ const Dashboard = () => {
             />
           )}
 
-          {/* Premium Stat Cards with Sparklines */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
+          {/* Hero Metrics - Simplified to 3 key metrics */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 md:gap-6">
             <StatCardWithSparkline
-              title="Active Bills"
+              title={t('active_bills', locale)}
               value={activeBills.length}
               icon={FileText}
               sparklineData={activeSparkline}
@@ -676,7 +682,7 @@ const Dashboard = () => {
               trendValue={contextPlan === 'free' ? `${bills.length}/${billLimit}` : undefined}
             />
             <StatCardWithSparkline
-              title="Overdue"
+              title={t('overdue', locale)}
               value={overdueBills.length}
               icon={AlertCircle}
               sparklineData={overdueSparkline}
@@ -687,7 +693,7 @@ const Dashboard = () => {
               trend={overdueBills.length > 0 ? 'down' : 'neutral'}
             />
             <StatCardWithSparkline
-              title="Due Soon"
+              title={t('due_soon', locale)}
               value={billsDueIn7Days.length}
               icon={Clock}
               sparklineData={dueSoonSparkline}
@@ -697,17 +703,20 @@ const Dashboard = () => {
               isPro={isPro}
               trendValue="Next 7 days"
             />
-            <StatCardWithSparkline
-              title="Paid"
-              value={paidBills.length}
-              icon={CheckCircle}
-              sparklineData={paidSparkline}
-              iconColor="text-green-600"
-              gradientFrom="from-green-600/10"
-              gradientTo="to-green-600/5"
-              isPro={isPro}
-              trend="up"
-            />
+          </div>
+
+          {/* See More Button - Expand to show all metrics */}
+          <div className="flex justify-center">
+            <Button
+              variant="outline"
+              size="default"
+              onClick={() => navigate('/bills')}
+              className="h-10 px-6 gap-2 min-h-[48px]"
+              data-tour="add-bill"
+            >
+              <ArrowRight className="h-4 w-4" />
+              {t('see_more', locale)} - {t('bills', locale)}
+            </Button>
           </div>
 
           {/* WhatsApp Integration Card */}
@@ -845,23 +854,12 @@ const Dashboard = () => {
               </CardHeader>
               <CardContent className="space-y-3">
                 {billsDueToday.map((bill) => (
-                  <div key={bill.id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 bg-white/80 dark:bg-background/80 rounded-xl border border-yellow-200 dark:border-yellow-800/50">
-                    <div className="flex-1 min-w-0">
-                      <div className="font-semibold text-sm md:text-base text-foreground truncate mb-1">{bill.name}</div>
-                      <div className="text-xs md:text-sm text-muted-foreground">
-                        {formatINRCompact(bill.amount)} • {bill.category.charAt(0).toUpperCase() + bill.category.slice(1)}
-                      </div>
-                    </div>
-                    <Button 
-                      size="default" 
-                      variant="default"
-                      onClick={() => toggleBillStatus(bill)}
-                      className="h-10 px-4 gap-2 w-full sm:w-auto shrink-0"
-                    >
-                      <CheckCircle className="h-4 w-4" />
-                      Mark Paid
-                    </Button>
-                  </div>
+                  <SwipeableBillCard
+                    key={bill.id}
+                    bill={bill}
+                    onToggleStatus={toggleBillStatus}
+                    getStatusColor={getBillStatusColor}
+                  />
                 ))}
               </CardContent>
             </Card>
@@ -1019,54 +1017,77 @@ const Dashboard = () => {
                   </Button>
                 </div>
               ) : (
-                <div className="overflow-x-auto">
-                  <div className="min-w-full inline-block align-middle">
-                    <Table className="min-w-[600px]">
-                      <TableHeader>
-                        <TableRow className="border-b">
-                          <TableHead className="text-sm font-semibold h-12">Bill Name</TableHead>
-                          <TableHead className="text-sm font-semibold">Amount</TableHead>
-                          <TableHead className="text-sm font-semibold">Due Date</TableHead>
-                          <TableHead className="text-sm font-semibold">Status</TableHead>
-                          <TableHead className="text-sm font-semibold text-right">Actions</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {bills.slice(0, 5).map((bill) => (
-                          <TableRow key={bill.id} className="border-b hover:bg-muted/50 transition-colors">
-                            <TableCell className="font-medium text-sm py-4">{bill.name}</TableCell>
-                            <TableCell className="text-sm py-4">{formatINRCompact(bill.amount)}</TableCell>
-                            <TableCell className="text-sm py-4 text-muted-foreground">{format(parseISO(bill.due_date), 'MMM dd, yyyy')}</TableCell>
-                            <TableCell className="py-4">
-                              <Badge className={`${getBillStatusColor(bill)} text-xs px-2.5 py-1`}>
-                                {bill.status.charAt(0).toUpperCase() + bill.status.slice(1)}
-                              </Badge>
-                            </TableCell>
-                            <TableCell className="py-4 text-right">
-                              <Button 
-                                size="default" 
-                                variant="outline"
-                                onClick={() => toggleBillStatus(bill)}
-                                disabled={bill.status === 'paid'}
-                                className="h-9 px-4 text-sm"
-                              >
-                                {bill.status === 'paid' ? 'Paid' : 'Mark Paid'}
-                              </Button>
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
+                <>
+                  {/* Mobile: Swipeable Cards */}
+                  <div className="block md:hidden space-y-3">
+                    {bills.slice(0, 5).map((bill) => (
+                      <SwipeableBillCard
+                        key={bill.id}
+                        bill={bill}
+                        onToggleStatus={toggleBillStatus}
+                        getStatusColor={getBillStatusColor}
+                      />
+                    ))}
                     {bills.length > 5 && (
-                      <div className="text-center p-6 border-t">
-                        <Button variant="outline" onClick={() => navigate('/bills')} size="default" className="h-10 px-6 gap-2">
-                          View All Bills
+                      <div className="text-center pt-4">
+                        <Button variant="outline" onClick={() => navigate('/bills')} size="default" className="h-10 px-6 gap-2 min-h-[48px]">
+                          {t('see_more', locale)} ({bills.length - 5} {t('bills', locale)})
                           <ArrowRight className="h-4 w-4" />
                         </Button>
                       </div>
                     )}
                   </div>
-                </div>
+
+                  {/* Desktop: Table View */}
+                  <div className="hidden md:block overflow-x-auto">
+                    <div className="min-w-full inline-block align-middle">
+                      <Table className="min-w-[600px]">
+                        <TableHeader>
+                          <TableRow className="border-b">
+                            <TableHead className="text-sm font-semibold h-12">{t('bill_name', locale)}</TableHead>
+                            <TableHead className="text-sm font-semibold">{t('amount', locale)}</TableHead>
+                            <TableHead className="text-sm font-semibold">{t('due_date', locale)}</TableHead>
+                            <TableHead className="text-sm font-semibold">{t('status', locale)}</TableHead>
+                            <TableHead className="text-sm font-semibold text-right">Actions</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {bills.slice(0, 5).map((bill) => (
+                            <TableRow key={bill.id} className="border-b hover:bg-muted/50 transition-colors">
+                              <TableCell className="font-medium text-sm py-4">{bill.name}</TableCell>
+                              <TableCell className="text-sm py-4">{formatINRCompact(bill.amount)}</TableCell>
+                              <TableCell className="text-sm py-4 text-muted-foreground">{format(parseISO(bill.due_date), 'MMM dd, yyyy')}</TableCell>
+                              <TableCell className="py-4">
+                                <Badge className={`${getBillStatusColor(bill)} text-xs px-2.5 py-1`}>
+                                  {t(bill.status, locale)}
+                                </Badge>
+                              </TableCell>
+                              <TableCell className="py-4 text-right">
+                                <Button 
+                                  size="default" 
+                                  variant="outline"
+                                  onClick={() => toggleBillStatus(bill)}
+                                  disabled={bill.status === 'paid'}
+                                  className="h-10 px-4 text-sm min-h-[48px]"
+                                >
+                                  {bill.status === 'paid' ? t('paid', locale) : t('mark_paid', locale)}
+                                </Button>
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                      {bills.length > 5 && (
+                        <div className="text-center p-6 border-t">
+                          <Button variant="outline" onClick={() => navigate('/bills')} size="default" className="h-10 px-6 gap-2 min-h-[48px]">
+                            {t('see_more', locale)} ({bills.length - 5} {t('bills', locale)})
+                            <ArrowRight className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </>
               )}
             </CardContent>
           </Card>

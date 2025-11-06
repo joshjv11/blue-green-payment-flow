@@ -25,8 +25,10 @@ import {
   Clock,
   AlertTriangle,
   Plus,
-  Save
+  Save,
+  ArrowRight
 } from 'lucide-react';
+import { cn } from '@/lib/utils';
 import { addDays, format, startOfMonth, addMonths } from 'date-fns';
 import { VoiceInput } from '@/components/mobile/VoiceInput';
 import { OCRScanner } from '@/components/mobile/OCRScanner';
@@ -129,6 +131,7 @@ const SmartBillForm = ({ formData, setFormData, onSubmit, editingBill }: SmartBi
   const [locale] = useLocalStorage<Locale>('invoiceflow_locale', 'en-IN');
   const [smartSuggestions, setSmartSuggestions] = useState<string[]>([]);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [showMoreOptions, setShowMoreOptions] = useState(false);
 
   // Smart category detection
   const detectCategory = (billName: string) => {
@@ -316,164 +319,165 @@ const SmartBillForm = ({ formData, setFormData, onSubmit, editingBill }: SmartBi
           />
         </div>
 
-        {/* Category Selection */}
-        <div className="space-y-2">
-          <Label htmlFor="category">Category</Label>
-          <Select value={formData.category} onValueChange={(value) => setFormData({ ...formData, category: value })}>
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="utilities">
-                <div className="flex items-center gap-2">
-                  <Zap className="h-4 w-4" />
-                  Utilities
-                </div>
-              </SelectItem>
-              <SelectItem value="rent">
-                <div className="flex items-center gap-2">
-                  <Home className="h-4 w-4" />
-                  Rent
-                </div>
-              </SelectItem>
-              <SelectItem value="insurance">
-                <div className="flex items-center gap-2">
-                  <Shield className="h-4 w-4" />
-                  Insurance
-                </div>
-              </SelectItem>
-              <SelectItem value="subscription">
-                <div className="flex items-center gap-2">
-                  <Smartphone className="h-4 w-4" />
-                  Subscription
-                </div>
-              </SelectItem>
-              <SelectItem value="loan">Loan</SelectItem>
-              <SelectItem value="credit_card">
-                <div className="flex items-center gap-2">
-                  <CreditCard className="h-4 w-4" />
-                  Credit Card
-                </div>
-              </SelectItem>
-              <SelectItem value="other">Other</SelectItem>
-            </SelectContent>
-          </Select>
+        {/* More Options Toggle - Progressive Disclosure */}
+        <div className="pt-2">
+          <Button
+            type="button"
+            variant="ghost"
+            onClick={() => setShowMoreOptions(!showMoreOptions)}
+            className="w-full justify-between h-10 min-h-[48px]"
+          >
+            <span>{t('more_options', locale)}</span>
+            <ArrowRight className={cn("h-4 w-4 transition-transform", showMoreOptions && "rotate-90")} />
+          </Button>
         </div>
 
-        {/* Email Reminder Toggle */}
-        <div className="space-y-4">
-          <div className="flex items-center justify-between p-4 bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-950/30 dark:to-purple-950/30 rounded-lg border border-blue-200 dark:border-blue-800">
-            <div className="space-y-1">
-              <Label className="flex items-center gap-2 text-base font-semibold text-blue-700 dark:text-blue-300">
-                📧 Email Reminder
-              </Label>
-              <p className="text-sm text-blue-600 dark:text-blue-400">
-                Get notified before this bill is due
-              </p>
-            </div>
-            <Switch
-              checked={formData.email_reminder}
-              onCheckedChange={(checked) => setFormData({ ...formData, email_reminder: checked })}
-              className="data-[state=checked]:bg-blue-600"
-            />
-          </div>
-
-          {formData.email_reminder && (
-            <div className="space-y-2 pl-4">
-              <Label>Remind me:</Label>
-              <Select 
-                value={formData.reminder_days.toString()} 
-                onValueChange={(value) => setFormData({ ...formData, reminder_days: parseInt(value) })}
-              >
-                <SelectTrigger>
+        {/* Advanced Options - Collapsible */}
+        {showMoreOptions && (
+          <div className="space-y-4 pt-2 border-t border-border/50">
+            {/* Category Selection */}
+            <div className="space-y-2">
+              <Label htmlFor="category">{t('category', locale)}</Label>
+              <Select value={formData.category} onValueChange={(value) => setFormData({ ...formData, category: value })}>
+                <SelectTrigger className="min-h-[48px]">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="0">Same day</SelectItem>
-                  <SelectItem value="1">1 day before</SelectItem>
-                  <SelectItem value="2">2 days before</SelectItem>
-                  <SelectItem value="7">7 days before</SelectItem>
+                  <SelectItem value="utilities">
+                    <div className="flex items-center gap-2">
+                      <Zap className="h-4 w-4" />
+                      Utilities
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="rent">
+                    <div className="flex items-center gap-2">
+                      <Home className="h-4 w-4" />
+                      Rent
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="insurance">
+                    <div className="flex items-center gap-2">
+                      <Shield className="h-4 w-4" />
+                      Insurance
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="subscription">
+                    <div className="flex items-center gap-2">
+                      <Smartphone className="h-4 w-4" />
+                      Subscription
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="loan">Loan</SelectItem>
+                  <SelectItem value="credit_card">
+                    <div className="flex items-center gap-2">
+                      <CreditCard className="h-4 w-4" />
+                      Credit Card
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="other">Other</SelectItem>
                 </SelectContent>
               </Select>
             </div>
-          )}
-        </div>
 
-        {/* Recurring Bill Toggle */}
-        <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
-          <div className="space-y-1">
-            <Label className="flex items-center gap-2">
-              <Clock className="h-4 w-4 text-blue-500" />
-              Recurring Bill
-            </Label>
-            <p className="text-xs text-muted-foreground">
-              This bill repeats every month
-            </p>
+            {/* Email Reminder Toggle */}
+            <div className="space-y-4">
+              <div className="flex items-center justify-between p-4 bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-950/30 dark:to-purple-950/30 rounded-lg border border-blue-200 dark:border-blue-800">
+                <div className="space-y-1">
+                  <Label className="flex items-center gap-2 text-base font-semibold text-blue-700 dark:text-blue-300">
+                    📧 {t('email_reminder', locale)}
+                  </Label>
+                  <p className="text-sm text-blue-600 dark:text-blue-400">
+                    Get notified before this bill is due
+                  </p>
+                </div>
+                <Switch
+                  checked={formData.email_reminder}
+                  onCheckedChange={(checked) => setFormData({ ...formData, email_reminder: checked })}
+                  className="data-[state=checked]:bg-blue-600"
+                />
+              </div>
+
+              {formData.email_reminder && (
+                <div className="space-y-2 pl-4">
+                  <Label>{t('reminder', locale)}:</Label>
+                  <Select 
+                    value={formData.reminder_days.toString()} 
+                    onValueChange={(value) => setFormData({ ...formData, reminder_days: parseInt(value) })}
+                  >
+                    <SelectTrigger className="min-h-[48px]">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="0">Same day</SelectItem>
+                      <SelectItem value="1">1 day before</SelectItem>
+                      <SelectItem value="2">2 days before</SelectItem>
+                      <SelectItem value="7">7 days before</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+            </div>
+
+            {/* Recurring Bill Toggle */}
+            <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+              <div className="space-y-1">
+                <Label className="flex items-center gap-2">
+                  <Clock className="h-4 w-4 text-blue-500" />
+                  {t('recurring', locale)}
+                </Label>
+                <p className="text-xs text-muted-foreground">
+                  This bill repeats every month
+                </p>
+              </div>
+              <Switch
+                checked={formData.recurring}
+                onCheckedChange={(checked) => setFormData({ ...formData, recurring: checked })}
+              />
+            </div>
+
+            {/* Status Selection */}
+            <div className="space-y-2">
+              <Label>{t('status', locale)}</Label>
+              <Select value={formData.status} onValueChange={(value: any) => setFormData({ ...formData, status: value })}>
+                <SelectTrigger className="min-h-[48px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="unpaid">
+                    <div className="flex items-center gap-2">
+                      <AlertTriangle className="h-4 w-4 text-orange-500" />
+                      {t('unpaid', locale)}
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="paid">
+                    <div className="flex items-center gap-2">
+                      <div className="w-2 h-2 bg-green-500 rounded-full" />
+                      {t('paid', locale)}
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="overdue">
+                    <div className="flex items-center gap-2">
+                      <AlertTriangle className="h-4 w-4 text-red-500" />
+                      {t('overdue', locale)}
+                    </div>
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Notes - Floating Label */}
+            <div className="space-y-2">
+              <FloatingLabelTextarea
+                id="notes"
+                label={t('notes', locale) + ' (Optional)'}
+                value={formData.notes}
+                onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                placeholder={t('notes', locale) + ' (Optional)'}
+                rows={3}
+              />
+            </div>
           </div>
-          <Switch
-            checked={formData.recurring}
-            onCheckedChange={(checked) => setFormData({ ...formData, recurring: checked })}
-          />
-        </div>
-
-        {/* Add to Calendar Toggle */}
-        <div className="flex items-center justify-between p-3 bg-green-50 dark:bg-green-950/30 rounded-lg border border-green-200 dark:border-green-800">
-          <div className="space-y-1">
-            <Label className="flex items-center gap-2 text-green-700 dark:text-green-300">
-              📅 Add to Google Calendar
-            </Label>
-            <p className="text-xs text-green-600 dark:text-green-400">
-              Create calendar event for this bill
-            </p>
-          </div>
-          <Switch
-            checked={true}
-            onCheckedChange={() => {}}
-            className="data-[state=checked]:bg-green-600"
-          />
-        </div>
-
-        {/* Status Selection */}
-        <div className="space-y-2">
-          <Label>Status</Label>
-          <Select value={formData.status} onValueChange={(value: any) => setFormData({ ...formData, status: value })}>
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="unpaid">
-                <div className="flex items-center gap-2">
-                  <AlertTriangle className="h-4 w-4 text-orange-500" />
-                  Unpaid
-                </div>
-              </SelectItem>
-              <SelectItem value="paid">
-                <div className="flex items-center gap-2">
-                  <div className="w-2 h-2 bg-green-500 rounded-full" />
-                  Paid
-                </div>
-              </SelectItem>
-              <SelectItem value="overdue">
-                <div className="flex items-center gap-2">
-                  <AlertTriangle className="h-4 w-4 text-red-500" />
-                  Overdue
-                </div>
-              </SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-
-        {/* Notes - Floating Label */}
-        <div className="space-y-2">
-          <FloatingLabelTextarea
-            id="notes"
-            label="Notes (Optional)"
-            value={formData.notes}
-            onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-            placeholder="Notes (Optional)"
-            rows={3}
-          />
-        </div>
+        )}
 
         {/* Submit Button with Gradient */}
         <Button 

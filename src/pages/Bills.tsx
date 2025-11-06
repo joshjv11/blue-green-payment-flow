@@ -701,6 +701,8 @@ const Bills = () => {
                           resetForm();
                         }
                       }}
+                      className="min-h-[48px] min-w-[48px]"
+                      data-tour="add-bill"
                     >
                       <Plus className="h-4 w-4" />
                       <span className="hidden sm:inline ml-1.5">Add</span>

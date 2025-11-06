@@ -24,7 +24,6 @@ import {
   RefreshCw,
   LayoutDashboard,
   Package,
-  Users,
   ShoppingCart,
   Bell,
   Calculator,
@@ -50,7 +49,6 @@ import { useSearchParams } from 'react-router-dom';
 const OverviewTab = lazy(() => import('@/components/analytics-tabs/OverviewTab'));
 const ProfitabilityTab = lazy(() => import('@/components/analytics-tabs/ProfitabilityTab'));
 const InventoryTab = lazy(() => import('@/components/analytics-tabs/InventoryTab'));
-const CustomerIntelligenceTab = lazy(() => import('@/components/analytics-tabs/CustomerIntelligenceTab'));
 const SalesTrendsTab = lazy(() => import('@/components/analytics-tabs/SalesTrendsTab'));
 const SmartAlertsTab = lazy(() => import('@/components/analytics-tabs/SmartAlertsTab'));
 const ScenarioPlanningTab = lazy(() => import('@/components/analytics-tabs/ScenarioPlanningTab'));
@@ -102,14 +100,6 @@ const advancedTabs: Tab[] = [
     icon: Package,
     component: InventoryTab,
     description: 'Stock & Forecasting',
-    premium: true
-  },
-  {
-    id: 'customers',
-    label: 'Customers',
-    icon: Users,
-    component: CustomerIntelligenceTab,
-    description: 'Customer Intelligence',
     premium: true
   },
   {
@@ -210,6 +200,10 @@ const Analytics = () => {
     const tabFromUrl = searchParams.get('tab');
     if (tabFromUrl && (tabFromUrl === 'basic' || advancedTabs.some(t => t.id === tabFromUrl))) {
       setActiveTab(tabFromUrl);
+    } else if (tabFromUrl === 'customers') {
+      // Redirect from old customers tab to overview
+      setActiveTab('overview');
+      setSearchParams({ tab: 'overview' });
     }
   }, [searchParams]);
 

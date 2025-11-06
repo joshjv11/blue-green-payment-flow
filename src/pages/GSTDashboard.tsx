@@ -24,6 +24,11 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { PageTransition } from '@/components/PageTransition';
 import { PremiumGuard } from '@/components/PremiumGuard';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { OneClickGSTRFiling } from '@/components/OneClickGSTRFiling';
+import { ITCMismatchDashboard } from '@/components/gst/ITCMismatchDashboard';
+import { LanguageToggle } from '@/components/mobile/LanguageToggle';
+import { useLocalStorage } from '@/hooks/useLocalStorage';
+import { Locale, t } from '@/utils/locale';
 
 export default function GSTDashboard() {
   const { toast } = useToast();
@@ -452,12 +457,22 @@ export default function GSTDashboard() {
           </div>
 
           {/* Main Content Tabs */}
-          <Tabs defaultValue="quick-test" className="space-y-4">
-            <TabsList className="grid w-full grid-cols-3">
+          <Tabs defaultValue="filing" className="space-y-4">
+            <TabsList className="grid w-full grid-cols-5">
+              <TabsTrigger value="filing">⚡ One-Click Filing</TabsTrigger>
               <TabsTrigger value="quick-test">🚀 Quick Test</TabsTrigger>
               <TabsTrigger value="itc">🔄 ITC Reconciliation</TabsTrigger>
+              <TabsTrigger value="mismatches">⚠️ Mismatches</TabsTrigger>
               <TabsTrigger value="hsn">🎯 HSN Suggestions</TabsTrigger>
             </TabsList>
+
+            {/* One-Click Filing Tab */}
+            <TabsContent value="filing" className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <OneClickGSTRFiling filingType="gstr1" />
+                <OneClickGSTRFiling filingType="gstr3b" />
+              </div>
+            </TabsContent>
 
             {/* Quick Test Tab */}
             <TabsContent value="quick-test" className="space-y-4">
@@ -688,7 +703,7 @@ export default function GSTDashboard() {
                 <CardHeader>
                   <CardTitle>ITC Reconciliation</CardTitle>
                   <CardDescription>
-                    Automatically match your purchase invoices with Form 2A/2B from GSTN
+                    Automatically match your purchase invoices with Form 2A/2B from GSTN using AI-powered fuzzy matching
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">

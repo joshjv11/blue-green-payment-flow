@@ -75,3 +75,33 @@ schedule = "0 * * * *"  # Every hour
 
 [functions.confirm-hsn]
 verify_jwt = true
+
+[functions.send-gst-filing-reminder]
+verify_jwt = false
+
+[[functions.send-gst-filing-reminder.cron]]
+schedule = "0 9 * * *"  # Daily at 9 AM IST
+
+[functions.sync-gstr2b-hourly]
+verify_jwt = false
+
+[[functions.sync-gstr2b-hourly.cron]]
+schedule = "0 * * * *"  # Every hour
+
+[functions.file-gstr1-with-gstn]
+verify_jwt = true
+
+[functions.file-gstr3b-with-gstn]
+verify_jwt = true
+
+[functions.process-einvoice-queue]
+verify_jwt = false
+
+[[functions.process-einvoice-queue.cron]]
+schedule = "*/5 * * * *"  # Every 5 minutes
+
+[functions.check-einvoice-30day-compliance]
+verify_jwt = false
+
+[[functions.check-einvoice-30day-compliance.cron]]
+schedule = "0 9 * * *"  # Daily at 9 AM IST

@@ -165,10 +165,23 @@ export const PlanProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       // Check admin status (separate call, non-blocking)
       try {
-        const { data: adminData } = await supabase.rpc('is_system_admin', { user_id: user.id });
+        const { data: adminData, error } = await supabase.rpc('is_system_admin', { user_id: user.id });
+        if (error) {
+          // RPC function might not exist - fail silently
+          if (error.code === '42883' || error.code === 'PGRST204' || error.message?.includes('does not exist')) {
+            setIsAdmin(false);
+            return;
+          }
+        }
         setIsAdmin(!!adminData);
-      } catch (err) {
-        console.warn('⚠️ Admin check failed, assuming non-admin');
+      } catch (err: any) {
+        // Fail silently if function doesn't exist
+        if (err?.code === '42883' || err?.code === 'PGRST204' || err?.message?.includes('does not exist')) {
+          setIsAdmin(false);
+          return;
+        }
+        // Only log unexpected errors
+        console.warn('⚠️ Admin check failed:', err);
         setIsAdmin(false);
       }
 

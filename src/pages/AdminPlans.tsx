@@ -50,8 +50,25 @@ export default function AdminPlans() {
       .single();
     
     // Check if admin via RPC or fallback to profile check
-    const { data: isAdminData } = await supabase.rpc('is_system_admin');
-    setIsAdmin(!!isAdminData);
+    try {
+      const { data: isAdminData, error } = await supabase.rpc('is_system_admin', { user_id: user.id });
+      if (error) {
+        // RPC function might not exist - fail silently
+        if (error.code === '42883' || error.code === 'PGRST204') {
+          setIsAdmin(false);
+          return;
+        }
+      }
+      setIsAdmin(!!isAdminData);
+    } catch (error: any) {
+      // Fail silently if function doesn't exist
+      if (error?.code === '42883' || error?.code === 'PGRST204' || error?.message?.includes('does not exist')) {
+        setIsAdmin(false);
+        return;
+      }
+      console.warn('⚠️ Admin check failed:', error);
+      setIsAdmin(false);
+    }
   };
 
   const fetchPlanChanges = async () => {

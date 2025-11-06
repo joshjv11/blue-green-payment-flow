@@ -30,11 +30,12 @@ export const usePaymentVerification = () => {
 
         if (error) {
           // Gracefully handle missing table (PGRST205)
-          if (error.code === 'PGRST205') {
-            console.warn('⚠️ payment_transactions table not found, skipping payment verification');
+          if (error.code === 'PGRST205' || error.code === 'PGRST204' || error.message?.includes('does not exist')) {
+            // Table doesn't exist - this is expected in some setups, fail silently
             return;
           }
-          console.error('❌ Error checking payment status:', error);
+          // Only log unexpected errors
+          console.warn('⚠️ Payment verification error:', error);
           return;
         }
 

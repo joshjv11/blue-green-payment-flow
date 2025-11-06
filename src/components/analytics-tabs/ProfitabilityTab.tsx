@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { CalendarIcon, Loader2 } from 'lucide-react';
+import { CalendarIcon, Loader2, TrendingUp } from 'lucide-react';
 import { useProfitabilityData } from '@/hooks/useProfitabilityData';
 import { SKUProfitabilityTable } from '@/components/analytics/SKUProfitabilityTable';
 import { ABCAnalysis } from '@/components/analytics/ABCAnalysis';
@@ -20,10 +20,41 @@ export default function ProfitabilityTab() {
     return (
       <Card>
         <CardContent className="pt-6">
-          <div className="text-center text-muted-foreground">
-            <p className="text-lg font-semibold mb-2">Error loading profitability data</p>
-            <p className="text-sm mb-4">{error}</p>
-            <Button onClick={refetch}>Retry</Button>
+          <div className="text-center text-muted-foreground py-8">
+            <p className="text-lg font-semibold mb-2 text-destructive">Error loading profitability data</p>
+            <p className="text-sm mb-6 max-w-md mx-auto">{error}</p>
+            <div className="flex gap-3 justify-center">
+              <Button onClick={refetch} variant="default">Retry</Button>
+              <Button onClick={() => window.location.href = '/sales'} variant="outline">
+                Go to Sales
+              </Button>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  // Show empty state if no data
+  if (!loading && skuData.length === 0 && abcData.length === 0 && categoryData.length === 0) {
+    return (
+      <Card>
+        <CardContent className="pt-6">
+          <div className="text-center text-muted-foreground py-12">
+            <TrendingUp className="h-12 w-12 mx-auto mb-4 opacity-50" />
+            <p className="text-lg font-semibold mb-2">No profitability data yet</p>
+            <p className="text-sm mb-6 max-w-md mx-auto">
+              Start tracking profitability by creating sales orders with products. 
+              Once you have sales data, your profitability analysis will appear here.
+            </p>
+            <div className="flex gap-3 justify-center">
+              <Button onClick={() => window.location.href = '/sales'} variant="default">
+                Create Sales Order
+              </Button>
+              <Button onClick={() => window.location.href = '/inventory'} variant="outline">
+                Add Products
+              </Button>
+            </div>
           </div>
         </CardContent>
       </Card>

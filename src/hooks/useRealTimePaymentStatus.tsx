@@ -61,8 +61,14 @@ export const useRealTimePaymentStatus = () => {
           }, 2000);
         }
 
-      } catch (error) {
-        console.error('❌ Error fetching payment status:', error);
+      } catch (error: any) {
+        // Gracefully handle missing table (PGRST205)
+        if (error?.code === 'PGRST205' || error?.message?.includes('does not exist')) {
+          // Table doesn't exist - this is expected in some setups
+          return;
+        }
+        // Only log unexpected errors
+        console.warn('⚠️ Error fetching payment status:', error);
       }
     };
 
