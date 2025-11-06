@@ -361,128 +361,82 @@ const handler = async (req: Request): Promise<Response> => {
       });
     }
 
-    // Small broadcasts: Process synchronously (original logic, optimized)
+    // Small broadcasts (≤50): Still use background processing to prevent timeouts
+    // Edge functions have 60s timeout, so even 50 messages with 1s delay = 50s+ (risky)
     const twilioUrl = `https://api.twilio.com/2010-04-01/Accounts/${TWILIO_ACCOUNT_SID}/Messages.json`;
     const twilioAuth = btoa(`${TWILIO_ACCOUNT_SID}:${TWILIO_AUTH_TOKEN}`);
-
-    let sentCount = 0;
-    let failedCount = 0;
-    const whatsappLinks: { name?: string | null; phone: string; url: string }[] = [];
-
-    // Process in batches of 10 with parallel execution
-    const batchSize = 10;
-    for (let i = 0; i < recipients.length; i += batchSize) {
-      const batch = recipients.slice(i, i + batchSize);
-      
-      // Process batch in parallel
-      const batchPromises = batch.map(async (customer) => {
-        if (!customer.phone) return { success: false, customer };
-
+    
+    // Prepare message queue
+    const messageQueue = recipients
+      .filter(c => c.phone)
+      .map(customer => {
         let formattedPhone = customer.phone.replace(/\s+/g, '');
         if (!formattedPhone.startsWith('+')) {
           formattedPhone = '+91' + formattedPhone;
         }
-
-        try {
-          const personalizedMessage = message
-            .replace('{customer_name}', customer.name || '')
-            .replace('{customer_email}', customer.email || '');
-
-          const digitsOnly = formattedPhone.replace(/\D/g, '');
-          const waUrl = `https://wa.me/${digitsOnly}?text=${encodeURIComponent(personalizedMessage)}`;
-
-          let formattedFromPhone = fromPhoneNumber.replace(/\s+/g, '').trim();
-          if (!formattedFromPhone.startsWith('+')) {
-            formattedFromPhone = '+91' + formattedFromPhone;
-          }
-
-          const twilioBody = new URLSearchParams({
-            From: `whatsapp:${formattedFromPhone}`,
-            To: `whatsapp:${formattedPhone}`,
-            Body: personalizedMessage
-          });
-
-          const twilioResponse = await fetch(twilioUrl, {
-            method: 'POST',
-            headers: {
-              'Authorization': `Basic ${twilioAuth}`,
-              'Content-Type': 'application/x-www-form-urlencoded'
-            },
-            body: twilioBody.toString()
-          });
-
-          const twilioData = await twilioResponse.json();
-
-          if (twilioResponse.ok) {
-            const insertPayload: Record<string, unknown> = {
-              user_id: user.id,
-              phone_number: formattedPhone,
-              message_type: broadcastType,
-              message_content: personalizedMessage,
-              broadcast_id: broadcast.id,
-              status: 'sent',
-              twilio_message_sid: twilioData.sid,
-              sent_at: new Date().toISOString()
-            };
-            if (customer.id) insertPayload.customer_id = customer.id;
-
-            await supabase.from('whatsapp_messages').insert(insertPayload);
-            return { success: true, customer, waUrl, formattedPhone };
-          } else {
-            console.error(`❌ Failed to send to ${customer.name}:`, twilioData);
-            return { success: false, customer };
-          }
-        } catch (error) {
-          console.error(`❌ Error sending to ${customer.name}:`, error);
-          return { success: false, customer };
+        
+        const personalizedMessage = message
+          .replace('{customer_name}', customer.name || '')
+          .replace('{customer_email}', customer.email || '');
+        
+        const digitsOnly = formattedPhone.replace(/\D/g, '');
+        const waUrl = `https://wa.me/${digitsOnly}?text=${encodeURIComponent(personalizedMessage)}`;
+        
+        let formattedFromPhone = fromPhoneNumber.replace(/\s+/g, '').trim();
+        if (!formattedFromPhone.startsWith('+')) {
+          formattedFromPhone = '+91' + formattedFromPhone;
         }
+        
+        return {
+          customer,
+          formattedPhone,
+          personalizedMessage,
+          waUrl,
+          formattedFromPhone
+        };
       });
 
-      const batchResults = await Promise.all(batchPromises);
-      
-      batchResults.forEach(result => {
-        if (result.success) {
-          sentCount++;
-          whatsappLinks.push({
-            name: result.customer.name,
-            phone: result.formattedPhone!,
-            url: result.waUrl!
-          });
-        } else {
-          failedCount++;
-        }
-      });
+    // Always use background processing to prevent timeouts
+    processBroadcastQueue(
+      supabase,
+      broadcast.id,
+      messageQueue,
+      twilioUrl,
+      twilioAuth,
+      user.id,
+      broadcastType
+    ).catch(err => {
+      console.error('❌ Background broadcast processing error:', err);
+      supabase
+        .from('whatsapp_broadcasts')
+        .update({ status: 'failed', error_message: err.message })
+        .eq('id', broadcast.id)
+        .catch(console.error);
+    });
 
-      // Small delay between batches to respect Twilio rate limits
-      if (i + batchSize < recipients.length) {
-        await new Promise(resolve => setTimeout(resolve, 500));
-      }
-    }
-
-    // Update broadcast record
-    await supabase
-      .from('whatsapp_broadcasts')
-      .update({
-        messages_sent: sentCount,
-        messages_failed: failedCount,
-        status: 'completed',
-        sent_at: new Date().toISOString()
-      })
-      .eq('id', broadcast.id);
-
-    console.log(`✅ Broadcast completed: ${sentCount} sent, ${failedCount} failed`);
+    // Return immediately
+    const whatsappLinks = messageQueue.map(m => ({
+      name: m.customer.name,
+      phone: m.formattedPhone,
+      url: m.waUrl
+    }));
 
     return new Response(JSON.stringify({
       success: true,
       broadcast_id: broadcast.id,
-      sent: sentCount,
-      failed: failedCount,
+      status: 'queued',
+      message: `Broadcast queued for ${recipients.length} recipients. Processing in background...`,
+      sent: 0,
+      failed: 0,
       whatsappLinks,
       totalLinks: whatsappLinks.length
     }), {
       status: 200,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }
     });
+
+    // All broadcasts now use background processing to prevent timeouts
+    // (Code removed - already returned above)
 
   } catch (error: any) {
     console.error('❌ Broadcast error:', error);

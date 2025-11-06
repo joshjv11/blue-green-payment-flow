@@ -35,6 +35,9 @@ export function EInvoiceButton({
   const [loading, setLoading] = useState(false);
   const [showQRDialog, setShowQRDialog] = useState(false);
   const [action, setAction] = useState<'irn' | 'ewaybill' | null>(null);
+  
+  // Auto-sync e-invoice status every 5 minutes
+  useAutoSyncEInvoice(irn ? [salesOrderId] : []);
 
   if (!isPremium) {
     return (

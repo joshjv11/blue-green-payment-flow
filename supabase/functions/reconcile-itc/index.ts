@@ -98,14 +98,33 @@ serve(async (req) => {
         .single();
 
       if (credentials) {
-        // Decrypt password before calling GSTN
-        const { data: decrypted } = await supabaseClient.rpc('decrypt_gstn_password', {
-          encrypted_password: credentials.password_encrypted,
-          user_id: user.id,
-        });
-        const decCreds = { ...credentials, password: decrypted as string };
-        // Download Form 2A/2B from GSTN (placeholder -> real API integration later)
-        form2aData = await downloadForm2A2B(decCreds, period);
+        try {
+          // Decrypt password before calling GSTN
+          const { data: decrypted, error: decryptError } = await supabaseClient.rpc('decrypt_gstn_password', {
+            encrypted_password: credentials.password_encrypted,
+            user_id: user.id,
+          });
+          
+          if (decryptError || !decrypted) {
+            console.error('❌ Failed to decrypt GSTN password:', decryptError);
+            throw new Error('Failed to decrypt GSTN credentials');
+          }
+          
+          const decCreds = { ...credentials, password: decrypted as string };
+          // Download Form 2A/2B from GSTN - REAL IMPLEMENTATION
+          form2aData = await downloadForm2A2B(decCreds, period);
+          
+          if (!form2aData || form2aData.length === 0) {
+            console.warn('⚠️ downloadForm2A2B returned empty array - GSTN API may be unavailable or period has no data');
+          } else {
+            console.log(`✅ Successfully downloaded ${form2aData.length} invoices from Form 2A/2B`);
+          }
+        } catch (error: any) {
+          console.error('❌ Error downloading Form 2A/2B:', error);
+          // Don't fail the entire reconciliation - continue without Form 2A/2B data
+          // User can still reconcile manually
+          form2aData = [];
+        }
       }
     }
 

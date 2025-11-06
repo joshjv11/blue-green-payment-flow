@@ -84,7 +84,37 @@ serve(async (req) => {
         if (link2) paymentLinkRecord = link2;
       }
 
-      const userId = paymentLinkRecord?.user_id || (referenceId?.split('-')[1] || null);
+      // Extract userId from multiple possible sources
+      let userId = paymentLinkRecord?.user_id;
+      
+      // Method 1: From payment_link record
+      if (!userId && paymentLinkRecord) {
+        userId = paymentLinkRecord.user_id;
+      }
+      
+      // Method 2: From reference_id pattern (e.g., "pro-user123" or "premium-user123")
+      if (!userId && referenceId) {
+        const match = referenceId.match(/(?:pro|premium)-(.+)/);
+        if (match) userId = match[1];
+        // Also try splitting by dash
+        const parts = referenceId.split('-');
+        if (parts.length >= 2 && parts[1].startsWith('user')) {
+          userId = parts[1];
+        }
+      }
+      
+      // Method 3: From payment entity notes
+      if (!userId && paymentEntity?.notes?.user_id) {
+        userId = paymentEntity.notes.user_id;
+      }
+      
+      // Method 4: Try to extract from payment link description/notes
+      if (!userId && paymentLinkRecord?.notes) {
+        const notesMatch = paymentLinkRecord.notes.match(/user[_-]?([a-f0-9-]+)/i);
+        if (notesMatch) userId = notesMatch[1];
+      }
+      
+      console.log('🔍 Extracted userId:', userId, 'from referenceId:', referenceId, 'paymentLinkRecord:', paymentLinkRecord?.id);
 
       // Insert/Update payment_transactions
       if (userId) {
