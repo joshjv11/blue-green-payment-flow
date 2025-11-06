@@ -111,10 +111,10 @@ export function AppSidebar() {
 
   const getNavClassName = ({ isActive }: { isActive: boolean }, isLocked: boolean) =>
     isActive
-      ? "bg-gradient-to-r from-primary/20 via-primary/15 to-primary/5 text-primary font-semibold border-l-[4px] border-primary shadow-md shadow-primary/20"
+      ? "bg-gradient-to-r from-primary/25 via-primary/20 to-primary/10 text-primary font-semibold border-l-[4px] border-primary shadow-lg shadow-primary/25 backdrop-blur-sm"
       : isLocked
-      ? "opacity-60 cursor-not-allowed hover:bg-muted/30 text-muted-foreground"
-      : "hover:bg-gradient-to-r hover:from-muted/70 hover:via-muted/50 hover:to-transparent text-muted-foreground hover:text-foreground transition-all duration-300 hover:shadow-sm";
+      ? "opacity-60 cursor-not-allowed hover:bg-muted/40 text-muted-foreground hover:shadow-sm"
+      : "hover:bg-gradient-to-r hover:from-muted/80 hover:via-muted/60 hover:to-transparent text-muted-foreground hover:text-foreground transition-all duration-300 hover:shadow-md hover:border-l-2 hover:border-primary/30";
 
   const renderNavItem = (item: typeof coreItems[0] & { requiredPlan?: "pro" | "premium"; isProminent?: boolean; isNew?: boolean }, index: number = 0) => {
     const hasAccess = hasFeatureAccess(item.featureKey, item.requiredPlan);
@@ -160,7 +160,7 @@ export function AppSidebar() {
             }
           }}
         >
-          <div className="flex items-center gap-3 flex-1 min-w-0 px-3 py-3 rounded-lg transition-all duration-300 group/item hover:scale-[1.02]">
+          <div className="flex items-center gap-3 flex-1 min-w-0 px-3 py-3 rounded-xl transition-all duration-300 group/item hover:scale-[1.02] hover:shadow-md">
             <motion.div
               animate={{
                 scale: isHovered ? 1.1 : 1,
@@ -296,19 +296,20 @@ export function AppSidebar() {
   return (
     <Sidebar 
       collapsible="icon" 
-      className="md:collapsible-icon border-r-2 border-border/60 backdrop-blur-xl bg-sidebar/98 shadow-2xl z-50 !block !md:block"
+      className="md:collapsible-icon border-r-2 border-border/80 backdrop-blur-xl bg-gradient-to-b from-sidebar via-sidebar/98 to-sidebar shadow-2xl z-50 !block !md:block"
       style={{ 
         position: 'relative',
         minWidth: open ? '256px' : '64px',
         width: open ? '256px' : '64px',
         transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-        boxShadow: '2px 0 8px rgba(0, 0, 0, 0.1)',
+        boxShadow: '4px 0 16px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.02)',
         display: 'block !important',
         visibility: 'visible !important',
-        opacity: '1 !important'
+        opacity: '1 !important',
+        background: 'linear-gradient(to bottom, hsl(var(--sidebar)), hsl(var(--sidebar)) 98%, hsl(var(--sidebar) / 0.95))'
       }}
     >
-      <SidebarContent className="overflow-y-auto scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent bg-gradient-to-b from-sidebar via-sidebar to-sidebar/95">
+      <SidebarContent className="overflow-y-auto scrollbar-thin scrollbar-thumb-border/50 scrollbar-track-transparent bg-gradient-to-b from-transparent via-transparent to-transparent">
         {/* Plan Badge */}
         <AnimatePresence>
           {loading ? (
@@ -328,7 +329,7 @@ export function AppSidebar() {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -10 }}
               transition={{ duration: 0.3 }}
-              className="px-4 py-4 border-b border-border/50 bg-gradient-to-b from-sidebar/50 to-transparent"
+              className="px-4 py-5 border-b border-border/60 bg-gradient-to-br from-primary/5 via-primary/3 to-transparent backdrop-blur-sm"
             >
               <div className="flex items-center gap-3 mb-3">
                 <motion.div
@@ -447,7 +448,7 @@ export function AppSidebar() {
                 exit={{ opacity: 0, y: -5 }}
                 transition={{ duration: 0.2 }}
               >
-                <SidebarGroupLabel className="text-xs uppercase tracking-wider px-4 py-2.5 font-semibold text-muted-foreground/80">
+                <SidebarGroupLabel className="text-xs uppercase tracking-widest px-4 py-3 font-bold text-muted-foreground/70 bg-gradient-to-r from-transparent via-muted/20 to-transparent border-b border-border/30">
                   Core
                 </SidebarGroupLabel>
               </motion.div>
@@ -756,7 +757,7 @@ export function AppSidebar() {
                 exit={{ opacity: 0, y: -5 }}
                 transition={{ duration: 0.2 }}
               >
-                <SidebarGroupLabel className="text-xs uppercase tracking-wider px-4 py-2.5 font-semibold text-muted-foreground/80">
+                <SidebarGroupLabel className="text-xs uppercase tracking-widest px-4 py-3 font-bold text-muted-foreground/70 bg-gradient-to-r from-transparent via-muted/20 to-transparent border-b border-border/30">
                   System
                 </SidebarGroupLabel>
               </motion.div>
@@ -815,7 +816,7 @@ export function AppSidebar() {
                 exit={{ opacity: 0, y: -5 }}
                 transition={{ duration: 0.2 }}
               >
-                <SidebarGroupLabel className="text-xs uppercase tracking-wider flex items-center gap-2.5 px-4 py-2.5 font-semibold text-muted-foreground/80">
+                <SidebarGroupLabel className="text-xs uppercase tracking-widest flex items-center gap-2.5 px-4 py-3 font-bold text-muted-foreground/70 bg-gradient-to-r from-transparent via-muted/20 to-transparent border-b border-border/30">
                   <Shield className="h-3.5 w-3.5" />
                   <span>Admin</span>
                 </SidebarGroupLabel>
@@ -909,7 +910,7 @@ export function AppSidebar() {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.3 }}
-          className="mt-auto border-t border-border/50 pt-3 px-4 pb-4 bg-gradient-to-t from-sidebar/50 to-transparent"
+          className="mt-auto border-t-2 border-border/60 pt-4 px-4 pb-4 bg-gradient-to-t from-sidebar/80 via-sidebar/60 to-transparent backdrop-blur-sm"
         >
           <motion.div
             whileHover={{ scale: 1.02, x: 2 }}
@@ -920,7 +921,7 @@ export function AppSidebar() {
               size="sm"
               onClick={signOut}
               className={cn(
-                "w-full justify-start gap-3 text-sm font-medium text-muted-foreground hover:text-destructive hover:bg-destructive/10 h-10 rounded-lg transition-all duration-300",
+                "w-full justify-start gap-3 text-sm font-semibold text-muted-foreground hover:text-destructive hover:bg-destructive/15 h-11 rounded-xl transition-all duration-300 hover:shadow-md hover:scale-[1.02] border border-transparent hover:border-destructive/20",
                 !open && "justify-center px-2"
               )}
             >
