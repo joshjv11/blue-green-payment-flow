@@ -254,56 +254,76 @@ const Dashboard = () => {
     }
   };
 
-  // Load Pro features data
+  // Load Pro features data - OPTIMIZED: Single RPC call instead of 4 separate queries
   const loadProFeaturesData = async () => {
     try {
       if (!user) return;
 
-      // Load savings goals
-      const { data: goals } = await supabase
-        .from('savings_goals')
-        .select('*')
-        .eq('user_id', user.id)
-        .eq('is_completed', false)
-        .order('created_at', { ascending: false })
-        .limit(3);
+      // Use optimized RPC function to fetch all data in one query
+      const { data, error } = await supabase.rpc('get_dashboard_data', {
+        p_user_id: user.id
+      });
 
-      setSavingsGoals(goals || []);
+      if (error) {
+        // Fallback to individual queries if RPC fails
+        console.warn('RPC failed, falling back to individual queries:', error);
+        await loadProFeaturesDataFallback();
+        return;
+      }
 
-      // Load active EMIs
-      const { data: emis } = await supabase
-        .from('emi_tracker')
-        .select('*')
-        .eq('user_id', user.id)
-        .eq('is_active', true)
-        .order('next_due_date', { ascending: true })
-        .limit(3);
+      if (data) {
+        setSavingsGoals(data.savings_goals || []);
+        setActiveEMIs(data.active_emis || []);
+        
+        // Process spending alerts
+        const expenses = data.current_month_expenses || [];
+        const alerts = data.spending_alerts || [];
+        
+        if (alerts.length > 0 && expenses.length > 0) {
+          const categorySpending: Record<string, number> = {};
+          expenses.forEach((e: any) => {
+            categorySpending[e.category] = (categorySpending[e.category] || 0) + parseFloat(e.total_amount || 0);
+          });
 
-      setActiveEMIs(emis || []);
+          for (const alert of alerts) {
+            const currentSpending = categorySpending[alert.category] || 0;
+            const threshold = (alert.monthly_limit * alert.alert_threshold) / 100;
+            if (currentSpending >= threshold) {
+              setSpendingAlert(alert);
+              break;
+            }
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Error loading Pro features data:', error);
+      // Fallback to individual queries
+      await loadProFeaturesDataFallback();
+    }
+  };
 
-      // Check for spending alerts
-      const today = new Date();
-      const currentMonthStart = new Date(today.getFullYear(), today.getMonth(), 1);
-      
-      const { data: expenses } = await supabase
-        .from('expenses')
-        .select('category, amount')
-        .eq('user_id', user.id)
-        .gte('expense_date', currentMonthStart.toISOString().split('T')[0]);
+  // Fallback: Individual queries (original logic)
+  const loadProFeaturesDataFallback = async () => {
+    if (!user) return;
 
-      const { data: alerts } = await supabase
-        .from('spending_alerts')
-        .select('*')
-        .eq('user_id', user.id)
-        .eq('is_active', true);
+    try {
+      const [goalsResult, emisResult, expensesResult, alertsResult] = await Promise.all([
+        supabase.from('savings_goals').select('*').eq('user_id', user.id).eq('is_completed', false).order('created_at', { ascending: false }).limit(3),
+        supabase.from('emi_tracker').select('*').eq('user_id', user.id).eq('is_active', true).order('next_due_date', { ascending: true }).limit(3),
+        supabase.from('expenses').select('category, amount').eq('user_id', user.id).gte('date', new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0]),
+        supabase.from('spending_alerts').select('*').eq('user_id', user.id).eq('is_active', true)
+      ]);
 
-      if (alerts && expenses) {
+      setSavingsGoals(goalsResult.data || []);
+      setActiveEMIs(emisResult.data || []);
+
+      if (alertsResult.data && expensesResult.data) {
         const categorySpending: Record<string, number> = {};
-        expenses.forEach((e: any) => {
+        expensesResult.data.forEach((e: any) => {
           categorySpending[e.category] = (categorySpending[e.category] || 0) + parseFloat(e.amount || 0);
         });
 
-        for (const alert of alerts) {
+        for (const alert of alertsResult.data) {
           const currentSpending = categorySpending[alert.category] || 0;
           const threshold = (alert.monthly_limit * alert.alert_threshold) / 100;
           if (currentSpending >= threshold) {
@@ -313,7 +333,7 @@ const Dashboard = () => {
         }
       }
     } catch (error) {
-      console.error('Error loading Pro features data:', error);
+      console.error('Fallback query error:', error);
     }
   };
 

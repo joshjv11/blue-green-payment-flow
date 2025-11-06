@@ -154,13 +154,68 @@ serve(async (req) => {
         changed_at: new Date().toISOString(),
       });
 
+    // Auto-upload to GSTN portal if credentials are available
+    let uploadResult = null;
+    try {
+      const { data: credentials } = await supabaseClient
+        .from("gstn_credentials")
+        .select("*")
+        .eq("user_id", user.id)
+        .eq("is_active", true)
+        .single();
+
+      if (credentials) {
+        // Decrypt password
+        const { data: decrypted } = await supabaseClient.rpc('decrypt_gstn_password', {
+          encrypted_password: credentials.password_encrypted,
+          user_id: user.id,
+        });
+
+        if (decrypted) {
+          uploadResult = await uploadGSTR1ToGSTN(
+            gstr1Data,
+            credentials.username,
+            decrypted as string,
+            credentials.api_endpoint || 'https://einvoice.gst.gov.in',
+            filing_period
+          );
+
+          // Update filing status based on upload result
+          if (uploadResult.success) {
+            await supabaseClient
+              .from("gstr1_filings")
+              .update({
+                status: "uploaded",
+                gstn_ack_no: uploadResult.ack_no,
+                uploaded_at: new Date().toISOString(),
+              })
+              .eq("id", filing.id);
+          } else {
+            await supabaseClient
+              .from("gstr1_filings")
+              .update({
+                status: "upload_failed",
+                upload_error: uploadResult.error,
+              })
+              .eq("id", filing.id);
+          }
+        }
+      }
+    } catch (uploadError) {
+      console.error("GSTR-1 upload error (non-blocking):", uploadError);
+      // Don't fail the entire request if upload fails
+    }
+
     return new Response(
       JSON.stringify({
         success: true,
         filing_id: filing.id,
         summary,
         json_data: gstr1Data,
-        message: "GSTR-1 generated successfully",
+        upload_result: uploadResult,
+        message: uploadResult?.success 
+          ? "GSTR-1 generated and uploaded to GSTN successfully" 
+          : "GSTR-1 generated successfully" + (uploadResult ? `. Upload failed: ${uploadResult.error}` : ". Upload skipped (no credentials)"),
       }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
@@ -354,6 +409,65 @@ function calculateGSTR1Summary(salesOrders: any[]): any {
     b2b_count,
     b2c_count,
   };
+}
+
+// Upload GSTR-1 to GSTN portal
+async function uploadGSTR1ToGSTN(
+  gstr1Data: any,
+  username: string,
+  password: string,
+  apiEndpoint: string,
+  period: string
+): Promise<{ success: boolean; ack_no?: string; error?: string }> {
+  try {
+    // 1. Authenticate with GSTN
+    const authResponse = await fetch(`${apiEndpoint}/auth`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ username, password }),
+    });
+
+    if (!authResponse.ok) {
+      return { success: false, error: "GSTN authentication failed" };
+    }
+
+    const authData = await authResponse.json();
+    const token = authData.token;
+    if (!token) {
+      return { success: false, error: "No auth token received" };
+    }
+
+    // 2. Upload GSTR-1 JSON
+    const uploadResponse = await fetch(`${apiEndpoint}/returns/gstr1/upload`, {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        gstin: gstr1Data.gstin,
+        ret_period: period,
+        data: gstr1Data,
+      }),
+    });
+
+    if (!uploadResponse.ok) {
+      const errorData = await uploadResponse.json().catch(() => ({}));
+      return { 
+        success: false, 
+        error: errorData.error || errorData.message || `Upload failed: ${uploadResponse.statusText}` 
+      };
+    }
+
+    const uploadData = await uploadResponse.json();
+    
+    return {
+      success: true,
+      ack_no: uploadData.ack_no || uploadData.acknowledgement_number || null,
+    };
+  } catch (error: any) {
+    return { success: false, error: error.message || "Upload failed" };
+  }
 }
 
 // Calculate due date for filing

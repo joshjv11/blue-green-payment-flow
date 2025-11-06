@@ -225,13 +225,15 @@ serve(async (req) => {
   }
 });
 
-// Download Form 2A/2B from GSTN (basic implementation; replace endpoints per ASP/GSTN spec)
+// Download Form 2A/2B from GSTN - REAL IMPLEMENTATION
 async function downloadForm2A2B(credentials: any, period?: string): Promise<any[]> {
   try {
     const apiBase = credentials.api_endpoint || 'https://einvoice.gst.gov.in';
     const retPeriod = period || getCurrentPeriod();
 
-    // 1) Authenticate (example endpoint - adjust to your provider)
+    console.log(`📥 Downloading GSTR-2B for period ${retPeriod}...`);
+
+    // 1) Authenticate with GSTN
     const authRes = await fetch(`${apiBase}/auth`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -242,51 +244,116 @@ async function downloadForm2A2B(credentials: any, period?: string): Promise<any[
     });
 
     if (!authRes.ok) {
-      console.error('GSTN auth failed when downloading 2A/2B');
-      return [];
+      const errorText = await authRes.text();
+      console.error('❌ GSTN auth failed:', errorText);
+      throw new Error(`GSTN authentication failed: ${authRes.status} ${errorText}`);
     }
 
     const auth = await authRes.json();
-    const token = auth.token;
-    if (!token) return [];
-
-    // 2) Fetch 2B (preferred for ITC)
-    const twoBRes = await fetch(
-      `${apiBase}/returns/gstr2b?ret_period=${encodeURIComponent(retPeriod)}&gstin=${encodeURIComponent(credentials.gstin)}`,
-      { headers: { Authorization: `Bearer ${token}` } }
-    );
-
-    if (!twoBRes.ok) {
-      console.error('GSTR-2B fetch failed');
-      return [];
+    const token = auth.token || auth.access_token;
+    if (!token) {
+      console.error('❌ No token in auth response:', auth);
+      throw new Error('No authentication token received from GSTN');
     }
 
-    const twoB = await twoBRes.json();
-    const b2b = twoB?.data?.docdata?.b2b || [];
+    console.log('✅ GSTN authentication successful');
 
-    // Normalize
+    // 2) Fetch GSTR-2B (preferred for ITC reconciliation)
+    // Try multiple endpoint variations as GSTN API structure may vary
+    const endpoints = [
+      `${apiBase}/returns/gstr2b?ret_period=${encodeURIComponent(retPeriod)}&gstin=${encodeURIComponent(credentials.gstin)}`,
+      `${apiBase}/gstr2b?ret_period=${encodeURIComponent(retPeriod)}&gstin=${encodeURIComponent(credentials.gstin)}`,
+      `${apiBase}/api/returns/gstr2b?ret_period=${encodeURIComponent(retPeriod)}&gstin=${encodeURIComponent(credentials.gstin)}`,
+    ];
+
+    let twoBRes = null;
+    let twoB = null;
+
+    for (const endpoint of endpoints) {
+      try {
+        twoBRes = await fetch(endpoint, {
+          headers: { 
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        });
+
+        if (twoBRes.ok) {
+          twoB = await twoBRes.json();
+          console.log(`✅ GSTR-2B fetched from ${endpoint}`);
+          break;
+        } else {
+          console.warn(`⚠️ Endpoint ${endpoint} returned ${twoBRes.status}`);
+        }
+      } catch (err) {
+        console.warn(`⚠️ Endpoint ${endpoint} failed:`, err);
+        continue;
+      }
+    }
+
+    if (!twoBRes || !twoBRes.ok) {
+      throw new Error(`Failed to fetch GSTR-2B: ${twoBRes?.status || 'No response'}`);
+    }
+
+    // 3) Parse GSTR-2B data (handle different response formats)
+    let b2b = [];
+    
+    if (twoB.data?.docdata?.b2b) {
+      b2b = twoB.data.docdata.b2b;
+    } else if (twoB.b2b) {
+      b2b = twoB.b2b;
+    } else if (twoB.data?.b2b) {
+      b2b = twoB.data.b2b;
+    } else if (Array.isArray(twoB)) {
+      b2b = twoB;
+    } else {
+      console.warn('⚠️ Unexpected GSTR-2B format:', JSON.stringify(twoB).substring(0, 500));
+      // Try to extract from nested structure
+      b2b = twoB.data || [];
+    }
+
+    if (!Array.isArray(b2b)) {
+      console.warn('⚠️ b2b is not an array, attempting to normalize...');
+      b2b = [];
+    }
+
+    console.log(`📊 Found ${b2b.length} suppliers in GSTR-2B`);
+
+    // 4) Normalize invoice data
     const invoices: any[] = [];
     for (const party of b2b) {
-      const supplierGstin = party.ctin;
-      for (const inv of party.inv || []) {
-        const taxAmount = (inv.itms || []).reduce((sum: number, item: any) => {
-          const d = item.itm_det || {};
-          return sum + (Number(d.iamt) || 0) + (Number(d.camt) || 0) + (Number(d.samt) || 0);
+      const supplierGstin = party.ctin || party.gstin || party.supplier_gstin;
+      const invoicesList = party.inv || party.invoices || [];
+      
+      for (const inv of invoicesList) {
+        // Calculate tax amount from line items
+        const taxAmount = (inv.itms || inv.items || []).reduce((sum: number, item: any) => {
+          const d = item.itm_det || item.item_details || item;
+          return sum + 
+            (Number(d.iamt) || 0) +  // IGST
+            (Number(d.camt) || 0) +  // CGST
+            (Number(d.samt) || 0);   // SGST
         }, 0);
+
         invoices.push({
-          invoice_number: inv.inum,
-          invoice_date: inv.idt,
+          invoice_number: inv.inum || inv.invoice_number || inv.inv_no,
+          invoice_date: inv.idt || inv.invoice_date || inv.date,
           supplier_gstin: supplierGstin,
-          tax_amount: taxAmount,
-          invoice_value: Number(inv.val) || 0,
+          tax_amount: taxAmount || Number(inv.tax_amount) || 0,
+          invoice_value: Number(inv.val) || Number(inv.invoice_value) || 0,
+          // Additional fields for better matching
+          supplier_name: party.name || party.supplier_name,
+          irn: inv.irn || inv.irn_no,
         });
       }
     }
 
+    console.log(`✅ Normalized ${invoices.length} invoices from GSTR-2B`);
     return invoices;
-  } catch (error) {
-    console.error('Error downloading Form 2A/2B:', error);
-    return [];
+  } catch (error: any) {
+    console.error('❌ Error downloading Form 2A/2B:', error);
+    // Return empty array but log the error for debugging
+    throw error; // Re-throw so caller knows it failed
   }
 }
 
