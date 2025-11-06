@@ -402,10 +402,10 @@ function AppLayout({ children }: { children: React.ReactNode }) {
     <SidebarProvider defaultOpen={true}>
       <div className="flex min-h-screen w-full relative">
         {/* Sidebar - Always rendered, never conditionally hidden */}
-        <div className="relative z-50">
+        <div className="relative z-50 flex-shrink-0">
           <AppSidebar />
         </div>
-        <div className="flex-1 flex flex-col min-w-0 relative">
+        <div className="flex-1 flex flex-col min-w-0 relative ml-0">
           <header className="sticky top-0 z-40 h-14 md:h-16 flex items-center gap-2 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 px-3 md:px-4 safe-area-inset-top">
             <SidebarTrigger />
             <div className="flex-1" />

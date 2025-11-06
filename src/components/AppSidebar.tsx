@@ -291,16 +291,21 @@ export function AppSidebar() {
   // Always render sidebar, show loading state instead of hiding
   // This prevents sidebar from disappearing on deployments
 
+  // Force sidebar to always be visible - never hide it
+  // This ensures sidebar doesn't disappear on deployments
   return (
     <Sidebar 
-      collapsible="offcanvas" 
-      className="md:collapsible-icon border-r-2 border-border/60 backdrop-blur-xl bg-sidebar/98 shadow-2xl z-50"
+      collapsible="icon" 
+      className="md:collapsible-icon border-r-2 border-border/60 backdrop-blur-xl bg-sidebar/98 shadow-2xl z-50 !block"
       style={{ 
         position: 'relative',
         minWidth: open ? '256px' : '64px',
         width: open ? '256px' : '64px',
         transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-        boxShadow: '2px 0 8px rgba(0, 0, 0, 0.1)'
+        boxShadow: '2px 0 8px rgba(0, 0, 0, 0.1)',
+        display: 'block !important',
+        visibility: 'visible !important',
+        opacity: '1 !important'
       }}
     >
       <SidebarContent className="overflow-y-auto scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent bg-gradient-to-b from-sidebar via-sidebar to-sidebar/95">
