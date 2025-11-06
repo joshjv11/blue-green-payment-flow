@@ -87,10 +87,12 @@ All colors MUST be HSL.
     --popover: 0 0% 100%;
     --popover-foreground: 222 47% 11%;
 
-    /* Primary - Vibrant Blue */
-    --primary: 217 91% 60%;
+    /* Primary - Vibrant Purple-to-Cyan Gradient (Stripe-inspired) */
+    --primary: 262 83% 58%; /* #8B5CF6 purple */
     --primary-foreground: 0 0% 100%;
-    --primary-hover: 217 91% 55%;
+    --primary-hover: 188 94% 43%; /* #06B6D4 cyan */
+    --primary-gradient-start: 262 83% 58%; /* #8B5CF6 */
+    --primary-gradient-end: 188 94% 43%; /* #06B6D4 */
 
     /* Secondary - Soft Gray-Blue */
     --secondary: 210 40% 96%;
@@ -109,9 +111,21 @@ All colors MUST be HSL.
     --pro-amber: 35 100% 55%;
     --pro-glow: 45 100% 70%;
 
-    /* Destructive */
-    --destructive: 0 84% 60%;
+    /* Destructive - Coral Red (not harsh red) */
+    --destructive: 0 84% 71%; /* #F87171 coral red */
     --destructive-foreground: 0 0% 100%;
+    
+    /* Positive Metrics - Electric Lime Green */
+    --success: 84 81% 44%; /* #84CC16 electric lime green */
+    --success-foreground: 0 0% 100%;
+    
+    /* GST Pro - Amber Gradient */
+    --gst-amber-start: 48 96% 67%; /* #FCD34D */
+    --gst-amber-end: 38 92% 50%; /* #F59E0B */
+    
+    /* GST Compliance - Teal to Emerald */
+    --gst-teal: 173 80% 40%; /* #14B8A6 */
+    --gst-emerald: 160 84% 39%; /* #10B981 */
 
     /* Borders - Light Gray */
     --border: 214 32% 91%;
@@ -119,14 +133,22 @@ All colors MUST be HSL.
     --ring: 217 91% 60%;
     --input-focus-glow: 217 91% 60%;
     
-    /* Light Mode Gradients - Blue Tones */
-    --hero-gradient: linear-gradient(135deg, hsl(210 100% 97%) 0%, hsl(217 100% 95%) 50%, hsl(220 100% 93%) 100%);
-    --feature-gradient: linear-gradient(180deg, hsl(0 0% 100%), hsl(210 40% 98%));
-    --card-gradient: linear-gradient(135deg, hsl(0 0% 100%) 0%, hsl(210 40% 98%) 100%);
-    --auth-gradient: linear-gradient(135deg, hsl(210 100% 97%) 0%, hsl(217 91% 95%) 100%);
-    --premium-gradient: linear-gradient(135deg, hsl(217 91% 60%) 0%, hsl(210 100% 60%) 50%, hsl(200 100% 60%) 100%);
+    /* Light Mode Gradients - Purple-to-Cyan Revolution */
+    --hero-gradient: linear-gradient(135deg, hsl(262 83% 95%) 0%, hsl(300 100% 90%) 50%, hsl(25 100% 90%) 100%);
+    --hero-gradient-animated: linear-gradient(135deg, hsl(262 83% 95%) 0%, hsl(300 100% 90%) 25%, hsl(25 100% 90%) 50%, hsl(300 100% 90%) 75%, hsl(262 83% 95%) 100%);
+    --feature-gradient: linear-gradient(180deg, hsl(0 0% 100%), hsl(262 40% 98%));
+    --card-gradient: linear-gradient(135deg, hsl(0 0% 100%) 0%, hsl(262 40% 98%) 100%);
+    --auth-gradient: linear-gradient(135deg, hsl(262 100% 97%) 0%, hsl(188 100% 95%) 100%);
+    --premium-gradient: linear-gradient(135deg, hsl(262 83% 58%) 0%, hsl(188 94% 43%) 50%, hsl(262 83% 58%) 100%);
     --glass-gradient: linear-gradient(135deg, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.7));
-    --premium-border: linear-gradient(135deg, hsl(217 91% 60%), hsl(200 100% 60%));
+    --premium-border: linear-gradient(135deg, hsl(262 83% 58%), hsl(188 94% 43%));
+    
+    /* GST Gradients */
+    --gst-gradient: linear-gradient(135deg, hsl(173 80% 40%) 0%, hsl(160 84% 39%) 100%);
+    --gst-card-gradient: linear-gradient(135deg, hsl(173 80% 98%) 0%, hsl(160 84% 97%) 100%);
+    
+    /* Amber GST Pro Gradient */
+    --gst-pro-gradient: linear-gradient(135deg, hsl(48 96% 67%) 0%, hsl(38 92% 50%) 100%);
     
     /* Pro-Specific Gradients - Golden Amber */
     --pro-gradient: linear-gradient(135deg, hsl(45 100% 60%) 0%, hsl(35 100% 55%) 50%, hsl(25 100% 50%) 100%);
@@ -175,19 +197,22 @@ All colors MUST be HSL.
   }
 
   .dark {
-    /* Same premium theme for dark mode consistency */
-    --background: 230 35% 7%;
+    /* Dark Mode - Lightened to slate-900 for better contrast */
+    --background: 222 47% 11%; /* #0F172A slate-900 */
     --foreground: 210 40% 98%;
 
-    --card: 230 30% 12%;
+    --card: 222 47% 15%; /* #1E293B slate-800 for cards */
     --card-foreground: 210 40% 98%;
 
     --popover: 230 30% 12%;
     --popover-foreground: 210 40% 98%;
 
-    --primary: 250 95% 68%;
+    /* Primary - Purple-to-Cyan in Dark Mode */
+    --primary: 262 83% 65%; /* Brighter purple for dark mode */
     --primary-foreground: 0 0% 100%;
-    --primary-hover: 250 95% 75%;
+    --primary-hover: 188 94% 50%; /* Brighter cyan for dark mode */
+    --primary-gradient-start: 262 83% 65%;
+    --primary-gradient-end: 188 94% 50%;
 
     --secondary: 230 25% 18%;
     --secondary-foreground: 210 40% 98%;
@@ -198,8 +223,20 @@ All colors MUST be HSL.
     --accent: 180 100% 60%;
     --accent-foreground: 230 35% 7%;
 
-    --destructive: 0 84% 60%;
+    --destructive: 0 84% 71%; /* Coral red */
     --destructive-foreground: 210 40% 98%;
+    
+    /* Positive Metrics - Electric Lime Green */
+    --success: 84 81% 50%; /* Brighter for dark mode */
+    --success-foreground: 0 0% 100%;
+    
+    /* GST Pro - Amber Gradient */
+    --gst-amber-start: 48 96% 70%;
+    --gst-amber-end: 38 92% 55%;
+    
+    /* GST Compliance - Teal to Emerald */
+    --gst-teal: 173 80% 45%;
+    --gst-emerald: 160 84% 44%;
 
     --border: 230 25% 22%;
     --input: 230 25% 22%;
@@ -437,20 +474,41 @@ All colors MUST be HSL.
   }
 }
 
-/* Premium Glassmorphism Utilities */
+/* Premium Glassmorphism Utilities - Enhanced */
 @layer utilities {
   .glass {
-    background: linear-gradient(135deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.02));
-    backdrop-filter: blur(16px) saturate(180%);
-    -webkit-backdrop-filter: blur(16px) saturate(180%);
+    background: rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(24px) saturate(180%);
+    -webkit-backdrop-filter: blur(24px) saturate(180%);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  }
+  
+  .glass-strong {
+    background: rgba(255, 255, 255, 0.12);
+    backdrop-filter: blur(32px) saturate(200%);
+    -webkit-backdrop-filter: blur(32px) saturate(200%);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+  }
+  
+  .glass-card {
+    background: rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(24px) saturate(180%);
+    -webkit-backdrop-filter: blur(24px) saturate(180%);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 
+      0 8px 32px rgba(0, 0, 0, 0.1),
+      inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  }
+  
+  .dark .glass {
+    background: rgba(255, 255, 255, 0.05);
     border: 1px solid rgba(255, 255, 255, 0.08);
   }
-
-  .glass-strong {
-    background: linear-gradient(135deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.04));
-    backdrop-filter: blur(24px) saturate(200%);
-    -webkit-backdrop-filter: blur(24px) saturate(200%);
-    border: 1px solid rgba(255, 255, 255, 0.12);
+  
+  .dark .glass-card {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.08);
   }
 
   .neumorphic {
@@ -471,21 +529,82 @@ All colors MUST be HSL.
       0 0 80px hsl(180 100% 60% / 0.15);
   }
 
+  /* Gradient Text - Updated with Purple-to-Cyan */
   .gradient-text {
-    background: linear-gradient(135deg, hsl(250 95% 68%), hsl(180 100% 60%));
+    background: linear-gradient(135deg, hsl(var(--primary-gradient-start)), hsl(var(--primary-gradient-end)));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  
+  .gradient-text-gst {
+    background: linear-gradient(135deg, hsl(var(--gst-teal)), hsl(var(--gst-emerald)));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  
+  .gradient-text-success {
+    background: hsl(var(--success));
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
   }
 
-  /* Landing Page Animations */
+  /* Hero Gradient Animations - Purple → Pink → Orange */
   @keyframes gradient-shift {
-    0%, 100% {
+    0% {
       background-position: 0% 50%;
     }
     50% {
       background-position: 100% 50%;
     }
+    100% {
+      background-position: 0% 50%;
+    }
+  }
+  
+  @keyframes hero-gradient-animate {
+    0% {
+      background: linear-gradient(135deg, hsl(262 83% 95%) 0%, hsl(300 100% 90%) 50%, hsl(25 100% 90%) 100%);
+    }
+    33% {
+      background: linear-gradient(135deg, hsl(300 100% 90%) 0%, hsl(25 100% 90%) 50%, hsl(262 83% 95%) 100%);
+    }
+    66% {
+      background: linear-gradient(135deg, hsl(25 100% 90%) 0%, hsl(262 83% 95%) 50%, hsl(300 100% 90%) 100%);
+    }
+    100% {
+      background: linear-gradient(135deg, hsl(262 83% 95%) 0%, hsl(300 100% 90%) 50%, hsl(25 100% 90%) 100%);
+    }
+  }
+  
+  @keyframes shimmer-gold {
+    0% {
+      background-position: -200% 0;
+    }
+    100% {
+      background-position: 200% 0;
+    }
+  }
+  
+  /* Hero Section with Animated Gradient */
+  .hero-gradient-animated {
+    background: linear-gradient(135deg, hsl(262 83% 95%) 0%, hsl(300 100% 90%) 25%, hsl(25 100% 90%) 50%, hsl(300 100% 90%) 75%, hsl(262 83% 95%) 100%);
+    background-size: 200% 200%;
+    animation: gradient-shift 8s ease infinite;
+  }
+  
+  /* Gold Shimmer for Pro Features */
+  .shimmer-gold {
+    background: linear-gradient(
+      90deg,
+      transparent,
+      rgba(255, 215, 0, 0.4),
+      transparent
+    );
+    background-size: 200% 100%;
+    animation: shimmer-gold 3s infinite;
   }
 
   @keyframes float {
@@ -537,8 +656,8 @@ All colors MUST be HSL.
   }
 
   /* Gradient Text Utilities */
-  .gradient-text-blue {
-    background: linear-gradient(135deg, hsl(217 91% 70%), hsl(200 100% 70%));
+  .gradient-text-primary {
+    background: linear-gradient(135deg, hsl(var(--primary-gradient-start)), hsl(var(--primary-gradient-end)));
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
@@ -551,21 +670,79 @@ All colors MUST be HSL.
     background-clip: text;
   }
 
-  /* Button Glow Effects */
+  /* Button Hover Effects - Enhanced with Scale & Colored Shadow */
+  .btn-hover-lift {
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  
+  .btn-hover-lift:hover {
+    transform: scale(1.05) translateY(-2px);
+    box-shadow: 
+      0 8px 24px hsl(var(--primary) / 0.4),
+      0 4px 12px hsl(var(--primary) / 0.3);
+  }
+  
+  .btn-hover-lift:active {
+    transform: scale(1.02) translateY(0);
+  }
+  
+  /* Primary Button with Purple-to-Cyan Gradient */
+  .btn-primary-gradient {
+    background: linear-gradient(135deg, hsl(var(--primary-gradient-start)), hsl(var(--primary-gradient-end)));
+    color: white;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  
+  .btn-primary-gradient:hover {
+    transform: scale(1.05);
+    box-shadow: 
+      0 8px 32px hsl(var(--primary-gradient-start) / 0.4),
+      0 4px 16px hsl(var(--primary-gradient-end) / 0.3);
+  }
+  
+  /* Success Button with Electric Lime Green */
+  .btn-success {
+    background: hsl(var(--success));
+    color: hsl(var(--success-foreground));
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  
+  .btn-success:hover {
+    transform: scale(1.05);
+    box-shadow: 
+      0 8px 32px hsl(var(--success) / 0.4),
+      0 4px 16px hsl(var(--success) / 0.3);
+  }
+  
+  /* GST Pro Button with Amber Gradient */
+  .btn-gst-pro {
+    background: linear-gradient(135deg, hsl(var(--gst-amber-start)), hsl(var(--gst-amber-end)));
+    color: white;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  
+  .btn-gst-pro:hover {
+    transform: scale(1.05);
+    box-shadow: 
+      0 8px 32px hsl(var(--gst-amber-start) / 0.4),
+      0 4px 16px hsl(var(--gst-amber-end) / 0.3);
+  }
+  
+  /* Button Glow Effects - Updated with new colors */
   .glow-button {
     box-shadow: 
-      0 0 20px hsl(217 91% 60% / 0.4),
-      0 0 40px hsl(217 91% 60% / 0.2),
-      0 0 60px hsl(217 91% 60% / 0.1);
+      0 0 20px hsl(var(--primary) / 0.4),
+      0 0 40px hsl(var(--primary) / 0.2),
+      0 0 60px hsl(var(--primary) / 0.1);
     transition: all 0.3s ease;
   }
 
   .glow-button:hover {
     box-shadow: 
-      0 0 30px hsl(217 91% 60% / 0.6),
-      0 0 60px hsl(217 91% 60% / 0.4),
-      0 0 90px hsl(217 91% 60% / 0.2);
-    transform: translateY(-2px);
+      0 0 30px hsl(var(--primary) / 0.6),
+      0 0 60px hsl(var(--primary) / 0.4),
+      0 0 90px hsl(var(--primary) / 0.2);
+    transform: scale(1.05) translateY(-2px);
   }
 
   .pro-gradient-text {

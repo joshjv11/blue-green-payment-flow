@@ -23,6 +23,10 @@ export default {
         primary: {
           DEFAULT: "hsl(var(--primary))",
           foreground: "hsl(var(--primary-foreground))",
+          gradient: {
+            start: "hsl(var(--primary-gradient-start))",
+            end: "hsl(var(--primary-gradient-end))",
+          },
         },
         secondary: {
           DEFAULT: "hsl(var(--secondary))",
@@ -31,6 +35,10 @@ export default {
         destructive: {
           DEFAULT: "hsl(var(--destructive))",
           foreground: "hsl(var(--destructive-foreground))",
+        },
+        success: {
+          DEFAULT: "hsl(var(--success))",
+          foreground: "hsl(var(--success-foreground))",
         },
         muted: {
           DEFAULT: "hsl(var(--muted))",
@@ -48,6 +56,14 @@ export default {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
+        gst: {
+          teal: "hsl(var(--gst-teal))",
+          emerald: "hsl(var(--gst-emerald))",
+          amber: {
+            start: "hsl(var(--gst-amber-start))",
+            end: "hsl(var(--gst-amber-end))",
+          },
+        },
         sidebar: {
           DEFAULT: "hsl(var(--sidebar-background))",
           foreground: "hsl(var(--sidebar-foreground))",
@@ -61,6 +77,7 @@ export default {
       },
       backgroundImage: {
         'hero-gradient': 'var(--hero-gradient)',
+        'hero-gradient-animated': 'var(--hero-gradient-animated)',
         'feature-gradient': 'var(--feature-gradient)',
         'premium-gradient': 'var(--premium-gradient)',
         'glass-gradient': 'var(--glass-gradient)',
@@ -68,6 +85,9 @@ export default {
         'auth-gradient': 'var(--auth-gradient)',
         'pro-gradient': 'var(--pro-gradient)',
         'pro-glass': 'var(--pro-glass)',
+        'gst-gradient': 'var(--gst-gradient)',
+        'gst-card-gradient': 'var(--gst-card-gradient)',
+        'gst-pro-gradient': 'var(--gst-pro-gradient)',
       },
       boxShadow: {
         'soft': 'var(--shadow-soft)',
@@ -177,6 +197,24 @@ export default {
             boxShadow: "0 0 40px currentColor",
           }
         },
+        "shimmer": {
+          "0%": {
+            backgroundPosition: "-200% 0",
+          },
+          "100%": {
+            backgroundPosition: "200% 0",
+          }
+        },
+        "button-hover": {
+          "0%": {
+            transform: "scale(1)",
+            boxShadow: "0 4px 12px rgba(0, 0, 0, 0.15)",
+          },
+          "100%": {
+            transform: "scale(1.05)",
+            boxShadow: "0 8px 24px rgba(139, 92, 246, 0.4), 0 4px 12px rgba(6, 182, 212, 0.3)",
+          }
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
@@ -187,6 +225,7 @@ export default {
         "shimmer": "shimmer 2s infinite",
         "bounce-subtle": "bounce-subtle 0.5s ease-out",
         "glow-pulse": "glow-pulse 2s ease-in-out infinite",
+        "button-hover": "button-hover 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
       },
     },
   },
