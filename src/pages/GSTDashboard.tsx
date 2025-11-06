@@ -29,6 +29,9 @@ import { ITCMismatchDashboard } from '@/components/gst/ITCMismatchDashboard';
 import { LanguageToggle } from '@/components/mobile/LanguageToggle';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
 import { Locale, t } from '@/utils/locale';
+import { GSTComplianceDashboard } from '@/components/GSTComplianceDashboard';
+import { TrustBadges } from '@/components/TrustBadges';
+import { LiveActivityFeed } from '@/components/LiveActivityFeed';
 
 export default function GSTDashboard() {
   const { toast } = useToast();
@@ -394,6 +397,11 @@ export default function GSTDashboard() {
                 <Shield className="h-8 w-8 text-primary" />
                 GST Compliance Center
               </h1>
+              
+              {/* Trust Badges - Compact */}
+              <div className="mt-3">
+                <TrustBadges variant="compact" />
+              </div>
               <p className="text-muted-foreground">
                 Manage all your GST features in one place - Simple, Fast, Secure
               </p>
@@ -406,6 +414,16 @@ export default function GSTDashboard() {
               <FileText className="h-4 w-4" />
               Setup
             </Button>
+          </div>
+
+          {/* GST Compliance Dashboard & Live Activity */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="lg:col-span-2">
+              <GSTComplianceDashboard />
+            </div>
+            <div>
+              <LiveActivityFeed />
+            </div>
           </div>
 
           {/* Quick Stats */}
