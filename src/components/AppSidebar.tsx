@@ -475,7 +475,7 @@ export function AppSidebar() {
                 whileHover={{ x: 2 }}
                 whileTap={{ scale: 0.98 }}
               >
-                <SidebarGroupLabel className="text-xs uppercase tracking-wider flex items-center justify-between px-4 py-2.5 hover:bg-muted/40 cursor-pointer group rounded-lg transition-all duration-300 font-semibold text-muted-foreground/80">
+                <SidebarGroupLabel className="text-xs uppercase tracking-widest flex items-center justify-between px-4 py-3 hover:bg-muted/50 cursor-pointer group rounded-xl transition-all duration-300 font-bold text-muted-foreground/70 hover:text-foreground border-b border-border/30 bg-gradient-to-r from-transparent via-muted/10 to-transparent">
                   <div className="flex items-center gap-2.5">
                     <motion.div
                       animate={{ rotate: proOpen ? 0 : [0, 5, -5, 0] }}
@@ -542,7 +542,7 @@ export function AppSidebar() {
                 whileHover={{ x: 2 }}
                 whileTap={{ scale: 0.98 }}
               >
-                <SidebarGroupLabel className="text-xs uppercase tracking-wider flex items-center justify-between px-4 py-2.5 hover:bg-muted/40 cursor-pointer group rounded-lg transition-all duration-300 font-semibold text-muted-foreground/80">
+                <SidebarGroupLabel className="text-xs uppercase tracking-widest flex items-center justify-between px-4 py-3 hover:bg-muted/50 cursor-pointer group rounded-xl transition-all duration-300 font-bold text-muted-foreground/70 hover:text-foreground border-b border-border/30 bg-gradient-to-r from-transparent via-muted/10 to-transparent">
                   <div className="flex items-center gap-2.5">
                     <motion.div
                       animate={{ 
@@ -613,7 +613,7 @@ export function AppSidebar() {
                 whileHover={{ x: 2 }}
                 whileTap={{ scale: 0.98 }}
               >
-                <SidebarGroupLabel className="text-xs uppercase tracking-wider flex items-center justify-between px-4 py-2.5 hover:bg-muted/40 cursor-pointer group rounded-lg transition-all duration-300 font-semibold text-muted-foreground/80">
+                <SidebarGroupLabel className="text-xs uppercase tracking-widest flex items-center justify-between px-4 py-3 hover:bg-muted/50 cursor-pointer group rounded-xl transition-all duration-300 font-bold text-muted-foreground/70 hover:text-foreground border-b border-border/30 bg-gradient-to-r from-transparent via-muted/10 to-transparent">
                   <div className="flex items-center gap-2.5">
                     <motion.div
                       animate={{ 
