@@ -7,8 +7,7 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from '@/hooks/useAuth';
 import { PlanProvider } from '@/contexts/PlanContext';
 import { ThemeProvider } from 'next-themes';
-import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
-import { AppSidebar } from '@/components/AppSidebar';
+import { HorizontalNavbar } from '@/components/HorizontalNavbar';
 import ErrorBoundary from '@/components/ErrorBoundary';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import DebugInfo from '@/components/DebugInfo';
@@ -397,27 +396,17 @@ function AppLayout({ children }: { children: React.ReactNode }) {
     return <>{children}</>;
   }
 
-  // Always render sidebar for protected routes - never hide it
+  // Use horizontal navbar instead of sidebar
   return (
-    <SidebarProvider defaultOpen={true}>
-      <div className="flex min-h-screen w-full relative">
-        {/* Sidebar - Always rendered, never conditionally hidden */}
-        <div className="relative z-50 flex-shrink-0">
-          <AppSidebar />
-        </div>
-        <div className="flex-1 flex flex-col min-w-0 relative ml-0">
-          <header className="sticky top-0 z-40 h-14 md:h-16 flex items-center gap-2 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 px-3 md:px-4 safe-area-inset-top">
-            <SidebarTrigger />
-            <div className="flex-1" />
-          </header>
-          <main className="flex-1 relative overflow-x-hidden">
-            <ReturnHomeButton />
-            <SecretAdminLock />
-            {children}
-          </main>
-        </div>
-      </div>
-    </SidebarProvider>
+    <div className="flex flex-col min-h-screen w-full">
+      {/* Horizontal Navigation Bar */}
+      <HorizontalNavbar />
+      <main className="flex-1 relative overflow-x-hidden">
+        <ReturnHomeButton />
+        <SecretAdminLock />
+        {children}
+      </main>
+    </div>
   );
 }
 
