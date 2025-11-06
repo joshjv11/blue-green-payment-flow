@@ -143,6 +143,13 @@ export default function SalesV2() {
         return;
       }
 
+      // Track sales creation
+      const { trackFeatureUsage } = await import('@/lib/analytics');
+      trackFeatureUsage('Sales', 'create', { 
+        invoice_number: data?.data?.invoice_number || invoiceNumber,
+        amount: data?.data?.grand_total 
+      });
+      
       toast({
         title: "Success",
         description: `Sale created! Invoice: ${data?.data?.invoice_number || invoiceNumber}`,
