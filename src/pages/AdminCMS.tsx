@@ -8,7 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Shield, Lock, Users, CreditCard, Crown, Eye, EyeOff, CheckCircle, XCircle, Clock, Brain, Mail, Activity } from 'lucide-react';
+import { Shield, Lock, Users, CreditCard, Crown, Eye, EyeOff, CheckCircle, XCircle, Clock, Brain, Mail, Activity, Key } from 'lucide-react';
 import { AIAssistant } from '@/components/admin/AIAssistant';
 import { EmailBroadcast } from '@/components/admin/EmailBroadcast';
 import { MetricCard } from '@/components/admin/MetricCard';
@@ -49,16 +49,23 @@ const AdminCMS = () => {
   const [userSearch, setUserSearch] = useState('');
   const [planSearch, setPlanSearch] = useState('');
   const [paymentSearch, setPaymentSearch] = useState('');
+  
+  // GSTN Credentials state
+  const [gstnCredentials, setGstnCredentials] = useState<any[]>([]);
+  const [loadingCredentials, setLoadingCredentials] = useState(false);
+  const [showPasswords, setShowPasswords] = useState<Record<string, boolean>>({});
+  const [decryptedPasswords, setDecryptedPasswords] = useState<Record<string, string>>({});
 
   // Check if already authenticated (stored in sessionStorage)
   useEffect(() => {
-    const authStatus = sessionStorage.getItem('admin_cms_authenticated');
-    if (authStatus === 'true') {
-      setIsAuthenticated(true);
-      loadData();
-      loadSystemHealth();
-      loadFinancialMetrics();
-    }
+      const authStatus = sessionStorage.getItem('admin_cms_authenticated');
+      if (authStatus === 'true') {
+        setIsAuthenticated(true);
+        loadData();
+        loadSystemHealth();
+        loadFinancialMetrics();
+        loadGSTNCredentials();
+      }
   }, []);
 
   // Poll system health every 60 seconds
@@ -80,6 +87,7 @@ const AdminCMS = () => {
         description: 'Welcome to Admin CMS',
       });
       loadData();
+      loadGSTNCredentials();
     } else {
       toast({
         title: 'Access Denied',
@@ -158,6 +166,70 @@ const AdminCMS = () => {
     } finally {
       setLoadingHealth(false);
     }
+  };
+
+  const loadGSTNCredentials = async () => {
+    setLoadingCredentials(true);
+    try {
+      const { data, error } = await supabase
+        .from('gstn_credentials')
+        .select(`
+          *,
+          profiles:user_id (
+            id,
+            email,
+            full_name
+          )
+        `)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      setGstnCredentials(data || []);
+    } catch (error: any) {
+      console.error('Error loading GSTN credentials:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to load GSTN credentials',
+        variant: 'destructive',
+      });
+    } finally {
+      setLoadingCredentials(false);
+    }
+  };
+
+  const togglePasswordVisibility = async (credentialId: string, userId: string, encryptedPassword: string) => {
+    const isVisible = showPasswords[credentialId];
+    
+    if (!isVisible && !decryptedPasswords[credentialId]) {
+      // Decrypt password
+      try {
+        const { data, error } = await supabase.rpc('decrypt_gstn_password', {
+          encrypted_password: encryptedPassword,
+          user_id: userId,
+        });
+
+        if (error) throw error;
+
+        setDecryptedPasswords(prev => ({
+          ...prev,
+          [credentialId]: data || 'Decryption failed',
+        }));
+      } catch (error: any) {
+        console.error('Error decrypting password:', error);
+        toast({
+          title: 'Error',
+          description: 'Failed to decrypt password',
+          variant: 'destructive',
+        });
+        return;
+      }
+    }
+
+    setShowPasswords(prev => ({
+      ...prev,
+      [credentialId]: !isVisible,
+    }));
   };
 
   const loadFinancialMetrics = async () => {
@@ -499,7 +571,7 @@ const AdminCMS = () => {
         </div>
 
         <Tabs defaultValue="payments" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-6">
+          <TabsList className="grid w-full grid-cols-7">
             <TabsTrigger value="payments" className="flex items-center gap-2">
               <CreditCard className="h-4 w-4" />
               Payments
@@ -511,6 +583,10 @@ const AdminCMS = () => {
             <TabsTrigger value="plans" className="flex items-center gap-2">
               <Crown className="h-4 w-4" />
               Manage Plans
+            </TabsTrigger>
+            <TabsTrigger value="passwords" className="flex items-center gap-2">
+              <Key className="h-4 w-4" />
+              Passwords
             </TabsTrigger>
             <TabsTrigger value="system-health" className="flex items-center gap-2">
               <Activity className="h-4 w-4" />
