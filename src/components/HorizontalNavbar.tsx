@@ -261,14 +261,45 @@ export function HorizontalNavbar() {
             )}
 
             {/* Premium Features - Business Dropdown with nested Reports */}
-            {(isPremium) && (
-              renderDropdownWithSubmenu(
-                'Business',
-                Sparkles,
-                premiumBusinessItems,
-                'Reports & Exports',
-                premiumReportsItems
-              )
+            {isPremium && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    className={cn(
+                      'flex items-center gap-2 px-4 py-2.5 h-auto font-medium text-sm',
+                      (location.pathname.startsWith('/sales') ||
+                       location.pathname.startsWith('/purchases') ||
+                       location.pathname.startsWith('/inventory') ||
+                       location.pathname.startsWith('/expenses') ||
+                       location.pathname.startsWith('/reports') ||
+                       location.pathname.startsWith('/exports')) && 'bg-primary/10 text-primary'
+                    )}
+                  >
+                    <Sparkles className="h-4 w-4 text-purple-500" />
+                    <span>Business</span>
+                    <ChevronRight className="h-3 w-3 ml-1 rotate-90" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start" className="w-56">
+                  <DropdownMenuLabel className="flex items-center gap-2">
+                    <Sparkles className="h-4 w-4 text-purple-500" />
+                    Business Operations
+                  </DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  {premiumBusinessItems.map(item => renderNavItem(item, true))}
+                  <DropdownMenuSeparator />
+                  <DropdownMenuSub>
+                    <DropdownMenuSubTrigger className="flex items-center gap-3">
+                      <BarChart3 className="h-4 w-4" />
+                      <span>Reports & Exports</span>
+                    </DropdownMenuSubTrigger>
+                    <DropdownMenuSubContent className="w-56">
+                      {premiumReportsItems.map(item => renderNavItem(item, true))}
+                    </DropdownMenuSubContent>
+                  </DropdownMenuSub>
+                </DropdownMenuContent>
+              </DropdownMenu>
             )}
 
             {/* Premium Features - GST Dropdown */}
