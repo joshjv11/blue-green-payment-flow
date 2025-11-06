@@ -111,10 +111,10 @@ export function AppSidebar() {
 
   const getNavClassName = ({ isActive }: { isActive: boolean }, isLocked: boolean) =>
     isActive
-      ? "bg-gradient-to-r from-primary/15 via-primary/10 to-transparent text-primary font-semibold border-l-[3px] border-primary shadow-sm"
+      ? "bg-gradient-to-r from-primary/20 via-primary/15 to-primary/5 text-primary font-semibold border-l-[4px] border-primary shadow-md shadow-primary/20"
       : isLocked
-      ? "opacity-50 cursor-not-allowed hover:bg-muted/20 text-muted-foreground"
-      : "hover:bg-gradient-to-r hover:from-muted/60 hover:via-muted/40 hover:to-transparent text-muted-foreground hover:text-foreground transition-all duration-300";
+      ? "opacity-60 cursor-not-allowed hover:bg-muted/30 text-muted-foreground"
+      : "hover:bg-gradient-to-r hover:from-muted/70 hover:via-muted/50 hover:to-transparent text-muted-foreground hover:text-foreground transition-all duration-300 hover:shadow-sm";
 
   const renderNavItem = (item: typeof coreItems[0] & { requiredPlan?: "pro" | "premium"; isProminent?: boolean; isNew?: boolean }, index: number = 0) => {
     const hasAccess = hasFeatureAccess(item.featureKey, item.requiredPlan);
@@ -160,7 +160,7 @@ export function AppSidebar() {
             }
           }}
         >
-          <div className="flex items-center gap-3 flex-1 min-w-0 px-3 py-2.5 rounded-lg transition-all duration-300 group/item">
+          <div className="flex items-center gap-3 flex-1 min-w-0 px-3 py-3 rounded-lg transition-all duration-300 group/item hover:scale-[1.02]">
             <motion.div
               animate={{
                 scale: isHovered ? 1.1 : 1,
@@ -303,7 +303,7 @@ export function AppSidebar() {
         boxShadow: '2px 0 8px rgba(0, 0, 0, 0.1)'
       }}
     >
-      <SidebarContent className="overflow-y-auto scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent">
+      <SidebarContent className="overflow-y-auto scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent bg-gradient-to-b from-sidebar via-sidebar to-sidebar/95">
         {/* Plan Badge */}
         <AnimatePresence>
           {loading ? (
