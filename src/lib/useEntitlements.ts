@@ -5,6 +5,7 @@ type Entitlements = {
   user_id: string;
   plan: string;
   is_premium: boolean;
+  is_pro: boolean;
   is_enterprise: boolean;
   subscription_status: boolean | null;
   current_period_end: string | null;
@@ -51,6 +52,7 @@ export function useEntitlements() {
             user_id: user.id,
             plan: plan,
             is_premium: (plan === 'premium' || plan === 'pro') && isActive,
+            is_pro: (plan === 'pro') && isActive,
             is_enterprise: plan === 'enterprise' && isActive,
             subscription_status: isActive,
             current_period_end: userPlan.expires_at,
@@ -61,6 +63,7 @@ export function useEntitlements() {
             user_id: user.id,
             plan: 'free',
             is_premium: false,
+            is_pro: false,
             is_enterprise: false,
             subscription_status: null,
             current_period_end: null,
@@ -74,6 +77,7 @@ export function useEntitlements() {
           user_id: '',
           plan: 'free',
           is_premium: false,
+          is_pro: false,
           is_enterprise: false,
           subscription_status: null,
           current_period_end: null,
@@ -89,6 +93,7 @@ export function useEntitlements() {
     loading, 
     error, 
     isPremium: !!data?.is_premium, 
+    isPro: !!data?.is_pro,
     plan: data?.plan ?? 'free' 
   };
 }
