@@ -225,7 +225,7 @@ export function HorizontalNavbar() {
           </div>
 
           {/* Main Navigation */}
-          <div className="flex items-center gap-1 flex-1 justify-center overflow-x-auto scrollbar-hide">
+          <div className="flex items-center gap-1 flex-1 justify-center overflow-x-auto scrollbar-hide px-2">
             {/* Core Items - Always Visible */}
             {coreItems.map(item => renderNavItem(item))}
 
