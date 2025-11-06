@@ -2,6 +2,29 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Force sidebar to always be visible - prevent it from disappearing */
+@layer utilities {
+  /* Override sidebar hidden classes to ensure it's always visible */
+  [data-sidebar="sidebar"] {
+    display: flex !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+  }
+  
+  /* Ensure sidebar container is always visible */
+  .group.peer[data-state] {
+    display: block !important;
+    visibility: visible !important;
+  }
+  
+  /* Force sidebar inner div to be visible */
+  .group.peer[data-state] > div[data-sidebar="sidebar"] {
+    display: flex !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+  }
+}
+
 /* Custom Scrollbar Styles */
 @layer utilities {
   .scrollbar-thin {
