@@ -296,7 +296,7 @@ export function AppSidebar() {
   return (
     <Sidebar 
       collapsible="icon" 
-      className="md:collapsible-icon border-r-2 border-border/60 backdrop-blur-xl bg-sidebar/98 shadow-2xl z-50 !block"
+      className="md:collapsible-icon border-r-2 border-border/60 backdrop-blur-xl bg-sidebar/98 shadow-2xl z-50 !block !md:block"
       style={{ 
         position: 'relative',
         minWidth: open ? '256px' : '64px',
