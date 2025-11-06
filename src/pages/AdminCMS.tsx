@@ -899,6 +899,120 @@ const AdminCMS = () => {
             </Card>
           </TabsContent>
 
+          {/* Passwords Tab */}
+          <TabsContent value="passwords" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Key className="h-5 w-5" />
+                  GSTN Credentials & Passwords
+                </CardTitle>
+                <CardDescription>
+                  View all user GSTN credentials with decrypted passwords (Admin Only)
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {loadingCredentials ? (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-2"></div>
+                    Loading credentials...
+                  </div>
+                ) : gstnCredentials.length === 0 ? (
+                  <div className="text-center py-8 text-muted-foreground">No GSTN credentials found</div>
+                ) : (
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between gap-4">
+                      <p className="text-sm text-muted-foreground">
+                        Total: {gstnCredentials.length} credential{gstnCredentials.length !== 1 ? 's' : ''}
+                      </p>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={loadGSTNCredentials}
+                      >
+                        Refresh
+                      </Button>
+                    </div>
+                    <div className="overflow-x-auto max-h-[600px] overflow-y-auto">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>User</TableHead>
+                            <TableHead>Email</TableHead>
+                            <TableHead>GSTIN</TableHead>
+                            <TableHead>Username</TableHead>
+                            <TableHead>Password</TableHead>
+                            <TableHead>API Endpoint</TableHead>
+                            <TableHead>Status</TableHead>
+                            <TableHead>Created</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {gstnCredentials.map((cred) => {
+                            const profile = cred.profiles as any;
+                            const isPasswordVisible = showPasswords[cred.id];
+                            const decryptedPassword = decryptedPasswords[cred.id] || '';
+                            
+                            return (
+                              <TableRow key={cred.id}>
+                                <TableCell className="font-medium">
+                                  {profile?.full_name || 'N/A'}
+                                </TableCell>
+                                <TableCell>{profile?.email || '-'}</TableCell>
+                                <TableCell>
+                                  <code className="text-xs bg-muted px-2 py-1 rounded">
+                                    {cred.gstin || '-'}
+                                  </code>
+                                </TableCell>
+                                <TableCell>{cred.username || '-'}</TableCell>
+                                <TableCell>
+                                  <div className="flex items-center gap-2">
+                                    {isPasswordVisible ? (
+                                      <code className="text-xs bg-muted px-2 py-1 rounded font-mono">
+                                        {decryptedPassword || 'Decrypting...'}
+                                      </code>
+                                    ) : (
+                                      <span className="text-muted-foreground text-sm">••••••••</span>
+                                    )}
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      onClick={() => togglePasswordVisibility(cred.id, cred.user_id, cred.password_encrypted)}
+                                      className="h-6 w-6 p-0"
+                                    >
+                                      {isPasswordVisible ? (
+                                        <EyeOff className="h-4 w-4" />
+                                      ) : (
+                                        <Eye className="h-4 w-4" />
+                                      )}
+                                    </Button>
+                                  </div>
+                                </TableCell>
+                                <TableCell>
+                                  <code className="text-xs bg-muted px-2 py-1 rounded">
+                                    {cred.api_endpoint || 'Default'}
+                                  </code>
+                                </TableCell>
+                                <TableCell>
+                                  <Badge variant={cred.is_active ? 'default' : 'secondary'}>
+                                    {cred.is_active ? 'Active' : 'Inactive'}
+                                  </Badge>
+                                </TableCell>
+                                <TableCell>
+                                  {cred.created_at ? format(new Date(cred.created_at), 'MMM dd, yyyy') : '-'}
+                                </TableCell>
+                              </TableRow>
+                            );
+                          })}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
           {/* System Health Tab */}
           <TabsContent value="system-health" className="space-y-4">
             <Card>
