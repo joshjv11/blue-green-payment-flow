@@ -345,12 +345,12 @@ export function AppSidebar() {
                   <Badge 
                     variant={plan === 'premium' ? 'default' : plan === 'pro' ? 'secondary' : 'outline'}
                     className={cn(
-                      "text-xs font-semibold px-3 py-1 shadow-md backdrop-blur-sm",
+                      "text-xs font-bold px-3.5 py-1.5 shadow-lg backdrop-blur-sm transition-all duration-300 hover:scale-105",
                       plan === 'premium' 
-                        ? 'bg-gradient-to-r from-purple-600 via-pink-600 to-purple-600 text-white border-0 shadow-purple-500/30' 
+                        ? 'bg-gradient-to-r from-purple-600 via-pink-600 to-purple-600 text-white border-0 shadow-purple-500/40 ring-2 ring-purple-500/20' 
                         : plan === 'pro'
-                        ? 'bg-gradient-to-r from-blue-600 via-purple-600 to-blue-600 text-white border-0 shadow-blue-500/30'
-                        : 'bg-muted/50 border-border/50'
+                        ? 'bg-gradient-to-r from-blue-600 via-purple-600 to-blue-600 text-white border-0 shadow-blue-500/40 ring-2 ring-blue-500/20'
+                        : 'bg-muted/60 border-border/60 shadow-sm hover:shadow-md'
                     )}
                   >
                     {plan === 'premium' ? (
@@ -406,7 +406,7 @@ export function AppSidebar() {
                   <Button 
                     variant="outline" 
                     size="sm" 
-                    className="w-full justify-start gap-2.5 text-xs font-medium h-9 border-border/50 bg-sidebar/50 hover:bg-sidebar/80 backdrop-blur-sm shadow-sm hover:shadow-md transition-all duration-300"
+                    className="w-full justify-start gap-2.5 text-xs font-semibold h-10 border-border/60 bg-gradient-to-r from-sidebar/60 to-sidebar/40 hover:from-sidebar/80 hover:to-sidebar/60 backdrop-blur-sm shadow-md hover:shadow-lg transition-all duration-300 hover:scale-[1.02] hover:border-primary/30"
                   >
                     <CreditCard className="h-3.5 w-3.5" />
                     View & Manage Plans
@@ -684,7 +684,7 @@ export function AppSidebar() {
                 whileHover={{ x: 2 }}
                 whileTap={{ scale: 0.98 }}
               >
-                <SidebarGroupLabel className="text-xs uppercase tracking-wider flex items-center justify-between px-4 py-2.5 hover:bg-muted/40 cursor-pointer group rounded-lg transition-all duration-300 font-semibold text-muted-foreground/80">
+                <SidebarGroupLabel className="text-xs uppercase tracking-widest flex items-center justify-between px-4 py-3 hover:bg-muted/50 cursor-pointer group rounded-xl transition-all duration-300 font-bold text-muted-foreground/70 hover:text-foreground border-b border-border/30 bg-gradient-to-r from-transparent via-muted/10 to-transparent">
                   <div className="flex items-center gap-2.5">
                     <motion.div
                       animate={{ 
