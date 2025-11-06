@@ -79,6 +79,13 @@ export function EInvoiceButton({
       if (error) throw error;
 
       if (data.success) {
+        // Track e-invoice generation
+        const { trackFeatureUsage } = await import('@/lib/analytics');
+        trackFeatureUsage('E-Invoice', 'create', { 
+          action: 'generate_irn',
+          sales_order_id: salesOrderId 
+        });
+        
         toast({
           title: "IRN Generated Successfully! ✅",
           description: `IRN: ${data.result.irn || 'Generated'}`,
