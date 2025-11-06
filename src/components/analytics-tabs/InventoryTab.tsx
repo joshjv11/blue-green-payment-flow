@@ -5,7 +5,7 @@ import { Progress } from '@/components/ui/progress';
 import { AlertTriangle, Package, TrendingUp, ArrowDown, Loader2 } from 'lucide-react';
 import { useInventoryKpis, useStockTurnover, useReorderSuggestions } from '@/hooks/useInventoryData';
 import { subDays, format } from 'date-fns';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase } from '@/lib/supabase';
 import { useEffect } from 'react';
 
 const InventoryTab = () => {

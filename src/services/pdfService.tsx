@@ -1,5 +1,5 @@
 import { pdf } from "@react-pdf/renderer";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/lib/supabase";
 import { InvoicePDFDocument } from "@/components/pdf/InvoicePDFDocument";
 
 interface GeneratePDFParams {

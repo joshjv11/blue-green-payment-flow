@@ -9,7 +9,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Mail, Send, Loader2, X, Plus, Users } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase } from '@/lib/supabase';
 
 const FROM_EMAILS = [
   { value: 'personal', label: 'joshuavaz55@gmail.com', address: 'joshuavaz55@gmail.com' },

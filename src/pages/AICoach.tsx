@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import AppNavigation from '@/components/AppNavigation';
 import EnhancedAIAssistantV2 from '@/components/EnhancedAIAssistantV2';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/hooks/useAuth';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Sparkles, Brain, TrendingUp, Lightbulb, MessageCircle } from 'lucide-react';

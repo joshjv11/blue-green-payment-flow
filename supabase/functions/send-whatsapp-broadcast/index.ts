@@ -1,10 +1,114 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.57.4';
+import { checkRateLimit, getRateLimitIdentifier } from '../_shared/rateLimit.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
+
+/**
+ * Background function to process broadcast queue
+ * Handles large broadcasts without timing out
+ */
+async function processBroadcastQueue(
+  supabase: any,
+  broadcastId: string,
+  messageQueue: Array<{
+    customer: any;
+    formattedPhone: string;
+    personalizedMessage: string;
+    waUrl: string;
+    formattedFromPhone: string;
+  }>,
+  twilioUrl: string,
+  twilioAuth: string,
+  userId: string,
+  broadcastType: string
+) {
+  let sentCount = 0;
+  let failedCount = 0;
+  const batchSize = 10; // Process 10 messages at a time
+
+  for (let i = 0; i < messageQueue.length; i += batchSize) {
+    const batch = messageQueue.slice(i, i + batchSize);
+    
+    const batchPromises = batch.map(async (item) => {
+      try {
+        const twilioBody = new URLSearchParams({
+          From: `whatsapp:${item.formattedFromPhone}`,
+          To: `whatsapp:${item.formattedPhone}`,
+          Body: item.personalizedMessage
+        });
+
+        const twilioResponse = await fetch(twilioUrl, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Basic ${twilioAuth}`,
+            'Content-Type': 'application/x-www-form-urlencoded'
+          },
+          body: twilioBody.toString()
+        });
+
+        const twilioData = await twilioResponse.json();
+
+        if (twilioResponse.ok) {
+          const insertPayload: Record<string, unknown> = {
+            user_id: userId,
+            phone_number: item.formattedPhone,
+            message_type: broadcastType,
+            message_content: item.personalizedMessage,
+            broadcast_id: broadcastId,
+            status: 'sent',
+            twilio_message_sid: twilioData.sid,
+            sent_at: new Date().toISOString()
+          };
+          if (item.customer.id) insertPayload.customer_id = item.customer.id;
+
+          await supabase.from('whatsapp_messages').insert(insertPayload);
+          return { success: true };
+        } else {
+          console.error(`❌ Failed to send to ${item.customer.name}:`, twilioData);
+          return { success: false };
+        }
+      } catch (error) {
+        console.error(`❌ Error sending to ${item.customer.name}:`, error);
+        return { success: false };
+      }
+    });
+
+    const results = await Promise.all(batchPromises);
+    results.forEach(r => r.success ? sentCount++ : failedCount++);
+
+    // Update progress every batch
+    await supabase
+      .from('whatsapp_broadcasts')
+      .update({
+        messages_sent: sentCount,
+        messages_failed: failedCount,
+        status: 'in_progress'
+      })
+      .eq('id', broadcastId);
+
+    // Rate limiting: 500ms between batches
+    if (i + batchSize < messageQueue.length) {
+      await new Promise(resolve => setTimeout(resolve, 500));
+    }
+  }
+
+  // Final update
+  await supabase
+    .from('whatsapp_broadcasts')
+    .update({
+      messages_sent: sentCount,
+      messages_failed: failedCount,
+      status: 'completed',
+      sent_at: new Date().toISOString()
+    })
+    .eq('id', broadcastId);
+
+  console.log(`✅ Background broadcast completed: ${sentCount} sent, ${failedCount} failed`);
+}
 
 interface BroadcastRequest {
   broadcastType: 'gst_reminder' | 'payment_reminder' | 'custom';
@@ -53,6 +157,32 @@ const handler = async (req: Request): Promise<Response> => {
       return new Response(JSON.stringify({ error: 'Invalid token' }), {
         status: 401,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+
+    // Rate limiting: 10 broadcasts per hour per user (more restrictive)
+    const identifier = getRateLimitIdentifier(user, req);
+    const rateLimit = await checkRateLimit(identifier, {
+      limit: 10,
+      window: "1 h",
+      prefix: "whatsapp:broadcast"
+    });
+
+    if (!rateLimit.success) {
+      return new Response(JSON.stringify({
+        error: 'Rate limit exceeded',
+        message: `You've exceeded the limit of 10 WhatsApp broadcasts per hour. Please try again later.`,
+        reset: rateLimit.reset
+      }), {
+        status: 429,
+        headers: {
+          ...corsHeaders,
+          'Content-Type': 'application/json',
+          'Retry-After': String(rateLimit.reset - Math.floor(Date.now() / 1000)),
+          'X-RateLimit-Limit': String(rateLimit.limit),
+          'X-RateLimit-Remaining': String(rateLimit.remaining),
+          'X-RateLimit-Reset': String(rateLimit.reset)
+        }
       });
     }
 
@@ -151,7 +281,87 @@ const handler = async (req: Request): Promise<Response> => {
 
     console.log('📝 Broadcast record created:', broadcast.id);
 
-    // Send messages to each customer
+    // OPTIMIZATION: Queue messages for async processing to prevent timeouts
+    // For large broadcasts (>50 recipients), return immediately and process in background
+    const isLargeBroadcast = recipients.length > 50;
+    
+    if (isLargeBroadcast) {
+      // Queue messages for background processing
+      const twilioUrl = `https://api.twilio.com/2010-04-01/Accounts/${TWILIO_ACCOUNT_SID}/Messages.json`;
+      const twilioAuth = btoa(`${TWILIO_ACCOUNT_SID}:${TWILIO_AUTH_TOKEN}`);
+      
+      // Prepare all messages upfront
+      const messageQueue = recipients
+        .filter(c => c.phone)
+        .map(customer => {
+          let formattedPhone = customer.phone.replace(/\s+/g, '');
+          if (!formattedPhone.startsWith('+')) {
+            formattedPhone = '+91' + formattedPhone;
+          }
+          
+          const personalizedMessage = message
+            .replace('{customer_name}', customer.name || '')
+            .replace('{customer_email}', customer.email || '');
+          
+          const digitsOnly = formattedPhone.replace(/\D/g, '');
+          const waUrl = `https://wa.me/${digitsOnly}?text=${encodeURIComponent(personalizedMessage)}`;
+          
+          let formattedFromPhone = fromPhoneNumber.replace(/\s+/g, '').trim();
+          if (!formattedFromPhone.startsWith('+')) {
+            formattedFromPhone = '+91' + formattedFromPhone;
+          }
+          
+          return {
+            customer,
+            formattedPhone,
+            personalizedMessage,
+            waUrl,
+            formattedFromPhone
+          };
+        });
+
+      // Start background processing (don't await - return immediately)
+      processBroadcastQueue(
+        supabase,
+        broadcast.id,
+        messageQueue,
+        twilioUrl,
+        twilioAuth,
+        user.id,
+        broadcastType
+      ).catch(err => {
+        console.error('❌ Background broadcast processing error:', err);
+        // Update broadcast status to failed
+        supabase
+          .from('whatsapp_broadcasts')
+          .update({ status: 'failed', error_message: err.message })
+          .eq('id', broadcast.id)
+          .catch(console.error);
+      });
+
+      // Return immediately with queued status
+      const whatsappLinks = messageQueue.map(m => ({
+        name: m.customer.name,
+        phone: m.formattedPhone,
+        url: m.waUrl
+      }));
+
+      return new Response(JSON.stringify({
+        success: true,
+        broadcast_id: broadcast.id,
+        status: 'queued',
+        message: `Broadcast queued for ${recipients.length} recipients. Processing in background...`,
+        sent: 0,
+        failed: 0,
+        whatsappLinks,
+        totalLinks: whatsappLinks.length
+      }), {
+        status: 200,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+
+    // Small broadcasts: Process synchronously (original logic, optimized)
     const twilioUrl = `https://api.twilio.com/2010-04-01/Accounts/${TWILIO_ACCOUNT_SID}/Messages.json`;
     const twilioAuth = btoa(`${TWILIO_ACCOUNT_SID}:${TWILIO_AUTH_TOKEN}`);
 
@@ -159,80 +369,93 @@ const handler = async (req: Request): Promise<Response> => {
     let failedCount = 0;
     const whatsappLinks: { name?: string | null; phone: string; url: string }[] = [];
 
-    for (const customer of recipients) {
-      if (!customer.phone) continue;
+    // Process in batches of 10 with parallel execution
+    const batchSize = 10;
+    for (let i = 0; i < recipients.length; i += batchSize) {
+      const batch = recipients.slice(i, i + batchSize);
+      
+      // Process batch in parallel
+      const batchPromises = batch.map(async (customer) => {
+        if (!customer.phone) return { success: false, customer };
 
-      let formattedPhone = customer.phone.replace(/\s+/g, '');
-      if (!formattedPhone.startsWith('+')) {
-        formattedPhone = '+91' + formattedPhone;
-      }
-
-      try {
-        // Personalize message FIRST
-        const personalizedMessage = message
-          .replace('{customer_name}', customer.name || '')
-          .replace('{customer_email}', customer.email || '');
-
-        // Build WhatsApp Web link (helps frontend show/open links)
-        const digitsOnly = formattedPhone.replace(/\D/g, '');
-        const waUrl = `https://wa.me/${digitsOnly}?text=${encodeURIComponent(personalizedMessage)}`;
-        whatsappLinks.push({ name: customer.name, phone: formattedPhone, url: waUrl });
-
-        // Format the from phone number
-        let formattedFromPhone = fromPhoneNumber.replace(/\s+/g, '').trim();
-        if (!formattedFromPhone.startsWith('+')) {
-          formattedFromPhone = '+91' + formattedFromPhone;
+        let formattedPhone = customer.phone.replace(/\s+/g, '');
+        if (!formattedPhone.startsWith('+')) {
+          formattedPhone = '+91' + formattedPhone;
         }
 
-        const twilioBody = new URLSearchParams({
-          From: `whatsapp:${formattedFromPhone}`,
-          To: `whatsapp:${formattedPhone}`,
-          Body: personalizedMessage
-        });
+        try {
+          const personalizedMessage = message
+            .replace('{customer_name}', customer.name || '')
+            .replace('{customer_email}', customer.email || '');
 
-        const twilioResponse = await fetch(twilioUrl, {
-          method: 'POST',
-          headers: {
-            'Authorization': `Basic ${twilioAuth}`,
-            'Content-Type': 'application/x-www-form-urlencoded'
-          },
-          body: twilioBody.toString()
-        });
+          const digitsOnly = formattedPhone.replace(/\D/g, '');
+          const waUrl = `https://wa.me/${digitsOnly}?text=${encodeURIComponent(personalizedMessage)}`;
 
-        const twilioData = await twilioResponse.json();
+          let formattedFromPhone = fromPhoneNumber.replace(/\s+/g, '').trim();
+          if (!formattedFromPhone.startsWith('+')) {
+            formattedFromPhone = '+91' + formattedFromPhone;
+          }
 
-        if (twilioResponse.ok) {
+          const twilioBody = new URLSearchParams({
+            From: `whatsapp:${formattedFromPhone}`,
+            To: `whatsapp:${formattedPhone}`,
+            Body: personalizedMessage
+          });
+
+          const twilioResponse = await fetch(twilioUrl, {
+            method: 'POST',
+            headers: {
+              'Authorization': `Basic ${twilioAuth}`,
+              'Content-Type': 'application/x-www-form-urlencoded'
+            },
+            body: twilioBody.toString()
+          });
+
+          const twilioData = await twilioResponse.json();
+
+          if (twilioResponse.ok) {
+            const insertPayload: Record<string, unknown> = {
+              user_id: user.id,
+              phone_number: formattedPhone,
+              message_type: broadcastType,
+              message_content: personalizedMessage,
+              broadcast_id: broadcast.id,
+              status: 'sent',
+              twilio_message_sid: twilioData.sid,
+              sent_at: new Date().toISOString()
+            };
+            if (customer.id) insertPayload.customer_id = customer.id;
+
+            await supabase.from('whatsapp_messages').insert(insertPayload);
+            return { success: true, customer, waUrl, formattedPhone };
+          } else {
+            console.error(`❌ Failed to send to ${customer.name}:`, twilioData);
+            return { success: false, customer };
+          }
+        } catch (error) {
+          console.error(`❌ Error sending to ${customer.name}:`, error);
+          return { success: false, customer };
+        }
+      });
+
+      const batchResults = await Promise.all(batchPromises);
+      
+      batchResults.forEach(result => {
+        if (result.success) {
           sentCount++;
-          
-          // Create message record
-          const insertPayload: Record<string, unknown> = {
-            user_id: user.id,
-            phone_number: formattedPhone,
-            message_type: broadcastType,
-            message_content: personalizedMessage,
-            broadcast_id: broadcast.id,
-            status: 'sent',
-            twilio_message_sid: twilioData.sid,
-            sent_at: new Date().toISOString()
-          };
-          if (customer.id) insertPayload.customer_id = customer.id;
-
-          await supabase
-            .from('whatsapp_messages')
-            .insert(insertPayload);
-
-          console.log(`✅ Sent to ${customer.name}`);
+          whatsappLinks.push({
+            name: result.customer.name,
+            phone: result.formattedPhone!,
+            url: result.waUrl!
+          });
         } else {
           failedCount++;
-          console.error(`❌ Failed to send to ${customer.name}:`, twilioData);
         }
+      });
 
-        // Rate limiting - wait 1 second between messages
-        await new Promise(resolve => setTimeout(resolve, 1000));
-
-      } catch (error) {
-        failedCount++;
-        console.error(`❌ Error sending to ${customer.name}:`, error);
+      // Small delay between batches to respect Twilio rate limits
+      if (i + batchSize < recipients.length) {
+        await new Promise(resolve => setTimeout(resolve, 500));
       }
     }
 

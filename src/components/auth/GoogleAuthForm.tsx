@@ -11,7 +11,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, Eye, EyeOff, AlertCircle } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase } from '@/lib/supabase';
 import invoiceFlowLogo from '@/assets/invoiceflow-logo.png';
 import { useAnalytics } from '@/hooks/useAnalytics';
 

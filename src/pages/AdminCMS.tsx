@@ -16,7 +16,7 @@ import { FeatureUsageChart } from '@/components/admin/FeatureUsageChart';
 import { SecurityEventsTable } from '@/components/admin/SecurityEventsTable';
 import { UserInsightsTable } from '@/components/admin/UserInsightsTable';
 import { useToast } from '@/hooks/use-toast';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase } from '@/lib/supabase';
 import { format } from 'date-fns';
 
 const ADMIN_PASSWORD = 'Deathground333';

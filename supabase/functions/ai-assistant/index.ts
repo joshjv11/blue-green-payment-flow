@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { checkRateLimit, getRateLimitIdentifier } from '../_shared/rateLimit.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -44,6 +45,32 @@ serve(async (req) => {
     const { data: { user }, error: userError } = await supabaseClient.auth.getUser();
     if (userError || !user) {
       throw new Error('User not authenticated');
+    }
+
+    // Rate limiting: 100 AI queries per hour per user
+    const identifier = getRateLimitIdentifier(user, req);
+    const rateLimit = await checkRateLimit(identifier, {
+      limit: 100,
+      window: "1 h",
+      prefix: "ai:assistant"
+    });
+
+    if (!rateLimit.success) {
+      return new Response(JSON.stringify({
+        error: 'Rate limit exceeded',
+        message: `You've exceeded the limit of 100 AI queries per hour. Please try again later.`,
+        reset: rateLimit.reset
+      }), {
+        status: 429,
+        headers: {
+          ...corsHeaders,
+          'Content-Type': 'application/json',
+          'Retry-After': String(rateLimit.reset - Math.floor(Date.now() / 1000)),
+          'X-RateLimit-Limit': String(rateLimit.limit),
+          'X-RateLimit-Remaining': String(rateLimit.remaining),
+          'X-RateLimit-Reset': String(rateLimit.reset)
+        }
+      });
     }
 
     // Get API keys from secrets - try Groq first (free), then OpenAI

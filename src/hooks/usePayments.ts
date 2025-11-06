@@ -1,4 +1,4 @@
-import { supabase } from '@/integrations/supabase/client';
+import { supabase } from '@/lib/supabase';
 
 type CreatePaymentLinkArgs = {
   amountInRupees: number; // e.g. 499.99

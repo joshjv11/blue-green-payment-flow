@@ -9,7 +9,7 @@ import PaymentVerificationDashboard from '@/components/PaymentVerificationDashbo
 import AdminPlanManager from '@/components/AdminPlanManager';
 import { Navigation } from '@/components/Navigation';
 import { useAuth } from '@/hooks/useAuth';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase } from '@/lib/supabase';
 
 const Admin = () => {
   const { user } = useAuth();

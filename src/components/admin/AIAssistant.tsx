@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Brain, Loader2, Zap, AlertTriangle, TrendingUp, CheckCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase } from '@/lib/supabase';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
 interface AnalysisResult {

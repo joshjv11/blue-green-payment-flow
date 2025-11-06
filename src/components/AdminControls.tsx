@@ -10,7 +10,7 @@ import { Label } from '@/components/ui/label';
 import { useSupabaseData } from '@/hooks/useSupabaseData';
 import { formatINRCompact } from '@/utils/currency';
 import { useTeams } from '@/hooks/useTeams';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase } from '@/lib/supabase';
 import { useToast } from '@/hooks/use-toast';
 import { Shield, Users, BarChart3, Settings, Crown, Download, FileText, Calendar, DollarSign } from 'lucide-react';
 import { format } from 'date-fns';

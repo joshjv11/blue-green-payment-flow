@@ -108,13 +108,34 @@ serve(async (req) => {
           .eq('id', paymentLinkRecord.id);
       }
 
-      // Optional: Activate plan if purchase reference encodes plan
+      // Auto-activate plan based on amount or reference_id
+      let planType: 'pro' | 'premium' | null = null;
+      
+      // Method 1: Check reference_id pattern (e.g., "pro-user123" or "premium-user123")
       const planMatch = referenceId?.match(/^(pro|premium)-/);
-      const planType = planMatch ? planMatch[1] : null;
+      if (planMatch) {
+        planType = planMatch[1] as 'pro' | 'premium';
+      }
+      
+      // Method 2: Infer from amount if reference_id doesn't specify
+      if (!planType) {
+        if (amount === 100) planType = 'pro';
+        else if (amount === 999) planType = 'premium';
+      }
+      
+      // Method 3: Check payment link notes/description
+      if (!planType && paymentLinkRecord?.notes) {
+        const notesLower = paymentLinkRecord.notes.toLowerCase();
+        if (notesLower.includes('pro')) planType = 'pro';
+        else if (notesLower.includes('premium')) planType = 'premium';
+      }
+
+      // Activate plan automatically
       if (planType && userId) {
         const expiresAt = new Date();
-        expiresAt.setDate(expiresAt.getDate() + 30);
-        await supabaseClient
+        expiresAt.setDate(expiresAt.getDate() + 30); // 30-day subscription
+        
+        const { error: planError } = await supabaseClient
           .from('user_plans')
           .upsert({
             user_id: userId,
@@ -126,6 +147,20 @@ serve(async (req) => {
           }, {
             onConflict: 'user_id'
           });
+
+        if (planError) {
+          console.error('❌ Error activating plan:', planError);
+        } else {
+          console.log(`✅ Auto-activated ${planType} plan for user ${userId}`);
+          
+          // Mark payment transaction as processed
+          await supabaseClient
+            .from('payment_transactions')
+            .update({ processed: true })
+            .eq('user_id', userId)
+            .eq('status', 'verified')
+            .eq('processed', false);
+        }
       }
     }
 

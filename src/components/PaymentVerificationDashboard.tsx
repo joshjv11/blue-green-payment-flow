@@ -8,7 +8,7 @@ import { Separator } from '@/components/ui/separator';
 import { CheckCircle, XCircle, Clock, Search, ArrowUpDown } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/hooks/useAuth';
 
 interface PaymentTransaction {

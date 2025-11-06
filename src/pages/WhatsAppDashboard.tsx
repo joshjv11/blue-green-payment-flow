@@ -13,7 +13,7 @@ import {
 import AppNavigation from '@/components/AppNavigation';
 import { WhatsAppSendModal } from '@/components/WhatsAppSendModal';
 import { WhatsAppBroadcastModal } from '@/components/WhatsAppBroadcastModal';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase } from '@/lib/supabase';
 import { MessageCircle, Send, Link as LinkIcon, Clock, CheckCircle2, XCircle, Megaphone, Plus, TrendingUp, Phone } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';

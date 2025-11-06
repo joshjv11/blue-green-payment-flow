@@ -11,7 +11,7 @@ import { InputOTP, InputOTPGroup, InputOTPSlot, InputOTPSeparator } from '@/comp
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, Mail, Phone, Fingerprint, Shield, Zap, AlertCircle } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase } from '@/lib/supabase';
 import invoiceFlowLogo from '@/assets/invoiceflow-logo.png';
 import { useAnalytics } from '@/hooks/useAnalytics';
 

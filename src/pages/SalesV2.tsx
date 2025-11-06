@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/lib/supabase";
 import { Loader2, Plus, Trash2 } from "lucide-react";
 import { useBusinessSettings } from "@/hooks/useBusinessSettings";
 import AppNavigation from "@/components/AppNavigation";

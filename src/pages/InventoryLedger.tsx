@@ -9,7 +9,7 @@ import { useInventoryLedger } from '@/hooks/useInventoryData';
 import { startOfMonth, endOfMonth, format, subDays } from 'date-fns';
 import { BackToDashboard } from '@/components/BackToDashboard';
 import { Badge } from '@/components/ui/badge';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase } from '@/lib/supabase';
 import { useEffect } from 'react';
 
 export default function InventoryLedger() {

@@ -10,7 +10,7 @@ import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
 import { Bell, Clock, Calendar, Mail, Loader2 } from 'lucide-react';
 import { useSupabaseData } from '@/hooks/useSupabaseData';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase } from '@/lib/supabase';
 
 interface ReminderSettingsModalProps {
   bill: any;
