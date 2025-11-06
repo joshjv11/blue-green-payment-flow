@@ -177,6 +177,13 @@ export default function GSTRFiling() {
       if (error) throw error;
 
       if (data.success) {
+        // Track GSTR filing
+        const { trackFeatureUsage } = await import('@/lib/analytics');
+        trackFeatureUsage('GSTR Filing', 'submit', { 
+          type: 'GSTR-3B',
+          period: selectedPeriod 
+        });
+        
         toast({
           title: "GSTR-3B Generated! ✅",
           description: `Generated for period ${selectedPeriod}`,
