@@ -5,9 +5,8 @@ import { supabase } from '@/lib/supabase';
 import { Loader2, BarChart3 } from 'lucide-react';
 
 interface FeatureUsageData {
-  feature_name: string;
+  feature: string;
   usage_count: number;
-  unique_users: number;
   last_used: string;
 }
 
@@ -22,9 +21,7 @@ export function FeatureUsageChart() {
   const loadFeatureUsage = async () => {
     setLoading(true);
     try {
-      const { data: stats, error } = await supabase.rpc('get_feature_usage_stats', {
-        days_back: 7,
-      });
+      const { data: stats, error } = await supabase.rpc('get_feature_usage_stats');
 
       if (error) {
         console.error('Error loading feature usage:', error);
@@ -32,7 +29,7 @@ export function FeatureUsageChart() {
         return;
       }
 
-      setData(stats || []);
+      setData((stats as FeatureUsageData[]) || []);
     } catch (error) {
       console.error('Error loading feature usage:', error);
       setData([]);
@@ -43,9 +40,8 @@ export function FeatureUsageChart() {
 
   // Format data for chart
   const chartData = data.map(item => ({
-    name: item.feature_name.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
+    name: item.feature.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
     usage: item.usage_count,
-    users: item.unique_users,
   }));
 
   return (
@@ -92,7 +88,6 @@ export function FeatureUsageChart() {
                 />
                 <Legend />
                 <Bar dataKey="usage" fill="#8884d8" name="Total Usage" />
-                <Bar dataKey="users" fill="#82ca9d" name="Unique Users" />
               </BarChart>
             </ResponsiveContainer>
 
@@ -107,7 +102,7 @@ export function FeatureUsageChart() {
                   >
                     <div>
                       <div className="font-medium capitalize">
-                        {item.feature_name.replace(/_/g, ' ')}
+                        {item.feature.replace(/_/g, ' ')}
                       </div>
                       <div className="text-sm text-muted-foreground">
                         Last used: {new Date(item.last_used).toLocaleDateString()}
@@ -115,9 +110,6 @@ export function FeatureUsageChart() {
                     </div>
                     <div className="text-right">
                       <div className="font-semibold">{item.usage_count.toLocaleString()}</div>
-                      <div className="text-xs text-muted-foreground">
-                        {item.unique_users} unique user{item.unique_users !== 1 ? 's' : ''}
-                      </div>
                     </div>
                   </div>
                 ))}

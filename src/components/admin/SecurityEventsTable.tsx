@@ -8,13 +8,10 @@ import { Loader2, Shield, AlertTriangle } from 'lucide-react';
 import { format } from 'date-fns';
 
 interface SecurityEvent {
-  id: string;
   event_type: string;
   user_id: string | null;
-  ip_address: string | null;
-  severity: 'low' | 'medium' | 'high' | 'critical';
   created_at: string;
-  metadata: Record<string, any>;
+  details: Record<string, any>;
 }
 
 export function SecurityEventsTable() {
@@ -40,10 +37,7 @@ export function SecurityEventsTable() {
   const loadSecurityEvents = async () => {
     setLoading(true);
     try {
-      const { data, error } = await supabase.rpc('get_security_events', {
-        p_severity: severityFilter === 'all' ? null : severityFilter,
-        p_limit: 100,
-      });
+      const { data, error } = await supabase.rpc('get_security_events');
 
       if (error) {
         console.error('Error loading security events:', error);
@@ -51,12 +45,12 @@ export function SecurityEventsTable() {
         return;
       }
 
-      setEvents(data || []);
+      setEvents((data as SecurityEvent[]) || []);
       
-      // Calculate counts
+      // Calculate counts based on event_type
       const last24h = (data || []).length;
-      const critical = (data || []).filter(e => e.severity === 'critical').length;
-      const high = (data || []).filter(e => e.severity === 'high').length;
+      const critical = (data || []).filter((e: any) => e.event_type === 'ERROR').length;
+      const high = (data || []).filter((e: any) => e.event_type === 'RATE_LIMIT').length;
       
       setEventCounts({ last24h, critical, high });
     } catch (error) {
@@ -158,8 +152,8 @@ export function SecurityEventsTable() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {events.map((event) => (
-                  <TableRow key={event.id}>
+                {events.map((event, index) => (
+                  <TableRow key={index}>
                     <TableCell className="text-sm">
                       {format(new Date(event.created_at), 'MMM dd, HH:mm:ss')}
                     </TableCell>
@@ -167,18 +161,18 @@ export function SecurityEventsTable() {
                       {formatEventType(event.event_type)}
                     </TableCell>
                     <TableCell>
-                      <Badge variant={getSeverityBadgeVariant(event.severity)}>
-                        {event.severity}
+                      <Badge variant={event.event_type === 'ERROR' ? 'destructive' : 'default'}>
+                        {event.event_type}
                       </Badge>
                     </TableCell>
                     <TableCell className="font-mono text-xs">
                       {event.user_id ? event.user_id.slice(0, 8) + '...' : 'N/A'}
                     </TableCell>
                     <TableCell className="font-mono text-xs">
-                      {event.ip_address || 'N/A'}
+                      N/A
                     </TableCell>
                     <TableCell className="text-xs text-muted-foreground max-w-xs truncate">
-                      {JSON.stringify(event.metadata || {})}
+                      {JSON.stringify(event.details || {})}
                     </TableCell>
                   </TableRow>
                 ))}

@@ -1,5 +1,46 @@
 import { supabase } from '@/lib/supabase';
 
+// Export types for analytics components
+export interface DashboardSummary {
+  total_sales: number;
+  total_purchases: number;
+  total_expenses: number;
+  net_profit: number;
+}
+
+export interface InventoryValue {
+  total_inventory_value: number;
+  sku_count: number;
+}
+
+export interface MonthlyAggregate {
+  tx_month: string;
+  sales_total: number;
+  purchases_total: number;
+  expenses_total: number;
+}
+
+export interface TopCustomer {
+  customer_name: string;
+  total_sales: number;
+  transaction_count: number;
+}
+
+export interface TopVendor {
+  vendor_name: string;
+  total_purchases: number;
+  transaction_count: number;
+}
+
+export interface UpcomingBill {
+  id: string;
+  name: string;
+  amount: number;
+  due_date: string;
+  category: string;
+  status: string;
+}
+
 // Debounce utility to batch analytics events
 let analyticsQueue: Array<() => Promise<void>> = [];
 let debounceTimer: NodeJS.Timeout | null = null;

@@ -12,16 +12,10 @@ import { useToast } from '@/hooks/use-toast';
 interface UserInsight {
   user_id: string;
   email: string;
-  plan: string | null;
-  plan_active: boolean;
-  engagement_score: number;
-  churn_risk_score: number;
-  upsell_candidate: boolean;
-  last_activity: string | null;
+  plan: string;
   total_bills: number;
   total_invoices: number;
-  total_whatsapp_messages: number;
-  account_age_days: number;
+  last_active: string | null;
 }
 
 export function UserInsightsTable() {
@@ -37,10 +31,7 @@ export function UserInsightsTable() {
   const loadUserInsights = async () => {
     setLoading(true);
     try {
-      const { data, error } = await supabase.rpc('get_admin_user_insights', {
-        p_sort_by: sortBy,
-        p_limit: 100,
-      });
+      const { data, error } = await supabase.rpc('get_admin_user_insights');
 
       if (error) {
         console.error('Error loading user insights:', error);
@@ -48,7 +39,7 @@ export function UserInsightsTable() {
         return;
       }
 
-      setInsights(data || []);
+      setInsights((data as UserInsight[]) || []);
     } catch (error) {
       console.error('Error loading user insights:', error);
       setInsights([]);
@@ -67,16 +58,13 @@ export function UserInsightsTable() {
       return;
     }
 
-    const headers = ['Email', 'Plan', 'Engagement Score', 'Churn Risk', 'Upsell Candidate', 'Last Activity', 'Total Bills', 'Account Age (days)'];
+    const headers = ['Email', 'Plan', 'Last Activity', 'Total Bills', 'Total Invoices'];
     const rows = insights.map(insight => [
       insight.email,
       insight.plan || 'free',
-      insight.engagement_score.toString(),
-      insight.churn_risk_score.toString(),
-      insight.upsell_candidate ? 'Yes' : 'No',
-      insight.last_activity ? format(new Date(insight.last_activity), 'yyyy-MM-dd HH:mm') : 'Never',
+      insight.last_active ? format(new Date(insight.last_active), 'yyyy-MM-dd HH:mm') : 'Never',
       insight.total_bills.toString(),
-      Math.round(insight.account_age_days).toString(),
+      insight.total_invoices.toString(),
     ]);
 
     const csvContent = [

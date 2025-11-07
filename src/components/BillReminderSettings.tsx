@@ -52,9 +52,10 @@ export function BillReminderSettings() {
         .single();
 
       if (profile?.whatsapp_reminder_settings) {
+        const savedSettings = profile.whatsapp_reminder_settings as Record<string, any>;
         setSettings({
           ...settings,
-          ...profile.whatsapp_reminder_settings,
+          ...savedSettings,
         });
       }
     } catch (error: any) {
@@ -74,7 +75,7 @@ export function BillReminderSettings() {
       const { error } = await supabase
         .from('profiles')
         .update({
-          whatsapp_reminder_settings: settings,
+          whatsapp_reminder_settings: settings as any,
           updated_at: new Date().toISOString(),
         })
         .eq('id', user.id);

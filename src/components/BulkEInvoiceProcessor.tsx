@@ -108,7 +108,7 @@ export function BulkEInvoiceProcessor({
 
       if (error) throw error;
 
-      setQueueItems(data || []);
+      setQueueItems((data as QueueItem[]) || []);
 
       // Check if all items are completed or failed
       const allDone = data?.every(item => 
