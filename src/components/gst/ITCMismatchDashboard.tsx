@@ -6,57 +6,180 @@ import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useToast } from '@/hooks/use-toast';
-import { AlertTriangle, CheckCircle2, XCircle, Mail, MessageSquare, TrendingDown } from 'lucide-react';
+import { AlertTriangle, CheckCircle2, MessageSquare } from 'lucide-react';
 import { formatCurrency } from '@/utils/locale';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
 import { Locale, t } from '@/utils/locale';
+import { useAuth } from '@/hooks/useAuth';
 
 interface ITCMismatch {
   id: string;
-  purchase_order_id: string;
-  invoice_number: string;
-  invoice_date: string;
-  supplier_gstin: string;
+  invoice_number: string | null;
+  invoice_date: string | null;
+  gstin: string | null;
+  vendor_name: string | null;
+  difference_amount: number;
+  mismatch_type: string;
+  is_resolved: boolean;
+  resolution_notes?: string | null;
+  details: Record<string, any> | null;
+  created_at: string;
+  resolved_at?: string | null;
   your_amount: number;
   gstn_amount: number;
-  difference: number;
-  mismatch_type: 'missing' | 'amount_mismatch' | 'date_mismatch' | 'supplier_mismatch';
-  is_resolved: boolean;
-  resolution_notes?: string;
-  created_at: string;
 }
 
 export function ITCMismatchDashboard() {
   const { toast } = useToast();
+  const { user } = useAuth();
   const [locale] = useLocalStorage<Locale>('invoiceflow_locale', 'en-IN');
-  const [mismatches, setMismatches] = useState<ITCMismatch[]>([]);
+  const [allMismatches, setAllMismatches] = useState<ITCMismatch[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<'all' | 'unresolved' | 'resolved'>('unresolved');
+  const [submittingId, setSubmittingId] = useState<string | null>(null);
 
   useEffect(() => {
     loadMismatches();
-  }, [filter]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const loadMismatches = async () => {
-    // Table doesn't exist yet - disable for now
-    setLoading(false);
-    setMismatches([]);
+    if (!user) {
+      setLoading(false);
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('itc_mismatch_alerts')
+        .select('id, invoice_number, vendor_name, mismatch_type, difference_amount, is_resolved, details, created_at, resolved_at, gstin')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        if (error.message?.includes('does not exist')) {
+          setAllMismatches([]);
+          return;
+        }
+        throw error;
+      }
+
+      const mapped = (data || []).map((item) => {
+        const details = (item.details as Record<string, any>) || {};
+        const yourAmount = Number(details.your_amount ?? details.yourAmount ?? 0);
+        const gstnAmount = Number(details.gstn_amount ?? details.gstnAmount ?? 0);
+        return {
+          id: item.id,
+          invoice_number: item.invoice_number,
+          invoice_date: details.invoice_date || null,
+          gstin: item.gstin || details.supplier_gstin || null,
+          vendor_name: item.vendor_name || details.vendor_name || null,
+          difference_amount: Number(item.difference_amount ?? 0),
+          mismatch_type: item.mismatch_type || details.mismatch_type || 'unknown',
+          is_resolved: !!item.is_resolved,
+          resolution_notes: details.resolution_notes || null,
+          details,
+          created_at: item.created_at,
+          resolved_at: item.resolved_at || null,
+          your_amount: yourAmount,
+          gstn_amount: gstnAmount,
+        } as ITCMismatch;
+      });
+
+      setAllMismatches(mapped);
+    } catch (error: any) {
+      console.error('Error loading ITC mismatches:', error);
+      toast({
+        title: 'Failed to load ITC mismatches',
+        description: error.message || 'Please try again later.',
+        variant: 'destructive',
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleDispute = async (mismatch: ITCMismatch) => {
-    toast({
-      title: 'Feature Not Available',
-      description: 'ITC mismatch dispute is under development',
-      variant: 'destructive',
-    });
+    try {
+      setSubmittingId(mismatch.id);
+      const currentDetails = mismatch.details || {};
+      const updatedDetails = {
+        ...currentDetails,
+        dispute_requested: true,
+        dispute_requested_at: new Date().toISOString(),
+      };
+
+      const { error } = await supabase
+        .from('itc_mismatch_alerts')
+        .update({ details: updatedDetails })
+        .eq('id', mismatch.id);
+
+      if (error) throw error;
+
+      toast({
+        title: 'Dispute logged',
+        description: 'Our GST ops team will review this mismatch.',
+      });
+
+      await loadMismatches();
+    } catch (error: any) {
+      toast({
+        title: 'Dispute failed',
+        description: error.message || 'Unable to log dispute right now.',
+        variant: 'destructive',
+      });
+    } finally {
+      setSubmittingId(null);
+    }
   };
 
   const handleResolve = async (mismatch: ITCMismatch) => {
-    toast({
-      title: 'Feature Not Available',
-      description: 'ITC mismatch resolution is under development',
-      variant: 'destructive',
-    });
+    try {
+      const resolutionNotes = window.prompt(
+        locale === 'hi-IN'
+          ? 'समाधान नोट जोड़ें (वैकल्पिक)'
+          : 'Add a resolution note (optional)',
+        mismatch.resolution_notes || ''
+      );
+
+      setSubmittingId(mismatch.id);
+
+      const currentDetails = mismatch.details || {};
+      const updatedDetails = {
+        ...currentDetails,
+        resolution_notes: resolutionNotes || null,
+      };
+
+      const { error } = await supabase
+        .from('itc_mismatch_alerts')
+        .update({
+          is_resolved: true,
+          resolved_at: new Date().toISOString(),
+          details: updatedDetails,
+        })
+        .eq('id', mismatch.id);
+
+      if (error) throw error;
+
+      toast({
+        title: locale === 'hi-IN' ? 'समाधान पूरा' : 'Mismatch resolved',
+        description:
+          locale === 'hi-IN'
+            ? 'असमानता को समाधान के रूप में चिह्नित कर दिया गया है।'
+            : 'Mismatch is now marked resolved.',
+      });
+
+      await loadMismatches();
+    } catch (error: any) {
+      toast({
+        title: locale === 'hi-IN' ? 'समाधान विफल' : 'Unable to resolve',
+        description: error.message || 'Please try again later.',
+        variant: 'destructive',
+      });
+    } finally {
+      setSubmittingId(null);
+    }
   };
 
   const getMismatchTypeBadge = (type: string) => {
@@ -69,9 +192,19 @@ export function ITCMismatchDashboard() {
     return badges[type as keyof typeof badges] || { label: type, variant: 'default' as const };
   };
 
-  const totalAtRisk = mismatches
+  const totalAtRisk = allMismatches
     .filter(m => !m.is_resolved)
-    .reduce((sum, m) => sum + Math.abs(m.difference), 0);
+    .reduce((sum, m) => sum + Math.abs(m.difference_amount || 0), 0);
+
+  const mismatches = allMismatches.filter((mismatch) => {
+    if (filter === 'resolved') {
+      return mismatch.is_resolved;
+    }
+    if (filter === 'unresolved') {
+      return !mismatch.is_resolved;
+    }
+    return true;
+  });
 
   if (loading) {
     return (
@@ -103,7 +236,7 @@ export function ITCMismatchDashboard() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-destructive">
-              {mismatches.filter(m => !m.is_resolved).length}
+              {allMismatches.filter(m => !m.is_resolved).length}
             </div>
           </CardContent>
         </Card>
@@ -123,7 +256,7 @@ export function ITCMismatchDashboard() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-green-600">
-              {mismatches.filter(m => m.is_resolved).length}
+              {allMismatches.filter(m => m.is_resolved).length}
             </div>
           </CardContent>
         </Card>
@@ -192,12 +325,16 @@ export function ITCMismatchDashboard() {
                 {mismatches.map((mismatch) => (
                   <TableRow key={mismatch.id}>
                     <TableCell className="font-medium">{mismatch.invoice_number}</TableCell>
-                    <TableCell>{new Date(mismatch.invoice_date).toLocaleDateString()}</TableCell>
+                    <TableCell>
+                      {mismatch.invoice_date
+                        ? new Date(mismatch.invoice_date).toLocaleDateString()
+                        : new Date(mismatch.created_at).toLocaleDateString()}
+                    </TableCell>
                     <TableCell>{formatCurrency(mismatch.your_amount, locale)}</TableCell>
                     <TableCell>{formatCurrency(mismatch.gstn_amount, locale)}</TableCell>
                     <TableCell>
-                      <span className={mismatch.difference > 0 ? 'text-destructive' : 'text-green-600'}>
-                        {mismatch.difference > 0 ? '+' : ''}{formatCurrency(mismatch.difference, locale)}
+                      <span className={mismatch.difference_amount > 0 ? 'text-destructive' : 'text-green-600'}>
+                        {mismatch.difference_amount > 0 ? '+' : ''}{formatCurrency(mismatch.difference_amount, locale)}
                       </span>
                     </TableCell>
                     <TableCell>
@@ -225,6 +362,7 @@ export function ITCMismatchDashboard() {
                             <Button
                               size="sm"
                               variant="outline"
+                              disabled={submittingId === mismatch.id}
                               onClick={() => handleDispute(mismatch)}
                             >
                               <MessageSquare className="w-4 h-4 mr-1" />
@@ -233,6 +371,7 @@ export function ITCMismatchDashboard() {
                             <Button
                               size="sm"
                               variant="outline"
+                              disabled={submittingId === mismatch.id}
                               onClick={() => handleResolve(mismatch)}
                             >
                               <CheckCircle2 className="w-4 h-4 mr-1" />
