@@ -34,7 +34,40 @@ const LandingPage = () => {
             transition={{ duration: 0.5 }}
             className="flex items-center space-x-2"
           >
-            <img src={invoiceFlowLogo} alt="InvoiceFlow" className="h-10 w-auto" />
+            <motion.div
+              animate={{ 
+                y: [0, -4, 0],
+                scale: [1, 1.02, 1]
+              }}
+              transition={{ 
+                duration: 3,
+                repeat: Infinity,
+                ease: "easeInOut"
+              }}
+              className="relative"
+            >
+              {/* Animated glow rings */}
+              <motion.div
+                animate={{ 
+                  scale: [1, 1.4, 1],
+                  opacity: [0.3, 0, 0.3]
+                }}
+                transition={{ 
+                  duration: 2.5,
+                  repeat: Infinity,
+                  ease: "easeOut"
+                }}
+                className="absolute inset-0 -m-3 rounded-2xl bg-gradient-to-r from-blue-500/30 via-cyan-500/30 to-blue-500/30 blur-xl"
+              />
+              
+              {/* Logo container with gradient border */}
+              <div className="relative bg-gradient-to-br from-blue-500/10 via-cyan-500/10 to-purple-500/10 p-3 rounded-2xl border border-white/20 backdrop-blur-sm shadow-lg">
+                <img src={invoiceFlowLogo} alt="InvoiceFlow" className="h-10 w-auto relative z-10" />
+                
+                {/* Corner accent */}
+                <div className="absolute -top-1 -right-1 w-3 h-3 bg-gradient-to-br from-cyan-400 to-blue-500 rounded-full shadow-lg shadow-cyan-500/50" />
+              </div>
+            </motion.div>
           </motion.div>
           <motion.div 
             initial={{ opacity: 0, x: 20 }}
