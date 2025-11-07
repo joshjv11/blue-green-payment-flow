@@ -42,193 +42,41 @@ export function CategoryManagement() {
   const [newKeyword, setNewKeyword] = useState('');
 
   useEffect(() => {
-    loadCategories();
+    // Table doesn't exist yet - disable for now
+    setLoading(false);
+    setCategories([]);
   }, []);
 
-  const loadCategories = async () => {
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-
-      const { data, error } = await supabase
-        .from('expense_categories')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('sort_order', { ascending: true });
-
-      if (error) throw error;
-      setCategories(data || []);
-    } catch (error: any) {
-      toast({
-        title: 'Error',
-        description: error.message || 'Failed to load categories',
-        variant: 'destructive',
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const handleSaveCategory = async (category: ExpenseCategory) => {
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-
-      const { error } = await supabase
-        .from('expense_categories')
-        .update({
-          category_name: category.category_name,
-          category_icon: category.category_icon,
-          monthly_budget: category.monthly_budget,
-          auto_detect_keywords: category.auto_detect_keywords,
-        })
-        .eq('id', category.id)
-        .eq('user_id', user.id);
-
-      if (error) throw error;
-
-      toast({
-        title: 'Category Updated',
-        description: `${category.category_name} has been updated`,
-      });
-
-      setEditingCategory(null);
-      await loadCategories();
-    } catch (error: any) {
-      toast({
-        title: 'Error',
-        description: error.message || 'Failed to update category',
-        variant: 'destructive',
-      });
-    }
+    toast({
+      title: 'Feature Not Available',
+      description: 'Expense categories feature is under development',
+      variant: 'destructive',
+    });
   };
 
   const handleAddCategory = async () => {
-    if (!newCategory.category_name.trim()) {
-      toast({
-        title: 'Error',
-        description: 'Please enter a category name',
-        variant: 'destructive',
-      });
-      return;
-    }
-
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-
-      // Check if category already exists
-      const existing = categories.find(
-        c => c.category_name.toLowerCase() === newCategory.category_name.toLowerCase()
-      );
-      if (existing) {
-        toast({
-          title: 'Error',
-          description: 'Category already exists',
-          variant: 'destructive',
-        });
-        return;
-      }
-
-      const { error } = await supabase
-        .from('expense_categories')
-        .insert({
-          user_id: user.id,
-          category_name: newCategory.category_name,
-          category_icon: newCategory.category_icon,
-          monthly_budget: parseFloat(newCategory.monthly_budget) || 0,
-          auto_detect_keywords: newCategory.keywords,
-          is_default: false,
-          is_active: true,
-          sort_order: categories.length + 1,
-        });
-
-      if (error) throw error;
-
-      toast({
-        title: 'Category Added',
-        description: `${newCategory.category_name} has been added`,
-      });
-
-      setShowAddDialog(false);
-      setNewCategory({
-        category_name: '',
-        category_icon: '💰',
-        monthly_budget: '',
-        keywords: [],
-      });
-      await loadCategories();
-    } catch (error: any) {
-      toast({
-        title: 'Error',
-        description: error.message || 'Failed to add category',
-        variant: 'destructive',
-      });
-    }
+    toast({
+      title: 'Feature Not Available',
+      description: 'Expense categories feature is under development',
+      variant: 'destructive',
+    });
   };
 
   const handleDeleteCategory = async (category: ExpenseCategory) => {
-    if (category.is_default) {
-      toast({
-        title: 'Cannot Delete',
-        description: 'Default categories cannot be deleted. You can deactivate them instead.',
-        variant: 'destructive',
-      });
-      return;
-    }
-
-    if (!confirm(`Are you sure you want to delete "${category.category_name}"?`)) {
-      return;
-    }
-
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-
-      const { error } = await supabase
-        .from('expense_categories')
-        .delete()
-        .eq('id', category.id)
-        .eq('user_id', user.id);
-
-      if (error) throw error;
-
-      toast({
-        title: 'Category Deleted',
-        description: `${category.category_name} has been deleted`,
-      });
-
-      await loadCategories();
-    } catch (error: any) {
-      toast({
-        title: 'Error',
-        description: error.message || 'Failed to delete category',
-        variant: 'destructive',
-      });
-    }
+    toast({
+      title: 'Feature Not Available',
+      description: 'Expense categories feature is under development',
+      variant: 'destructive',
+    });
   };
 
   const handleToggleActive = async (category: ExpenseCategory) => {
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-
-      const { error } = await supabase
-        .from('expense_categories')
-        .update({ is_active: !category.is_active })
-        .eq('id', category.id)
-        .eq('user_id', user.id);
-
-      if (error) throw error;
-
-      await loadCategories();
-    } catch (error: any) {
-      toast({
-        title: 'Error',
-        description: error.message || 'Failed to update category',
-        variant: 'destructive',
-      });
-    }
+    toast({
+      title: 'Feature Not Available',
+      description: 'Expense categories feature is under development',
+      variant: 'destructive',
+    });
   };
 
   const addKeyword = () => {

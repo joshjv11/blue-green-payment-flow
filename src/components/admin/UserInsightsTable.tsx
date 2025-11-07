@@ -146,11 +146,9 @@ export function UserInsightsTable() {
                 <TableRow>
                   <TableHead>Email</TableHead>
                   <TableHead>Plan</TableHead>
-                  <TableHead>Engagement</TableHead>
-                  <TableHead>Churn Risk</TableHead>
-                  <TableHead>Upsell</TableHead>
                   <TableHead>Last Activity</TableHead>
                   <TableHead>Bills</TableHead>
+                  <TableHead>Invoices</TableHead>
                   <TableHead>Actions</TableHead>
                 </TableRow>
               </TableHeader>
@@ -163,38 +161,13 @@ export function UserInsightsTable() {
                         {insight.plan || 'free'}
                       </Badge>
                     </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        {getEngagementBadge(insight.engagement_score)}
-                        <span className="text-xs text-muted-foreground">
-                          {insight.engagement_score}/100
-                        </span>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        {getChurnRiskBadge(insight.churn_risk_score)}
-                        <span className="text-xs text-muted-foreground">
-                          {insight.churn_risk_score}/100
-                        </span>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      {insight.upsell_candidate ? (
-                        <Badge variant="default" className="gap-1">
-                          <TrendingUp className="h-3 w-3" />
-                          Candidate
-                        </Badge>
-                      ) : (
-                        <span className="text-muted-foreground text-sm">-</span>
-                      )}
-                    </TableCell>
                     <TableCell className="text-sm">
-                      {insight.last_activity 
-                        ? format(new Date(insight.last_activity), 'MMM dd, yyyy')
+                      {insight.last_active 
+                        ? format(new Date(insight.last_active), 'MMM dd, yyyy')
                         : 'Never'}
                     </TableCell>
                     <TableCell>{insight.total_bills}</TableCell>
+                    <TableCell>{insight.total_invoices}</TableCell>
                     <TableCell>
                       <div className="flex items-center gap-1">
                         <Button

@@ -38,137 +38,25 @@ export function ITCMismatchDashboard() {
   }, [filter]);
 
   const loadMismatches = async () => {
-    try {
-      setLoading(true);
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-
-      let query = supabase
-        .from('itc_mismatch_alerts')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false });
-
-      if (filter === 'unresolved') {
-        query = query.eq('is_resolved', false);
-      } else if (filter === 'resolved') {
-        query = query.eq('is_resolved', true);
-      }
-
-      const { data, error } = await query;
-
-      if (error) {
-        if (error.code === 'PGRST204' || error.code === '42P01') {
-          // Table doesn't exist yet
-          setMismatches([]);
-          return;
-        }
-        throw error;
-      }
-
-      setMismatches(data || []);
-    } catch (error: any) {
-      console.error('Error loading mismatches:', error);
-      toast({
-        title: t('error', locale),
-        description: error.message || t('loading', locale),
-        variant: 'destructive',
-      });
-    } finally {
-      setLoading(false);
-    }
+    // Table doesn't exist yet - disable for now
+    setLoading(false);
+    setMismatches([]);
   };
 
   const handleDispute = async (mismatch: ITCMismatch) => {
-    try {
-      // Get supplier contact info from purchase order
-      const { data: purchase } = await supabase
-        .from('purchase_orders')
-        .select('supplier_name, supplier_email, supplier_phone')
-        .eq('id', mismatch.purchase_order_id)
-        .single();
-
-      if (!purchase) {
-        toast({
-          title: t('error', locale),
-          description: 'Purchase order not found',
-          variant: 'destructive',
-        });
-        return;
-      }
-
-      // Create dispute record
-      await supabase
-        .from('itc_mismatch_alerts')
-        .update({
-          is_resolved: false,
-          resolution_notes: `Dispute filed on ${new Date().toLocaleDateString()}. Contacting supplier: ${purchase.supplier_email || purchase.supplier_phone}`,
-        })
-        .eq('id', mismatch.id);
-
-      // Send email to supplier (if email available)
-      if (purchase.supplier_email) {
-        // TODO: Integrate with email service
-        toast({
-          title: t('success', locale),
-          description: `Dispute email sent to ${purchase.supplier_email}`,
-        });
-      }
-
-      // Send WhatsApp message (if phone available)
-      if (purchase.supplier_phone) {
-        try {
-          await supabase.functions.invoke('send-whatsapp-message', {
-            body: {
-              phone_number: purchase.supplier_phone,
-              message: locale === 'hi-IN'
-                ? `नमस्ते, आपके इनवॉइस ${mismatch.invoice_number} में ITC असमानता है। कृपया जांच करें।`
-                : `Hello, there is an ITC mismatch in your invoice ${mismatch.invoice_number}. Please verify.`,
-            },
-          });
-        } catch (err) {
-          console.warn('WhatsApp send failed:', err);
-        }
-      }
-
-      toast({
-        title: t('success', locale),
-        description: locale === 'hi-IN' ? 'विवाद दर्ज किया गया' : 'Dispute filed successfully',
-      });
-
-      loadMismatches();
-    } catch (error: any) {
-      toast({
-        title: t('error', locale),
-        description: error.message,
-        variant: 'destructive',
-      });
-    }
+    toast({
+      title: 'Feature Not Available',
+      description: 'ITC mismatch dispute is under development',
+      variant: 'destructive',
+    });
   };
 
   const handleResolve = async (mismatch: ITCMismatch) => {
-    try {
-      await supabase
-        .from('itc_mismatch_alerts')
-        .update({
-          is_resolved: true,
-          resolution_notes: `Resolved manually on ${new Date().toLocaleDateString()}`,
-        })
-        .eq('id', mismatch.id);
-
-      toast({
-        title: t('success', locale),
-        description: locale === 'hi-IN' ? 'असमानता हल की गई' : 'Mismatch resolved',
-      });
-
-      loadMismatches();
-    } catch (error: any) {
-      toast({
-        title: t('error', locale),
-        description: error.message,
-        variant: 'destructive',
-      });
-    }
+    toast({
+      title: 'Feature Not Available',
+      description: 'ITC mismatch resolution is under development',
+      variant: 'destructive',
+    });
   };
 
   const getMismatchTypeBadge = (type: string) => {

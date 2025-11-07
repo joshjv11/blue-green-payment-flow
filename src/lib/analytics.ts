@@ -21,24 +21,32 @@ export interface MonthlyAggregate {
 }
 
 export interface TopCustomer {
+  customer_id?: string;
   customer_name: string;
-  total_sales: number;
-  transaction_count: number;
+  total_sales?: number;
+  total_amount?: number;
+  transaction_count?: number;
+  invoice_count?: number;
 }
 
 export interface TopVendor {
+  vendor_id?: string;
   vendor_name: string;
-  total_purchases: number;
-  transaction_count: number;
+  total_purchases?: number;
+  total_amount?: number;
+  transaction_count?: number;
+  bill_count?: number;
 }
 
 export interface UpcomingBill {
   id: string;
-  name: string;
+  name?: string;
+  bill_name?: string;
+  description?: string;
   amount: number;
   due_date: string;
-  category: string;
-  status: string;
+  category?: string;
+  status?: string;
 }
 
 // Debounce utility to batch analytics events

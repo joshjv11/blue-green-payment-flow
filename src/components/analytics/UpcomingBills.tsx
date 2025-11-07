@@ -73,7 +73,7 @@ export function UpcomingBills({ bills, loading }: UpcomingBillsProps) {
                   className="flex items-center justify-between p-4 rounded-xl border border-border/50 bg-card/50 hover:bg-accent/10 transition-colors"
                 >
                   <div className="flex-1 min-w-0">
-                    <div className="font-medium truncate mb-1">{bill.bill_name}</div>
+                    <div className="font-medium truncate mb-1">{bill.bill_name || bill.name || bill.description || 'Untitled Bill'}</div>
                     <div className="flex items-center gap-2 text-xs text-muted-foreground">
                       <Calendar className="w-3 h-3" />
                       {format(new Date(bill.due_date), 'MMM dd, yyyy')}
