@@ -195,7 +195,7 @@ export default function ComponentPlayground() {
         </div>}
       >
         <div className="p-6 border rounded-lg bg-background">
-          <Component {...componentProps} type="bills" currentCount={0} onUpgrade={() => {}} />
+          <Component {...componentProps} />
         </div>
       </ErrorBoundary>
     );

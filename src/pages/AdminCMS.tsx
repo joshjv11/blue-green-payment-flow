@@ -184,6 +184,17 @@ const AdminCMS = () => {
     }
   };
 
+  const loadUserBehaviour = async () => {
+    setLoadingBehaviour(true);
+    try {
+      // Feature disabled until analytics tables are provisioned
+      setBehaviourStats(null);
+      setUserBehaviour([]);
+    } finally {
+      setLoadingBehaviour(false);
+    }
+  };
+
   const loadData = async () => {
     setLoadingData(true);
     try {

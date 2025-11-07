@@ -280,10 +280,25 @@ const Dashboard = () => {
         supabase.from('spending_alerts').select('*').eq('user_id', user.id).eq('is_active', true)
       ]);
 
-      setSavingsGoals(goalsResult.data || []);
-      setActiveEMIs(emisResult.data || []);
+      const isMissingTable = (result: any) => result?.error?.message?.includes('does not exist');
 
-      if (alertsResult.data && expensesResult.data) {
+      if (isMissingTable(goalsResult)) {
+        setSavingsGoals([]);
+      } else if (!goalsResult.error) {
+        setSavingsGoals(goalsResult.data || []);
+      } else {
+        throw goalsResult.error;
+      }
+
+      if (isMissingTable(emisResult)) {
+        setActiveEMIs([]);
+      } else if (!emisResult.error) {
+        setActiveEMIs(emisResult.data || []);
+      } else {
+        throw emisResult.error;
+      }
+
+      if (!isMissingTable(alertsResult) && !alertsResult.error && expensesResult.data) {
         const categorySpending: Record<string, number> = {};
         expensesResult.data.forEach((e: any) => {
           categorySpending[e.category] = (categorySpending[e.category] || 0) + parseFloat(e.amount || 0);

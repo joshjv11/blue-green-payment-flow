@@ -222,6 +222,37 @@ ALTER TABLE public.sales_orders
 -- ---------------------------------------------------------------------------
 -- Helper function for decrypting GSTN credentials
 -- ---------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION public.encrypt_gstn_password(
+  password TEXT,
+  user_id UUID
+)
+RETURNS TEXT
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  secret_suffix TEXT := current_setting('app.settings.encryption_key', true);
+  key TEXT;
+BEGIN
+  IF password IS NULL THEN
+    RETURN NULL;
+  END IF;
+
+  key := user_id::text || 'GST_SALT_v1';
+  IF secret_suffix IS NOT NULL AND secret_suffix <> '' THEN
+    key := key || '_' || secret_suffix;
+  END IF;
+
+  RETURN encode(pgp_sym_encrypt(password::text, key), 'base64');
+EXCEPTION WHEN others THEN
+  RAISE WARNING 'encrypt_gstn_password failed: %', SQLERRM;
+  RETURN password;
+END;
+$$;
+
+GRANT EXECUTE ON FUNCTION public.encrypt_gstn_password(TEXT, UUID) TO authenticated, service_role;
+
 CREATE OR REPLACE FUNCTION public.decrypt_gstn_password(
   encrypted_password TEXT,
   user_id UUID
@@ -413,6 +444,354 @@ $$;
 GRANT EXECUTE ON FUNCTION public.get_admin_system_health() TO authenticated, service_role;
 
 -- ---------------------------------------------------------------------------
+-- Additional analytics helpers
+-- ---------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION public.get_sales_trends(p_from DATE, p_to DATE)
+RETURNS TABLE(
+  d DATE,
+  orders INT,
+  sales_amount NUMERIC
+)
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+BEGIN
+  IF to_regclass('public.sales_orders') IS NULL THEN
+    RETURN;
+  END IF;
+
+  RETURN QUERY
+  SELECT
+    date_trunc('day', transaction_date)::date AS d,
+    COUNT(*)::INT AS orders,
+    COALESCE(SUM(grand_total), 0) AS sales_amount
+  FROM public.sales_orders
+  WHERE user_id = auth.uid()
+    AND transaction_date >= p_from
+    AND transaction_date <= p_to
+  GROUP BY 1
+  ORDER BY 1;
+END;
+$$;
+
+GRANT EXECUTE ON FUNCTION public.get_sales_trends(DATE, DATE) TO authenticated, service_role;
+
+CREATE OR REPLACE FUNCTION public.get_purchases_trends(p_from DATE, p_to DATE)
+RETURNS TABLE(
+  d DATE,
+  bills INT,
+  spend_amount NUMERIC
+)
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+BEGIN
+  IF to_regclass('public.purchase_orders') IS NULL THEN
+    RETURN;
+  END IF;
+
+  RETURN QUERY
+  SELECT
+    date_trunc('day', transaction_date)::date AS d,
+    COUNT(*)::INT AS bills,
+    COALESCE(SUM(grand_total), 0) AS spend_amount
+  FROM public.purchase_orders
+  WHERE user_id = auth.uid()
+    AND transaction_date >= p_from
+    AND transaction_date <= p_to
+  GROUP BY 1
+  ORDER BY 1;
+END;
+$$;
+
+GRANT EXECUTE ON FUNCTION public.get_purchases_trends(DATE, DATE) TO authenticated, service_role;
+
+CREATE OR REPLACE FUNCTION public.get_stock_turnover(p_from DATE, p_to DATE)
+RETURNS TABLE(
+  product_id UUID,
+  product_name TEXT,
+  current_stock NUMERIC,
+  sales_qty NUMERIC,
+  turnover_ratio NUMERIC
+)
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+BEGIN
+  IF to_regclass('public.products') IS NULL OR to_regclass('public.order_lines') IS NULL OR to_regclass('public.sales_orders') IS NULL THEN
+    RETURN;
+  END IF;
+
+  RETURN QUERY
+  WITH sales_window AS (
+    SELECT
+      ol.product_id,
+      COALESCE(ol.product_name, 'Unknown') AS product_name,
+      SUM(ol.quantity) AS qty
+    FROM public.order_lines ol
+    JOIN public.sales_orders so ON so.id = ol.order_id AND ol.order_type = 'sale'
+    WHERE so.user_id = auth.uid()
+      AND so.transaction_date BETWEEN p_from AND p_to
+    GROUP BY ol.product_id, COALESCE(ol.product_name, 'Unknown')
+  )
+  SELECT
+    p.id,
+    p.name,
+    COALESCE(p.stock_qty, 0) AS current_stock,
+    COALESCE(sw.qty, 0) AS sales_qty,
+    CASE
+      WHEN COALESCE(p.stock_qty, 0) = 0 OR COALESCE(sw.qty, 0) = 0 THEN 0
+      ELSE COALESCE(sw.qty, 0) / NULLIF(p.stock_qty::NUMERIC, 0)
+    END AS turnover_ratio
+  FROM public.products p
+  LEFT JOIN sales_window sw ON sw.product_id = p.id
+  WHERE p.user_id = auth.uid();
+END;
+$$;
+
+GRANT EXECUTE ON FUNCTION public.get_stock_turnover(DATE, DATE) TO authenticated, service_role;
+
+CREATE OR REPLACE FUNCTION public.get_reorder_suggestions()
+RETURNS TABLE(
+  product_id UUID,
+  product_name TEXT,
+  stock_qty NUMERIC,
+  reorder_level NUMERIC
+)
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+BEGIN
+  IF to_regclass('public.products') IS NULL THEN
+    RETURN;
+  END IF;
+
+  RETURN QUERY
+  SELECT
+    id,
+    name,
+    COALESCE(stock_qty, 0) AS stock_qty,
+    COALESCE(reorder_level, 0) AS reorder_level
+  FROM public.products
+  WHERE user_id = auth.uid()
+    AND COALESCE(stock_qty, 0) <= GREATEST(reorder_level, 0)
+  ORDER BY reorder_level - stock_qty ASC;
+END;
+$$;
+
+GRANT EXECUTE ON FUNCTION public.get_reorder_suggestions() TO authenticated, service_role;
+
+CREATE OR REPLACE FUNCTION public.get_admin_financial_metrics()
+RETURNS TABLE (
+  total_paying_users BIGINT,
+  total_revenue NUMERIC,
+  avg_payment_amount NUMERIC,
+  payment_success_rate NUMERIC,
+  pro_users BIGINT,
+  premium_users BIGINT,
+  free_users BIGINT,
+  inactive_users_30d BIGINT,
+  estimated_mrr NUMERIC,
+  revenue_this_month NUMERIC,
+  revenue_last_month NUMERIC
+)
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  has_payments BOOLEAN := to_regclass('public.payment_transactions') IS NOT NULL;
+  has_plans BOOLEAN := to_regclass('public.user_plans') IS NOT NULL;
+  paying_users BIGINT := 0;
+  revenue_total NUMERIC := 0;
+  avg_amount NUMERIC := 0;
+  success_rate NUMERIC := 0;
+  pro_count BIGINT := 0;
+  premium_count BIGINT := 0;
+  free_count BIGINT := 0;
+  estimated_mrr_val NUMERIC := 0;
+  revenue_this_month_val NUMERIC := 0;
+  revenue_last_month_val NUMERIC := 0;
+BEGIN
+  IF NOT public.is_system_admin() THEN
+    RAISE EXCEPTION 'Only system admins can view financial metrics';
+  END IF;
+
+  IF has_payments THEN
+    SELECT COUNT(DISTINCT user_id), COALESCE(SUM(amount), 0), COALESCE(AVG(amount), 0)
+      INTO paying_users, revenue_total, avg_amount
+    FROM public.payment_transactions
+    WHERE status = 'verified';
+
+    SELECT CASE WHEN COUNT(*) = 0 THEN 0
+                ELSE COUNT(*) FILTER (WHERE status = 'verified')::NUMERIC / COUNT(*)
+           END,
+           COALESCE(SUM(amount) FILTER (WHERE status = 'verified' AND created_at >= date_trunc('month', CURRENT_DATE)), 0),
+           COALESCE(SUM(amount) FILTER (WHERE status = 'verified' AND created_at >= date_trunc('month', CURRENT_DATE - INTERVAL '1 month') AND created_at < date_trunc('month', CURRENT_DATE)), 0)
+      INTO success_rate, revenue_this_month_val, revenue_last_month_val
+    FROM public.payment_transactions;
+  END IF;
+
+  IF has_plans THEN
+    SELECT
+      COUNT(*) FILTER (WHERE plan = 'pro' AND is_active = TRUE),
+      COUNT(*) FILTER (WHERE plan = 'premium' AND is_active = TRUE),
+      COUNT(*) FILTER (WHERE plan = 'free' OR is_active IS FALSE),
+      COALESCE(SUM(CASE plan WHEN 'premium' THEN 1499 WHEN 'pro' THEN 499 ELSE 0 END) FILTER (WHERE is_active = TRUE), 0)
+    INTO pro_count, premium_count, free_count, estimated_mrr_val
+    FROM public.user_plans;
+  END IF;
+
+  RETURN QUERY
+  SELECT
+    paying_users,
+    revenue_total,
+    avg_amount,
+    success_rate,
+    pro_count,
+    premium_count,
+    free_count,
+    0,
+    estimated_mrr_val,
+    revenue_this_month_val,
+    revenue_last_month_val;
+END;
+$$;
+
+GRANT EXECUTE ON FUNCTION public.get_admin_financial_metrics() TO authenticated, service_role;
+
+CREATE OR REPLACE FUNCTION public.get_all_users_for_admin()
+RETURNS TABLE (
+  users JSON,
+  plans JSON,
+  payments JSON
+)
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  payments_json JSON := '[]'::json;
+BEGIN
+  IF NOT public.is_system_admin() THEN
+    RAISE EXCEPTION 'Only system admins can view user data';
+  END IF;
+
+  IF to_regclass('public.payment_transactions') IS NOT NULL THEN
+    SELECT COALESCE(json_agg(row_to_json(pt)), '[]'::json)
+      INTO payments_json
+    FROM public.payment_transactions pt
+    ORDER BY created_at DESC;
+  END IF;
+
+  RETURN QUERY
+  SELECT
+    (SELECT COALESCE(json_agg(row_to_json(p)), '[]'::json)
+     FROM public.profiles p),
+    (SELECT COALESCE(json_agg(row_to_json(up)), '[]'::json)
+     FROM public.user_plans up),
+    payments_json;
+END;
+$$;
+
+GRANT EXECUTE ON FUNCTION public.get_all_users_for_admin() TO authenticated, service_role;
+
+CREATE OR REPLACE FUNCTION public.get_dashboard_data(p_user_id UUID)
+RETURNS JSON
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  result JSON := '{}'::json;
+  has_bills BOOLEAN := to_regclass('public.bills') IS NOT NULL;
+  has_savings BOOLEAN := to_regclass('public.savings_goals') IS NOT NULL;
+  has_emi BOOLEAN := to_regclass('public.emi_tracker') IS NOT NULL;
+  has_expenses BOOLEAN := to_regclass('public.expenses') IS NOT NULL;
+  has_alerts BOOLEAN := to_regclass('public.spending_alerts') IS NOT NULL;
+  bills_json JSON := '[]'::json;
+  savings_json JSON := '[]'::json;
+  emis_json JSON := '[]'::json;
+  expense_json JSON := '[]'::json;
+  alerts_json JSON := '[]'::json;
+BEGIN
+  IF NOT public.is_system_admin(p_user_id) AND p_user_id <> auth.uid() THEN
+    RAISE EXCEPTION 'Access denied';
+  END IF;
+
+  IF has_bills THEN
+    SELECT COALESCE(json_agg(row_to_json(b)), '[]'::json)
+      INTO bills_json
+    FROM (
+      SELECT * FROM public.bills
+      WHERE user_id = p_user_id
+      ORDER BY due_date ASC
+      LIMIT 50
+    ) b;
+  END IF;
+
+  IF has_savings THEN
+    SELECT COALESCE(json_agg(row_to_json(sg)), '[]'::json)
+      INTO savings_json
+    FROM (
+      SELECT * FROM public.savings_goals
+      WHERE user_id = p_user_id AND is_completed = FALSE
+      ORDER BY created_at DESC
+      LIMIT 3
+    ) sg;
+  END IF;
+
+  IF has_emi THEN
+    SELECT COALESCE(json_agg(row_to_json(e)), '[]'::json)
+      INTO emis_json
+    FROM (
+      SELECT * FROM public.emi_tracker
+      WHERE user_id = p_user_id AND is_active = TRUE
+      ORDER BY next_due_date ASC
+      LIMIT 3
+    ) e;
+  END IF;
+
+  IF has_expenses THEN
+    SELECT COALESCE(json_agg(row_to_json(exp)), '[]'::json)
+      INTO expense_json
+    FROM (
+      SELECT category, SUM(amount::numeric) AS total_amount
+      FROM public.expenses
+      WHERE user_id = p_user_id
+        AND date >= date_trunc('month', CURRENT_DATE)
+      GROUP BY category
+    ) exp;
+  END IF;
+
+  IF has_alerts THEN
+    SELECT COALESCE(json_agg(row_to_json(sa)), '[]'::json)
+      INTO alerts_json
+    FROM (
+      SELECT * FROM public.spending_alerts
+      WHERE user_id = p_user_id AND is_active = TRUE
+    ) sa;
+  END IF;
+
+  SELECT json_build_object(
+    'bills', bills_json,
+    'savings_goals', savings_json,
+    'active_emis', emis_json,
+    'current_month_expenses', expense_json,
+    'spending_alerts', alerts_json
+  ) INTO result;
+
+  RETURN result;
+END;
+$$;
+
+GRANT EXECUTE ON FUNCTION public.get_dashboard_data(UUID) TO authenticated;
+
+-- ---------------------------------------------------------------------------
 -- Ensure admin_users table and is_system_admin helper exist
 -- ---------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS public.admin_users (
@@ -455,6 +834,123 @@ SELECT id, 'super_admin', id
 FROM auth.users
 WHERE email = 'noreply@invoiceflow.dev'
 ON CONFLICT (user_id) DO NOTHING;
+
+-- ---------------------------------------------------------------------------
+-- Core financial tables required by dashboard widgets
+-- ---------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS public.savings_goals (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  goal_name TEXT NOT NULL,
+  target_amount NUMERIC(14,2) NOT NULL,
+  current_amount NUMERIC(14,2) NOT NULL DEFAULT 0,
+  target_date DATE,
+  is_completed BOOLEAN DEFAULT FALSE,
+  created_at TIMESTAMPTZ DEFAULT now(),
+  updated_at TIMESTAMPTZ DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS idx_savings_goals_user ON public.savings_goals(user_id, created_at DESC);
+
+ALTER TABLE public.savings_goals ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Users manage savings goals" ON public.savings_goals;
+CREATE POLICY "Users manage savings goals"
+  ON public.savings_goals
+  FOR ALL
+  USING (auth.uid() = user_id)
+  WITH CHECK (auth.uid() = user_id);
+
+DROP TRIGGER IF EXISTS trg_savings_goals_updated_at ON public.savings_goals;
+CREATE TRIGGER trg_savings_goals_updated_at
+  BEFORE UPDATE ON public.savings_goals
+  FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
+
+CREATE TABLE IF NOT EXISTS public.emi_tracker (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  lender_name TEXT NOT NULL,
+  principal_amount NUMERIC(14,2) NOT NULL DEFAULT 0,
+  outstanding_balance NUMERIC(14,2) NOT NULL DEFAULT 0,
+  interest_rate NUMERIC(6,2) NOT NULL DEFAULT 0,
+  emi_amount NUMERIC(14,2) NOT NULL DEFAULT 0,
+  emi_due_day INTEGER DEFAULT 1 CHECK (emi_due_day BETWEEN 1 AND 31),
+  next_due_date DATE,
+  is_active BOOLEAN DEFAULT TRUE,
+  created_at TIMESTAMPTZ DEFAULT now(),
+  updated_at TIMESTAMPTZ DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS idx_emi_tracker_user ON public.emi_tracker(user_id, next_due_date);
+
+ALTER TABLE public.emi_tracker ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Users manage emi tracker" ON public.emi_tracker;
+CREATE POLICY "Users manage emi tracker"
+  ON public.emi_tracker
+  FOR ALL
+  USING (auth.uid() = user_id)
+  WITH CHECK (auth.uid() = user_id);
+
+DROP TRIGGER IF EXISTS trg_emi_tracker_updated_at ON public.emi_tracker;
+CREATE TRIGGER trg_emi_tracker_updated_at
+  BEFORE UPDATE ON public.emi_tracker
+  FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
+
+CREATE TABLE IF NOT EXISTS public.expense_categories (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  name TEXT NOT NULL,
+  icon TEXT,
+  color TEXT,
+  monthly_budget NUMERIC(14,2) DEFAULT 0,
+  created_at TIMESTAMPTZ DEFAULT now(),
+  updated_at TIMESTAMPTZ DEFAULT now(),
+  UNIQUE(user_id, name)
+);
+
+CREATE INDEX IF NOT EXISTS idx_expense_categories_user ON public.expense_categories(user_id, name);
+
+ALTER TABLE public.expense_categories ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Users manage expense categories" ON public.expense_categories;
+CREATE POLICY "Users manage expense categories"
+  ON public.expense_categories
+  FOR ALL
+  USING (auth.uid() = user_id)
+  WITH CHECK (auth.uid() = user_id);
+
+DROP TRIGGER IF EXISTS trg_expense_categories_updated_at ON public.expense_categories;
+CREATE TRIGGER trg_expense_categories_updated_at
+  BEFORE UPDATE ON public.expense_categories
+  FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
+
+CREATE TABLE IF NOT EXISTS public.spending_alerts (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  category TEXT NOT NULL,
+  monthly_limit NUMERIC(14,2) NOT NULL DEFAULT 0,
+  alert_threshold NUMERIC(5,2) NOT NULL DEFAULT 80,
+  is_active BOOLEAN DEFAULT TRUE,
+  created_at TIMESTAMPTZ DEFAULT now(),
+  updated_at TIMESTAMPTZ DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS idx_spending_alerts_user ON public.spending_alerts(user_id, is_active);
+
+ALTER TABLE public.spending_alerts ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Users manage spending alerts" ON public.spending_alerts;
+CREATE POLICY "Users manage spending alerts"
+  ON public.spending_alerts
+  FOR ALL
+  USING (auth.uid() = user_id)
+  WITH CHECK (auth.uid() = user_id);
+
+DROP TRIGGER IF EXISTS trg_spending_alerts_updated_at ON public.spending_alerts;
+CREATE TRIGGER trg_spending_alerts_updated_at
+  BEFORE UPDATE ON public.spending_alerts
+  FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
 
 -- ---------------------------------------------------------------------------
 -- Create lightweight payment_transactions table if it is still missing

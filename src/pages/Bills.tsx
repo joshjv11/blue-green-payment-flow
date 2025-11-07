@@ -34,7 +34,8 @@ import {
   Download,
   Clock,
   RefreshCw,
-  FileText
+  FileText,
+  Loader2
 } from 'lucide-react';
 import { format, parseISO, differenceInDays, isAfter, isBefore, addDays } from 'date-fns';
 import { useSupabasePlan } from '@/hooks/useSupabasePlan';

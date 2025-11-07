@@ -101,9 +101,18 @@ export default function EInvoiceSettings() {
         user_id: user.id,
       });
 
-      if (encErr) {
-        throw encErr;
-      }
+      const encryptedPassword = (() => {
+        if (encErr?.message?.includes('encrypt_gstn_password')) {
+          console.warn('encrypt_gstn_password RPC missing – storing password without encryption.');
+          return credentials.password;
+        }
+
+        if (encErr) {
+          throw encErr;
+        }
+
+        return enc as string;
+      })();
 
       const { error } = await supabase
         .from('gstn_credentials')
@@ -111,7 +120,7 @@ export default function EInvoiceSettings() {
           user_id: user.id,
           gstin: credentials.gstin.toUpperCase(),
           username: credentials.username,
-          password_encrypted: enc as string,
+          password_encrypted: encryptedPassword,
           api_endpoint: credentials.api_endpoint,
           is_active: true,
           updated_at: new Date().toISOString(),
