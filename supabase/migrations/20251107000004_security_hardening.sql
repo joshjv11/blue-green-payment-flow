@@ -1,19 +1,27 @@
 -- Phase 4 Security Hardening
 -- Enable email confirmation and enforce password policies
-UPDATE auth.config
-SET
-  enable_email_confirm = TRUE,
-  enable_signup = TRUE,
-  enable_email_signup = TRUE,
-  password_min_length = GREATEST(password_min_length, 10),
-  password_require_upper = TRUE,
-  password_require_lower = TRUE,
-  password_require_numbers = TRUE,
-  password_require_special = TRUE;
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT 1 FROM information_schema.tables
+    WHERE table_schema = 'auth' AND table_name = 'config'
+  ) THEN
+    UPDATE auth.config
+    SET
+      enable_email_confirm = TRUE,
+      enable_signup = TRUE,
+      enable_email_signup = TRUE,
+      password_min_length = GREATEST(password_min_length, 10),
+      password_require_upper = TRUE,
+      password_require_lower = TRUE,
+      password_require_numbers = TRUE,
+      password_require_special = TRUE;
 
--- Optional: ensure Have I Been Pwned check is enabled
-UPDATE auth.config
-SET enable_hibp = TRUE;
+    UPDATE auth.config
+    SET enable_hibp = TRUE;
+  END IF;
+END;
+$$;
 
 -- Force all SECURITY DEFINER functions in public schema to set search_path=public
 DO $$
