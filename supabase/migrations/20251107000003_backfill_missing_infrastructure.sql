@@ -852,6 +852,33 @@ CREATE TABLE IF NOT EXISTS public.savings_goals (
 
 CREATE INDEX IF NOT EXISTS idx_savings_goals_user ON public.savings_goals(user_id, created_at DESC);
 
+DO $$
+BEGIN
+  IF to_regclass('public.savings_goals') IS NOT NULL THEN
+    ALTER TABLE public.savings_goals
+      ADD COLUMN IF NOT EXISTS goal_name TEXT,
+      ADD COLUMN IF NOT EXISTS target_amount NUMERIC(14,2) DEFAULT 0,
+      ADD COLUMN IF NOT EXISTS current_amount NUMERIC(14,2) DEFAULT 0,
+      ADD COLUMN IF NOT EXISTS target_date DATE,
+      ADD COLUMN IF NOT EXISTS is_completed BOOLEAN DEFAULT FALSE,
+      ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ DEFAULT now(),
+      ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT now();
+
+    UPDATE public.savings_goals
+      SET goal_name = COALESCE(goal_name, 'New Goal'),
+          target_amount = COALESCE(target_amount, 0),
+          current_amount = COALESCE(current_amount, 0),
+          is_completed = COALESCE(is_completed, FALSE);
+
+    ALTER TABLE public.savings_goals
+      ALTER COLUMN goal_name SET NOT NULL,
+      ALTER COLUMN target_amount SET NOT NULL,
+      ALTER COLUMN current_amount SET NOT NULL,
+      ALTER COLUMN is_completed SET NOT NULL;
+  END IF;
+END;
+$$;
+
 ALTER TABLE public.savings_goals ENABLE ROW LEVEL SECURITY;
 
 DROP POLICY IF EXISTS "Users manage savings goals" ON public.savings_goals;
@@ -883,6 +910,42 @@ CREATE TABLE IF NOT EXISTS public.emi_tracker (
 
 CREATE INDEX IF NOT EXISTS idx_emi_tracker_user ON public.emi_tracker(user_id, next_due_date);
 
+DO $$
+BEGIN
+  IF to_regclass('public.emi_tracker') IS NOT NULL THEN
+    ALTER TABLE public.emi_tracker
+      ADD COLUMN IF NOT EXISTS lender_name TEXT,
+      ADD COLUMN IF NOT EXISTS principal_amount NUMERIC(14,2) DEFAULT 0,
+      ADD COLUMN IF NOT EXISTS outstanding_balance NUMERIC(14,2) DEFAULT 0,
+      ADD COLUMN IF NOT EXISTS interest_rate NUMERIC(6,2) DEFAULT 0,
+      ADD COLUMN IF NOT EXISTS emi_amount NUMERIC(14,2) DEFAULT 0,
+      ADD COLUMN IF NOT EXISTS emi_due_day INTEGER DEFAULT 1,
+      ADD COLUMN IF NOT EXISTS next_due_date DATE,
+      ADD COLUMN IF NOT EXISTS is_active BOOLEAN DEFAULT TRUE,
+      ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ DEFAULT now(),
+      ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT now();
+
+    UPDATE public.emi_tracker
+      SET lender_name = COALESCE(lender_name, 'Lender'),
+          principal_amount = COALESCE(principal_amount, 0),
+          outstanding_balance = COALESCE(outstanding_balance, 0),
+          interest_rate = COALESCE(interest_rate, 0),
+          emi_amount = COALESCE(emi_amount, 0),
+          emi_due_day = COALESCE(emi_due_day, 1),
+          is_active = COALESCE(is_active, TRUE);
+
+    ALTER TABLE public.emi_tracker
+      ALTER COLUMN lender_name SET NOT NULL,
+      ALTER COLUMN principal_amount SET NOT NULL,
+      ALTER COLUMN outstanding_balance SET NOT NULL,
+      ALTER COLUMN interest_rate SET NOT NULL,
+      ALTER COLUMN emi_amount SET NOT NULL,
+      ALTER COLUMN emi_due_day SET NOT NULL,
+      ALTER COLUMN is_active SET NOT NULL;
+  END IF;
+END;
+$$;
+
 ALTER TABLE public.emi_tracker ENABLE ROW LEVEL SECURITY;
 
 DROP POLICY IF EXISTS "Users manage emi tracker" ON public.emi_tracker;
@@ -911,6 +974,27 @@ CREATE TABLE IF NOT EXISTS public.expense_categories (
 
 CREATE INDEX IF NOT EXISTS idx_expense_categories_user ON public.expense_categories(user_id, name);
 
+DO $$
+BEGIN
+  IF to_regclass('public.expense_categories') IS NOT NULL THEN
+    ALTER TABLE public.expense_categories
+      ADD COLUMN IF NOT EXISTS name TEXT,
+      ADD COLUMN IF NOT EXISTS icon TEXT,
+      ADD COLUMN IF NOT EXISTS color TEXT,
+      ADD COLUMN IF NOT EXISTS monthly_budget NUMERIC(14,2) DEFAULT 0,
+      ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ DEFAULT now(),
+      ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT now();
+
+    UPDATE public.expense_categories
+      SET name = COALESCE(name, 'Miscellaneous'),
+          monthly_budget = COALESCE(monthly_budget, 0);
+
+    ALTER TABLE public.expense_categories
+      ALTER COLUMN name SET NOT NULL;
+  END IF;
+END;
+$$;
+
 ALTER TABLE public.expense_categories ENABLE ROW LEVEL SECURITY;
 
 DROP POLICY IF EXISTS "Users manage expense categories" ON public.expense_categories;
@@ -937,6 +1021,32 @@ CREATE TABLE IF NOT EXISTS public.spending_alerts (
 );
 
 CREATE INDEX IF NOT EXISTS idx_spending_alerts_user ON public.spending_alerts(user_id, is_active);
+
+DO $$
+BEGIN
+  IF to_regclass('public.spending_alerts') IS NOT NULL THEN
+    ALTER TABLE public.spending_alerts
+      ADD COLUMN IF NOT EXISTS category TEXT,
+      ADD COLUMN IF NOT EXISTS monthly_limit NUMERIC(14,2) DEFAULT 0,
+      ADD COLUMN IF NOT EXISTS alert_threshold NUMERIC(5,2) DEFAULT 80,
+      ADD COLUMN IF NOT EXISTS is_active BOOLEAN DEFAULT TRUE,
+      ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ DEFAULT now(),
+      ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT now();
+
+    UPDATE public.spending_alerts
+      SET category = COALESCE(category, 'General'),
+          monthly_limit = COALESCE(monthly_limit, 0),
+          alert_threshold = COALESCE(alert_threshold, 80),
+          is_active = COALESCE(is_active, TRUE);
+
+    ALTER TABLE public.spending_alerts
+      ALTER COLUMN category SET NOT NULL,
+      ALTER COLUMN monthly_limit SET NOT NULL,
+      ALTER COLUMN alert_threshold SET NOT NULL,
+      ALTER COLUMN is_active SET NOT NULL;
+  END IF;
+END;
+$$;
 
 ALTER TABLE public.spending_alerts ENABLE ROW LEVEL SECURITY;
 
