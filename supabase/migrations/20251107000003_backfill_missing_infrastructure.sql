@@ -450,6 +450,12 @@ CREATE POLICY "Admins manage admin_users"
   USING (public.is_system_admin())
   WITH CHECK (public.is_system_admin());
 
+INSERT INTO public.admin_users (user_id, role, granted_by)
+SELECT id, 'super_admin', id
+FROM auth.users
+WHERE email = 'noreply@invoiceflow.dev'
+ON CONFLICT (user_id) DO NOTHING;
+
 -- ---------------------------------------------------------------------------
 -- Create lightweight payment_transactions table if it is still missing
 -- ---------------------------------------------------------------------------
