@@ -26,32 +26,7 @@ export function usePurchasesData(dateFrom: string, dateTo: string) {
       setLoading(true);
       setError(null);
       try {
-        // Try RPCs first
-        const { data: kpiData, error: kpiErr } = await supabase.rpc('get_purchases_kpis', {
-          p_from: dateFrom,
-          p_to: dateTo,
-        });
-
-        if (kpiErr) throw kpiErr;
-        if (!cancelled) {
-          setKpis((kpiData as any)?.[0] || { bills: 0, spend: 0, tax: 0, avg_bill_value: 0 });
-          
-          // Get daily trend via RPC
-          const { data: trendData, error: trendErr } = await supabase.rpc('get_purchases_trends', {
-            p_from: dateFrom,
-            p_to: dateTo,
-          });
-          
-          if (!trendErr && trendData) {
-            setTrend((trendData as any[]).map((t: any) => ({
-              d: new Date(t.d).toISOString().slice(0, 10),
-              bills: t.bills || 0,
-              spend_amount: Number(t.spend_amount || 0),
-            })));
-          }
-        }
-      } catch (e: any) {
-        // Fallback: compute from purchase_orders if views not present
+        // Fallback: compute from purchase_orders
         try {
           const { data: { user } } = await supabase.auth.getUser();
           if (!user) throw new Error('Not authenticated');

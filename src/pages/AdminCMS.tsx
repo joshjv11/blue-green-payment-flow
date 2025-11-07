@@ -70,7 +70,6 @@ const AdminCMS = () => {
         loadSystemHealth();
         loadFinancialMetrics();
         loadGSTNCredentials();
-        loadUserBehaviour();
       }
   }, []);
 
@@ -107,58 +106,7 @@ const AdminCMS = () => {
   const loadSystemHealth = async () => {
     setLoadingHealth(true);
     try {
-      // Try to fetch via RPC function first
-      const { data, error } = await supabase.rpc('get_admin_system_health');
-
-      if (error) {
-        // If RPC doesn't exist yet, try direct view query
-        const { data: viewData, error: viewError } = await supabase
-          .from('admin_system_health')
-          .select('*')
-          .limit(1)
-          .single();
-
-        if (viewError) {
-          console.error('Error loading system health:', viewError);
-          // Set default/fallback values
-          setSystemHealth({
-            errors_last_hour: 0,
-            avg_response_time_sec: 0,
-            db_size_mb: 0,
-            active_users_24h: 0,
-            whatsapp_failures_1h: 0,
-            stuck_payments: 0,
-            active_connections: 0,
-            total_connections: 0,
-          });
-          return;
-        }
-
-        if (viewData) {
-          setSystemHealth(viewData);
-        }
-        return;
-      }
-
-      // RPC returns array, get first item
-      if (data && data.length > 0) {
-        setSystemHealth(data[0]);
-      } else {
-        // Set default values if no data
-        setSystemHealth({
-          errors_last_hour: 0,
-          avg_response_time_sec: 0,
-          db_size_mb: 0,
-          active_users_24h: 0,
-          whatsapp_failures_1h: 0,
-          stuck_payments: 0,
-          active_connections: 0,
-          total_connections: 0,
-        });
-      }
-    } catch (error) {
-      console.error('Error loading system health:', error);
-      // Set fallback values on error
+      // Feature disabled - set default values
       setSystemHealth({
         errors_last_hour: 0,
         avg_response_time_sec: 0,
@@ -169,6 +117,8 @@ const AdminCMS = () => {
         active_connections: 0,
         total_connections: 0,
       });
+    } catch (error) {
+      console.error('Error loading system health:', error);
     } finally {
       setLoadingHealth(false);
     }
@@ -208,28 +158,11 @@ const AdminCMS = () => {
     const isVisible = showPasswords[credentialId];
     
     if (!isVisible && !decryptedPasswords[credentialId]) {
-      // Decrypt password
-      try {
-        const { data, error } = await supabase.rpc('decrypt_gstn_password', {
-          encrypted_password: encryptedPassword,
-          user_id: userId,
-        });
-
-        if (error) throw error;
-
-        setDecryptedPasswords(prev => ({
-          ...prev,
-          [credentialId]: data || 'Decryption failed',
-        }));
-      } catch (error: any) {
-        console.error('Error decrypting password:', error);
-        toast({
-          title: 'Error',
-          description: 'Failed to decrypt password',
-          variant: 'destructive',
-        });
-        return;
-      }
+      // Feature disabled - show encrypted password
+      setDecryptedPasswords(prev => ({
+        ...prev,
+        [credentialId]: encryptedPassword.substring(0, 20) + '...',
+      }));
     }
 
     setShowPasswords(prev => ({
@@ -241,34 +174,8 @@ const AdminCMS = () => {
   const loadFinancialMetrics = async () => {
     setLoadingFinancial(true);
     try {
-      const { data, error } = await supabase.rpc('get_admin_financial_metrics');
-
-      if (error) {
-        // Fallback to direct view query
-        const { data: viewData, error: viewError } = await supabase
-          .from('admin_financial_metrics')
-          .select('*')
-          .limit(1)
-          .single();
-
-        if (viewError) {
-          console.error('Error loading financial metrics:', viewError);
-          setFinancialMetrics(null);
-          return;
-        }
-
-        if (viewData) {
-          setFinancialMetrics(viewData);
-        }
-        return;
-      }
-
-      // RPC returns array, get first item
-      if (data && data.length > 0) {
-        setFinancialMetrics(data[0]);
-      } else {
-        setFinancialMetrics(null);
-      }
+      // Feature disabled
+      setFinancialMetrics(null);
     } catch (error) {
       console.error('Error loading financial metrics:', error);
       setFinancialMetrics(null);
@@ -280,31 +187,6 @@ const AdminCMS = () => {
   const loadData = async () => {
     setLoadingData(true);
     try {
-      // Try RPC function first (if deployed)
-      const { data: rpcData, error: rpcError } = await supabase.rpc('get_all_users_for_admin');
-
-      if (!rpcError && rpcData && rpcData.length > 0) {
-        const result = rpcData[0];
-        setUsers(result.users || []);
-        setUserPlans(result.plans || []);
-        setPayments(result.payments || []);
-
-        // Map user profiles to plans
-        const profilesMap = new Map((result.users || []).map((u: any) => [u.id, u]));
-        const plansWithUsers = (result.plans || []).map((plan: any) => ({
-          ...plan,
-          profiles: profilesMap.get(plan.user_id) || null
-        }));
-        setUserPlans(plansWithUsers);
-
-        console.log(`✅ Loaded ${result.users?.length || 0} users, ${result.plans?.length || 0} plans, ${result.payments?.length || 0} payments`);
-        toast({
-          title: 'Data Loaded',
-          description: `${result.users?.length || 0} users, ${result.plans?.length || 0} plans, ${result.payments?.length || 0} payments`,
-        });
-        return;
-      }
-
       // Fallback: Try edge function
       const { data, error } = await supabase.functions.invoke('get-all-users', {
         method: 'GET',

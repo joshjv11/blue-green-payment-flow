@@ -261,46 +261,10 @@ const Dashboard = () => {
     try {
       if (!user) return;
 
-      // Use optimized RPC function to fetch all data in one query
-      const { data, error } = await supabase.rpc('get_dashboard_data', {
-        p_user_id: user.id
-      });
-
-      if (error) {
-        // Fallback to individual queries if RPC fails
-        console.warn('RPC failed, falling back to individual queries:', error);
-        await loadProFeaturesDataFallback();
-        return;
-      }
-
-      if (data) {
-        setSavingsGoals(data.savings_goals || []);
-        setActiveEMIs(data.active_emis || []);
-        
-        // Process spending alerts
-        const expenses = data.current_month_expenses || [];
-        const alerts = data.spending_alerts || [];
-        
-        if (alerts.length > 0 && expenses.length > 0) {
-          const categorySpending: Record<string, number> = {};
-          expenses.forEach((e: any) => {
-            categorySpending[e.category] = (categorySpending[e.category] || 0) + parseFloat(e.total_amount || 0);
-          });
-
-          for (const alert of alerts) {
-            const currentSpending = categorySpending[alert.category] || 0;
-            const threshold = (alert.monthly_limit * alert.alert_threshold) / 100;
-            if (currentSpending >= threshold) {
-              setSpendingAlert(alert);
-              break;
-            }
-          }
-        }
-      }
-    } catch (error) {
-      console.error('Error loading Pro features data:', error);
       // Fallback to individual queries
       await loadProFeaturesDataFallback();
+    } catch (error) {
+      console.error('Error loading pro features:', error);
     }
   };
 

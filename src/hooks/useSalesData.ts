@@ -26,19 +26,7 @@ export function useSalesData(dateFrom: string, dateTo: string) {
       setLoading(true);
       setError(null);
       try {
-        // Try RPCs first
-        const [{ data: kpiData, error: kpiErr }, { data: trendData, error: trendErr }] = await Promise.all([
-          supabase.rpc('get_sales_kpis', { p_from: dateFrom, p_to: dateTo }),
-          supabase.rpc('get_sales_trends', { p_from: dateFrom, p_to: dateTo })
-        ]);
-
-        if (kpiErr || trendErr) throw kpiErr || trendErr;
-        if (!cancelled) {
-          setKpis((kpiData as any)?.[0] || { orders: 0, gmv: 0, tax: 0, avg_order_value: 0 });
-          setTrend((trendData as any) || []);
-        }
-      } catch (e: any) {
-        // Fallback: compute from sales_orders if views not present
+        // Fallback: compute from sales_orders
         try {
           const { data: { user } } = await supabase.auth.getUser();
           if (!user) throw new Error('Not authenticated');

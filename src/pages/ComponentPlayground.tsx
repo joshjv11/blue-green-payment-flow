@@ -186,18 +186,16 @@ export default function ComponentPlayground() {
 
     return (
       <ErrorBoundary
-        fallback={(error) => (
-          <div className="p-4 border border-red-200 rounded-lg bg-red-50">
-            <div className="flex items-center gap-2 text-red-600">
-              <AlertCircle className="w-5 h-5" />
-              <span className="font-semibold">Component Error</span>
-            </div>
-            <p className="mt-2 text-sm text-red-700">{error.message}</p>
+        fallback={<div className="p-4 border border-red-200 rounded-lg bg-red-50">
+          <div className="flex items-center gap-2 text-red-600">
+            <AlertCircle className="w-5 h-5" />
+            <span className="font-semibold">Component Error</span>
           </div>
-        )}
+          <p className="mt-2 text-sm text-red-700">Failed to render component</p>
+        </div>}
       >
         <div className="p-6 border rounded-lg bg-background">
-          <Component {...componentProps} />
+          <Component {...componentProps} type="bills" currentCount={0} onUpgrade={() => {}} />
         </div>
       </ErrorBoundary>
     );

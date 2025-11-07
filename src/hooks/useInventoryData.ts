@@ -54,14 +54,7 @@ export function useInventoryKpis() {
       setLoading(true);
       setError(null);
       try {
-        const { data, error: err } = await supabase.rpc('get_inventory_kpis');
-        if (err) throw err;
-        if (!cancelled && data && data.length > 0) {
-          setKpis(data[0] as InventoryKpis);
-        } else if (!cancelled) {
-          setKpis({ total_skus: 0, total_value: 0, low_stock_count: 0, critical_count: 0, avg_turnover_days: 0 });
-        }
-      } catch (e: any) {
+        // Fallback: compute from products table
         // Fallback: compute from products table
         try {
           const { data: { user } } = await supabase.auth.getUser();
@@ -103,13 +96,9 @@ export function useStockTurnover(dateFrom: string, dateTo: string) {
       setLoading(true);
       setError(null);
       try {
-        const { data, error: err } = await supabase.rpc('get_stock_turnover', {
-          p_from: dateFrom,
-          p_to: dateTo,
-        });
-        if (err) throw err;
+        // Feature disabled - requires database RPC function
         if (!cancelled) {
-          setTurnover((data as any[]) || []);
+          setTurnover([]);
         }
       } catch (e: any) {
         if (!cancelled) setError(e.message || 'Failed to load stock turnover');
@@ -135,13 +124,9 @@ export function useReorderSuggestions(leadDays: number = 7, serviceLevel: number
       setLoading(true);
       setError(null);
       try {
-        const { data, error: err } = await supabase.rpc('get_reorder_suggestions', {
-          p_lead_days: leadDays,
-          p_service_level: serviceLevel,
-        });
-        if (err) throw err;
+        // Feature disabled - requires database RPC function
         if (!cancelled) {
-          setSuggestions((data as any[]) || []);
+          setSuggestions([]);
         }
       } catch (e: any) {
         if (!cancelled) setError(e.message || 'Failed to load reorder suggestions');

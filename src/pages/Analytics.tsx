@@ -663,7 +663,7 @@ const Analytics = () => {
         currentBillCount={bills.length}
         aiQueriesUsed={aiQueriesUsed}
         aiQueriesLimit={aiQueriesLimit}
-        trigger="analytics"
+        trigger="general"
       />
     </div>
   );

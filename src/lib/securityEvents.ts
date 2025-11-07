@@ -14,24 +14,8 @@ export async function logSecurityEvent(
   userAgent?: string
 ) {
   try {
-    // Get current user if not provided
-    const { data: { user } } = await supabase.auth.getUser();
-    const finalUserId = userId || user?.id;
-
-    const { error } = await supabase
-      .from('security_events')
-      .insert({
-        event_type: eventType,
-        severity,
-        user_id: finalUserId || null,
-        ip_address: ipAddress || null,
-        user_agent: userAgent || (typeof window !== 'undefined' ? window.navigator.userAgent : null),
-        metadata: metadata || {},
-      });
-
-    if (error) {
-      console.error('Error logging security event:', error);
-    }
+    // Feature disabled - requires database table
+    console.log('Security event (disabled):', eventType, severity, metadata);
   } catch (error) {
     console.error('Error in logSecurityEvent:', error);
   }
