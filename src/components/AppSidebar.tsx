@@ -303,9 +303,9 @@ export function AppSidebar() {
         width: open ? '256px' : '64px',
         transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
         boxShadow: '4px 0 16px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.02)',
-        display: 'block !important',
-        visibility: 'visible !important',
-        opacity: '1 !important',
+        display: 'block' as const,
+        visibility: 'visible' as const,
+        opacity: 1,
         background: 'linear-gradient(to bottom, hsl(var(--sidebar)), hsl(var(--sidebar)) 98%, hsl(var(--sidebar) / 0.95))'
       }}
     >

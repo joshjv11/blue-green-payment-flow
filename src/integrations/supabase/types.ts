@@ -568,6 +568,66 @@ export type Database = {
           },
         ]
       }
+      einvoice_queue: {
+        Row: {
+          ack_date: string | null
+          ack_no: string | null
+          created_at: string | null
+          error_message: string | null
+          id: string
+          irn: string | null
+          max_retries: number | null
+          processed_at: string | null
+          retry_count: number | null
+          sales_order_id: string
+          status: string
+          user_id: string
+        }
+        Insert: {
+          ack_date?: string | null
+          ack_no?: string | null
+          created_at?: string | null
+          error_message?: string | null
+          id?: string
+          irn?: string | null
+          max_retries?: number | null
+          processed_at?: string | null
+          retry_count?: number | null
+          sales_order_id: string
+          status?: string
+          user_id: string
+        }
+        Update: {
+          ack_date?: string | null
+          ack_no?: string | null
+          created_at?: string | null
+          error_message?: string | null
+          id?: string
+          irn?: string | null
+          max_retries?: number | null
+          processed_at?: string | null
+          retry_count?: number | null
+          sales_order_id?: string
+          status?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "einvoice_queue_sales_order_id_fkey"
+            columns: ["sales_order_id"]
+            isOneToOne: true
+            referencedRelation: "sales_orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "einvoice_queue_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "user_entitlements_v1"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
       expenses: {
         Row: {
           amount: number
@@ -655,6 +715,50 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "export_logs_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "user_entitlements_v1"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
+      gstn_credentials: {
+        Row: {
+          api_endpoint: string
+          created_at: string | null
+          gstin: string
+          id: string
+          is_active: boolean | null
+          password_encrypted: string
+          updated_at: string | null
+          user_id: string
+          username: string
+        }
+        Insert: {
+          api_endpoint?: string
+          created_at?: string | null
+          gstin: string
+          id?: string
+          is_active?: boolean | null
+          password_encrypted: string
+          updated_at?: string | null
+          user_id: string
+          username: string
+        }
+        Update: {
+          api_endpoint?: string
+          created_at?: string | null
+          gstin?: string
+          id?: string
+          is_active?: boolean | null
+          password_encrypted?: string
+          updated_at?: string | null
+          user_id?: string
+          username?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gstn_credentials_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "user_entitlements_v1"
@@ -1212,12 +1316,15 @@ export type Database = {
           full_name: string | null
           id: string
           is_active: boolean | null
+          phone: string | null
           phone_number: string | null
           reminder_email: string | null
           short_id: string | null
           sms_notifications_enabled: boolean | null
           tax_regime: string | null
           updated_at: string
+          whatsapp_phone_number: string | null
+          whatsapp_reminder_settings: Json | null
         }
         Insert: {
           avatar_url?: string | null
@@ -1234,12 +1341,15 @@ export type Database = {
           full_name?: string | null
           id: string
           is_active?: boolean | null
+          phone?: string | null
           phone_number?: string | null
           reminder_email?: string | null
           short_id?: string | null
           sms_notifications_enabled?: boolean | null
           tax_regime?: string | null
           updated_at?: string
+          whatsapp_phone_number?: string | null
+          whatsapp_reminder_settings?: Json | null
         }
         Update: {
           avatar_url?: string | null
@@ -1256,12 +1366,15 @@ export type Database = {
           full_name?: string | null
           id?: string
           is_active?: boolean | null
+          phone?: string | null
           phone_number?: string | null
           reminder_email?: string | null
           short_id?: string | null
           sms_notifications_enabled?: boolean | null
           tax_regime?: string | null
           updated_at?: string
+          whatsapp_phone_number?: string | null
+          whatsapp_reminder_settings?: Json | null
         }
         Relationships: [
           {
@@ -2632,6 +2745,34 @@ export type Database = {
       generate_invoice_number: {
         Args: { p_order_type: string; p_user_id: string }
         Returns: string
+      }
+      get_admin_user_insights: {
+        Args: never
+        Returns: {
+          email: string
+          last_active: string
+          plan: string
+          total_bills: number
+          total_invoices: number
+          user_id: string
+        }[]
+      }
+      get_feature_usage_stats: {
+        Args: never
+        Returns: {
+          feature: string
+          last_used: string
+          usage_count: number
+        }[]
+      }
+      get_security_events: {
+        Args: never
+        Returns: {
+          created_at: string
+          details: Json
+          event_type: string
+          user_id: string
+        }[]
       }
       get_user_plan: {
         Args: never

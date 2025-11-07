@@ -173,7 +173,7 @@ export function EmailBroadcast() {
       // First, check if the edge function is accessible
       try {
         const testResponse = await supabase.functions.invoke('send-broadcast-email', {
-          method: 'OPTIONS',
+          body: { test: true },
         });
       } catch (testErr: any) {
         // If edge function doesn't exist, show helpful message

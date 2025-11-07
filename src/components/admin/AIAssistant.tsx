@@ -115,6 +115,7 @@ export function AIAssistant() {
       const freeUsers = analysisData.plans.filter((p: any) => p.plan === 'free').length;
       const proUsers = analysisData.plans.filter((p: any) => p.plan === 'pro').length;
       const premiumUsers = analysisData.plans.filter((p: any) => p.plan === 'premium').length;
+      let recentUsersCount = 0;
 
       if (totalUsers > 0) {
         insights.push(`📊 **User Base**: ${totalUsers} total users`);
@@ -208,15 +209,15 @@ export function AIAssistant() {
 
       // User Growth Analysis
       if (analysisData.users.length > 0) {
-        const recentUsers = analysisData.users.filter((u: any) => {
+        recentUsersCount = analysisData.users.filter((u: any) => {
           const created = new Date(u.created_at);
           const daysAgo = (Date.now() - created.getTime()) / (1000 * 60 * 60 * 24);
           return daysAgo <= 30;
         }).length;
 
-        insights.push(`📈 **New Users (30 days)**: ${recentUsers}`);
+        insights.push(`📈 **New Users (30 days)**: ${recentUsersCount}`);
 
-        if (recentUsers === 0 && totalUsers > 0) {
+        if (recentUsersCount === 0 && totalUsers > 0) {
           results.push({
             category: 'warning',
             title: 'No New Users in 30 Days',
@@ -260,7 +261,7 @@ Application Data:
 - Total Revenue: ₹${totalRevenue.toLocaleString('en-IN')}
 - Total Bills: ${totalBills} (Unpaid: ${unpaidBills}, Overdue: ${overdueBills})
 - Total Expenses: ${totalExpenses}
-- New Users (30 days): ${recentUsers}
+- New Users (30 days): ${recentUsersCount}
 
 Provide a detailed analysis focusing on:
 - User growth and engagement trends
