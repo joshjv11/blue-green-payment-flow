@@ -850,8 +850,6 @@ CREATE TABLE IF NOT EXISTS public.savings_goals (
   updated_at TIMESTAMPTZ DEFAULT now()
 );
 
-CREATE INDEX IF NOT EXISTS idx_savings_goals_user ON public.savings_goals(user_id, created_at DESC);
-
 DO $$
 BEGIN
   IF to_regclass('public.savings_goals') IS NOT NULL THEN
@@ -878,6 +876,8 @@ BEGIN
   END IF;
 END;
 $$;
+
+CREATE INDEX IF NOT EXISTS idx_savings_goals_user ON public.savings_goals(user_id, created_at DESC);
 
 ALTER TABLE public.savings_goals ENABLE ROW LEVEL SECURITY;
 
@@ -907,8 +907,6 @@ CREATE TABLE IF NOT EXISTS public.emi_tracker (
   created_at TIMESTAMPTZ DEFAULT now(),
   updated_at TIMESTAMPTZ DEFAULT now()
 );
-
-CREATE INDEX IF NOT EXISTS idx_emi_tracker_user ON public.emi_tracker(user_id, next_due_date);
 
 DO $$
 BEGIN
@@ -946,6 +944,8 @@ BEGIN
 END;
 $$;
 
+CREATE INDEX IF NOT EXISTS idx_emi_tracker_user ON public.emi_tracker(user_id, next_due_date);
+
 ALTER TABLE public.emi_tracker ENABLE ROW LEVEL SECURITY;
 
 DROP POLICY IF EXISTS "Users manage emi tracker" ON public.emi_tracker;
@@ -972,8 +972,6 @@ CREATE TABLE IF NOT EXISTS public.expense_categories (
   UNIQUE(user_id, name)
 );
 
-CREATE INDEX IF NOT EXISTS idx_expense_categories_user ON public.expense_categories(user_id, name);
-
 DO $$
 BEGIN
   IF to_regclass('public.expense_categories') IS NOT NULL THEN
@@ -994,6 +992,8 @@ BEGIN
   END IF;
 END;
 $$;
+
+CREATE INDEX IF NOT EXISTS idx_expense_categories_user ON public.expense_categories(user_id, name);
 
 ALTER TABLE public.expense_categories ENABLE ROW LEVEL SECURITY;
 
@@ -1020,8 +1020,6 @@ CREATE TABLE IF NOT EXISTS public.spending_alerts (
   updated_at TIMESTAMPTZ DEFAULT now()
 );
 
-CREATE INDEX IF NOT EXISTS idx_spending_alerts_user ON public.spending_alerts(user_id, is_active);
-
 DO $$
 BEGIN
   IF to_regclass('public.spending_alerts') IS NOT NULL THEN
@@ -1047,6 +1045,8 @@ BEGIN
   END IF;
 END;
 $$;
+
+CREATE INDEX IF NOT EXISTS idx_spending_alerts_user ON public.spending_alerts(user_id, is_active);
 
 ALTER TABLE public.spending_alerts ENABLE ROW LEVEL SECURITY;
 
