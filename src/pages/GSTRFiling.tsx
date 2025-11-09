@@ -56,37 +56,37 @@ export default function GSTRFiling() {
 
       // Load GSTR-1 filings
       const { data: gstr1 } = await supabase
-        .from('gstr1_filings')
+        .from('gstr1_filings' as any)
         .select('*')
         .eq('user_id', user.id)
         .order('filing_period', { ascending: false })
         .limit(12);
 
-      setGstr1Filings(gstr1 || []);
+      setGstr1Filings((gstr1 || []) as any);
 
       // Load GSTR-3B filings
       const { data: gstr3b } = await supabase
-        .from('gstr3b_filings')
+        .from('gstr3b_filings' as any)
         .select('*')
         .eq('user_id', user.id)
         .order('filing_period', { ascending: false })
         .limit(12);
 
-      setGstr3bFilings(gstr3b || []);
+      setGstr3bFilings((gstr3b || []) as any);
 
       // Load ITC reconciliation
       const { data: itc } = await supabase
-        .from('itc_reconciliation')
+        .from('itc_reconciliation' as any)
         .select('*')
         .eq('user_id', user.id)
         .order('invoice_date', { ascending: false })
         .limit(50);
 
-      setItcReconciliation(itc || []);
+      setItcReconciliation((itc || []) as any);
 
       // Load mismatch alerts
       const { data: alerts } = await supabase
-        .from('gst_mismatch_alerts')
+        .from('gst_mismatch_alerts' as any)
         .select('*')
         .eq('user_id', user.id)
         .eq('is_resolved', false)
@@ -94,7 +94,7 @@ export default function GSTRFiling() {
         .order('created_at', { ascending: false })
         .limit(20);
 
-      setMismatchAlerts(alerts || []);
+      setMismatchAlerts((alerts || []) as any);
     } catch (error: any) {
       toast({
         title: "Error",
@@ -297,7 +297,7 @@ export default function GSTRFiling() {
             <Alert variant="destructive">
               <AlertTriangle className="h-4 w-4" />
               <AlertDescription>
-                <strong>{criticalAlerts.length} critical mismatch{alerts.length > 1 ? 'es' : ''} detected!</strong>
+                <strong>{criticalAlerts.length} critical mismatch{criticalAlerts.length > 1 ? 'es' : ''} detected!</strong>
                 {' '}Review ITC reconciliation to resolve discrepancies.
               </AlertDescription>
             </Alert>

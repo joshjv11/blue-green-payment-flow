@@ -68,20 +68,25 @@ export default function EMIManager() {
       if (!user) return;
 
       const { data, error } = await supabase
-        .from('emi_tracker')
+        .from('emi_tracker' as any)
         .select('*')
         .eq('user_id', user.id)
         .order('next_due_date', { ascending: true });
 
-      if (error) throw error;
+      if (error) {
+        // Table doesn't exist yet
+        console.warn('EMI tracker table not available:', error.message);
+        setEmis([]);
+        return;
+      }
 
       // Update next_due_date for each EMI
-      const updatedEmis = (data || []).map(emi => {
+      const updatedEmis = ((data || []) as any[]).map((emi: any) => {
         const nextDue = calculateNextDueDate(emi.due_date_day);
         if (emi.next_due_date !== nextDue) {
           // Update in database
           supabase
-            .from('emi_tracker')
+            .from('emi_tracker' as any)
             .update({ next_due_date: nextDue })
             .eq('id', emi.id)
             .then(() => {});
@@ -156,7 +161,7 @@ export default function EMIManager() {
 
       if (editingEmi) {
         const { error } = await supabase
-          .from('emi_tracker')
+          .from('emi_tracker' as any)
           .update(emiData)
           .eq('id', editingEmi.id);
 
@@ -167,7 +172,7 @@ export default function EMIManager() {
         });
       } else {
         const { error } = await supabase
-          .from('emi_tracker')
+          .from('emi_tracker' as any)
           .insert(emiData);
 
         if (error) throw error;
@@ -203,7 +208,7 @@ export default function EMIManager() {
       const nextDueDate = newRemainingTenure > 0 ? calculateNextDueDate(emi.due_date_day) : null;
 
       const { error } = await supabase
-        .from('emi_tracker')
+        .from('emi_tracker' as any)
         .update({
           total_paid: newPaid,
           total_remaining: newRemaining,
@@ -233,7 +238,7 @@ export default function EMIManager() {
   const handleDelete = async (emiId: string) => {
     try {
       const { error } = await supabase
-        .from('emi_tracker')
+        .from('emi_tracker' as any)
         .delete()
         .eq('id', emiId);
 

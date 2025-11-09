@@ -78,7 +78,7 @@ const pricingTiers = [
 export default function PricingGST() {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { currentPlan } = usePlan();
+  const { plan } = usePlan();
   const [loading, setLoading] = useState<string | null>(null);
 
   const handleSubscribe = async (tierId: string) => {
@@ -105,7 +105,7 @@ export default function PricingGST() {
       'einvoice-pro': 'gst_einvoice_pro',
     };
     
-    if (currentPlan === planMap[tierId]) {
+    if (plan === planMap[tierId]) {
       return (
         <Badge className="mb-4 bg-green-500">
           <Check className="w-3 h-3 mr-1" />

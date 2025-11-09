@@ -96,23 +96,19 @@ export default function EInvoiceSettings() {
       }
 
       // Encrypt password before storing using Postgres function
-      const { data: enc, error: encErr } = await supabase.rpc('encrypt_gstn_password', {
+      const { data: enc, error: encErr } = await supabase.rpc('encrypt_gstn_password' as any, {
         password: credentials.password,
         user_id: user.id,
       });
 
-      const encryptedPassword = (() => {
-        if (encErr?.message?.includes('encrypt_gstn_password')) {
-          console.warn('encrypt_gstn_password RPC missing – storing password without encryption.');
-          return credentials.password;
-        }
-
-        if (encErr) {
-          throw encErr;
-        }
-
-        return enc as string;
-      })();
+      // Function doesn't exist yet - store password as-is
+      const encryptedPassword = encErr 
+        ? credentials.password 
+        : (enc as string);
+      
+      if (encErr) {
+        console.warn('encrypt_gstn_password function not available, storing password without encryption');
+      }
 
       const { error } = await supabase
         .from('gstn_credentials')

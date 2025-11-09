@@ -83,7 +83,7 @@ export default function GSTDashboard() {
       let itcData: any[] = [];
       try {
         const { data, error } = await supabase
-          .from('itc_reconciliation')
+          .from('itc_reconciliation' as any)
           .select('reconciliation_status')
           .eq('user_id', user.id);
         
@@ -105,7 +105,7 @@ export default function GSTDashboard() {
       let hsnData: any[] = [];
       try {
         const { data, error } = await supabase
-          .from('hsn_suggestions')
+          .from('hsn_suggestions' as any)
           .select('*')
           .eq('user_id', user.id)
           .eq('is_confirmed', true);
@@ -156,7 +156,7 @@ export default function GSTDashboard() {
       }
 
       // Decrypt password
-      const { data: decrypted } = await supabase.rpc('decrypt_gstn_password', {
+      const { data: decrypted } = await supabase.rpc('decrypt_gstn_password' as any, {
         encrypted_password: credentials.password_encrypted,
         user_id: user.id,
       });

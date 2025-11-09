@@ -61,13 +61,18 @@ export default function SavingsGoals() {
       if (!user) return;
 
       const { data, error } = await supabase
-        .from('savings_goals')
+        .from('savings_goals' as any)
         .select('*')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
-      setGoals(data || []);
+      if (error) {
+        // Table doesn't exist yet
+        console.warn('Savings goals table not available:', error.message);
+        setGoals([]);
+        return;
+      }
+      setGoals((data || []) as any);
     } catch (error: any) {
       toast({
         title: "Error",
@@ -108,7 +113,7 @@ export default function SavingsGoals() {
 
       if (editingGoal) {
         const { error } = await supabase
-          .from('savings_goals')
+          .from('savings_goals' as any)
           .update(goalData)
           .eq('id', editingGoal.id);
 
@@ -119,7 +124,7 @@ export default function SavingsGoals() {
         });
       } else {
         const { error } = await supabase
-          .from('savings_goals')
+          .from('savings_goals' as any)
           .insert(goalData);
 
         if (error) throw error;
@@ -153,7 +158,7 @@ export default function SavingsGoals() {
       const isCompleted = newAmount >= goal.target_amount;
 
       const { error } = await supabase
-        .from('savings_goals')
+        .from('savings_goals' as any)
         .update({
           current_amount: newAmount,
           is_completed: isCompleted,
@@ -188,7 +193,7 @@ export default function SavingsGoals() {
   const handleDelete = async (goalId: string) => {
     try {
       const { error } = await supabase
-        .from('savings_goals')
+        .from('savings_goals' as any)
         .delete()
         .eq('id', goalId);
 

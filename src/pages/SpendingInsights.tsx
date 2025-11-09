@@ -163,9 +163,9 @@ export default function SpendingInsights() {
         console.error('Error loading monthly expenses:', monthlyError);
       }
 
-      const todayTotal = (todayExpenses || []).reduce((sum, e) => sum + (parseFloat(e.amount) || 0), 0);
-      const weeklyTotal = (weeklyExpenses || []).reduce((sum, e) => sum + (parseFloat(e.amount) || 0), 0);
-      const monthlyTotal = (monthlyExpenses || []).reduce((sum, e) => sum + (parseFloat(e.amount) || 0), 0);
+      const todayTotal = (todayExpenses || []).reduce((sum, e) => sum + (parseFloat(String(e.amount)) || 0), 0);
+      const weeklyTotal = (weeklyExpenses || []).reduce((sum, e) => sum + (parseFloat(String(e.amount)) || 0), 0);
+      const monthlyTotal = (monthlyExpenses || []).reduce((sum, e) => sum + (parseFloat(String(e.amount)) || 0), 0);
 
       setTodaySpent(todayTotal);
       setWeeklySpent(weeklyTotal);
@@ -259,7 +259,7 @@ export default function SpendingInsights() {
       }
 
       // Calculate previous period total
-      const previousTotal = (previousExpenses || []).reduce((sum, e) => sum + (parseFloat(e.amount) || 0), 0);
+      const previousTotal = (previousExpenses || []).reduce((sum, e) => sum + (parseFloat(String(e.amount)) || 0), 0);
       setPreviousPeriodSpending(previousTotal);
 
       // Calculate category-wise spending
@@ -321,7 +321,7 @@ export default function SpendingInsights() {
       if (!user) return;
 
       const { data, error } = await supabase
-        .from('spending_alerts')
+        .from('spending_alerts' as any)
         .select('*')
         .eq('user_id', user.id)
         .eq('is_active', true);
@@ -334,7 +334,7 @@ export default function SpendingInsights() {
         }
         throw error;
       }
-      setSpendingAlerts(data || []);
+      setSpendingAlerts((data || []) as any);
     } catch (error: any) {
       console.error('Error loading spending alerts:', error);
       setSpendingAlerts([]);

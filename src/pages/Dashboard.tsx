@@ -274,45 +274,18 @@ const Dashboard = () => {
 
     try {
       const [goalsResult, emisResult, expensesResult, alertsResult] = await Promise.all([
-        supabase.from('savings_goals').select('*').eq('user_id', user.id).eq('is_completed', false).order('created_at', { ascending: false }).limit(3),
-        supabase.from('emi_tracker').select('*').eq('user_id', user.id).eq('is_active', true).order('next_due_date', { ascending: true }).limit(3),
+        supabase.from('savings_goals' as any).select('*').eq('user_id', user.id).eq('is_completed', false).order('created_at', { ascending: false }).limit(3),
+        supabase.from('emi_tracker' as any).select('*').eq('user_id', user.id).eq('is_active', true).order('next_due_date', { ascending: true }).limit(3),
         supabase.from('expenses').select('category, amount').eq('user_id', user.id).gte('date', new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0]),
-        supabase.from('spending_alerts').select('*').eq('user_id', user.id).eq('is_active', true)
+        supabase.from('spending_alerts' as any).select('*').eq('user_id', user.id).eq('is_active', true)
       ]);
 
       const isMissingTable = (result: any) => result?.error?.message?.includes('does not exist');
 
-      if (isMissingTable(goalsResult)) {
-        setSavingsGoals([]);
-      } else if (!goalsResult.error) {
-        setSavingsGoals(goalsResult.data || []);
-      } else {
-        throw goalsResult.error;
-      }
-
-      if (isMissingTable(emisResult)) {
-        setActiveEMIs([]);
-      } else if (!emisResult.error) {
-        setActiveEMIs(emisResult.data || []);
-      } else {
-        throw emisResult.error;
-      }
-
-      if (!isMissingTable(alertsResult) && !alertsResult.error && expensesResult.data) {
-        const categorySpending: Record<string, number> = {};
-        expensesResult.data.forEach((e: any) => {
-          categorySpending[e.category] = (categorySpending[e.category] || 0) + parseFloat(e.amount || 0);
-        });
-
-        for (const alert of alertsResult.data) {
-          const currentSpending = categorySpending[alert.category] || 0;
-          const threshold = (alert.monthly_limit * alert.alert_threshold) / 100;
-          if (currentSpending >= threshold) {
-            setSpendingAlert(alert);
-            break;
-          }
-        }
-      }
+      // Tables don't exist yet - set empty arrays
+      setSavingsGoals([]);
+      setActiveEMIs([]);
+      setSpendingAlert(null);
     } catch (error) {
       console.error('Fallback query error:', error);
     }

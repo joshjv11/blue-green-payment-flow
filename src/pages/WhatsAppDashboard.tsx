@@ -122,7 +122,7 @@ export default function WhatsAppDashboard() {
         .limit(10);
 
       if (salesError) throw salesError;
-      setSalesOrders(sales || []);
+      setSalesOrders((sales || []) as any);
 
       // Load recent WhatsApp messages
       const { data: messages, error: messagesError } = await supabase

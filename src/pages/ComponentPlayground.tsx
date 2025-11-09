@@ -139,7 +139,9 @@ const COMPONENTS = [
     component: ProBadge,
     category: 'UI',
     description: 'Pro plan badge',
-    defaultProps: {},
+    defaultProps: {
+      feature: 'Advanced Analytics',
+    },
   },
   {
     name: 'ThemeToggle',
@@ -195,7 +197,7 @@ export default function ComponentPlayground() {
         </div>}
       >
         <div className="p-6 border rounded-lg bg-background">
-          <Component {...componentProps} />
+          <Component {...(componentProps as any)} />
         </div>
       </ErrorBoundary>
     );
