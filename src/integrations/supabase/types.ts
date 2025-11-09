@@ -302,8 +302,11 @@ export type Database = {
           created_at: string
           due_date: string
           id: string
+          invoice_image_url: string | null
           name: string
           notes: string | null
+          ocr_confidence: number | null
+          ocr_source: string | null
           priority: string | null
           recurring: boolean
           reminder_days_before: number | null
@@ -319,8 +322,11 @@ export type Database = {
           created_at?: string
           due_date: string
           id?: string
+          invoice_image_url?: string | null
           name: string
           notes?: string | null
+          ocr_confidence?: number | null
+          ocr_source?: string | null
           priority?: string | null
           recurring?: boolean
           reminder_days_before?: number | null
@@ -336,8 +342,11 @@ export type Database = {
           created_at?: string
           due_date?: string
           id?: string
+          invoice_image_url?: string | null
           name?: string
           notes?: string | null
+          ocr_confidence?: number | null
+          ocr_source?: string | null
           priority?: string | null
           recurring?: boolean
           reminder_days_before?: number | null

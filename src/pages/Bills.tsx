@@ -48,7 +48,7 @@ import { BackToDashboard } from '@/components/BackToDashboard';
 import PlanStatusCard from '@/components/PlanStatusCard';
 import UpgradeTrigger from '@/components/UpgradeTrigger';
 import { useIsMobile } from '@/hooks/use-mobile';
-import BillReminderManager from '@/components/BillReminderManager';
+import { InvoiceOCRUploader } from '@/components/InvoiceOCRUploader';
 import { BillReminderSettings } from '@/components/BillReminderSettings';
 import { formatINRCompact } from '@/utils/currency';
 import { MessageCircle } from 'lucide-react';
@@ -889,7 +889,32 @@ const Bills = () => {
             context="bills page - managing and organizing bills, payment tracking"
           />
 
-          <BillReminderManager />
+          {/* Invoice OCR Scanner */}
+          <div className="mt-6">
+            <InvoiceOCRUploader
+              userId={user!.id}
+              onPrefill={(data) => {
+                // Pre-fill the form with extracted data
+                setFormData({
+                  name: data.vendor,
+                  amount: data.amount.toString(),
+                  due_date: data.due_date,
+                  category: data.category,
+                  recurring: false,
+                  status: 'unpaid',
+                  notes: `Extracted via OCR (Confidence: ${(data.confidence * 100).toFixed(0)}%)`,
+                  email_reminder: true,
+                  reminder_days: 1,
+                });
+                setIsDialogOpen(true);
+              }}
+              onBillCreated={() => {
+                // Refresh bills list after OCR creation
+                fetchBills();
+                trackFeatureUsage('ocr', 'create');
+              }}
+            />
+          </div>
         </div>
       </main>
     </div>

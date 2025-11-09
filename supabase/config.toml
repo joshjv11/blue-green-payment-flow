@@ -105,3 +105,6 @@ verify_jwt = false
 
 [[functions.check-einvoice-30day-compliance.cron]]
 schedule = "0 9 * * *"  # Daily at 9 AM IST
+
+[functions.extract-invoice-ocr]
+verify_jwt = false
