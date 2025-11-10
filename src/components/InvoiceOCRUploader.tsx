@@ -88,8 +88,11 @@ export function InvoiceOCRUploader({ userId, onPrefill, onBillCreated }: Invoice
       });
 
       if (functionError) {
+        console.error('❌ Edge function error:', functionError);
         throw new Error(`Extraction failed: ${functionError.message}`);
       }
+
+      console.log('✅ OCR Response:', data);
 
       if (!data.success) {
         throw new Error(data.error || 'Extraction failed');
