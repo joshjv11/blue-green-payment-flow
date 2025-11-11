@@ -77,7 +77,14 @@ export function InvoiceOCRUploader({ userId, onPrefill, onBillCreated }: Invoice
 
       toast.success('File uploaded successfully');
 
-      // Call OCR edge function
+      // Call OCR edge function with detailed logging
+      console.log('🚀 Calling extract-invoice-ocr edge function...', {
+        bucket: 'receipts',
+        path: fileName,
+        userId,
+        project: 'qusloccwftavvcsttmnq'
+      });
+
       const { data, error: functionError } = await supabase.functions.invoke('extract-invoice-ocr', {
         body: {
           bucket: 'receipts',
@@ -87,9 +94,16 @@ export function InvoiceOCRUploader({ userId, onPrefill, onBillCreated }: Invoice
         }
       });
 
+      console.log('📦 Edge function response:', { data, error: functionError });
+
       if (functionError) {
-        console.error('❌ Edge function error:', functionError);
-        throw new Error(`Extraction failed: ${functionError.message}`);
+        console.error('❌ Edge function error details:', {
+          message: functionError.message,
+          name: functionError.name,
+          stack: functionError.stack,
+          context: functionError.context
+        });
+        throw new Error(`OCR failed: ${functionError.message || 'Edge function not reachable'}`);
       }
 
       console.log('✅ OCR Response:', data);
