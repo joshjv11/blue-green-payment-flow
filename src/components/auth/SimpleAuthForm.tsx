@@ -35,6 +35,7 @@ export default function SimpleAuthForm({ onSuccess }: SimpleAuthFormProps) {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [resetLoading, setResetLoading] = useState(false);
+  const [authError, setAuthError] = useState<string>('');
   const navigate = useNavigate();
   const { signUp, signIn, resetPassword } = useAuth();
   const { toast } = useToast();
@@ -79,12 +80,20 @@ export default function SimpleAuthForm({ onSuccess }: SimpleAuthFormProps) {
 
   const handleSignIn = async (data: SignInFormData) => {
     setIsLoading(true);
+    setAuthError('');
     try {
       await signIn(data.email, data.password);
       onSuccess?.();
       navigate('/dashboard');
     } catch (error: any) {
-      // Error handling with specific messages is done in useAuth hook
+      // Show subtle inline error instead of toast
+      if (error.message?.includes('Invalid login credentials')) {
+        setAuthError('Invalid email or password');
+      } else if (error.message?.includes('Email not confirmed')) {
+        setAuthError('Please verify your email before signing in');
+      } else {
+        setAuthError('Unable to sign in. Please try again');
+      }
     } finally {
       setIsLoading(false);
     }
@@ -275,6 +284,12 @@ export default function SimpleAuthForm({ onSuccess }: SimpleAuthFormProps) {
                   {resetLoading ? 'Sending...' : 'Forgot password?'}
                 </button>
               </div>
+
+              {authError && (
+                <div className="text-sm text-destructive bg-destructive/10 px-3 py-2 rounded-md">
+                  {authError}
+                </div>
+              )}
 
               <Button
                 type="submit"

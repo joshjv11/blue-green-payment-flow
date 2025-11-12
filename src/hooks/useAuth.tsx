@@ -215,24 +215,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       });
     } catch (error: any) {
       console.error('❌ Signin failed:', error);
-      
-      let errorMessage = 'Failed to sign in. Please try again.';
-      
-      if (error.message?.includes('Invalid login credentials')) {
-        errorMessage = 'Invalid email or password. Please check your credentials and try again.';
-      } else if (error.message?.includes('Email not confirmed')) {
-        errorMessage = 'Please check your email and click the confirmation link before signing in.';
-      } else if (error.message?.includes('Too many requests')) {
-        errorMessage = 'Too many login attempts. Please wait a moment before trying again.';
-      } else if (error.message) {
-        errorMessage = error.message;
-      }
-      
-      toast({
-        title: "Error signing in",
-        description: errorMessage,
-        variant: "destructive",
-      });
       throw error;
     } finally {
       setLoading(false);
