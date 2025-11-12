@@ -35,27 +35,11 @@ function getSupabaseClient() {
       detectSessionInUrl: true,
     },
     global: {
-      fetch: apiFetch, // Use our custom fetch with timeout
+      fetch: apiFetch,
     },
   });
 
-  // Session recovery on visibility change
-  if (typeof document !== 'undefined') {
-    document.addEventListener('visibilitychange', async () => {
-      if (!document.hidden && supabaseInstance) {
-        try {
-          const { data: { session } } = await supabaseInstance.auth.getSession();
-          if (!session) {
-            console.warn('⚠️ Session lost while tab was hidden, attempting recovery...');
-            await supabaseInstance.auth.refreshSession();
-          }
-        } catch (error) {
-          console.error('❌ Session recovery failed:', error);
-        }
-      }
-    });
-  }
-
+  console.log('✅ Supabase client initialized');
   return supabaseInstance;
 }
 
