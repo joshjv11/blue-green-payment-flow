@@ -143,22 +143,65 @@ CREATE INDEX IF NOT EXISTS idx_gstn_credentials_gstin ON public.gstn_credentials
 -- Enable RLS on gstn_credentials
 ALTER TABLE public.gstn_credentials ENABLE ROW LEVEL SECURITY;
 
--- RLS policies for gstn_credentials (users can only see their own credentials)
-CREATE POLICY "Users can view their own GSTN credentials"
-  ON public.gstn_credentials FOR SELECT
-  USING (auth.uid() = user_id);
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1
+    FROM pg_policies
+    WHERE schemaname = 'public'
+      AND tablename = 'gstn_credentials'
+      AND policyname = 'Users can view their own GSTN credentials'
+  ) THEN
+    CREATE POLICY "Users can view their own GSTN credentials"
+      ON public.gstn_credentials FOR SELECT
+      USING (auth.uid() = user_id);
+  END IF;
+END $$;
 
-CREATE POLICY "Users can insert their own GSTN credentials"
-  ON public.gstn_credentials FOR INSERT
-  WITH CHECK (auth.uid() = user_id);
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1
+    FROM pg_policies
+    WHERE schemaname = 'public'
+      AND tablename = 'gstn_credentials'
+      AND policyname = 'Users can insert their own GSTN credentials'
+  ) THEN
+    CREATE POLICY "Users can insert their own GSTN credentials"
+      ON public.gstn_credentials FOR INSERT
+      WITH CHECK (auth.uid() = user_id);
+  END IF;
+END $$;
 
-CREATE POLICY "Users can update their own GSTN credentials"
-  ON public.gstn_credentials FOR UPDATE
-  USING (auth.uid() = user_id);
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1
+    FROM pg_policies
+    WHERE schemaname = 'public'
+      AND tablename = 'gstn_credentials'
+      AND policyname = 'Users can update their own GSTN credentials'
+  ) THEN
+    CREATE POLICY "Users can update their own GSTN credentials"
+      ON public.gstn_credentials FOR UPDATE
+      USING (auth.uid() = user_id);
+  END IF;
+END $$;
 
-CREATE POLICY "Users can delete their own GSTN credentials"
-  ON public.gstn_credentials FOR DELETE
-  USING (auth.uid() = user_id);
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1
+    FROM pg_policies
+    WHERE schemaname = 'public'
+      AND tablename = 'gstn_credentials'
+      AND policyname = 'Users can delete their own GSTN credentials'
+  ) THEN
+    CREATE POLICY "Users can delete their own GSTN credentials"
+      ON public.gstn_credentials FOR DELETE
+      USING (auth.uid() = user_id);
+  END IF;
+END $$;
 
 -- Create table for bulk e-invoice queue
 CREATE TABLE IF NOT EXISTS public.einvoice_queue (
@@ -183,18 +226,50 @@ CREATE INDEX IF NOT EXISTS idx_einvoice_queue_priority_status ON public.einvoice
 -- Enable RLS on einvoice_queue
 ALTER TABLE public.einvoice_queue ENABLE ROW LEVEL SECURITY;
 
--- RLS policies for einvoice_queue
-CREATE POLICY "Users can view their own e-invoice queue"
-  ON public.einvoice_queue FOR SELECT
-  USING (auth.uid() = user_id);
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1
+    FROM pg_policies
+    WHERE schemaname = 'public'
+      AND tablename = 'einvoice_queue'
+      AND policyname = 'Users can view their own e-invoice queue'
+  ) THEN
+    CREATE POLICY "Users can view their own e-invoice queue"
+      ON public.einvoice_queue FOR SELECT
+      USING (auth.uid() = user_id);
+  END IF;
+END $$;
 
-CREATE POLICY "Users can insert their own e-invoice queue items"
-  ON public.einvoice_queue FOR INSERT
-  WITH CHECK (auth.uid() = user_id);
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1
+    FROM pg_policies
+    WHERE schemaname = 'public'
+      AND tablename = 'einvoice_queue'
+      AND policyname = 'Users can insert their own e-invoice queue items'
+  ) THEN
+    CREATE POLICY "Users can insert their own e-invoice queue items"
+      ON public.einvoice_queue FOR INSERT
+      WITH CHECK (auth.uid() = user_id);
+  END IF;
+END $$;
 
-CREATE POLICY "Users can update their own e-invoice queue items"
-  ON public.einvoice_queue FOR UPDATE
-  USING (auth.uid() = user_id);
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1
+    FROM pg_policies
+    WHERE schemaname = 'public'
+      AND tablename = 'einvoice_queue'
+      AND policyname = 'Users can update their own e-invoice queue items'
+  ) THEN
+    CREATE POLICY "Users can update their own e-invoice queue items"
+      ON public.einvoice_queue FOR UPDATE
+      USING (auth.uid() = user_id);
+  END IF;
+END $$;
 
 -- Add comments for documentation
 COMMENT ON COLUMN public.sales_orders.irn IS 'Invoice Reference Number (IRN) from GSTN e-invoice portal';

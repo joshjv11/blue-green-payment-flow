@@ -19,6 +19,10 @@ ALTER TABLE public.user_plans ENABLE ROW LEVEL SECURITY;
 
 -- Drop existing policy and create a more permissive one
 DROP POLICY IF EXISTS "Users can manage their own plans" ON public.user_plans;
+DROP POLICY IF EXISTS "Users can view their own plan" ON public.user_plans;
+DROP POLICY IF EXISTS "Users can insert their own plan" ON public.user_plans;
+DROP POLICY IF EXISTS "Users can update their own plan" ON public.user_plans;
+DROP POLICY IF EXISTS "System can create user plans" ON public.user_plans;
 
 -- Create separate policies for better control
 CREATE POLICY "Users can view their own plan" ON public.user_plans

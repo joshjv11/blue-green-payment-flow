@@ -42,6 +42,18 @@ export default defineConfig(({ mode }) => ({
           });
         },
       },
+      '/api/invoices': {
+        target: 'http://localhost:4000',
+        changeOrigin: true,
+      },
+      '/api/matches': {
+        target: 'http://localhost:4000',
+        changeOrigin: true,
+      },
+      '/api/health': {
+        target: 'http://localhost:4000',
+        changeOrigin: true,
+      },
     },
   },
   plugins: [react(), mode === "development" && componentTagger()].filter(Boolean),

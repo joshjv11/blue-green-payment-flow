@@ -92,64 +92,163 @@ ALTER TABLE public.expense_tracking_settings ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.expense_categories ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.expense_transactions ENABLE ROW LEVEL SECURITY;
 
+CREATE OR REPLACE FUNCTION public.ensure_policy(
+  p_name text,
+  p_table text,
+  p_cmd text,
+  p_using text,
+  p_check text
+) RETURNS void
+LANGUAGE plpgsql
+AS $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies WHERE policyname = p_name AND tablename = p_table
+  ) THEN
+    EXECUTE format(
+      'CREATE POLICY %I ON %I FOR %s USING (%s)%s',
+      p_name,
+      p_table,
+      p_cmd,
+      p_using,
+      CASE WHEN p_check IS NOT NULL THEN format(' WITH CHECK (%s)', p_check) ELSE '' END
+    );
+  END IF;
+END;
+$$;
+
 -- RLS Policies for expense_tracking_settings
-CREATE POLICY "Users can view their own expense tracking settings"
-  ON public.expense_tracking_settings FOR SELECT
-  USING (auth.uid() = user_id);
+SELECT public.ensure_policy(
+  'Users can view their own expense tracking settings',
+  'expense_tracking_settings',
+  'SELECT',
+  'auth.uid() = user_id',
+  NULL
+);
 
-CREATE POLICY "Users can insert their own expense tracking settings"
-  ON public.expense_tracking_settings FOR INSERT
-  WITH CHECK (auth.uid() = user_id);
+SELECT public.ensure_policy(
+  'Users can insert expense tracking settings',
+  'expense_tracking_settings',
+  'INSERT',
+  'auth.uid() = user_id',
+  'auth.uid() = user_id'
+);
 
-CREATE POLICY "Users can update their own expense tracking settings"
-  ON public.expense_tracking_settings FOR UPDATE
-  USING (auth.uid() = user_id);
+SELECT public.ensure_policy(
+  'Users can update their expense tracking settings',
+  'expense_tracking_settings',
+  'UPDATE',
+  'auth.uid() = user_id',
+  'auth.uid() = user_id'
+);
 
 -- RLS Policies for expense_categories
-CREATE POLICY "Users can view their own expense categories"
-  ON public.expense_categories FOR SELECT
-  USING (auth.uid() = user_id);
+SELECT public.ensure_policy(
+  'Users can view their own expense categories',
+  'expense_categories',
+  'SELECT',
+  'auth.uid() = user_id',
+  NULL
+);
 
-CREATE POLICY "Users can insert their own expense categories"
-  ON public.expense_categories FOR INSERT
-  WITH CHECK (auth.uid() = user_id);
+SELECT public.ensure_policy(
+  'Users can insert expense categories',
+  'expense_categories',
+  'INSERT',
+  'auth.uid() = user_id',
+  'auth.uid() = user_id'
+);
 
-CREATE POLICY "Users can update their own expense categories"
-  ON public.expense_categories FOR UPDATE
-  USING (auth.uid() = user_id);
+SELECT public.ensure_policy(
+  'Users can update their expense categories',
+  'expense_categories',
+  'UPDATE',
+  'auth.uid() = user_id',
+  'auth.uid() = user_id'
+);
 
-CREATE POLICY "Users can delete their own expense categories"
-  ON public.expense_categories FOR DELETE
-  USING (auth.uid() = user_id);
+SELECT public.ensure_policy(
+  'Users can delete their expense categories',
+  'expense_categories',
+  'DELETE',
+  'auth.uid() = user_id',
+  NULL
+);
 
 -- RLS Policies for expense_transactions
-CREATE POLICY "Users can view their own expense transactions"
-  ON public.expense_transactions FOR SELECT
-  USING (auth.uid() = user_id);
+SELECT public.ensure_policy(
+  'Users can view their own expense transactions',
+  'expense_transactions',
+  'SELECT',
+  'auth.uid() = user_id',
+  NULL
+);
 
-CREATE POLICY "Users can insert their own expense transactions"
-  ON public.expense_transactions FOR INSERT
-  WITH CHECK (auth.uid() = user_id);
+SELECT public.ensure_policy(
+  'Users can insert expense transactions',
+  'expense_transactions',
+  'INSERT',
+  'auth.uid() = user_id',
+  'auth.uid() = user_id'
+);
 
-CREATE POLICY "Users can update their own expense transactions"
-  ON public.expense_transactions FOR UPDATE
-  USING (auth.uid() = user_id);
+SELECT public.ensure_policy(
+  'Users can update their expense transactions',
+  'expense_transactions',
+  'UPDATE',
+  'auth.uid() = user_id',
+  'auth.uid() = user_id'
+);
+
+SELECT public.ensure_policy(
+  'Users can delete their expense transactions',
+  'expense_transactions',
+  'DELETE',
+  'auth.uid() = user_id',
+  NULL
+);
+
+DROP FUNCTION IF EXISTS public.ensure_policy(text, text, text, text, text);
 
 -- Create trigger for updated_at
-CREATE TRIGGER update_expense_tracking_settings_updated_at
-  BEFORE UPDATE ON public.expense_tracking_settings
-  FOR EACH ROW
-  EXECUTE FUNCTION public.update_updated_at_column();
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_trigger WHERE tgname = 'update_expense_tracking_settings_updated_at'
+  ) THEN
+    CREATE TRIGGER update_expense_tracking_settings_updated_at
+      BEFORE UPDATE ON public.expense_tracking_settings
+      FOR EACH ROW
+      EXECUTE FUNCTION public.update_updated_at_column();
+  END IF;
+END;
+$$;
 
-CREATE TRIGGER update_expense_categories_updated_at
-  BEFORE UPDATE ON public.expense_categories
-  FOR EACH ROW
-  EXECUTE FUNCTION public.update_updated_at_column();
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_trigger WHERE tgname = 'update_expense_categories_updated_at'
+  ) THEN
+    CREATE TRIGGER update_expense_categories_updated_at
+      BEFORE UPDATE ON public.expense_categories
+      FOR EACH ROW
+      EXECUTE FUNCTION public.update_updated_at_column();
+  END IF;
+END;
+$$;
 
-CREATE TRIGGER update_expense_transactions_updated_at
-  BEFORE UPDATE ON public.expense_transactions
-  FOR EACH ROW
-  EXECUTE FUNCTION public.update_updated_at_column();
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_trigger WHERE tgname = 'update_expense_transactions_updated_at'
+  ) THEN
+    CREATE TRIGGER update_expense_transactions_updated_at
+      BEFORE UPDATE ON public.expense_transactions
+      FOR EACH ROW
+      EXECUTE FUNCTION public.update_updated_at_column();
+  END IF;
+END;
+$$;
 
 -- Insert default categories for new users (via trigger)
 CREATE OR REPLACE FUNCTION create_default_expense_categories()
@@ -174,10 +273,18 @@ END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
 -- Trigger to create default categories when user settings are created
-CREATE TRIGGER create_default_categories_on_settings_create
-  AFTER INSERT ON public.expense_tracking_settings
-  FOR EACH ROW
-  EXECUTE FUNCTION create_default_expense_categories();
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_trigger WHERE tgname = 'create_default_categories_on_settings_create'
+  ) THEN
+    CREATE TRIGGER create_default_categories_on_settings_create
+      AFTER INSERT ON public.expense_tracking_settings
+      FOR EACH ROW
+      EXECUTE FUNCTION create_default_expense_categories();
+  END IF;
+END;
+$$;
 
 COMMENT ON TABLE public.expense_tracking_settings IS 'User settings for expense tracking: budgets, notifications, SMS import, AI coach';
 COMMENT ON TABLE public.expense_categories IS 'Customizable expense categories with auto-detection keywords';

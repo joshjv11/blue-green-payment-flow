@@ -4,7 +4,10 @@
  */
 
 // Capture native fetch BEFORE any modifications to prevent recursion
-const NATIVE_FETCH = window.fetch.bind(window);
+const NATIVE_FETCH =
+  typeof window !== 'undefined' && window.fetch
+    ? window.fetch.bind(window)
+    : (globalThis.fetch as typeof window.fetch);
 
 const FETCH_TIMEOUT_MS = 15000; // 15 seconds
 const activeRequests = new Set<AbortController>();

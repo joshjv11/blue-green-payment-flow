@@ -1,4 +1,4 @@
-import { lazy, Suspense, useState, useEffect } from 'react';
+import { lazy, Suspense, useState, useEffect, useMemo } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -25,6 +25,9 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { RequirePlan } from '@/components/RequirePlan';
+import { useKPIData } from '@/hooks/useKPIData';
+import { computeAnalyticsHighlights } from '@/lib/analyticsHighlights';
+import { startOfMonth, endOfMonth, startOfQuarter, endOfQuarter, subMonths, subDays } from 'date-fns';
 
 // Lazy load tab components for performance
 const OverviewTab = lazy(() => import('@/components/analytics-tabs/OverviewTab'));
@@ -106,6 +109,13 @@ const tabs: Tab[] = [
 const FAVORITES_KEY = 'analytics-favorites';
 const FILTER_STATE_KEY = 'analytics-filters';
 
+const TIMEFRAME_OPTIONS = [
+  { id: '30d', label: 'Last 30 days' },
+  { id: 'mtd', label: 'Month to date' },
+  { id: 'qtd', label: 'Quarter to date' },
+  { id: '12m', label: 'Last 12 months' },
+];
+
 const TabLoadingSkeleton = () => (
   <div className="space-y-6 p-6">
     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -140,6 +150,25 @@ const AdvancedAnalyticsDashboard = () => {
   const [favorites, setFavorites] = useState<string[]>([]);
   const [showQuickAccess, setShowQuickAccess] = useState(false);
   const [filterState, setFilterState] = useState<Record<string, any>>({});
+  const [timeframe, setTimeframe] = useState<string>('30d');
+
+  const dateRange = useMemo(() => {
+    const now = new Date();
+    switch (timeframe) {
+      case 'mtd':
+        return { start: startOfMonth(now), end: now };
+      case 'qtd':
+        return { start: startOfQuarter(now), end: now };
+      case '12m':
+        return { start: startOfMonth(subMonths(now, 11)), end: endOfMonth(now) };
+      case '30d':
+      default:
+        return { start: subDays(now, 29), end: now };
+    }
+  }, [timeframe]);
+
+  const { data: kpiData, loading: kpiLoading } = useKPIData(dateRange);
+  const highlights = useMemo(() => computeAnalyticsHighlights(kpiData ?? null), [kpiData]);
 
   // Load favorites from localStorage
   useEffect(() => {
@@ -158,7 +187,11 @@ const AdvancedAnalyticsDashboard = () => {
     const savedFilters = localStorage.getItem(FILTER_STATE_KEY);
     if (savedFilters) {
       try {
-        setFilterState(JSON.parse(savedFilters));
+        const parsed = JSON.parse(savedFilters);
+        setFilterState(parsed);
+        if (parsed?.global?.timeframe) {
+          setTimeframe(parsed.global.timeframe);
+        }
       } catch (e) {
         console.error('Failed to load filter state:', e);
       }
@@ -196,7 +229,10 @@ const AdvancedAnalyticsDashboard = () => {
 
   // Save filter state
   const saveFilterState = (tabId: string, filters: any) => {
-    const newState = { ...filterState, [tabId]: filters };
+    const newState = {
+      ...filterState,
+      [tabId]: { ...(filterState[tabId] || {}), ...filters },
+    };
     setFilterState(newState);
     localStorage.setItem(FILTER_STATE_KEY, JSON.stringify(newState));
   };
@@ -263,6 +299,98 @@ const AdvancedAnalyticsDashboard = () => {
                 )}
               </Button>
             </div>
+
+            {/* Highlights & Filters */}
+            <Card className="relative overflow-hidden border-primary/20 bg-hero-gradient-animated">
+              <CardContent className="p-6">
+                <div className="grid gap-6 md:grid-cols-[1.35fr,1fr] items-start">
+                  <div className="space-y-4">
+                    <Badge variant="secondary" className="bg-white/10 text-white">
+                      Business pulse
+                    </Badge>
+                    {kpiLoading ? (
+                      <div className="space-y-3">
+                        <Skeleton className="h-6 w-2/3" />
+                        <Skeleton className="h-4 w-5/6" />
+                        <Skeleton className="h-4 w-4/6" />
+                      </div>
+                    ) : (
+                      <>
+                        <h2 className="text-xl md:text-2xl font-semibold text-foreground">
+                          {highlights.headline}
+                        </h2>
+                        <p className="text-sm text-muted-foreground leading-relaxed">
+                          {highlights.supporting}
+                        </p>
+                      </>
+                    )}
+
+                    <div className="flex flex-wrap gap-2">
+                      {TIMEFRAME_OPTIONS.map((option) => (
+                        <Button
+                          key={option.id}
+                          size="sm"
+                          variant={timeframe === option.id ? 'default' : 'ghost'}
+                          className={cn(
+                            'rounded-full border border-primary/20 bg-white/5 backdrop-blur transition',
+                            timeframe === option.id && 'shadow-lg shadow-primary/30',
+                          )}
+                          onClick={() => {
+                            setTimeframe(option.id);
+                            saveFilterState('global', { timeframe: option.id });
+                          }}
+                        >
+                          {option.label}
+                        </Button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    {highlights.metrics.map((metric) => (
+                      <div
+                        key={metric.label}
+                        className="rounded-xl bg-white/10 border border-white/20 backdrop-blur p-4 shadow-inner"
+                      >
+                        {kpiLoading ? (
+                          <div className="space-y-3">
+                            <Skeleton className="h-4 w-2/3" />
+                            <Skeleton className="h-7 w-1/2" />
+                            <Skeleton className="h-4 w-4/5" />
+                          </div>
+                        ) : (
+                          <>
+                            <p className="text-xs uppercase tracking-wide text-white/70">
+                              {metric.label}
+                            </p>
+                            <p className="mt-2 text-xl font-semibold text-white">
+                              {metric.value}
+                            </p>
+                            <div className="mt-3 flex items-center justify-between text-xs text-white/80">
+                              <span>{metric.helper}</span>
+                              <span
+                                className={cn(
+                                  "font-medium",
+                                  metric.trend === 'up' && 'text-emerald-300',
+                                  metric.trend === 'down' && 'text-rose-300',
+                                  metric.trend === 'flat' && 'text-amber-200',
+                                )}
+                              >
+                                {metric.trend === 'up'
+                                  ? 'Rising'
+                                  : metric.trend === 'down'
+                                    ? 'Declining'
+                                    : 'Steady'}
+                              </span>
+                            </div>
+                          </>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
 
             {/* Quick Access Panel */}
             {showQuickAccess && (

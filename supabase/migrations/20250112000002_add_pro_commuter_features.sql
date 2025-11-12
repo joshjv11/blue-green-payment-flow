@@ -121,86 +121,185 @@ ALTER TABLE public.emi_tracker ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.spending_alerts ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.bill_payment_schedule ENABLE ROW LEVEL SECURITY;
 
--- RLS Policies for whatsapp_bill_reminders
-CREATE POLICY "Users can view their own WhatsApp reminders"
-  ON public.whatsapp_bill_reminders FOR SELECT
-  USING (auth.uid() = user_id);
+CREATE OR REPLACE FUNCTION public.ensure_policy(
+  p_name text,
+  p_table text,
+  p_cmd text,
+  p_using text,
+  p_check text
+) RETURNS void
+LANGUAGE plpgsql
+AS $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies WHERE policyname = p_name AND tablename = p_table
+  ) THEN
+    EXECUTE format(
+      'CREATE POLICY %I ON %I FOR %s USING (%s)%s',
+      p_name,
+      p_table,
+      p_cmd,
+      p_using,
+      CASE WHEN p_check IS NOT NULL THEN format(' WITH CHECK (%s)', p_check) ELSE '' END
+    );
+  END IF;
+END;
+$$;
 
-CREATE POLICY "Users can insert their own WhatsApp reminders"
-  ON public.whatsapp_bill_reminders FOR INSERT
-  WITH CHECK (auth.uid() = user_id);
+-- RLS Policies leveraging helper
+SELECT public.ensure_policy(
+  'Users can view their own WhatsApp reminders',
+  'whatsapp_bill_reminders',
+  'SELECT',
+  'auth.uid() = user_id',
+  NULL
+);
 
-CREATE POLICY "Users can update their own WhatsApp reminders"
-  ON public.whatsapp_bill_reminders FOR UPDATE
-  USING (auth.uid() = user_id);
+SELECT public.ensure_policy(
+  'Users can insert their own WhatsApp reminders',
+  'whatsapp_bill_reminders',
+  'INSERT',
+  'auth.uid() = user_id',
+  'auth.uid() = user_id'
+);
 
--- RLS Policies for savings_goals
-CREATE POLICY "Users can view their own savings goals"
-  ON public.savings_goals FOR SELECT
-  USING (auth.uid() = user_id);
+SELECT public.ensure_policy(
+  'Users can update their own WhatsApp reminders',
+  'whatsapp_bill_reminders',
+  'UPDATE',
+  'auth.uid() = user_id',
+  'auth.uid() = user_id'
+);
 
-CREATE POLICY "Users can insert their own savings goals"
-  ON public.savings_goals FOR INSERT
-  WITH CHECK (auth.uid() = user_id);
+SELECT public.ensure_policy(
+  'Users can view their own savings goals',
+  'savings_goals',
+  'SELECT',
+  'auth.uid() = user_id',
+  NULL
+);
 
-CREATE POLICY "Users can update their own savings goals"
-  ON public.savings_goals FOR UPDATE
-  USING (auth.uid() = user_id);
+SELECT public.ensure_policy(
+  'Users can insert their own savings goals',
+  'savings_goals',
+  'INSERT',
+  'auth.uid() = user_id',
+  'auth.uid() = user_id'
+);
 
-CREATE POLICY "Users can delete their own savings goals"
-  ON public.savings_goals FOR DELETE
-  USING (auth.uid() = user_id);
+SELECT public.ensure_policy(
+  'Users can update their own savings goals',
+  'savings_goals',
+  'UPDATE',
+  'auth.uid() = user_id',
+  'auth.uid() = user_id'
+);
 
--- RLS Policies for emi_tracker
-CREATE POLICY "Users can view their own EMIs"
-  ON public.emi_tracker FOR SELECT
-  USING (auth.uid() = user_id);
+SELECT public.ensure_policy(
+  'Users can delete their own savings goals',
+  'savings_goals',
+  'DELETE',
+  'auth.uid() = user_id',
+  NULL
+);
 
-CREATE POLICY "Users can insert their own EMIs"
-  ON public.emi_tracker FOR INSERT
-  WITH CHECK (auth.uid() = user_id);
+SELECT public.ensure_policy(
+  'Users can view their own EMIs',
+  'emi_tracker',
+  'SELECT',
+  'auth.uid() = user_id',
+  NULL
+);
 
-CREATE POLICY "Users can update their own EMIs"
-  ON public.emi_tracker FOR UPDATE
-  USING (auth.uid() = user_id);
+SELECT public.ensure_policy(
+  'Users can insert their own EMIs',
+  'emi_tracker',
+  'INSERT',
+  'auth.uid() = user_id',
+  'auth.uid() = user_id'
+);
 
-CREATE POLICY "Users can delete their own EMIs"
-  ON public.emi_tracker FOR DELETE
-  USING (auth.uid() = user_id);
+SELECT public.ensure_policy(
+  'Users can update their own EMIs',
+  'emi_tracker',
+  'UPDATE',
+  'auth.uid() = user_id',
+  'auth.uid() = user_id'
+);
 
--- RLS Policies for spending_alerts
-CREATE POLICY "Users can view their own spending alerts"
-  ON public.spending_alerts FOR SELECT
-  USING (auth.uid() = user_id);
+SELECT public.ensure_policy(
+  'Users can delete their own EMIs',
+  'emi_tracker',
+  'DELETE',
+  'auth.uid() = user_id',
+  NULL
+);
 
-CREATE POLICY "Users can insert their own spending alerts"
-  ON public.spending_alerts FOR INSERT
-  WITH CHECK (auth.uid() = user_id);
+SELECT public.ensure_policy(
+  'Users can view their own spending alerts',
+  'spending_alerts',
+  'SELECT',
+  'auth.uid() = user_id',
+  NULL
+);
 
-CREATE POLICY "Users can update their own spending alerts"
-  ON public.spending_alerts FOR UPDATE
-  USING (auth.uid() = user_id);
+SELECT public.ensure_policy(
+  'Users can insert their own spending alerts',
+  'spending_alerts',
+  'INSERT',
+  'auth.uid() = user_id',
+  'auth.uid() = user_id'
+);
 
-CREATE POLICY "Users can delete their own spending alerts"
-  ON public.spending_alerts FOR DELETE
-  USING (auth.uid() = user_id);
+SELECT public.ensure_policy(
+  'Users can update their own spending alerts',
+  'spending_alerts',
+  'UPDATE',
+  'auth.uid() = user_id',
+  'auth.uid() = user_id'
+);
 
--- RLS Policies for bill_payment_schedule
-CREATE POLICY "Users can view their own payment schedules"
-  ON public.bill_payment_schedule FOR SELECT
-  USING (auth.uid() = user_id);
+SELECT public.ensure_policy(
+  'Users can delete their own spending alerts',
+  'spending_alerts',
+  'DELETE',
+  'auth.uid() = user_id',
+  NULL
+);
 
-CREATE POLICY "Users can insert their own payment schedules"
-  ON public.bill_payment_schedule FOR INSERT
-  WITH CHECK (auth.uid() = user_id);
+SELECT public.ensure_policy(
+  'Users can view their own payment schedules',
+  'bill_payment_schedule',
+  'SELECT',
+  'auth.uid() = user_id',
+  NULL
+);
 
-CREATE POLICY "Users can update their own payment schedules"
-  ON public.bill_payment_schedule FOR UPDATE
-  USING (auth.uid() = user_id);
+SELECT public.ensure_policy(
+  'Users can insert their own payment schedules',
+  'bill_payment_schedule',
+  'INSERT',
+  'auth.uid() = user_id',
+  'auth.uid() = user_id'
+);
 
-CREATE POLICY "Users can delete their own payment schedules"
-  ON public.bill_payment_schedule FOR DELETE
-  USING (auth.uid() = user_id);
+SELECT public.ensure_policy(
+  'Users can update their own payment schedules',
+  'bill_payment_schedule',
+  'UPDATE',
+  'auth.uid() = user_id',
+  'auth.uid() = user_id'
+);
+
+SELECT public.ensure_policy(
+  'Users can delete their own payment schedules',
+  'bill_payment_schedule',
+  'DELETE',
+  'auth.uid() = user_id',
+  NULL
+);
+
+DROP FUNCTION IF EXISTS public.ensure_policy(text, text, text, text, text);
 
 -- Add comments for documentation
 COMMENT ON TABLE public.whatsapp_bill_reminders IS 'WhatsApp bill reminders using FREE wa.me links (no Twilio costs)';

@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useAuth } from './useAuth';
 import { useSupabasePlan } from './useSupabasePlan';
 import { useToast } from './use-toast';
-import { supabase } from '@/lib/supabase';
+import { supabase, isSupabaseConfigured } from '@/lib/supabase';
 import { useNavigate } from 'react-router-dom';
 
 export const usePaymentVerification = () => {
@@ -14,27 +14,27 @@ export const usePaymentVerification = () => {
 
   // Check for real-time payment verification from Supabase
   useEffect(() => {
-    if (!user) return;
+    if (!user || !isSupabaseConfigured || typeof window === 'undefined') return;
+    if (!navigator.onLine) return;
 
     const checkPaymentStatus = async () => {
       try {
         console.log('💳 Checking payment status for user:', user.email);
         
-        // Get user's payment transactions that are verified but not processed
         const { data: verifiedPayments, error } = await supabase
           .from('payment_transactions')
           .select('*')
           .eq('user_id', user.id)
           .eq('status', 'verified')
-          .eq('processed', false); // Only get unprocessed verified payments
+          .eq('processed', false);
 
         if (error) {
-          // Gracefully handle missing table (PGRST205)
-          if (error.code === 'PGRST205' || error.code === 'PGRST204' || error.message?.includes('does not exist')) {
-            // Table doesn't exist - this is expected in some setups, fail silently
+          if (error.code === 'PGRST205' || error.code === 'PGRST204' || error.code === '42P01' || error.message?.includes('does not exist')) {
+            if (pendingPayments.length > 0) {
+              setPendingPayments([]);
+            }
             return;
           }
-          // Only log unexpected errors
           console.warn('⚠️ Payment verification error:', error);
           return;
         }
@@ -71,21 +71,27 @@ export const usePaymentVerification = () => {
           await fetchUserPlan();
         }
 
-        // Get pending payments for UI feedback
         const { data: pending, error: pendingError } = await supabase
           .from('payment_transactions')
           .select('*')
           .eq('user_id', user.id)
           .eq('status', 'pending');
 
-        // Ignore if table doesn't exist
-        if (!pendingError || pendingError.code !== 'PGRST205') {
-          setPendingPayments(pending || []);
+        if (pendingError) {
+          if (pendingError.code === 'PGRST205' || pendingError.code === 'PGRST204' || pendingError.code === '42P01' || pendingError.message?.includes('does not exist')) {
+            if (pendingPayments.length > 0) {
+              setPendingPayments([]);
+            }
+            return;
+          }
+          console.warn('⚠️ Payment verification pending error:', pendingError);
+          return;
         }
 
+        setPendingPayments(pending || []);
+
       } catch (error: any) {
-        // Silently handle payment table errors - it's optional functionality
-        if (error?.code !== 'PGRST205') {
+        if (error?.code !== 'PGRST205' && error?.code !== 'PGRST204' && error?.code !== '42P01') {
           console.error('❌ Error checking payment status:', error);
         }
       }

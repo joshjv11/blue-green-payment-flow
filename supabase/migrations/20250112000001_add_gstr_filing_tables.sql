@@ -164,79 +164,192 @@ ALTER TABLE public.hsn_suggestions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.gst_audit_trail ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.gst_mismatch_alerts ENABLE ROW LEVEL SECURITY;
 
--- RLS Policies for GSTR-1
-CREATE POLICY "Users can view their own GSTR-1 filings"
-  ON public.gstr1_filings FOR SELECT
-  USING (auth.uid() = user_id);
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies WHERE schemaname = 'public' AND tablename = 'gstr1_filings' AND policyname = 'Users can view their own GSTR-1 filings'
+  ) THEN
+    CREATE POLICY "Users can view their own GSTR-1 filings"
+      ON public.gstr1_filings FOR SELECT
+      USING (auth.uid() = user_id);
+  END IF;
+END $$;
 
-CREATE POLICY "Users can insert their own GSTR-1 filings"
-  ON public.gstr1_filings FOR INSERT
-  WITH CHECK (auth.uid() = user_id);
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies WHERE schemaname = 'public' AND tablename = 'gstr1_filings' AND policyname = 'Users can insert their own GSTR-1 filings'
+  ) THEN
+    CREATE POLICY "Users can insert their own GSTR-1 filings"
+      ON public.gstr1_filings FOR INSERT
+      WITH CHECK (auth.uid() = user_id);
+  END IF;
+END $$;
 
-CREATE POLICY "Users can update their own GSTR-1 filings"
-  ON public.gstr1_filings FOR UPDATE
-  USING (auth.uid() = user_id);
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies WHERE schemaname = 'public' AND tablename = 'gstr1_filings' AND policyname = 'Users can update their own GSTR-1 filings'
+  ) THEN
+    CREATE POLICY "Users can update their own GSTR-1 filings"
+      ON public.gstr1_filings FOR UPDATE
+      USING (auth.uid() = user_id);
+  END IF;
+END $$;
 
--- RLS Policies for GSTR-3B
-CREATE POLICY "Users can view their own GSTR-3B filings"
-  ON public.gstr3b_filings FOR SELECT
-  USING (auth.uid() = user_id);
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies WHERE schemaname = 'public' AND tablename = 'gstr3b_filings' AND policyname = 'Users can view their own GSTR-3B filings'
+  ) THEN
+    CREATE POLICY "Users can view their own GSTR-3B filings"
+      ON public.gstr3b_filings FOR SELECT
+      USING (auth.uid() = user_id);
+  END IF;
+END $$;
 
-CREATE POLICY "Users can insert their own GSTR-3B filings"
-  ON public.gstr3b_filings FOR INSERT
-  WITH CHECK (auth.uid() = user_id);
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies WHERE schemaname = 'public' AND tablename = 'gstr3b_filings' AND policyname = 'Users can insert their own GSTR-3B filings'
+  ) THEN
+    CREATE POLICY "Users can insert their own GSTR-3B filings"
+      ON public.gstr3b_filings FOR INSERT
+      WITH CHECK (auth.uid() = user_id);
+  END IF;
+END $$;
 
-CREATE POLICY "Users can update their own GSTR-3B filings"
-  ON public.gstr3b_filings FOR UPDATE
-  USING (auth.uid() = user_id);
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies WHERE schemaname = 'public' AND tablename = 'gstr3b_filings' AND policyname = 'Users can update their own GSTR-3B filings'
+  ) THEN
+    CREATE POLICY "Users can update their own GSTR-3B filings"
+      ON public.gstr3b_filings FOR UPDATE
+      USING (auth.uid() = user_id);
+  END IF;
+END $$;
 
--- RLS Policies for ITC Reconciliation
-CREATE POLICY "Users can view their own ITC reconciliation"
-  ON public.itc_reconciliation FOR SELECT
-  USING (auth.uid() = user_id);
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies WHERE schemaname = 'public' AND tablename = 'itc_reconciliation' AND policyname = 'Users can view their own ITC reconciliation'
+  ) THEN
+    CREATE POLICY "Users can view their own ITC reconciliation"
+      ON public.itc_reconciliation FOR SELECT
+      USING (auth.uid() = user_id);
+  END IF;
+END $$;
 
-CREATE POLICY "Users can insert their own ITC reconciliation"
-  ON public.itc_reconciliation FOR INSERT
-  WITH CHECK (auth.uid() = user_id);
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies WHERE schemaname = 'public' AND tablename = 'itc_reconciliation' AND policyname = 'Users can insert their own ITC reconciliation'
+  ) THEN
+    CREATE POLICY "Users can insert their own ITC reconciliation"
+      ON public.itc_reconciliation FOR INSERT
+      WITH CHECK (auth.uid() = user_id);
+  END IF;
+END $$;
 
-CREATE POLICY "Users can update their own ITC reconciliation"
-  ON public.itc_reconciliation FOR UPDATE
-  USING (auth.uid() = user_id);
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies WHERE schemaname = 'public' AND tablename = 'itc_reconciliation' AND policyname = 'Users can update their own ITC reconciliation'
+  ) THEN
+    CREATE POLICY "Users can update their own ITC reconciliation"
+      ON public.itc_reconciliation FOR UPDATE
+      USING (auth.uid() = user_id);
+  END IF;
+END $$;
 
--- RLS Policies for HSN Suggestions
-CREATE POLICY "Users can view their own HSN suggestions"
-  ON public.hsn_suggestions FOR SELECT
-  USING (auth.uid() = user_id);
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies WHERE schemaname = 'public' AND tablename = 'hsn_suggestions' AND policyname = 'Users can view their own HSN suggestions'
+  ) THEN
+    CREATE POLICY "Users can view their own HSN suggestions"
+      ON public.hsn_suggestions FOR SELECT
+      USING (auth.uid() = user_id);
+  END IF;
+END $$;
 
-CREATE POLICY "Users can insert their own HSN suggestions"
-  ON public.hsn_suggestions FOR INSERT
-  WITH CHECK (auth.uid() = user_id);
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies WHERE schemaname = 'public' AND tablename = 'hsn_suggestions' AND policyname = 'Users can insert their own HSN suggestions'
+  ) THEN
+    CREATE POLICY "Users can insert their own HSN suggestions"
+      ON public.hsn_suggestions FOR INSERT
+      WITH CHECK (auth.uid() = user_id);
+  END IF;
+END $$;
 
-CREATE POLICY "Users can update their own HSN suggestions"
-  ON public.hsn_suggestions FOR UPDATE
-  USING (auth.uid() = user_id);
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies WHERE schemaname = 'public' AND tablename = 'hsn_suggestions' AND policyname = 'Users can update their own HSN suggestions'
+  ) THEN
+    CREATE POLICY "Users can update their own HSN suggestions"
+      ON public.hsn_suggestions FOR UPDATE
+      USING (auth.uid() = user_id);
+  END IF;
+END $$;
 
--- RLS Policies for Audit Trail
-CREATE POLICY "Users can view their own audit trail"
-  ON public.gst_audit_trail FOR SELECT
-  USING (auth.uid() = user_id);
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies WHERE schemaname = 'public' AND tablename = 'gst_audit_trail' AND policyname = 'Users can view their own audit trail'
+  ) THEN
+    CREATE POLICY "Users can view their own audit trail"
+      ON public.gst_audit_trail FOR SELECT
+      USING (auth.uid() = user_id);
+  END IF;
+END $$;
 
-CREATE POLICY "System can insert audit trail"
-  ON public.gst_audit_trail FOR INSERT
-  WITH CHECK (true); -- System inserts, user_id is set by application
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies WHERE schemaname = 'public' AND tablename = 'gst_audit_trail' AND policyname = 'System can insert audit trail'
+  ) THEN
+    CREATE POLICY "System can insert audit trail"
+      ON public.gst_audit_trail FOR INSERT
+      WITH CHECK (true);
+  END IF;
+END $$;
 
--- RLS Policies for Mismatch Alerts
-CREATE POLICY "Users can view their own mismatch alerts"
-  ON public.gst_mismatch_alerts FOR SELECT
-  USING (auth.uid() = user_id);
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies WHERE schemaname = 'public' AND tablename = 'gst_mismatch_alerts' AND policyname = 'Users can view their own mismatch alerts'
+  ) THEN
+    CREATE POLICY "Users can view their own mismatch alerts"
+      ON public.gst_mismatch_alerts FOR SELECT
+      USING (auth.uid() = user_id);
+  END IF;
+END $$;
 
-CREATE POLICY "Users can insert their own mismatch alerts"
-  ON public.gst_mismatch_alerts FOR INSERT
-  WITH CHECK (auth.uid() = user_id);
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies WHERE schemaname = 'public' AND tablename = 'gst_mismatch_alerts' AND policyname = 'Users can insert their own mismatch alerts'
+  ) THEN
+    CREATE POLICY "Users can insert their own mismatch alerts"
+      ON public.gst_mismatch_alerts FOR INSERT
+      WITH CHECK (auth.uid() = user_id);
+  END IF;
+END $$;
 
-CREATE POLICY "Users can update their own mismatch alerts"
-  ON public.gst_mismatch_alerts FOR UPDATE
-  USING (auth.uid() = user_id);
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies WHERE schemaname = 'public' AND tablename = 'gst_mismatch_alerts' AND policyname = 'Users can update their own mismatch alerts'
+  ) THEN
+    CREATE POLICY "Users can update their own mismatch alerts"
+      ON public.gst_mismatch_alerts FOR UPDATE
+      USING (auth.uid() = user_id);
+  END IF;
+END $$;
 
 -- Add comments for documentation
 COMMENT ON TABLE public.gstr1_filings IS 'GSTR-1 filings (Outward Supplies) - Monthly/Quarterly';
