@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useState } from 'react';
 import { User, Session, AuthChangeEvent } from '@supabase/supabase-js';
-import { supabase } from '@/lib/supabase';
+import { supabase, isSupabaseConfigured } from '@/lib/supabase';
 import { useToast } from '@/hooks/use-toast';
 
 interface AuthContextType {
@@ -197,6 +197,18 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       setLoading(true);
       console.log('🔐 Attempting signin for:', email);
 
+      // Check if Supabase is configured
+      if (!isSupabaseConfigured) {
+        const error = new Error('Supabase is not configured. Please check your API keys.');
+        console.error('❌ Supabase configuration error:', error);
+        toast({
+          title: "Configuration Error",
+          description: "Supabase API keys are missing or invalid. Please check your environment variables.",
+          variant: "destructive",
+        });
+        throw error;
+      }
+
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
@@ -204,6 +216,20 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
       if (error) {
         console.error('❌ Signin error:', error);
+        
+        // Provide user-friendly error messages
+        let errorMessage = error.message;
+        if (error.message?.includes('Invalid API key') || error.message?.includes('API key')) {
+          errorMessage = 'Authentication service is not properly configured. Please contact support.';
+        } else if (error.message?.includes('Invalid login credentials')) {
+          errorMessage = 'Invalid email or password. Please try again.';
+        }
+        
+        toast({
+          title: "Sign in failed",
+          description: errorMessage,
+          variant: "destructive",
+        });
         throw error;
       }
 
@@ -215,7 +241,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       });
     } catch (error: any) {
       console.error('❌ Signin failed:', error);
-      throw error;
+      // Don't throw again if we already showed a toast
+      if (!error.message?.includes('Invalid API key')) {
+        throw error;
+      }
     } finally {
       setLoading(false);
     }

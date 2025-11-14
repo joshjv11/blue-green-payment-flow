@@ -23,7 +23,7 @@ const getEnvVar = (name: string): string | undefined => {
 
 const FALLBACK_SUPABASE_URL = 'https://qusloccwftavvcsttmnq.supabase.co';
 const FALLBACK_SUPABASE_ANON_KEY =
-  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF1c2xvY2N3ZnRhdnZjc3R0bW5xIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTg3ODk0MTQsImV4cCI6MjA3NDM2NTQxNH0.8YpZ9eWRA2c96zmMJMOBPpgNWjoKACwpwNGafOsyUS0';
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF1c2xvY2N3ZnRhdnZjc3R0bW5xIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzU0NjgzMzYsImV4cCI6MjA1MTA0NDMzNn0.XNMiO9LcWBCCb5cGa4pFEKSsJmXQ7rCmfqZhJ0d-vE0';
 
 const SUPABASE_URL = getEnvVar('VITE_SUPABASE_URL') ?? FALLBACK_SUPABASE_URL;
 const SUPABASE_ANON_KEY =
@@ -31,12 +31,25 @@ const SUPABASE_ANON_KEY =
 
 export const isSupabaseConfigured = Boolean(SUPABASE_URL && SUPABASE_ANON_KEY);
 
+// Validate API key format
+if (!SUPABASE_ANON_KEY || SUPABASE_ANON_KEY.length < 100) {
+  console.error('❌ Invalid Supabase API key detected. Please check your VITE_SUPABASE_ANON_KEY environment variable.');
+}
+
 let supabaseInstance: ReturnType<typeof createClient<Database>> | null = null;
 
 function getSupabaseClient() {
   if (supabaseInstance) return supabaseInstance;
 
+  const usingEnvKey = Boolean(getEnvVar('VITE_SUPABASE_ANON_KEY'));
   console.log('🔧 Creating singleton Supabase client...');
+  console.log(`📍 Supabase URL: ${SUPABASE_URL}`);
+  console.log(`🔑 Using ${usingEnvKey ? 'environment' : 'fallback'} API key`);
+
+  if (!SUPABASE_ANON_KEY) {
+    console.error('❌ Supabase API key is missing! Please set VITE_SUPABASE_ANON_KEY in your .env file.');
+    throw new Error('Supabase API key is required');
+  }
 
   const authStorage =
     typeof window !== 'undefined' && window.localStorage ? window.localStorage : undefined;
