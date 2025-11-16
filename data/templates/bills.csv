@@ -1,0 +1,4 @@
+id,user_id,title,amount,due_date,status,notes,created_at,updated_at
+00000000-0000-0000-0000-000000000001,00000000-0000-0000-0000-000000000000,Electricity Bill,1200.50,2025-02-10,pending,January usage,2025-01-15T00:00:00Z,2025-01-15T00:00:00Z
+
+
