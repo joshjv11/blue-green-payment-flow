@@ -25,7 +25,13 @@
     "deploy:vercel": "vercel --prod",
     "deploy:vercel:preview": "vercel",
     "deploy:quick": "git add -A && git commit -m 'Deploy: Quick deploy' && git push origin main",
-    "apply:schema": "node scripts/db/apply-schema.mjs"
+    "apply:schema": "node scripts/db/apply-schema.mjs",
+    "dev:web": "vite",
+    "dev:auth": "npm --prefix services/auth-api run dev",
+    "dev:postgrest": "docker compose -f scripts/postgrest/docker-compose.yml --env-file scripts/postgrest/.env.postgrest up",
+    "dev:postgrest:detached": "docker compose -f scripts/postgrest/docker-compose.yml --env-file scripts/postgrest/.env.postgrest up -d",
+    "dev:stack": "concurrently -c \"cyan,magenta,green\" -n postgrest,auth,web \"npm run dev:postgrest\" \"npm run dev:auth\" \"npm run dev:web\"",
+    "smoke": "node scripts/smoke.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.12.1",
