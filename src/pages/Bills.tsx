@@ -166,7 +166,17 @@ const Bills = () => {
   const fetchBills = async () => {
     try {
       setLoading(true);
-      if (isSupabaseConfigured && supabase) {
+      const usePgrstBills = import.meta.env.VITE_USE_PGRST_BILLS === 'true';
+      if (usePgrstBills) {
+        const { pgrst } = await import('@/lib/pgrst');
+        const data = await pgrst<any[]>('/bills?select=*&order=due_date.asc&limit=200');
+        const billsData = data || [];
+        setBills(billsData);
+        if (billsData.length > 0) {
+          addToCache(billsData.slice(0, 30));
+        }
+        console.log(`✅ [PGRST] Loaded ${billsData.length} bills successfully`);
+      } else if (isSupabaseConfigured && supabase) {
         const { data, error } = await supabase
           .from('bills')
           .select('*')
