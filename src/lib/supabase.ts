@@ -21,9 +21,9 @@ const getEnvVar = (name: string): string | undefined => {
   return undefined;
 };
 
-const FALLBACK_SUPABASE_URL = 'https://qusloccwftavvcsttmnq.supabase.co';
+const FALLBACK_SUPABASE_URL = 'https://pmcvuqdjiepqlkwnmwgo.supabase.co';
 const FALLBACK_SUPABASE_ANON_KEY =
-  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF1c2xvY2N3ZnRhdnZjc3R0bW5xIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzU0NjgzMzYsImV4cCI6MjA1MTA0NDMzNn0.XNMiO9LcWBCCb5cGa4pFEKSsJmXQ7rCmfqZhJ0d-vE0';
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBtY3Z1cWRqaWVwcWxrd25td2dvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjMyNzg0MjQsImV4cCI6MjA3ODg1NDQyNH0.A2d1_reMbnSUsI0KFHhY_0sjgjmr3Pm80QDK5hEGarc';
 
 const SUPABASE_URL = getEnvVar('VITE_SUPABASE_URL') ?? FALLBACK_SUPABASE_URL;
 const SUPABASE_ANON_KEY =
