@@ -82,7 +82,7 @@ export function InvoiceOCRUploader({ userId, onPrefill, onBillCreated }: Invoice
         bucket: 'receipts',
         path: fileName,
         userId,
-        project: 'qusloccwftavvcsttmnq'
+        project: 'fbzfddgqfqjuvpjzvhfi'
       });
 
       const { data, error: functionError } = await supabase.functions.invoke('extract-invoice-ocr', {

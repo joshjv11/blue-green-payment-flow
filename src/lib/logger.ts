@@ -52,8 +52,8 @@ export const logEvent = async (params: LogEventParams): Promise<void> => {
     };
 
     // Get Supabase URL from client
-    const supabaseUrl = 'https://yqzzcvkgeoghirfrflzq.supabase.co';
-    const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlxenpjdmtnZW9naGlyZnJmbHpxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc4NDQzNDUsImV4cCI6MjA3MzQyMDM0NX0.NiUzLQFPOwPMiTFKyxMS82hdrqWxE9JbLdIYo-zoJYo';
+    const supabaseUrl = 'https://fbzfddgqfqjuvpjzvhfi.supabase.co';
+    const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZiemZkZGdxZnFqdXZwanp2aGZpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM3MTMyMTAsImV4cCI6MjA3OTI4OTIxMH0.ulFXrPwMvrXJGIjli9KQvoM_T8lb6VBqGHfP_LsfQ7Q';
 
     // Send log to edge function (fire and forget with keepalive)
     fetch(`${supabaseUrl}/functions/v1/log-client-event`, {

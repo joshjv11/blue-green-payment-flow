@@ -18,8 +18,8 @@ const AdminDbHealth = () => {
   const [tableCounts, setTableCounts] = useState<TableCount[]>([]);
   const { toast } = useToast();
 
-  const supabaseUrl = "https://yqzzcvkgeoghirfrflzq.supabase.co";
-  const projectRef = "yqzzcvkgeoghirfrflzq";
+  const supabaseUrl = "https://fbzfddgqfqjuvpjzvhfi.supabase.co";
+  const projectRef = "fbzfddgqfqjuvpjzvhfi";
 
   const fetchDbHealth = async () => {
     setLoading(true);
