@@ -117,6 +117,10 @@ export function AppSidebar() {
       : "hover:bg-gradient-to-r hover:from-muted/80 hover:via-muted/60 hover:to-transparent text-muted-foreground hover:text-foreground transition-all duration-300 hover:shadow-md hover:border-l-2 hover:border-primary/30";
 
   const renderNavItem = (item: typeof coreItems[0] & { requiredPlan?: "pro" | "premium"; isProminent?: boolean; isNew?: boolean }, index: number = 0) => {
+    if (!item || !item.icon) {
+      console.warn('NavItem missing or missing icon:', item);
+      return null;
+    }
     const hasAccess = hasFeatureAccess(item.featureKey, item.requiredPlan);
     const isLocked = !hasAccess;
     const isPremiumFeature = item.requiredPlan === 'premium';
