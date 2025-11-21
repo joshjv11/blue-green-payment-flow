@@ -174,7 +174,7 @@ EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- Index for user_rewards
 CREATE INDEX IF NOT EXISTS idx_user_rewards_user_id ON public.user_rewards(user_id);
-CREATE INDEX IF NOT EXISTS idx_user_rewards_status ON public.user_rewards(status);
+CREATE INDEX IF NOT EXISTS idx_user_rewards_tier ON public.user_rewards(tier);
 
 -- =========================
 -- VERIFICATION
