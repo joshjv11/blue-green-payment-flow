@@ -72,6 +72,9 @@ const Auth = () => {
   }
 
   const handleTakeToDashboard = () => {
+    if (typeof window !== 'undefined') {
+      window.localStorage.setItem('demo_dashboard_access', 'true');
+    }
     navigate('/dashboard', { replace: true });
   };
 
