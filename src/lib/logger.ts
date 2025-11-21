@@ -56,6 +56,7 @@ export const logEvent = async (params: LogEventParams): Promise<void> => {
     const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZiemZkZGdxZnFqdXZwanp2aGZpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM3MTMyMTAsImV4cCI6MjA3OTI4OTIxMH0.ulFXrPwMvrXJGIjli9KQvoM_T8lb6VBqGHfP_LsfQ7Q';
 
     // Send log to edge function (fire and forget with keepalive)
+    // Note: Edge function may not exist yet - that's okay, we fail silently
     fetch(`${supabaseUrl}/functions/v1/log-client-event`, {
       method: 'POST',
       headers: {
@@ -66,8 +67,11 @@ export const logEvent = async (params: LogEventParams): Promise<void> => {
       body: JSON.stringify(payload),
       keepalive: true, // Ensure log is sent even if page is closed
     }).catch((error) => {
-      // Swallow errors silently - logging should never break the app
-      console.debug('Failed to send log (non-critical):', error.message);
+      // Swallow all errors silently - logging should never break the app
+      // CORS errors, 404s, network errors are all acceptable
+      if (process.env.NODE_ENV === 'development') {
+        console.debug('📊 Log event failed (non-critical, edge function may not exist):', error.message);
+      }
     });
 
     // Also log to console in development

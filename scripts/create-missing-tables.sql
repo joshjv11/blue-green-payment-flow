@@ -177,6 +177,50 @@ CREATE INDEX IF NOT EXISTS idx_user_rewards_user_id ON public.user_rewards(user_
 CREATE INDEX IF NOT EXISTS idx_user_rewards_tier ON public.user_rewards(tier);
 
 -- =========================
+-- HELPER FUNCTIONS
+-- =========================
+
+-- Create default user plan function (creates free plan for new users)
+CREATE OR REPLACE FUNCTION public.create_default_user_plan(_user_id UUID)
+RETURNS void
+LANGUAGE plpgsql
+SECURITY DEFINER 
+SET search_path = public
+AS $$
+BEGIN
+  INSERT INTO public.user_plans (
+    user_id, 
+    plan, 
+    ai_queries_used, 
+    ai_queries_limit,
+    ai_queries_reset_date,
+    is_active,
+    started_at
+  )
+  VALUES (
+    _user_id,
+    'free',
+    0,
+    3,
+    CURRENT_DATE,
+    true,
+    now()
+  )
+  ON CONFLICT (user_id) DO UPDATE SET
+    plan = COALESCE(EXCLUDED.plan, user_plans.plan),
+    ai_queries_used = COALESCE(EXCLUDED.ai_queries_used, user_plans.ai_queries_used),
+    ai_queries_limit = COALESCE(EXCLUDED.ai_queries_limit, user_plans.ai_queries_limit),
+    ai_queries_reset_date = COALESCE(EXCLUDED.ai_queries_reset_date, user_plans.ai_queries_reset_date),
+    is_active = COALESCE(EXCLUDED.is_active, user_plans.is_active),
+    updated_at = now();
+END;
+$$;
+
+-- Grant execute permission to authenticated users
+GRANT EXECUTE ON FUNCTION public.create_default_user_plan(UUID) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.create_default_user_plan(UUID) TO anon;
+
+-- =========================
 -- VERIFICATION
 -- =========================
 SELECT 
@@ -187,4 +231,30 @@ FROM pg_tables
 WHERE schemaname = 'public' 
   AND tablename IN ('user_plans', 'payment_transactions', 'user_badges', 'user_rewards')
 ORDER BY tablename;
+
+-- Verify function exists
+SELECT 
+  routine_name,
+  routine_type
+FROM information_schema.routines
+WHERE routine_schema = 'public'
+  AND routine_name = 'create_default_user_plan';
+
+-- =========================
+-- CREATE DEFAULT PLANS FOR EXISTING USERS
+-- =========================
+-- This creates default free plans for any users who don't have one yet
+DO $$
+DECLARE
+    profile_record RECORD;
+BEGIN
+    FOR profile_record IN SELECT id FROM public.profiles LOOP
+        -- Only create plan if user doesn't have one
+        IF NOT EXISTS (
+            SELECT 1 FROM public.user_plans WHERE user_id = profile_record.id
+        ) THEN
+            PERFORM public.create_default_user_plan(profile_record.id);
+        END IF;
+    END LOOP;
+END $$;
 
