@@ -300,7 +300,7 @@ export function HorizontalNavbar() {
                       <span>Reports & Exports</span>
                     </DropdownMenuSubTrigger>
                     <DropdownMenuSubContent className="w-56">
-                      {premiumReportsItems.map(item => renderNavItem(item, true))}
+                      {premiumReportsItems.filter(item => item && item.icon).map(item => renderNavItem(item, true))}
                     </DropdownMenuSubContent>
                   </DropdownMenuSub>
                 </DropdownMenuContent>
@@ -329,7 +329,7 @@ export function HorizontalNavbar() {
                     GST & Compliance
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator />
-                  {premiumGSTItems.map(item => renderNavItem(item, true))}
+                  {premiumGSTItems.filter(item => item && item.icon).map(item => renderNavItem(item, true))}
                 </DropdownMenuContent>
               </DropdownMenu>
             )}
@@ -385,7 +385,7 @@ export function HorizontalNavbar() {
               <DropdownMenuContent align="end" className="w-56">
                 <DropdownMenuLabel>Admin</DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                {adminItems.map(item => renderNavItem(item, true))}
+                {adminItems.filter(item => item && item.icon).map(item => renderNavItem(item, true))}
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
