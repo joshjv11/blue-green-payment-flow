@@ -120,6 +120,11 @@ export function HorizontalNavbar() {
   };
 
   const renderNavItem = (item: NavItem, isDropdown = false) => {
+    if (!item || !item.icon) {
+      console.warn('NavItem missing or missing icon:', item);
+      return null;
+    }
+    
     const hasAccess = hasFeatureAccess(item.featureKey, item.requiredPlan);
     const isLocked = !hasAccess;
     const isActive = location.pathname === item.url || location.pathname.startsWith(item.url + '/');
@@ -227,7 +232,7 @@ export function HorizontalNavbar() {
           {/* Main Navigation */}
           <div className="flex items-center gap-1 flex-1 justify-center overflow-x-auto scrollbar-hide px-2">
             {/* Core Items - Always Visible */}
-            {coreItems.map(item => renderNavItem(item))}
+            {coreItems.filter(item => item && item.icon).map(item => renderNavItem(item))}
 
             {/* Pro Features Dropdown */}
             {(isPro || isPremium) && (
@@ -255,7 +260,7 @@ export function HorizontalNavbar() {
                     Pro Features
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator />
-                  {proItems.map(item => renderNavItem(item, true))}
+                  {proItems.filter(item => item && item.icon).map(item => renderNavItem(item, true))}
                 </DropdownMenuContent>
               </DropdownMenu>
             )}
@@ -287,7 +292,7 @@ export function HorizontalNavbar() {
                     Business Operations
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator />
-                  {premiumBusinessItems.map(item => renderNavItem(item, true))}
+                  {premiumBusinessItems.filter(item => item && item.icon).map(item => renderNavItem(item, true))}
                   <DropdownMenuSeparator />
                   <DropdownMenuSub>
                     <DropdownMenuSubTrigger className="flex items-center gap-3">
