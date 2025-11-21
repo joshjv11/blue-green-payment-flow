@@ -11,16 +11,6 @@ CREATE SCHEMA IF NOT EXISTS auth;
 CREATE SCHEMA IF NOT EXISTS extensions;
 CREATE SCHEMA IF NOT EXISTS storage;
 
--- Create auth.users table placeholder (Supabase manages this, but we need it for FKs)
-CREATE TABLE IF NOT EXISTS auth.users (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  email text,
-  encrypted_password text,
-  raw_user_meta_data jsonb DEFAULT '{}'::jsonb,
-  created_at timestamptz DEFAULT now(),
-  updated_at timestamptz DEFAULT now()
-);
-
 -- Create auth.uid() function shim
 CREATE OR REPLACE FUNCTION auth.uid()
 RETURNS uuid
