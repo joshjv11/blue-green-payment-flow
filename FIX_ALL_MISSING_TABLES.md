@@ -18,11 +18,14 @@ The file `scripts/create-missing-tables.sql` has been updated with:
 - `payment_transactions` - Payment history
 - `user_badges` - User achievements/badges
 - `user_rewards` - User rewards and streaks
-- `temporary_unlocks` - Temporary feature unlocks (NEW!)
-- `streak_shields` - Streak protection shields (NEW!)
+- `temporary_unlocks` - Temporary feature unlocks
+- `streak_shields` - Streak protection shields
+- `daily_bonuses` - Daily bonus rewards (NEW!)
 
 ✅ **Functions Created:**
 - `create_default_user_plan` - Creates free plan for new users
+- `can_claim_daily_bonus` - Checks if user can claim daily bonus (NEW!)
+- `generate_daily_reward` - Generates random daily reward (NEW!)
 - Auto-creates default plans for existing users
 
 ✅ **Features:**
@@ -58,6 +61,7 @@ After running the script, **refresh your browser**. All errors should be gone!
 ❌ Error fetching temporary unlocks: Could not find the table 'public.temporary_unlocks'
 ❌ Error fetching shields: Could not find the table 'public.streak_shields'
 ❌ Error creating default plan: Could not find the function public.create_default_user_plan
+❌ Error checking daily bonus: Could not find the function public.can_claim_daily_bonus
 ❌ TypeError: Cannot read properties of undefined (reading 'icon')
 ```
 
