@@ -28,9 +28,11 @@ const __dirname = dirname(__filename);
 // CONFIGURATION
 // ============================================================================
 
-const OLD_SUPABASE_URL = process.env.OLD_SUPABASE_URL || 'https://yqzzcvkgeoghirfrflzq.supabase.co';
-const OLD_SERVICE_ROLE_KEY = process.env.OLD_SERVICE_ROLE_KEY;
+// Old Project (source)
+const OLD_SUPABASE_URL = process.env.OLD_SUPABASE_URL || 'https://qusloccwftavvcsttmnq.supabase.co';
+const OLD_SERVICE_ROLE_KEY = process.env.OLD_SERVICE_ROLE_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF1c2xvY2N3ZnRhdnZjc3R0bW5xIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1ODc4OTQxNCwiZXhwIjoyMDc0MzY1NDE0fQ.sabLfnzwaJxxhzvmy0k0U4rtOKeFvKKJGRScnx64y0M';
 
+// New Project (destination)
 const NEW_SUPABASE_URL = process.env.NEW_SUPABASE_URL || 'https://fbzfddgqfqjuvpjzvhfi.supabase.co';
 const NEW_SERVICE_ROLE_KEY = process.env.NEW_SERVICE_ROLE_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZiemZkZGdxZnFqdXZwanp2aGZpIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2MzcxMzIxMCwiZXhwIjoyMDc5Mjg5MjEwfQ.hIEALJ-LjzxUDh-L9TRxLNumA_3BEYTYxmg6OQZasz8';
 
@@ -73,6 +75,35 @@ function validateConfig() {
   log(`New project: ${NEW_SUPABASE_URL}`, 'info');
 }
 
+async function getTableColumns(supabase, tableName) {
+  try {
+    // Try to get column info by selecting with limit 0
+    const { data, error } = await supabase
+      .from(tableName)
+      .select('*')
+      .limit(0);
+    
+    if (error) {
+      // Try to infer from error or return null
+      return null;
+    }
+    
+    // We can't directly get columns, so we'll try to select one row
+    const { data: sampleData } = await supabase
+      .from(tableName)
+      .select('*')
+      .limit(1);
+    
+    if (sampleData && sampleData.length > 0) {
+      return Object.keys(sampleData[0]);
+    }
+    
+    return null;
+  } catch (error) {
+    return null;
+  }
+}
+
 async function getTableData(supabase, tableName) {
   try {
     const { data, error } = await supabase
@@ -95,9 +126,25 @@ async function getTableData(supabase, tableName) {
   }
 }
 
+function filterColumns(data, allowedColumns) {
+  if (!data || !allowedColumns || allowedColumns.length === 0) {
+    return data;
+  }
+  
+  return data.map(row => {
+    const filtered = {};
+    allowedColumns.forEach(col => {
+      if (row.hasOwnProperty(col)) {
+        filtered[col] = row[col];
+      }
+    });
+    return filtered;
+  });
+}
+
 async function insertTableData(supabase, tableName, data, userMapping = null) {
   if (!data || data.length === 0) {
-    log(`No data to migrate for ${tableName}`, 'warning');
+    log(`  No data to migrate for ${tableName}`, 'warning');
     return 0;
   }
 
@@ -119,7 +166,21 @@ async function insertTableData(supabase, tableName, data, userMapping = null) {
         }
         
         return mapped;
+      }).filter(row => {
+        // Filter out rows where user_id couldn't be mapped (unless profiles table)
+        if (tableName === 'profiles') {
+          return row.id && userMapping[row.id]; // Only migrate profiles for mapped users
+        }
+        if (row.user_id) {
+          return userMapping[row.user_id]; // Only migrate rows for mapped users
+        }
+        return true; // Keep rows without user_id
       });
+    }
+
+    if (mappedData.length === 0) {
+      log(`  No data to migrate for ${tableName} (all users need to sign up first)`, 'warning');
+      return 0;
     }
 
     // Insert in batches of 100
@@ -132,21 +193,46 @@ async function insertTableData(supabase, tableName, data, userMapping = null) {
       
       if (error) {
         // Check if it's a conflict error (data already exists)
-        if (error.code === '23505' || error.message?.includes('duplicate')) {
-          log(`Some rows in ${tableName} already exist, skipping duplicates...`, 'warning');
+        if (error.code === '23505' || error.message?.includes('duplicate') || error.code === 'PGRST301') {
+          log(`  Some rows in ${tableName} already exist, skipping duplicates...`, 'warning');
+          // Try to insert row by row to see which ones succeed
+          let batchInserted = 0;
+          for (const row of batch) {
+            const { error: rowError } = await supabase
+              .from(tableName)
+              .insert(row);
+            if (!rowError) {
+              batchInserted++;
+            }
+          }
+          inserted += batchInserted;
         } else {
-          throw error;
+          log(`  Error details: ${error.message}`, 'error');
+          // Try to insert row by row to see which ones succeed
+          let batchInserted = 0;
+          for (const row of batch) {
+            const { error: rowError } = await supabase
+              .from(tableName)
+              .insert(row);
+            if (!rowError) {
+              batchInserted++;
+            } else {
+              log(`    Failed to insert row: ${rowError.message.substring(0, 100)}`, 'warning');
+            }
+          }
+          inserted += batchInserted;
         }
       } else {
         inserted += batch.length;
       }
     }
     
-    log(`Migrated ${inserted}/${mappedData.length} rows to ${tableName}`, 'success');
+    log(`  Migrated ${inserted}/${mappedData.length} rows to ${tableName}`, inserted === mappedData.length ? 'success' : 'warning');
     return inserted;
   } catch (error) {
-    log(`Error inserting into ${tableName}: ${error.message}`, 'error');
-    throw error;
+    log(`  Error inserting into ${tableName}: ${error.message}`, 'error');
+    // Don't throw - continue with other tables
+    return 0;
   }
 }
 
@@ -227,6 +313,18 @@ async function migrateData() {
     const userMapping = await createUserMapping(oldSupabase, newSupabase);
     log('', 'info');
 
+    // Get allowed columns for new project tables (to filter out non-existent columns)
+    log('Checking table schemas...', 'info');
+    const newTableColumns = {};
+    for (const tableName of TABLES_TO_MIGRATE) {
+      const columns = await getTableColumns(newSupabase, tableName);
+      if (columns) {
+        newTableColumns[tableName] = columns;
+        log(`  ${tableName}: ${columns.length} columns`, 'success');
+      }
+    }
+    log('', 'info');
+
     // Migrate each table
     const results = {};
     
@@ -241,11 +339,28 @@ async function migrateData() {
         continue;
       }
 
+      if (data.length === 0) {
+        log(`  No data to migrate for ${tableName}`, 'warning');
+        results[tableName] = { total: 0, inserted: 0 };
+        continue;
+      }
+
+      // Filter columns to only include those that exist in new table
+      let filteredData = data;
+      if (newTableColumns[tableName]) {
+        filteredData = filterColumns(data, newTableColumns[tableName]);
+        const originalColCount = Object.keys(data[0] || {}).length;
+        const filteredColCount = Object.keys(filteredData[0] || {}).length;
+        if (originalColCount !== filteredColCount) {
+          log(`  Filtered columns: ${filteredColCount}/${originalColCount} columns will be migrated`, 'warning');
+        }
+      }
+
       // Insert into new project
       const inserted = await insertTableData(
         newSupabase,
         tableName,
-        data,
+        filteredData,
         Object.keys(userMapping).length > 0 ? userMapping : null
       );
       
