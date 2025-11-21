@@ -291,6 +291,129 @@ GRANT EXECUTE ON FUNCTION public.create_default_user_plan(UUID) TO authenticated
 GRANT EXECUTE ON FUNCTION public.create_default_user_plan(UUID) TO anon;
 
 -- =========================
+-- DAILY BONUSES TABLE (optional - for daily reward system)
+-- =========================
+CREATE TABLE IF NOT EXISTS public.daily_bonuses (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  bonus_date DATE NOT NULL DEFAULT CURRENT_DATE,
+  claimed_at TIMESTAMP WITH TIME ZONE,
+  reward_type TEXT NOT NULL,
+  reward_value JSONB NOT NULL,
+  streak_day INTEGER NOT NULL DEFAULT 1,
+  created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
+  UNIQUE(user_id, bonus_date)
+);
+
+-- RLS for daily_bonuses
+ALTER TABLE public.daily_bonuses ENABLE ROW LEVEL SECURITY;
+
+DO $$ BEGIN
+  CREATE POLICY "daily_bonuses_select_own"
+    ON public.daily_bonuses FOR SELECT
+    USING (auth.uid() = user_id);
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+DO $$ BEGIN
+  CREATE POLICY "daily_bonuses_modify_own"
+    ON public.daily_bonuses FOR ALL
+    USING (auth.uid() = user_id)
+    WITH CHECK (auth.uid() = user_id);
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+-- Index for daily_bonuses
+CREATE INDEX IF NOT EXISTS idx_daily_bonuses_user_date ON public.daily_bonuses(user_id, bonus_date);
+
+-- =========================
+-- DAILY BONUS FUNCTIONS
+-- =========================
+
+-- Function to check if user can claim daily bonus
+CREATE OR REPLACE FUNCTION public.can_claim_daily_bonus(p_user_id UUID)
+RETURNS BOOLEAN
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  v_last_bonus RECORD;
+BEGIN
+  SELECT * INTO v_last_bonus
+  FROM public.daily_bonuses
+  WHERE user_id = p_user_id
+    AND bonus_date = CURRENT_DATE;
+  
+  RETURN (NOT FOUND) OR (v_last_bonus.claimed_at IS NULL);
+END;
+$$;
+
+-- Function to generate random reward
+CREATE OR REPLACE FUNCTION public.generate_daily_reward()
+RETURNS JSONB
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  v_reward_type TEXT;
+  v_reward_value JSONB;
+  v_random INTEGER;
+  v_theme_names TEXT[] := ARRAY['Cosmic', 'Neon', 'Vintage', 'Ocean', 'Forest'];
+  v_theme_idx INTEGER;
+BEGIN
+  v_random := FLOOR(RANDOM() * 100)::INTEGER;
+  
+  IF v_random < 40 THEN
+    v_reward_type := 'xp';
+    v_reward_value := jsonb_build_object(
+      'amount', 10 + FLOOR(RANDOM() * 91)::INTEGER,
+      'multiplier', 1 + (RANDOM() * 0.5)
+    );
+  ELSIF v_random < 65 THEN
+    v_reward_type := 'badge_boost';
+    v_reward_value := jsonb_build_object(
+      'boost_percentage', 10 + FLOOR(RANDOM() * 40)::INTEGER
+    );
+  ELSIF v_random < 85 THEN
+    v_reward_type := 'premium_access';
+    v_reward_value := jsonb_build_object(
+      'duration_hours', (1 + FLOOR(RANDOM() * 7)::INTEGER) * 24,
+      'features', jsonb_build_array('ai_unlimited', 'analytics', 'export')
+    );
+  ELSIF v_random < 95 THEN
+    v_theme_idx := 1 + FLOOR(RANDOM() * 5)::INTEGER;
+    v_reward_type := 'theme';
+    v_reward_value := jsonb_build_object(
+      'theme_id', 'special_' || FLOOR(RANDOM() * 10)::TEXT,
+      'theme_name', v_theme_names[v_theme_idx],
+      'duration_days', 7
+    );
+  ELSE
+    v_reward_type := 'collectible';
+    v_reward_value := jsonb_build_object(
+      'rarity', CASE 
+        WHEN RANDOM() < 0.6 THEN 'rare'
+        WHEN RANDOM() < 0.9 THEN 'epic'
+        ELSE 'legendary'
+      END,
+      'collectible_id', 'collectible_' || FLOOR(RANDOM() * 100)::TEXT
+    );
+  END IF;
+  
+  RETURN jsonb_build_object(
+    'type', v_reward_type,
+    'value', v_reward_value
+  );
+END;
+$$;
+
+-- Grant execute permissions
+GRANT EXECUTE ON FUNCTION public.can_claim_daily_bonus(UUID) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.can_claim_daily_bonus(UUID) TO anon;
+GRANT EXECUTE ON FUNCTION public.generate_daily_reward() TO authenticated;
+GRANT EXECUTE ON FUNCTION public.generate_daily_reward() TO anon;
+
+-- =========================
 -- VERIFICATION
 -- =========================
 SELECT 
@@ -299,16 +422,17 @@ SELECT
    WHERE table_schema = 'public' AND table_name = tablename) as column_count
 FROM pg_tables 
 WHERE schemaname = 'public' 
-  AND tablename IN ('user_plans', 'payment_transactions', 'user_badges', 'user_rewards', 'temporary_unlocks', 'streak_shields')
+  AND tablename IN ('user_plans', 'payment_transactions', 'user_badges', 'user_rewards', 'temporary_unlocks', 'streak_shields', 'daily_bonuses')
 ORDER BY tablename;
 
--- Verify function exists
+-- Verify functions exist
 SELECT 
   routine_name,
   routine_type
 FROM information_schema.routines
 WHERE routine_schema = 'public'
-  AND routine_name = 'create_default_user_plan';
+  AND routine_name IN ('create_default_user_plan', 'can_claim_daily_bonus', 'generate_daily_reward')
+ORDER BY routine_name;
 
 -- =========================
 -- CREATE DEFAULT PLANS FOR EXISTING USERS
