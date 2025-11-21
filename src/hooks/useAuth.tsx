@@ -223,6 +223,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           errorMessage = 'Authentication service is not properly configured. Please contact support.';
         } else if (error.message?.includes('Invalid login credentials')) {
           errorMessage = 'Invalid email or password. Please try again.';
+        } else if (error.message?.includes('Email not confirmed') || error.message?.includes('email_not_confirmed')) {
+          errorMessage = 'Please check your email and click the confirmation link before signing in. If you haven\'t received it, try signing up again or contact support.';
         }
         
         toast({
