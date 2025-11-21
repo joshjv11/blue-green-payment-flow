@@ -177,6 +177,76 @@ CREATE INDEX IF NOT EXISTS idx_user_rewards_user_id ON public.user_rewards(user_
 CREATE INDEX IF NOT EXISTS idx_user_rewards_tier ON public.user_rewards(tier);
 
 -- =========================
+-- TEMPORARY UNLOCKS (optional - for temporary feature access)
+-- =========================
+CREATE TABLE IF NOT EXISTS public.temporary_unlocks (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  unlock_type TEXT NOT NULL,
+  unlock_data JSONB NOT NULL,
+  unlocked_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
+  expires_at TIMESTAMP WITH TIME ZONE NOT NULL,
+  is_active BOOLEAN NOT NULL DEFAULT true,
+  created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now()
+);
+
+-- RLS for temporary_unlocks
+ALTER TABLE public.temporary_unlocks ENABLE ROW LEVEL SECURITY;
+
+DO $$ BEGIN
+  CREATE POLICY "temporary_unlocks_select_own"
+    ON public.temporary_unlocks FOR SELECT
+    USING (auth.uid() = user_id);
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+DO $$ BEGIN
+  CREATE POLICY "temporary_unlocks_modify_own"
+    ON public.temporary_unlocks FOR ALL
+    USING (auth.uid() = user_id)
+    WITH CHECK (auth.uid() = user_id);
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+-- Index for temporary_unlocks
+CREATE INDEX IF NOT EXISTS idx_temporary_unlocks_user_id ON public.temporary_unlocks(user_id);
+CREATE INDEX IF NOT EXISTS idx_temporary_unlocks_expires_at ON public.temporary_unlocks(expires_at);
+CREATE INDEX IF NOT EXISTS idx_temporary_unlocks_is_active ON public.temporary_unlocks(is_active);
+
+-- =========================
+-- STREAK SHIELDS (optional - for streak protection)
+-- =========================
+CREATE TABLE IF NOT EXISTS public.streak_shields (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  shield_type TEXT NOT NULL CHECK (shield_type IN ('basic', 'premium', 'insurance')),
+  earned_method TEXT NOT NULL CHECK (earned_method IN ('activity', 'purchase', 'bonus', 'reward')),
+  used_at TIMESTAMP WITH TIME ZONE,
+  expires_at TIMESTAMP WITH TIME ZONE,
+  is_active BOOLEAN NOT NULL DEFAULT true,
+  created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now()
+);
+
+-- RLS for streak_shields
+ALTER TABLE public.streak_shields ENABLE ROW LEVEL SECURITY;
+
+DO $$ BEGIN
+  CREATE POLICY "streak_shields_select_own"
+    ON public.streak_shields FOR SELECT
+    USING (auth.uid() = user_id);
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+DO $$ BEGIN
+  CREATE POLICY "streak_shields_modify_own"
+    ON public.streak_shields FOR ALL
+    USING (auth.uid() = user_id)
+    WITH CHECK (auth.uid() = user_id);
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+-- Index for streak_shields
+CREATE INDEX IF NOT EXISTS idx_streak_shields_user_id ON public.streak_shields(user_id);
+CREATE INDEX IF NOT EXISTS idx_streak_shields_is_active ON public.streak_shields(is_active);
+CREATE INDEX IF NOT EXISTS idx_streak_shields_used_at ON public.streak_shields(used_at);
+
+-- =========================
 -- HELPER FUNCTIONS
 -- =========================
 
@@ -229,7 +299,7 @@ SELECT
    WHERE table_schema = 'public' AND table_name = tablename) as column_count
 FROM pg_tables 
 WHERE schemaname = 'public' 
-  AND tablename IN ('user_plans', 'payment_transactions', 'user_badges', 'user_rewards')
+  AND tablename IN ('user_plans', 'payment_transactions', 'user_badges', 'user_rewards', 'temporary_unlocks', 'streak_shields')
 ORDER BY tablename;
 
 -- Verify function exists
