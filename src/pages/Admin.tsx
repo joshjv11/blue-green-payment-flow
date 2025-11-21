@@ -1,4 +1,3 @@
-import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -7,56 +6,11 @@ import { Button } from '@/components/ui/button';
 import { Shield, CreditCard, Users, TrendingUp, Database, Crown } from 'lucide-react';
 import PaymentVerificationDashboard from '@/components/PaymentVerificationDashboard';
 import AdminPlanManager from '@/components/AdminPlanManager';
-import { useAuth } from '@/hooks/useAuth';
-import { supabase } from '@/lib/supabase';
+import { useSystemAdminStatus } from '@/hooks/useSystemAdminStatus';
 
 const Admin = () => {
-  const { user } = useAuth();
   const navigate = useNavigate();
-  const [isAdmin, setIsAdmin] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
-  
-  // Check if user is a system administrator using the secure admin system
-  useEffect(() => {
-    const checkAdminStatus = async () => {
-      if (!user?.id) {
-        setIsAdmin(false);
-        setIsLoading(false);
-        return;
-      }
-
-      try {
-        const { data, error } = await supabase
-          .rpc('is_system_admin', { user_id: user.id });
-        
-        if (error) {
-          // RPC function might not exist - fail silently
-          if (error.code === '42883' || error.code === 'PGRST204') {
-            setIsAdmin(false);
-            setIsLoading(false);
-            return;
-          }
-          console.warn('⚠️ Admin check error:', error);
-          setIsAdmin(false);
-        } else {
-          setIsAdmin(data || false);
-        }
-      } catch (error: any) {
-        // Fail silently if function doesn't exist
-        if (error?.code === '42883' || error?.code === 'PGRST204' || error?.message?.includes('does not exist')) {
-          setIsAdmin(false);
-          setIsLoading(false);
-          return;
-        }
-        console.warn('⚠️ Admin check failed:', error);
-        setIsAdmin(false);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    checkAdminStatus();
-  }, [user?.id]);
+  const { isAdmin, loading: isLoading } = useSystemAdminStatus();
 
   if (isLoading) {
     return (

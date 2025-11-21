@@ -1,14 +1,12 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Shield, Lock, Users, CreditCard, Crown, Eye, EyeOff, CheckCircle, XCircle, Clock, Brain, Mail, Activity, Key, BarChart3 } from 'lucide-react';
+import { Shield, Users, CreditCard, Crown, Eye, EyeOff, CheckCircle, XCircle, Clock, Brain, Mail, Activity, Key, BarChart3 } from 'lucide-react';
 import { AIAssistant } from '@/components/admin/AIAssistant';
 import { EmailBroadcast } from '@/components/admin/EmailBroadcast';
 import { MetricCard } from '@/components/admin/MetricCard';
@@ -18,17 +16,14 @@ import { UserInsightsTable } from '@/components/admin/UserInsightsTable';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/lib/supabase';
 import { format } from 'date-fns';
+import { useSystemAdminStatus } from '@/hooks/useSystemAdminStatus';
 
-const ADMIN_PASSWORD = 'Deathground333';
 const ADMIN_EMAIL = 'joshuavaz55@gmail.com';
 const ADMIN_PHONE = '8828447880';
 
 const AdminCMS = () => {
-  const navigate = useNavigate();
   const { toast } = useToast();
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [password, setPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
+  const { isAdmin, loading: adminLoading } = useSystemAdminStatus();
   const [loading, setLoading] = useState(false);
   
   // Data states
@@ -61,47 +56,23 @@ const AdminCMS = () => {
   const [loadingBehaviour, setLoadingBehaviour] = useState(false);
   const [behaviourStats, setBehaviourStats] = useState<any>(null);
 
-  // Check if already authenticated (stored in sessionStorage)
   useEffect(() => {
-      const authStatus = sessionStorage.getItem('admin_cms_authenticated');
-      if (authStatus === 'true') {
-        setIsAuthenticated(true);
-        loadData();
-        loadSystemHealth();
-        loadFinancialMetrics();
-        loadGSTNCredentials();
-      }
-  }, []);
+    if (!isAdmin) return;
+    loadData();
+    loadSystemHealth();
+    loadFinancialMetrics();
+    loadGSTNCredentials();
+  }, [isAdmin]);
 
   // Poll system health every 60 seconds
   useEffect(() => {
-    if (!isAuthenticated) return;
+    if (!isAdmin) return;
 
     loadSystemHealth();
     const interval = setInterval(loadSystemHealth, 60000); // Poll every 60 seconds
 
     return () => clearInterval(interval);
-  }, [isAuthenticated]);
-
-  const handleLogin = () => {
-    if (password === ADMIN_PASSWORD) {
-      setIsAuthenticated(true);
-      sessionStorage.setItem('admin_cms_authenticated', 'true');
-      toast({
-        title: 'Access Granted',
-        description: 'Welcome to Admin CMS',
-      });
-      loadData();
-      loadGSTNCredentials();
-    } else {
-      toast({
-        title: 'Access Denied',
-        description: 'Incorrect password',
-        variant: 'destructive',
-      });
-      setPassword('');
-    }
-  };
+  }, [isAdmin]);
 
   const loadSystemHealth = async () => {
     setLoadingHealth(true);
@@ -391,53 +362,40 @@ const AdminCMS = () => {
     }
   };
 
-  if (!isAuthenticated) {
+  if (adminLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-background to-muted/20 flex items-center justify-center p-4">
         <Card className="w-full max-w-md">
-          <CardHeader className="text-center">
-            <div className="flex justify-center mb-4">
-              <div className="p-3 rounded-full bg-primary/10">
-                <Lock className="h-8 w-8 text-primary" />
+          <CardContent className="text-center space-y-4 py-8">
+            <div className="flex justify-center">
+              <div className="p-3 rounded-full bg-primary/10 animate-pulse">
+                <Shield className="h-8 w-8 text-primary" />
               </div>
             </div>
-            <CardTitle className="text-2xl">Admin CMS Access</CardTitle>
+            <CardTitle>Verifying Admin Access</CardTitle>
             <CardDescription>
-              Enter password to access the admin dashboard
+              Checking your administrator permissions...
             </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
-              <div className="relative">
-                <Input
-                  id="password"
-                  type={showPassword ? 'text' : 'password'}
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && handleLogin()}
-                  placeholder="Enter admin password"
-                  className="pr-10"
-                />
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  className="absolute right-0 top-0 h-full"
-                  onClick={() => setShowPassword(!showPassword)}
-                >
-                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  if (!isAdmin) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-background to-muted/20 flex items-center justify-center p-4">
+        <Card className="w-full max-w-md">
+          <CardContent className="text-center space-y-4 py-8">
+            <div className="flex justify-center">
+              <div className="p-3 rounded-full bg-destructive/10">
+                <Shield className="h-8 w-8 text-destructive" />
               </div>
             </div>
-            <Button
-              onClick={handleLogin}
-              className="w-full"
-              disabled={!password}
-            >
-              <Shield className="h-4 w-4 mr-2" />
-              Access Admin CMS
-            </Button>
+            <CardTitle>Access Restricted</CardTitle>
+            <CardDescription>
+              You need system administrator privileges to view the Admin CMS.
+            </CardDescription>
           </CardContent>
         </Card>
       </div>
@@ -458,15 +416,6 @@ const AdminCMS = () => {
               Manage payments, users, and plans
             </p>
           </div>
-          <Button
-            variant="outline"
-            onClick={() => {
-              sessionStorage.removeItem('admin_cms_authenticated');
-              setIsAuthenticated(false);
-            }}
-          >
-            Lock
-          </Button>
         </div>
 
         <Tabs defaultValue="payments" className="space-y-6">

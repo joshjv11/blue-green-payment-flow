@@ -14,7 +14,6 @@ import DebugInfo from '@/components/DebugInfo';
 import MobileOptimizer from '@/components/MobileOptimizer';
 import { PageTransition } from '@/components/PageTransition';
 import ReturnHomeButton from '@/components/ui/ReturnHomeButton';
-import { SecretAdminLock } from '@/components/SecretAdminLock';
 import { usePageTracking } from '@/hooks/usePageTracking';
 import { useLoginTracking } from '@/hooks/useLoginTracking';
 import Index from './pages/Index';
@@ -409,7 +408,6 @@ function AppLayout({ children }: { children: React.ReactNode }) {
       <HorizontalNavbar />
       <main className="flex-1 relative overflow-x-hidden">
         <ReturnHomeButton />
-        <SecretAdminLock />
         {children}
       </main>
     </div>
