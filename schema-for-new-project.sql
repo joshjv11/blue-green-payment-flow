@@ -6,19 +6,10 @@
 -- https://supabase.com/dashboard/project/fbzfddgqfqjuvpjzvhfi/sql/new
 -- ========================================
 
--- Ensure schemas exist
-CREATE SCHEMA IF NOT EXISTS auth;
+-- Ensure schemas exist (auth and storage are managed by Supabase)
 CREATE SCHEMA IF NOT EXISTS extensions;
-CREATE SCHEMA IF NOT EXISTS storage;
 
--- Create auth.uid() function shim
-CREATE OR REPLACE FUNCTION auth.uid()
-RETURNS uuid
-LANGUAGE sql
-STABLE
-AS $$
-  SELECT NULLIF((current_setting('request.jwt.claims', true)::jsonb ->> 'sub'),'')::uuid
-$$;
+-- Note: auth.uid() already exists in Supabase - no need to create it
 
 -- Create moddatetime trigger function
 CREATE OR REPLACE FUNCTION extensions.moddatetime()
@@ -165,7 +156,15 @@ exception when duplicate_object then null; end $$;
 -- =========================
 -- EXTENSIONS (required by triggers)
 -- =========================
-create extension if not exists moddatetime with schema extensions;
+-- Try to create extension, but it might already exist or need admin access
+-- If this fails, you can create it manually in Supabase Dashboard
+DO $$ 
+BEGIN
+  CREATE EXTENSION IF NOT EXISTS moddatetime WITH SCHEMA extensions;
+EXCEPTION WHEN OTHERS THEN
+  -- Extension might already exist or need admin access - that's okay
+  NULL;
+END $$;
 
 -- =========================
 -- OPTIONAL INDEXES
