@@ -1,6 +1,5 @@
 import { useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import SimpleAuthForm from '@/components/auth/SimpleAuthForm';
 import AuthCallbackHandler from '@/components/auth/AuthCallbackHandler';
 import { useAuth } from '@/hooks/useAuth';
 
@@ -30,23 +29,6 @@ const Auth = () => {
       navigate('/dashboard', { replace: true });
     }
   }, [user, loading, navigate, mode]);
-
-  const handleAuthSuccess = () => {
-    // The useEffect above will handle the redirect
-    console.log('✅ Auth success callback triggered');
-  };
-
-  // Show loading state while checking auth
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-feature-gradient flex items-center justify-center p-4">
-        <div className="flex flex-col items-center space-y-4">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
-          <p className="text-white text-sm">Checking authentication...</p>
-        </div>
-      </div>
-    );
-  }
 
   // Handle callback mode with dedicated handler
   if (mode === 'callback') {
@@ -89,8 +71,55 @@ const Auth = () => {
     );
   }
 
-  // Use Simple Email/Password Auth Form
-  return <SimpleAuthForm onSuccess={handleAuthSuccess} />;
+  const handleTakeToDashboard = () => {
+    navigate('/dashboard', { replace: true });
+  };
+
+  return (
+    <div className="min-h-screen bg-feature-gradient flex items-center justify-center p-4">
+      <div className="w-full max-w-xl">
+        <div className="bg-white/90 dark:bg-gray-900/80 backdrop-blur rounded-3xl shadow-2xl p-8 text-center space-y-6 border border-white/20">
+          <div className="mx-auto w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
+            <svg
+              className="w-8 h-8 text-primary"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M12 3v18" />
+              <path d="M5 12h14" />
+            </svg>
+          </div>
+
+          <div className="space-y-3">
+            <p className="inline-flex items-center px-3 py-1 rounded-full bg-primary/10 text-primary font-medium text-sm">
+              Instant Access
+            </p>
+            <h1 className="text-3xl font-bold tracking-tight text-gray-900 dark:text-white">
+              You're all set to explore InvoiceFlow
+            </h1>
+            <p className="text-muted-foreground max-w-md mx-auto">
+              We've temporarily opened the gates. Tap the button below and jump straight into the dashboard experience.
+            </p>
+          </div>
+
+          <button
+            onClick={handleTakeToDashboard}
+            className="w-full h-12 rounded-2xl bg-primary text-primary-foreground text-lg font-semibold shadow-lg shadow-primary/30 hover:bg-primary/90 transition-all duration-200"
+          >
+            Take me to the dashboard
+          </button>
+
+          <p className="text-xs text-muted-foreground">
+            Need sign-in restored later? Just let us know.
+          </p>
+        </div>
+      </div>
+    </div>
+  );
 };
 
 export default Auth;
