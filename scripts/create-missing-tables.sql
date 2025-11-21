@@ -97,12 +97,13 @@ CREATE INDEX IF NOT EXISTS idx_payment_transactions_processed ON public.payment_
 CREATE TABLE IF NOT EXISTS public.user_badges (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
-  badge_type TEXT NOT NULL,
+  badge_id TEXT NOT NULL,
   badge_name TEXT NOT NULL,
   badge_description TEXT,
-  earned_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
-  metadata JSONB,
-  created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now()
+  badge_icon TEXT,
+  badge_tier TEXT,
+  xp_earned INTEGER,
+  earned_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now()
 );
 
 -- RLS for user_badges
@@ -130,15 +131,21 @@ CREATE INDEX IF NOT EXISTS idx_user_badges_earned_at ON public.user_badges(earne
 -- =========================
 CREATE TABLE IF NOT EXISTS public.user_rewards (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
-  reward_type TEXT NOT NULL,
-  reward_name TEXT NOT NULL,
-  reward_description TEXT,
-  reward_value NUMERIC(10,2),
-  status TEXT DEFAULT 'pending' CHECK (status IN ('pending', 'claimed', 'expired')),
-  claimed_at TIMESTAMP WITH TIME ZONE,
-  expires_at TIMESTAMP WITH TIME ZONE,
-  metadata JSONB,
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE UNIQUE,
+  tier TEXT,
+  current_level INTEGER DEFAULT 1,
+  current_streak INTEGER DEFAULT 0,
+  longest_streak INTEGER DEFAULT 0,
+  total_xp INTEGER DEFAULT 0,
+  total_bills_paid INTEGER DEFAULT 0,
+  on_time_payments INTEGER DEFAULT 0,
+  early_payments INTEGER DEFAULT 0,
+  late_payments INTEGER DEFAULT 0,
+  total_shields_used INTEGER DEFAULT 0,
+  has_streak_insurance BOOLEAN DEFAULT false,
+  last_activity_date DATE,
+  last_streak_save_date DATE,
+  streak_expires_at TIMESTAMP WITH TIME ZONE,
   created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
   updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now()
 );
