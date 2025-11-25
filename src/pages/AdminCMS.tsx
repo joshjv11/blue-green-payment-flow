@@ -226,14 +226,30 @@ const AdminCMS = () => {
   const loadDataFallback = async () => {
     try {
       // Use admin client to bypass RLS
-      const { data: usersData, error: usersError } = await adminSupabase
+      const { data: profilesData, error: profilesError } = await adminSupabase
         .from('profiles')
         .select('*')
         .order('created_at', { ascending: false });
 
-      if (usersError) {
-        console.error('Error loading users:', usersError);
+      if (profilesError) {
+        console.error('Error loading profiles:', profilesError);
       }
+
+      // Fetch auth users to get email addresses
+      const { data: authData, error: authError } = await adminSupabase.auth.admin.listUsers();
+
+      if (authError) {
+        console.error('Error loading auth users:', authError);
+      }
+
+      // Merge profiles with auth users to get emails
+      const authUsersMap = new Map(authData?.users?.map(u => [u.id, u]) || []);
+      const usersWithEmails = (profilesData || []).map(profile => ({
+        ...profile,
+        email: authUsersMap.get(profile.id)?.email || null
+      }));
+
+      setUsers(usersWithEmails);
 
       const { data: plansData, error: plansError } = await adminSupabase
         .from('user_plans')
@@ -253,23 +269,18 @@ const AdminCMS = () => {
         console.error('Error loading payments:', paymentsError);
       }
 
-      setUsers(usersData || []);
       setPayments(paymentsData || []);
 
       // Map profiles to plans
       const userIds = [...new Set((plansData || []).map(p => p.user_id))];
 
       if (userIds.length > 0) {
-        const { data: profilesData } = await adminSupabase
-          .from('profiles')
-          .select('id, email, full_name')
-          .in('id', userIds);
-
-        const profilesMap = new Map(profilesData?.map(p => [p.id, p]) || []);
+        // Use the merged users with emails
+        const usersMap = new Map(usersWithEmails.map(u => [u.id, u]));
 
         const plansWithUsers = (plansData || []).map(plan => ({
           ...plan,
-          profiles: profilesMap.get(plan.user_id) || null
+          profiles: usersMap.get(plan.user_id) || null
         }));
 
         setUserPlans(plansWithUsers);
@@ -277,10 +288,10 @@ const AdminCMS = () => {
         setUserPlans(plansData || []);
       }
 
-      console.log(`✅ Loaded ${usersData?.length || 0} users, ${plansData?.length || 0} plans, ${paymentsData?.length || 0} payments`);
+      console.log(`✅ Loaded ${usersWithEmails?.length || 0} users, ${plansData?.length || 0} plans, ${paymentsData?.length || 0} payments`);
       toast({
         title: 'Data Loaded',
-        description: `${usersData?.length || 0} users, ${plansData?.length || 0} plans, ${paymentsData?.length || 0} payments`,
+        description: `${usersWithEmails?.length || 0} users, ${plansData?.length || 0} plans, ${paymentsData?.length || 0} payments`,
       });
     } catch (error) {
       console.error('Fallback error:', error);
