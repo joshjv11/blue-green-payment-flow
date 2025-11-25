@@ -118,14 +118,20 @@ const Auth = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20 flex items-center justify-center p-4">
-      <div className="w-full max-w-md space-y-4">
+    <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-accent/10 flex items-center justify-center p-4 relative overflow-hidden">
+      {/* Animated background elements */}
+      <div className="absolute inset-0 overflow-hidden">
+        <div className="absolute top-1/4 -left-20 w-72 h-72 bg-primary/10 rounded-full blur-3xl animate-pulse" />
+        <div className="absolute bottom-1/4 -right-20 w-96 h-96 bg-accent/10 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
+      </div>
+      
+      <div className="w-full max-w-md space-y-6 relative z-10">
         {/* Google OAuth Button */}
         <Button
           onClick={handleGoogleSignIn}
           disabled={googleLoading}
           variant="outline"
-          className="w-full h-12 text-base font-semibold border-2 hover:bg-accent"
+          className="w-full h-14 text-base font-semibold border-2 bg-background/80 backdrop-blur-sm hover:bg-accent hover:scale-[1.02] transition-all duration-300 shadow-lg hover:shadow-xl"
         >
           {googleLoading ? (
             <>
@@ -160,10 +166,10 @@ const Auth = () => {
         {/* Divider */}
         <div className="relative">
           <div className="absolute inset-0 flex items-center">
-            <span className="w-full border-t" />
+            <span className="w-full border-t border-border/50" />
           </div>
           <div className="relative flex justify-center text-xs uppercase">
-            <span className="bg-background px-2 text-muted-foreground">Or continue with email</span>
+            <span className="bg-background/80 backdrop-blur-sm px-4 py-1 rounded-full text-muted-foreground font-medium">Or continue with email</span>
           </div>
         </div>
 
@@ -175,11 +181,11 @@ const Auth = () => {
         />
 
         {/* Demo Access Button (smaller, at bottom) */}
-        <div className="pt-4 border-t">
+        <div className="pt-4 border-t border-border/50">
           <Button
             onClick={handleTakeToDashboard}
             variant="ghost"
-            className="w-full text-sm text-muted-foreground hover:text-foreground"
+            className="w-full text-sm text-muted-foreground hover:text-foreground hover:bg-accent/50 transition-all duration-300"
           >
             Take me to dashboard (demo)
           </Button>
