@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
-import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/hooks/useAuth';
+
+// Hardcoded admin email - matches AdminCMS.tsx
+const ADMIN_EMAIL = 'joshuavaz55@gmail.com';
 
 export function useSystemAdminStatus() {
   const { user } = useAuth();
@@ -11,7 +13,7 @@ export function useSystemAdminStatus() {
     let isMounted = true;
 
     const checkAdmin = async () => {
-      if (!user?.id) {
+      if (!user?.email) {
         if (isMounted) {
           setIsAdmin(false);
           setLoading(false);
@@ -21,40 +23,16 @@ export function useSystemAdminStatus() {
 
       setLoading(true);
       try {
-        const { data, error } = await supabase.rpc('is_system_admin', { user_id: user.id });
-
-        if (error) {
-          if (error.code === '42883' || error.code === 'PGRST204') {
-            // Function missing — treat as non-admin without spamming logs
-            if (isMounted) {
-              setIsAdmin(false);
-            }
-            return;
-          }
-          console.warn('[AdminGuard] is_system_admin RPC error:', error);
-          if (isMounted) {
-            setIsAdmin(false);
-          }
-          return;
-        }
+        // Simple email-based admin check
+        const isAdminUser = user.email.toLowerCase() === ADMIN_EMAIL.toLowerCase();
 
         if (isMounted) {
-          setIsAdmin(Boolean(data));
+          setIsAdmin(isAdminUser);
         }
       } catch (err: any) {
-        if (
-          err?.code === '42883' ||
-          err?.code === 'PGRST204' ||
-          err?.message?.includes('does not exist')
-        ) {
-          if (isMounted) {
-            setIsAdmin(false);
-          }
-        } else {
-          console.warn('[AdminGuard] Unexpected admin check failure:', err);
-          if (isMounted) {
-            setIsAdmin(false);
-          }
+        console.warn('[AdminGuard] Admin check failure:', err);
+        if (isMounted) {
+          setIsAdmin(false);
         }
       } finally {
         if (isMounted) {
@@ -68,10 +46,11 @@ export function useSystemAdminStatus() {
     return () => {
       isMounted = false;
     };
-  }, [user?.id]);
+  }, [user?.email]);
 
   return { isAdmin, loading };
 }
+
 
 
 
