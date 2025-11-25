@@ -61,3 +61,5 @@ Just use the email/password form instead of the Google button while testing on L
 
 The email/password form works perfectly and doesn't require any Google OAuth configuration. Google OAuth is mainly for production/live sites.
 
+
+

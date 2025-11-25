@@ -22,3 +22,5 @@ WHERE email = 'joshuavaz55@gmail.com';
 -- Should show email_confirmed_at and confirmed_at are now set to current timestamp
 -- This allows the user to sign in immediately
 
+
+

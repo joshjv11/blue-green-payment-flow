@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -11,6 +11,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { supabase } from '@/lib/supabase';
 
 const signUpSchema = z.object({
   email: z.string().email('Please enter a valid email address'),
@@ -68,8 +69,26 @@ export default function SimpleAuthForm({ onSuccess }: SimpleAuthFormProps) {
           title: 'Welcome to InvoiceFlow!',
           description: 'Your account has been created successfully.',
         });
+        
+        // Wait for session to be established
+        let attempts = 0;
+        const maxAttempts = 10;
+        
+        while (attempts < maxAttempts) {
+          const { data: { session } } = await supabase.auth.getSession();
+          if (session?.user) {
+            console.log('✅ Signup session confirmed, navigating to dashboard');
+            onSuccess?.();
+            navigate('/dashboard', { replace: true });
+            return;
+          }
+          await new Promise(resolve => setTimeout(resolve, 100));
+          attempts++;
+        }
+        
+        // Fallback navigation
         onSuccess?.();
-        navigate('/dashboard');
+        navigate('/dashboard', { replace: true });
       }
     } catch (error: any) {
       // Error handling is done in useAuth hook
@@ -83,8 +102,30 @@ export default function SimpleAuthForm({ onSuccess }: SimpleAuthFormProps) {
     setAuthError('');
     try {
       await signIn(data.email, data.password);
+      
+      // Wait for auth state to update before navigating
+      // Check session directly to ensure it's established
+      let attempts = 0;
+      const maxAttempts = 10;
+      
+      while (attempts < maxAttempts) {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session?.user) {
+          console.log('✅ Session confirmed, navigating to dashboard');
+          onSuccess?.();
+          navigate('/dashboard', { replace: true });
+          return;
+        }
+        // Wait 100ms before checking again
+        await new Promise(resolve => setTimeout(resolve, 100));
+        attempts++;
+      }
+      
+      // If we get here, session wasn't established but signIn didn't throw
+      // Try navigating anyway - the auth guard will handle it
+      console.warn('⚠️ Session not immediately available, navigating anyway');
       onSuccess?.();
-      navigate('/dashboard');
+      navigate('/dashboard', { replace: true });
     } catch (error: any) {
       // Show subtle inline error instead of toast
       if (error.message?.includes('Invalid login credentials')) {

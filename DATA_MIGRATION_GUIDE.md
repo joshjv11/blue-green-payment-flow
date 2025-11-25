@@ -185,3 +185,5 @@ const TABLES_TO_MIGRATE = [
 
 Once the migration completes, all your data will be in the new project and you can use your app normally. The old project can be kept as a backup or deleted after verifying everything works.
 
+
+

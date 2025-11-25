@@ -33,7 +33,10 @@ const Auth = () => {
     // Only redirect if we have a confirmed user and not loading
     if (user && !loading) {
       console.log('🔄 User authenticated, redirecting to dashboard');
-      navigate('/dashboard', { replace: true });
+      // Small delay to ensure session is fully established
+      setTimeout(() => {
+        navigate('/dashboard', { replace: true });
+      }, 100);
     }
   }, [user, loading, navigate, mode]);
 

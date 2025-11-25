@@ -153,3 +153,5 @@ You should see:
 - Verify email confirmation is disabled in Supabase Auth settings (if needed)
 - Check Site URL in Auth settings matches your app URL
 
+
+

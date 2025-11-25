@@ -84,3 +84,5 @@ Once you can sign in:
 
 **Recommended:** Use Option 1 (SQL script) to confirm your email now, then disable email confirmation in settings for future sign-ups!
 
+
+

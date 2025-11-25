@@ -42,3 +42,5 @@ WHERE trigger_name = 'on_auth_user_created';
 
 -- Should return one row showing the trigger exists
 
+
+

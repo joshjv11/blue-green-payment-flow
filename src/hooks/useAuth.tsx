@@ -235,12 +235,30 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         throw error;
       }
 
-      console.log('✅ Signin successful for:', data.user?.email);
-      
-      toast({
-        title: "Welcome back!",
-        description: "You've successfully signed in.",
-      });
+      // Ensure session is properly set
+      if (data.session) {
+        console.log('✅ Signin successful for:', data.user?.email);
+        console.log('✅ Session established:', data.session.access_token ? 'Yes' : 'No');
+        
+        // Force update auth state immediately
+        setSession(data.session);
+        setUser(data.user);
+        
+        toast({
+          title: "Welcome back!",
+          description: "You've successfully signed in.",
+        });
+      } else {
+        console.warn('⚠️ Signin succeeded but no session returned');
+        // Wait a bit for session to be established
+        await new Promise(resolve => setTimeout(resolve, 200));
+        const { data: { session: newSession } } = await supabase.auth.getSession();
+        if (newSession) {
+          setSession(newSession);
+          setUser(newSession.user);
+          console.log('✅ Session retrieved after delay');
+        }
+      }
     } catch (error: any) {
       console.error('❌ Signin failed:', error);
       // Don't throw again if we already showed a toast
