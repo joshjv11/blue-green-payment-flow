@@ -13,9 +13,9 @@ import { useRealTimePaymentStatus } from '@/hooks/useRealTimePaymentStatus';
 const MobileOptimizer = () => {
   const { user } = useAuth();
   
-  // Enable payment verification only for authenticated users
-  const { hasPendingPayments } = usePaymentVerification();
-  const paymentStatus = useRealTimePaymentStatus();
+  // Payment verification moved to App.tsx to prevent duplicate calls
+  // const { hasPendingPayments } = usePaymentVerification();
+  // const paymentStatus = useRealTimePaymentStatus();
 
   // Performance optimizations for mobile
   useEffect(() => {
@@ -65,17 +65,7 @@ const MobileOptimizer = () => {
     }
   }, [user]);
 
-  // Debug logging for mobile optimization (can be removed in production)
-  useEffect(() => {
-    if (process.env.NODE_ENV === 'development') {
-      console.log('📱 Mobile Optimizer Status:', {
-        user: user?.email || 'Not authenticated',
-        hasPendingPayments,
-        paymentStatus: paymentStatus.lastPaymentStatus || 'None',
-        pendingCount: paymentStatus.pendingCount,
-      });
-    }
-  }, [user, hasPendingPayments, paymentStatus]);
+  // Debug logging removed - payment verification now centralized in App.tsx
 
   // This component doesn't render anything - it's just for optimization
   return null;

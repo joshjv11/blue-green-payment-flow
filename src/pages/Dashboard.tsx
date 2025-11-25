@@ -112,7 +112,7 @@ const Dashboard = () => {
   // Initialize notifications, email reminders, and payment verification
   useNotifications();
   useEmailReminders();
-  usePaymentVerification();
+  // Payment verification moved to App.tsx to prevent duplicate calls
 
   // Loading watchdog to detect stuck states
   useLoadingWatchdog({

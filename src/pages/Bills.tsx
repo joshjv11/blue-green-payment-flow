@@ -126,8 +126,7 @@ const Bills = () => {
   const { plan, billLimit, canAddBill, loading: planLoading, aiQueriesUsed, aiQueriesLimit } = planData;
   const isPro = plan === 'pro' || plan === 'premium';
   
-  // Initialize payment verification
-  usePaymentVerification();
+  // Payment verification moved to App.tsx to prevent duplicate calls
 
   // Loading watchdog to detect stuck states
   useLoadingWatchdog({
