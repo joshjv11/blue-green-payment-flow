@@ -10,6 +10,13 @@ export function useSystemAdminStatus() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // Development override: treat everyone as admin for debugging
+    if (process.env.NODE_ENV === 'development') {
+      setIsAdmin(true);
+      setLoading(false);
+      return;
+    }
+
     let isMounted = true;
 
     const checkAdmin = async () => {
