@@ -171,8 +171,7 @@ const Analytics = () => {
   const [favorites, setFavorites] = useState<string[]>([]);
   const [showQuickAccess, setShowQuickAccess] = useState(false);
   
-  // Initialize payment verification
-  usePaymentVerification();
+  // Payment verification moved to App.tsx to prevent duplicate calls
 
   // Loading watchdog
   useLoadingWatchdog({
