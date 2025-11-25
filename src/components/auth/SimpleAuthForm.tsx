@@ -168,8 +168,8 @@ export default function SimpleAuthForm({ onSuccess }: SimpleAuthFormProps) {
 
   return (
     <div className="w-full max-w-md mx-auto">
-      <Card className="border-none shadow-2xl bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm overflow-hidden">
-        <CardHeader className="space-y-2 text-center pb-2">
+      <Card className="border border-border/50 shadow-2xl bg-background/95 backdrop-blur-xl overflow-hidden hover:shadow-3xl transition-shadow duration-500">
+        <CardHeader className="space-y-3 text-center pb-4 bg-gradient-to-b from-primary/5 to-transparent">
           <AnimatePresence mode="wait">
             <motion.div
               key={mode}
@@ -178,10 +178,10 @@ export default function SimpleAuthForm({ onSuccess }: SimpleAuthFormProps) {
               exit={{ opacity: 0, y: -10 }}
               transition={{ duration: 0.2 }}
             >
-              <CardTitle className="text-2xl font-bold tracking-tight">
+              <CardTitle className="text-3xl font-bold tracking-tight bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
                 {mode === 'signin' ? 'Welcome back' : 'Create account'}
               </CardTitle>
-              <CardDescription className="text-base mt-1">
+              <CardDescription className="text-base mt-2">
                 {mode === 'signin'
                   ? 'Enter your credentials to access your account'
                   : 'Get started with InvoiceFlow today'}
@@ -204,15 +204,15 @@ export default function SimpleAuthForm({ onSuccess }: SimpleAuthFormProps) {
               >
                 <div className="space-y-2">
                   <Label htmlFor="signup-email">Email</Label>
-                  <Input
-                    id="signup-email"
-                    type="email"
-                    placeholder="name@example.com"
-                    autoComplete="username"
-                    autoFocus
-                    {...signUpForm.register('email')}
-                    className="h-11 bg-background/50 focus:bg-background transition-colors"
-                  />
+                    <Input
+                      id="signup-email"
+                      type="email"
+                      placeholder="name@example.com"
+                      autoComplete="username"
+                      autoFocus
+                      {...signUpForm.register('email')}
+                      className="h-12 bg-background/50 focus:bg-background border-border/50 focus:border-primary transition-all duration-300"
+                    />
                   {signUpForm.formState.errors.email && (
                     <motion.p
                       initial={{ opacity: 0, height: 0 }}
@@ -234,7 +234,7 @@ export default function SimpleAuthForm({ onSuccess }: SimpleAuthFormProps) {
                       placeholder="Create a password"
                       autoComplete="new-password"
                       {...signUpForm.register('password')}
-                      className="h-11 pr-10 bg-background/50 focus:bg-background transition-colors"
+                      className="h-12 pr-10 bg-background/50 focus:bg-background border-border/50 focus:border-primary transition-all duration-300"
                     />
                     <button
                       type="button"
@@ -258,7 +258,7 @@ export default function SimpleAuthForm({ onSuccess }: SimpleAuthFormProps) {
 
                 <Button
                   type="submit"
-                  className="w-full h-11 text-base font-semibold shadow-lg hover:shadow-xl transition-all duration-300"
+                  className="w-full h-12 text-base font-semibold shadow-lg hover:shadow-xl hover:scale-[1.02] transition-all duration-300 bg-gradient-to-r from-primary to-primary/90"
                   disabled={isLoading}
                 >
                   {isLoading ? (
@@ -298,15 +298,15 @@ export default function SimpleAuthForm({ onSuccess }: SimpleAuthFormProps) {
               >
                 <div className="space-y-2">
                   <Label htmlFor="signin-email">Email</Label>
-                  <Input
-                    id="signin-email"
-                    type="email"
-                    placeholder="name@example.com"
-                    autoComplete="username"
-                    autoFocus
-                    {...signInForm.register('email')}
-                    className="h-11 bg-background/50 focus:bg-background transition-colors"
-                  />
+                    <Input
+                      id="signin-email"
+                      type="email"
+                      placeholder="name@example.com"
+                      autoComplete="username"
+                      autoFocus
+                      {...signInForm.register('email')}
+                      className="h-12 bg-background/50 focus:bg-background border-border/50 focus:border-primary transition-all duration-300"
+                    />
                   {signInForm.formState.errors.email && (
                     <motion.p
                       initial={{ opacity: 0, height: 0 }}
@@ -338,7 +338,7 @@ export default function SimpleAuthForm({ onSuccess }: SimpleAuthFormProps) {
                       placeholder="Enter your password"
                       autoComplete="current-password"
                       {...signInForm.register('password')}
-                      className="h-11 pr-10 bg-background/50 focus:bg-background transition-colors"
+                      className="h-12 pr-10 bg-background/50 focus:bg-background border-border/50 focus:border-primary transition-all duration-300"
                     />
                     <button
                       type="button"
@@ -392,7 +392,7 @@ export default function SimpleAuthForm({ onSuccess }: SimpleAuthFormProps) {
 
                 <Button
                   type="submit"
-                  className="w-full h-11 text-base font-semibold shadow-lg hover:shadow-xl transition-all duration-300"
+                  className="w-full h-12 text-base font-semibold shadow-lg hover:shadow-xl hover:scale-[1.02] transition-all duration-300 bg-gradient-to-r from-primary to-primary/90"
                   disabled={isLoading}
                 >
                   {isLoading ? (
