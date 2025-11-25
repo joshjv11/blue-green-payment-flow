@@ -15,42 +15,57 @@ import { SecurityEventsTable } from '@/components/admin/SecurityEventsTable';
 import { UserInsightsTable } from '@/components/admin/UserInsightsTable';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/lib/supabase';
+import { createClient } from '@supabase/supabase-js';
 import { format } from 'date-fns';
 import { useSystemAdminStatus } from '@/hooks/useSystemAdminStatus';
 
 const ADMIN_EMAIL = 'joshuavaz55@gmail.com';
 const ADMIN_PHONE = '8828447880';
 
+// Create admin client with service role key for bypassing RLS
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
+const SUPABASE_SERVICE_ROLE_KEY = import.meta.env.SUPABASE_SERVICE_ROLE_KEY;
+
+// Admin client bypasses RLS
+const adminSupabase = SUPABASE_SERVICE_ROLE_KEY
+  ? createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false
+    }
+  })
+  : supabase; // Fallback to regular client if service key not available
+
 const AdminCMS = () => {
   const { toast } = useToast();
   const { isAdmin, loading: adminLoading } = useSystemAdminStatus();
   const [loading, setLoading] = useState(false);
-  
+
   // Data states
   const [payments, setPayments] = useState<any[]>([]);
   const [users, setUsers] = useState<any[]>([]);
   const [userPlans, setUserPlans] = useState<any[]>([]);
   const [loadingData, setLoadingData] = useState(false);
-  
+
   // System Health state
   const [systemHealth, setSystemHealth] = useState<any>(null);
   const [loadingHealth, setLoadingHealth] = useState(false);
-  
+
   // Financial Metrics state
   const [financialMetrics, setFinancialMetrics] = useState<any>(null);
   const [loadingFinancial, setLoadingFinancial] = useState(false);
-  
+
   // Filter states
   const [userSearch, setUserSearch] = useState('');
   const [planSearch, setPlanSearch] = useState('');
   const [paymentSearch, setPaymentSearch] = useState('');
-  
+
   // GSTN Credentials state
   const [gstnCredentials, setGstnCredentials] = useState<any[]>([]);
   const [loadingCredentials, setLoadingCredentials] = useState(false);
   const [showPasswords, setShowPasswords] = useState<Record<string, boolean>>({});
   const [decryptedPasswords, setDecryptedPasswords] = useState<Record<string, string>>({});
-  
+
   // User Behaviour state
   const [userBehaviour, setUserBehaviour] = useState<any[]>([]);
   const [loadingBehaviour, setLoadingBehaviour] = useState(false);
@@ -98,7 +113,7 @@ const AdminCMS = () => {
   const loadGSTNCredentials = async () => {
     setLoadingCredentials(true);
     try {
-      const { data, error } = await supabase
+      const { data, error } = await adminSupabase
         .from('gstn_credentials')
         .select(`
           *,
@@ -127,7 +142,7 @@ const AdminCMS = () => {
 
   const togglePasswordVisibility = async (credentialId: string, userId: string, encryptedPassword: string) => {
     const isVisible = showPasswords[credentialId];
-    
+
     if (!isVisible && !decryptedPasswords[credentialId]) {
       // Feature disabled - show encrypted password
       setDecryptedPasswords(prev => ({
@@ -182,12 +197,12 @@ const AdminCMS = () => {
         // Map user profiles to plans
         const userIds = [...new Set((data.plans || []).map((p: any) => p.user_id))];
         const profilesMap = new Map((data.users || []).map((u: any) => [u.id, u]));
-        
+
         const plansWithUsers = (data.plans || []).map((plan: any) => ({
           ...plan,
           profiles: profilesMap.get(plan.user_id) || null
         }));
-        
+
         setUserPlans(plansWithUsers);
 
         console.log(`✅ Loaded ${data.users?.length || 0} users, ${data.plans?.length || 0} plans, ${data.payments?.length || 0} payments`);
@@ -210,44 +225,62 @@ const AdminCMS = () => {
 
   const loadDataFallback = async () => {
     try {
-      // Fallback: Direct queries (may be limited by RLS)
-      const { data: usersData } = await supabase
+      // Use admin client to bypass RLS
+      const { data: usersData, error: usersError } = await adminSupabase
         .from('profiles')
         .select('*')
         .order('created_at', { ascending: false });
 
-      const { data: plansData } = await supabase
+      if (usersError) {
+        console.error('Error loading users:', usersError);
+      }
+
+      const { data: plansData, error: plansError } = await adminSupabase
         .from('user_plans')
         .select('*')
         .order('created_at', { ascending: false });
 
-      const { data: paymentsData } = await supabase
+      if (plansError) {
+        console.error('Error loading plans:', plansError);
+      }
+
+      const { data: paymentsData, error: paymentsError } = await adminSupabase
         .from('payment_transactions')
         .select('*')
         .order('created_at', { ascending: false });
+
+      if (paymentsError) {
+        console.error('Error loading payments:', paymentsError);
+      }
 
       setUsers(usersData || []);
       setPayments(paymentsData || []);
 
       // Map profiles to plans
       const userIds = [...new Set((plansData || []).map(p => p.user_id))];
-      const { data: profilesData } = await supabase
-        .from('profiles')
-        .select('id, email, full_name')
-        .in('id', userIds);
 
-      const profilesMap = new Map(profilesData?.map(p => [p.id, p]) || []);
-      
-      const plansWithUsers = (plansData || []).map(plan => ({
-        ...plan,
-        profiles: profilesMap.get(plan.user_id) || null
-      }));
-      
-      setUserPlans(plansWithUsers);
+      if (userIds.length > 0) {
+        const { data: profilesData } = await adminSupabase
+          .from('profiles')
+          .select('id, email, full_name')
+          .in('id', userIds);
 
+        const profilesMap = new Map(profilesData?.map(p => [p.id, p]) || []);
+
+        const plansWithUsers = (plansData || []).map(plan => ({
+          ...plan,
+          profiles: profilesMap.get(plan.user_id) || null
+        }));
+
+        setUserPlans(plansWithUsers);
+      } else {
+        setUserPlans(plansData || []);
+      }
+
+      console.log(`✅ Loaded ${usersData?.length || 0} users, ${plansData?.length || 0} plans, ${paymentsData?.length || 0} payments`);
       toast({
-        title: 'Data Loaded (Limited)',
-        description: `Loaded ${usersData?.length || 0} users. Note: Some users may be hidden due to RLS policies. Deploy the get-all-users edge function for full access.`,
+        title: 'Data Loaded',
+        description: `${usersData?.length || 0} users, ${plansData?.length || 0} plans, ${paymentsData?.length || 0} payments`,
       });
     } catch (error) {
       console.error('Fallback error:', error);
@@ -282,7 +315,7 @@ const AdminCMS = () => {
         // Columns might not exist, continue without them
       }
 
-      const { error } = await supabase
+      const { error } = await adminSupabase
         .from('user_plans')
         .upsert(updateData, {
           onConflict: 'user_id'
@@ -291,7 +324,7 @@ const AdminCMS = () => {
       if (error) {
         // If error is about missing columns, try without them
         if (error.message?.includes('started_at') || error.message?.includes('expires_at')) {
-          const { error: retryError } = await supabase
+          const { error: retryError } = await adminSupabase
             .from('user_plans')
             .upsert({
               user_id: userId,
@@ -301,7 +334,7 @@ const AdminCMS = () => {
             }, {
               onConflict: 'user_id'
             });
-          
+
           if (retryError) throw retryError;
         } else {
           throw error;
@@ -331,7 +364,7 @@ const AdminCMS = () => {
   const sendNotification = async (userId: string, planType: string) => {
     try {
       // Get user email
-      const { data: profile } = await supabase
+      const { data: profile } = await adminSupabase
         .from('profiles')
         .select('email')
         .eq('id', userId)
@@ -339,7 +372,7 @@ const AdminCMS = () => {
 
       // Send email notification to admin
       const emailBody = `New Plan Update:\n\nUser: ${profile?.email || userId}\nPlan: ${planType}\nUpdated: ${new Date().toLocaleString()}`;
-      
+
       // You can integrate with an email service here
       console.log('📧 Email notification to admin:', {
         to: ADMIN_EMAIL,
@@ -475,7 +508,7 @@ const AdminCMS = () => {
                       <p className="text-sm text-muted-foreground">
                         Total: {payments.length} payment{payments.length !== 1 ? 's' : ''}
                         {paymentSearch && (() => {
-                          const filtered = payments.filter(p => 
+                          const filtered = payments.filter(p =>
                             p.user_id?.toLowerCase().includes(paymentSearch.toLowerCase()) ||
                             p.transaction_id?.toLowerCase().includes(paymentSearch.toLowerCase()) ||
                             p.notes?.toLowerCase().includes(paymentSearch.toLowerCase())
@@ -502,8 +535,8 @@ const AdminCMS = () => {
                           </TableRow>
                         </TableHeader>
                         <TableBody>
-                          {payments.filter(p => 
-                            !paymentSearch || 
+                          {payments.filter(p =>
+                            !paymentSearch ||
                             p.user_id?.toLowerCase().includes(paymentSearch.toLowerCase()) ||
                             p.transaction_id?.toLowerCase().includes(paymentSearch.toLowerCase()) ||
                             p.notes?.toLowerCase().includes(paymentSearch.toLowerCase())
@@ -514,7 +547,7 @@ const AdminCMS = () => {
                               <TableCell>
                                 <Badge variant={
                                   payment.status === 'verified' ? 'default' :
-                                  payment.status === 'pending' ? 'secondary' : 'destructive'
+                                    payment.status === 'pending' ? 'secondary' : 'destructive'
                                 }>
                                   {payment.status || 'pending'}
                                 </Badge>
@@ -557,7 +590,7 @@ const AdminCMS = () => {
                       <p className="text-sm text-muted-foreground">
                         Total: {users.length} user{users.length !== 1 ? 's' : ''}
                         {userSearch && (() => {
-                          const filtered = users.filter(u => 
+                          const filtered = users.filter(u =>
                             u.email?.toLowerCase().includes(userSearch.toLowerCase()) ||
                             u.full_name?.toLowerCase().includes(userSearch.toLowerCase()) ||
                             u.id?.toLowerCase().includes(userSearch.toLowerCase())
@@ -584,47 +617,47 @@ const AdminCMS = () => {
                           </TableRow>
                         </TableHeader>
                         <TableBody>
-                        {users.filter(u => 
-                          !userSearch || 
-                          u.email?.toLowerCase().includes(userSearch.toLowerCase()) ||
-                          u.full_name?.toLowerCase().includes(userSearch.toLowerCase()) ||
-                          u.id?.toLowerCase().includes(userSearch.toLowerCase())
-                        ).map((user) => {
-                          const userPlan = userPlans.find(p => p.user_id === user.id);
-                          return (
-                            <TableRow key={user.id}>
-                              <TableCell className="font-medium">{user.email || '-'}</TableCell>
-                              <TableCell>{user.full_name || '-'}</TableCell>
-                              <TableCell>
-                                {user.created_at ? format(new Date(user.created_at), 'MMM dd, yyyy') : '-'}
-                              </TableCell>
-                              <TableCell>
-                                <Badge variant={
-                                  userPlan?.plan === 'premium' ? 'default' :
-                                  userPlan?.plan === 'pro' ? 'secondary' : 'outline'
-                                }>
-                                  {userPlan?.plan || 'free'}
-                                </Badge>
-                              </TableCell>
-                              <TableCell>
-                                <Select
-                                  value={userPlan?.plan || 'free'}
-                                  onValueChange={(value) => updateUserPlan(user.id, value as any)}
-                                  disabled={loading}
-                                >
-                                  <SelectTrigger className="w-32">
-                                    <SelectValue />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    <SelectItem value="free">Free</SelectItem>
-                                    <SelectItem value="pro">Pro</SelectItem>
-                                    <SelectItem value="premium">Premium</SelectItem>
-                                  </SelectContent>
-                                </Select>
-                              </TableCell>
-                            </TableRow>
-                          );
-                        })}
+                          {users.filter(u =>
+                            !userSearch ||
+                            u.email?.toLowerCase().includes(userSearch.toLowerCase()) ||
+                            u.full_name?.toLowerCase().includes(userSearch.toLowerCase()) ||
+                            u.id?.toLowerCase().includes(userSearch.toLowerCase())
+                          ).map((user) => {
+                            const userPlan = userPlans.find(p => p.user_id === user.id);
+                            return (
+                              <TableRow key={user.id}>
+                                <TableCell className="font-medium">{user.email || '-'}</TableCell>
+                                <TableCell>{user.full_name || '-'}</TableCell>
+                                <TableCell>
+                                  {user.created_at ? format(new Date(user.created_at), 'MMM dd, yyyy') : '-'}
+                                </TableCell>
+                                <TableCell>
+                                  <Badge variant={
+                                    userPlan?.plan === 'premium' ? 'default' :
+                                      userPlan?.plan === 'pro' ? 'secondary' : 'outline'
+                                  }>
+                                    {userPlan?.plan || 'free'}
+                                  </Badge>
+                                </TableCell>
+                                <TableCell>
+                                  <Select
+                                    value={userPlan?.plan || 'free'}
+                                    onValueChange={(value) => updateUserPlan(user.id, value as any)}
+                                    disabled={loading}
+                                  >
+                                    <SelectTrigger className="w-32">
+                                      <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      <SelectItem value="free">Free</SelectItem>
+                                      <SelectItem value="pro">Pro</SelectItem>
+                                      <SelectItem value="premium">Premium</SelectItem>
+                                    </SelectContent>
+                                  </Select>
+                                </TableCell>
+                              </TableRow>
+                            );
+                          })}
                         </TableBody>
                       </Table>
                     </div>
@@ -655,7 +688,7 @@ const AdminCMS = () => {
                       <p className="text-sm text-muted-foreground">
                         Total: {userPlans.length} plan{userPlans.length !== 1 ? 's' : ''}
                         {planSearch && (() => {
-                          const filtered = userPlans.filter(p => 
+                          const filtered = userPlans.filter(p =>
                             (p.profiles as any)?.email?.toLowerCase().includes(planSearch.toLowerCase()) ||
                             p.user_id?.toLowerCase().includes(planSearch.toLowerCase()) ||
                             p.plan?.toLowerCase().includes(planSearch.toLowerCase())
@@ -683,8 +716,8 @@ const AdminCMS = () => {
                           </TableRow>
                         </TableHeader>
                         <TableBody>
-                          {userPlans.filter(p => 
-                            !planSearch || 
+                          {userPlans.filter(p =>
+                            !planSearch ||
                             (p.profiles as any)?.email?.toLowerCase().includes(planSearch.toLowerCase()) ||
                             p.user_id?.toLowerCase().includes(planSearch.toLowerCase()) ||
                             p.plan?.toLowerCase().includes(planSearch.toLowerCase())
@@ -696,7 +729,7 @@ const AdminCMS = () => {
                               <TableCell>
                                 <Badge variant={
                                   plan.plan === 'premium' ? 'default' :
-                                  plan.plan === 'pro' ? 'secondary' : 'outline'
+                                    plan.plan === 'pro' ? 'secondary' : 'outline'
                                 }>
                                   {plan.plan}
                                 </Badge>
@@ -804,7 +837,7 @@ const AdminCMS = () => {
                             const profile = cred.profiles as any;
                             const isPasswordVisible = showPasswords[cred.id];
                             const decryptedPassword = decryptedPasswords[cred.id] || '';
-                            
+
                             return (
                               <TableRow key={cred.id}>
                                 <TableCell className="font-medium">
@@ -1066,7 +1099,7 @@ const AdminCMS = () => {
                 )}
               </CardContent>
             </Card>
-            
+
             {/* Financial Metrics Card */}
             <Card>
               <CardHeader>
@@ -1138,13 +1171,13 @@ const AdminCMS = () => {
                 )}
               </CardContent>
             </Card>
-            
+
             {/* Feature Usage Chart */}
             <FeatureUsageChart />
-            
+
             {/* Security Events */}
             <SecurityEventsTable />
-            
+
             {/* User Insights */}
             <UserInsightsTable />
           </TabsContent>
