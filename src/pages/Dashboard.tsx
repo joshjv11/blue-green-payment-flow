@@ -13,7 +13,7 @@ import { useNotifications } from '@/hooks/useNotifications';
 import { useEmailReminders } from '@/hooks/useEmailReminders';
 import { supabase, isSupabaseConfigured } from '@/lib/supabase';
 import { useToast } from '@/hooks/use-toast';
-import { LogOut, User, Building, Mail, FileText, ArrowRight, Plus, DollarSign, Calendar, AlertCircle, CheckCircle, Clock, BarChart3, Settings, Download, Upload, Crown, RefreshCw, MessageCircle, Send } from 'lucide-react';
+import { LogOut, User, Building, Mail, FileText, ArrowRight, Plus, DollarSign, Calendar, AlertCircle, CheckCircle, Clock, BarChart3, Settings, Download, Upload, Crown, RefreshCw, MessageCircle, Send, Shield } from 'lucide-react';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { useNavigate } from 'react-router-dom';
 import { parseISO, differenceInDays, isBefore, isToday, isAfter, addDays, format } from 'date-fns';
@@ -54,6 +54,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { OnboardingTour } from '@/components/OnboardingTour';
 import { SwipeableBillCard } from '@/components/SwipeableBillCard';
 import { Locale, t } from '@/utils/locale';
+import { useSystemAdminStatus } from '@/hooks/useSystemAdminStatus';
 
 interface Bill {
   id: string;
@@ -79,11 +80,11 @@ const Dashboard = () => {
   const { plan, aiQueriesUsed, aiQueriesLimit, loading: planLoading } = useSupabasePlan();
   const { rewards, badges, loading: rewardsLoading, awardXP, updateStreak, checkAndAwardMilestoneBadges } = useRewards();
   const { canClaim: canClaimBonus, claimDailyBonus, loading: bonusLoading } = useDailyBonus();
-  const { 
-    timeUntilExpiry, 
-    formatTimeRemaining, 
-    isStreakInDanger, 
-    isCritical, 
+  const {
+    timeUntilExpiry,
+    formatTimeRemaining,
+    isStreakInDanger,
+    isCritical,
     getShieldCounts,
     useShield,
     purchaseShield
@@ -108,7 +109,8 @@ const Dashboard = () => {
   const [savingsGoals, setSavingsGoals] = useState<any[]>([]);
   const [activeEMIs, setActiveEMIs] = useState<any[]>([]);
   const [spendingAlert, setSpendingAlert] = useState<any>(null);
-  
+  const { isAdmin } = useSystemAdminStatus();
+
   // Initialize notifications, email reminders, and payment verification
   useNotifications();
   useEmailReminders();
@@ -145,20 +147,20 @@ const Dashboard = () => {
     if (user) {
       fetchProfile();
       fetchBills();
-      
+
       // Check if we should show the passkey banner
       const checkPasskeySupport = async () => {
-        if (window.PublicKeyCredential && 
-            await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable() &&
-            !localStorage.getItem('invoiceflow_has_passkey') &&
-            !localStorage.getItem('invoiceflow_passkey_banner_dismissed')) {
+        if (window.PublicKeyCredential &&
+          await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable() &&
+          !localStorage.getItem('invoiceflow_has_passkey') &&
+          !localStorage.getItem('invoiceflow_passkey_banner_dismissed')) {
           setShowPasskeyBanner(true);
         }
       };
 
       checkPasskeySupport();
       track('dashboard_viewed', { user_id: user?.id });
-      
+
       // Show daily bonus with unpredictable timing
       if (canClaimBonus && !showBonusWheel) {
         const delay = Math.random() * 5000; // 0-5 seconds
@@ -218,7 +220,7 @@ const Dashboard = () => {
         const updatedBills = data.map(bill => {
           const today = new Date();
           const dueDate = parseISO(bill.due_date);
-          
+
           if (bill.status === 'unpaid' && isBefore(dueDate, today)) {
             return { ...bill, status: 'overdue' as const };
           }
@@ -231,7 +233,7 @@ const Dashboard = () => {
         const updatedBills = localBills.map(bill => {
           const today = new Date();
           const dueDate = parseISO(bill.due_date);
-          
+
           if (bill.status === 'unpaid' && isBefore(dueDate, today)) {
             return { ...bill, status: 'overdue' as const };
           }
@@ -239,12 +241,12 @@ const Dashboard = () => {
         });
 
         setBills(updatedBills);
-        
+
         // Update overdue bills in localStorage
-        const hasOverdueChanges = updatedBills.some((bill, index) => 
+        const hasOverdueChanges = updatedBills.some((bill, index) =>
           bill.status !== localBills[index]?.status
         );
-        
+
         if (hasOverdueChanges) {
           setLocalBills(updatedBills);
         }
@@ -293,12 +295,12 @@ const Dashboard = () => {
 
   const fetchAnalytics = async () => {
     if (entitlementsLoading) return; // Wait for entitlements to load
-    
+
     // Load Pro features data (savings goals, EMIs) for Pro/Premium users
     if (isPro || contextPlan === 'premium') {
       loadProFeaturesData();
     }
-    
+
     // Premium analytics moved to /analytics page
   };
 
@@ -317,12 +319,12 @@ const Dashboard = () => {
 
   const toggleBillStatus = async (bill: Bill) => {
     const newStatus = bill.status === 'paid' ? 'unpaid' : 'paid';
-    
+
     try {
       if (isSupabaseConfigured && supabase) {
         const { error } = await supabase
           .from('bills')
-          .update({ 
+          .update({
             status: newStatus,
             updated_at: new Date().toISOString()
           })
@@ -337,36 +339,36 @@ const Dashboard = () => {
         setLocalBills(updatedBills);
       }
 
-        // Gamification logic
-        if (newStatus === 'paid' && rewards) {
-          const dueDate = parseISO(bill.due_date);
-          const today = new Date();
-          const daysEarly = differenceInDays(dueDate, today);
-          
-          let xpAmount = 5; // On-time
-          let description = 'Bill paid on time';
-          
-          if (daysEarly > 0) {
-            xpAmount = 10; // Early payment
-            description = `Bill paid ${daysEarly} days early`;
-          } else if (daysEarly < 0) {
-            xpAmount = -5; // Late payment
-            description = 'Bill paid late';
-          }
+      // Gamification logic
+      if (newStatus === 'paid' && rewards) {
+        const dueDate = parseISO(bill.due_date);
+        const today = new Date();
+        const daysEarly = differenceInDays(dueDate, today);
 
-          const result: any = await awardXP('bill_paid', xpAmount, description, bill.id);
-          await updateStreak(true, daysEarly);
-          await checkAndAwardMilestoneBadges();
+        let xpAmount = 5; // On-time
+        let description = 'Bill paid on time';
 
-          // Show celebration
-          if (result) {
-            setCelebrationData({
-              xpAwarded: result.xp_awarded || xpAmount,
-              levelUp: result.level_up || false,
-              newLevel: result.new_level || rewards.current_level,
-            });
-            setShowCelebration(true);
-            setTimeout(() => setShowCelebration(false), 2000);
+        if (daysEarly > 0) {
+          xpAmount = 10; // Early payment
+          description = `Bill paid ${daysEarly} days early`;
+        } else if (daysEarly < 0) {
+          xpAmount = -5; // Late payment
+          description = 'Bill paid late';
+        }
+
+        const result: any = await awardXP('bill_paid', xpAmount, description, bill.id);
+        await updateStreak(true, daysEarly);
+        await checkAndAwardMilestoneBadges();
+
+        // Show celebration
+        if (result) {
+          setCelebrationData({
+            xpAwarded: result.xp_awarded || xpAmount,
+            levelUp: result.level_up || false,
+            newLevel: result.new_level || rewards.current_level,
+          });
+          setShowCelebration(true);
+          setTimeout(() => setShowCelebration(false), 2000);
         }
 
         toast({
@@ -445,10 +447,10 @@ const Dashboard = () => {
   const getBillStatusColor = (bill: Bill) => {
     if (bill.status === 'paid') return 'bg-green-100 text-green-800 border-green-200';
     if (bill.status === 'overdue') return 'bg-red-100 text-red-800 border-red-200';
-    
+
     const daysUntilDue = differenceInDays(parseISO(bill.due_date), new Date());
     if (daysUntilDue <= 3) return 'bg-yellow-100 text-yellow-800 border-yellow-200';
-    
+
     return 'bg-blue-100 text-blue-800 border-blue-200';
   };
 
@@ -483,7 +485,7 @@ const Dashboard = () => {
     <MobileLayout>
       <OnboardingTour />
       <div className="min-h-screen bg-background pb-24 md:pb-6">
-        
+
         {/* Daily Bonus Wheel */}
         {showBonusWheel && (
           <DailyBonusWheel
@@ -519,8 +521,8 @@ const Dashboard = () => {
                     {profile?.full_name || user?.email?.split('@')[0] || 'Welcome back'}
                   </p>
                   {rewards && (
-                    <TierBadge 
-                      tier={rewards.tier} 
+                    <TierBadge
+                      tier={rewards.tier}
                       level={rewards.current_level}
                       variant="icon-only"
                     />
@@ -564,6 +566,43 @@ const Dashboard = () => {
               isPro={isPro}
             />
           )}
+
+          {/* Admin CMS Button - Only visible to admins */}
+          {isAdmin && (
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+            >
+              <Card className="border-purple-500/30 bg-gradient-to-r from-purple-500/10 via-pink-500/10 to-purple-500/10 cursor-pointer hover:border-purple-500/50 transition-all duration-300 hover:shadow-lg hover:shadow-purple-500/20"
+                onClick={() => navigate('/admin-cms')}>
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between gap-4">
+                    <div className="flex items-center gap-4 flex-1">
+                      <div className="p-4 rounded-xl bg-gradient-to-br from-purple-500/20 to-pink-500/20 shrink-0">
+                        <Shield className="h-6 w-6 text-purple-500" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <h3 className="text-lg md:text-xl font-semibold mb-1.5 flex items-center gap-2">
+                          Admin CMS
+                          <Badge variant="outline" className="bg-purple-500/20 text-purple-600 border-purple-500/50">
+                            Admin Only
+                          </Badge>
+                        </h3>
+                        <p className="text-sm md:text-base text-muted-foreground">
+                          Manage users, plans, payments, and system settings
+                        </p>
+                      </div>
+                    </div>
+                    <Button variant="ghost" size="default" className="h-10 w-10 p-0 shrink-0">
+                      <ArrowRight className="h-5 w-5" />
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            </motion.div>
+          )}
+
 
           {/* Motivational Banner */}
           {rewards && rewards.current_streak >= 3 && (
@@ -705,7 +744,7 @@ const Dashboard = () => {
           {/* Quick Link to Advanced Analytics */}
           {isPremium && (
             <Card className="border-purple-500/30 bg-gradient-to-r from-purple-500/10 via-blue-500/10 to-purple-500/10 cursor-pointer hover:border-purple-500/50 transition-all duration-300 hover:shadow-lg"
-                  onClick={() => navigate('/analytics?tab=overview')}>
+              onClick={() => navigate('/analytics?tab=overview')}>
               <CardContent className="p-6 md:p-8">
                 <div className="flex items-center justify-between gap-4">
                   <div className="flex items-center gap-4 flex-1">
@@ -899,7 +938,7 @@ const Dashboard = () => {
           {/* AI Financial Coach */}
           <Card className="border-purple-500/30 bg-gradient-to-r from-purple-500/10 via-fuchsia-500/10 to-pink-500/10">
             <CardContent className="p-6 md:p-8">
-              <EnhancedAIAssistantV2 
+              <EnhancedAIAssistantV2
                 bills={bills}
                 context="dashboard - managing bills and getting financial insights"
                 trigger={
@@ -1010,8 +1049,8 @@ const Dashboard = () => {
                                 </Badge>
                               </TableCell>
                               <TableCell className="py-4 text-right">
-                                <Button 
-                                  size="default" 
+                                <Button
+                                  size="default"
                                   variant="outline"
                                   onClick={() => toggleBillStatus(bill)}
                                   disabled={bill.status === 'paid'}
@@ -1045,9 +1084,9 @@ const Dashboard = () => {
               <CardHeader>
                 <CardTitle className="flex items-center justify-between">
                   <span>Export/Import Bills</span>
-                  <Button 
-                    variant="ghost" 
-                    size="sm" 
+                  <Button
+                    variant="ghost"
+                    size="sm"
                     onClick={() => setShowExportImport(false)}
                   >
                     ✕
@@ -1055,8 +1094,8 @@ const Dashboard = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <ExportImport 
-                  bills={bills} 
+                <ExportImport
+                  bills={bills}
                   onImportBills={handleImportBills}
                   userId={user!.id}
                 />
