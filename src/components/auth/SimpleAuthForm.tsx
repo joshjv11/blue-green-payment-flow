@@ -3,7 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Eye, EyeOff, Loader2 } from 'lucide-react';
+import { Eye, EyeOff, Loader2, CheckCircle2, AlertCircle } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
@@ -51,33 +52,37 @@ export default function SimpleAuthForm({ onSuccess }: SimpleAuthFormProps) {
     defaultValues: { email: '', password: '', rememberMe: false },
   });
 
+  // Clear errors when switching modes
+  useEffect(() => {
+    setAuthError('');
+    signUpForm.reset();
+    signInForm.reset();
+  }, [mode, signUpForm, signInForm]);
+
   const handleSignUp = async (data: SignUpFormData) => {
     setIsLoading(true);
     try {
       const result = await signUp(data.email, data.password);
-      
+
       if (result.requiresEmailConfirmation) {
-        // Email confirmation is enabled
         toast({
           title: 'Check your email',
           description: 'We sent you a confirmation link. Please verify your email before signing in.',
         });
         setMode('signin');
       } else {
-        // Email confirmation is disabled - user is auto-logged in
         toast({
           title: 'Welcome to InvoiceFlow!',
           description: 'Your account has been created successfully.',
         });
-        
+
         // Wait for session to be established
         let attempts = 0;
         const maxAttempts = 10;
-        
+
         while (attempts < maxAttempts) {
           const { data: { session } } = await supabase.auth.getSession();
           if (session?.user) {
-            console.log('✅ Signup session confirmed, navigating to dashboard');
             onSuccess?.();
             navigate('/dashboard', { replace: true });
             return;
@@ -85,8 +90,7 @@ export default function SimpleAuthForm({ onSuccess }: SimpleAuthFormProps) {
           await new Promise(resolve => setTimeout(resolve, 100));
           attempts++;
         }
-        
-        // Fallback navigation
+
         onSuccess?.();
         navigate('/dashboard', { replace: true });
       }
@@ -102,32 +106,24 @@ export default function SimpleAuthForm({ onSuccess }: SimpleAuthFormProps) {
     setAuthError('');
     try {
       await signIn(data.email, data.password);
-      
-      // Wait for auth state to update before navigating
-      // Check session directly to ensure it's established
+
       let attempts = 0;
       const maxAttempts = 10;
-      
+
       while (attempts < maxAttempts) {
         const { data: { session } } = await supabase.auth.getSession();
         if (session?.user) {
-          console.log('✅ Session confirmed, navigating to dashboard');
           onSuccess?.();
           navigate('/dashboard', { replace: true });
           return;
         }
-        // Wait 100ms before checking again
         await new Promise(resolve => setTimeout(resolve, 100));
         attempts++;
       }
-      
-      // If we get here, session wasn't established but signIn didn't throw
-      // Try navigating anyway - the auth guard will handle it
-      console.warn('⚠️ Session not immediately available, navigating anyway');
+
       onSuccess?.();
       navigate('/dashboard', { replace: true });
     } catch (error: any) {
-      // Show subtle inline error instead of toast
       if (error.message?.includes('Invalid login credentials')) {
         setAuthError('Invalid email or password');
       } else if (error.message?.includes('Email not confirmed')) {
@@ -145,9 +141,10 @@ export default function SimpleAuthForm({ onSuccess }: SimpleAuthFormProps) {
     if (!email) {
       toast({
         title: 'Email required',
-        description: 'Please enter your email address',
+        description: 'Please enter your email address to reset your password',
         variant: 'destructive',
       });
+      signInForm.setFocus('email');
       return;
     }
 
@@ -170,137 +167,199 @@ export default function SimpleAuthForm({ onSuccess }: SimpleAuthFormProps) {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20 flex items-center justify-center p-4">
-      <Card className="w-full max-w-md shadow-xl">
-        <CardHeader className="space-y-2 text-center">
-          <CardTitle className="text-2xl font-bold">
-            {mode === 'signin' ? 'Welcome back' : 'Create your account'}
-          </CardTitle>
-          <CardDescription>
-            {mode === 'signin'
-              ? 'Sign in to access your dashboard'
-              : 'Create your account in seconds — no credit card required.'}
-          </CardDescription>
+    <div className="w-full max-w-md mx-auto">
+      <Card className="border-none shadow-2xl bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm overflow-hidden">
+        <CardHeader className="space-y-2 text-center pb-2">
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={mode}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.2 }}
+            >
+              <CardTitle className="text-2xl font-bold tracking-tight">
+                {mode === 'signin' ? 'Welcome back' : 'Create account'}
+              </CardTitle>
+              <CardDescription className="text-base mt-1">
+                {mode === 'signin'
+                  ? 'Enter your credentials to access your account'
+                  : 'Get started with InvoiceFlow today'}
+              </CardDescription>
+            </motion.div>
+          </AnimatePresence>
         </CardHeader>
 
-        <CardContent className="space-y-6">
-          {mode === 'signup' ? (
-            <form onSubmit={signUpForm.handleSubmit(handleSignUp)} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="signup-email">Email</Label>
-                <Input
-                  id="signup-email"
-                  type="email"
-                  placeholder="you@example.com"
-                  {...signUpForm.register('email')}
-                  className="h-11"
-                />
-                {signUpForm.formState.errors.email ? (
-                  <p className="text-sm text-destructive">
-                    {signUpForm.formState.errors.email.message}
-                  </p>
-                ) : (
-                  <p className="text-xs text-muted-foreground">
-                    We'll never share your email.
-                  </p>
-                )}
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="signup-password">Password</Label>
-                <div className="relative">
-                  <Input
-                    id="signup-password"
-                    type={showPassword ? 'text' : 'password'}
-                    placeholder="At least 8 characters"
-                    {...signUpForm.register('password')}
-                    className="h-11 pr-10"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-                  >
-                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                  </button>
-                </div>
-                {signUpForm.formState.errors.password && (
-                  <p className="text-sm text-destructive">
-                    {signUpForm.formState.errors.password.message}
-                  </p>
-                )}
-              </div>
-
-              <Button
-                type="submit"
-                className="w-full h-11 text-base font-semibold"
-                disabled={isLoading}
+        <CardContent className="p-6 pt-4">
+          <AnimatePresence mode="wait">
+            {mode === 'signup' ? (
+              <motion.form
+                key="signup"
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                transition={{ duration: 0.3 }}
+                onSubmit={signUpForm.handleSubmit(handleSignUp)}
+                className="space-y-4"
               >
-                {isLoading ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Creating account...
-                  </>
-                ) : (
-                  'Sign Up'
-                )}
-              </Button>
-
-              <p className="text-center text-sm text-muted-foreground">
-                Already have an account?{' '}
-                <button
-                  type="button"
-                  onClick={() => setMode('signin')}
-                  className="text-primary font-medium hover:underline"
-                >
-                  Sign in
-                </button>
-              </p>
-            </form>
-          ) : (
-            <form onSubmit={signInForm.handleSubmit(handleSignIn)} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="signin-email">Email</Label>
-                <Input
-                  id="signin-email"
-                  type="email"
-                  placeholder="you@example.com"
-                  {...signInForm.register('email')}
-                  className="h-11"
-                />
-                {signInForm.formState.errors.email && (
-                  <p className="text-sm text-destructive">
-                    {signInForm.formState.errors.email.message}
-                  </p>
-                )}
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="signin-password">Password</Label>
-                <div className="relative">
+                <div className="space-y-2">
+                  <Label htmlFor="signup-email">Email</Label>
                   <Input
-                    id="signin-password"
-                    type={showPassword ? 'text' : 'password'}
-                    placeholder="Enter your password"
-                    {...signInForm.register('password')}
-                    className="h-11 pr-10"
+                    id="signup-email"
+                    type="email"
+                    placeholder="name@example.com"
+                    autoComplete="username"
+                    autoFocus
+                    {...signUpForm.register('email')}
+                    className="h-11 bg-background/50 focus:bg-background transition-colors"
                   />
+                  {signUpForm.formState.errors.email && (
+                    <motion.p
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: 'auto' }}
+                      className="text-sm text-destructive flex items-center gap-1"
+                    >
+                      <AlertCircle className="w-4 h-4" />
+                      {signUpForm.formState.errors.email.message}
+                    </motion.p>
+                  )}
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="signup-password">Password</Label>
+                  <div className="relative">
+                    <Input
+                      id="signup-password"
+                      type={showPassword ? 'text' : 'password'}
+                      placeholder="Create a password"
+                      autoComplete="new-password"
+                      {...signUpForm.register('password')}
+                      className="h-11 pr-10 bg-background/50 focus:bg-background transition-colors"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors p-1 rounded-full hover:bg-muted"
+                    >
+                      {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                    </button>
+                  </div>
+                  {signUpForm.formState.errors.password && (
+                    <motion.p
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: 'auto' }}
+                      className="text-sm text-destructive flex items-center gap-1"
+                    >
+                      <AlertCircle className="w-4 h-4" />
+                      {signUpForm.formState.errors.password.message}
+                    </motion.p>
+                  )}
+                </div>
+
+                <Button
+                  type="submit"
+                  className="w-full h-11 text-base font-semibold shadow-lg hover:shadow-xl transition-all duration-300"
+                  disabled={isLoading}
+                >
+                  {isLoading ? (
+                    <motion.div
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      className="flex items-center gap-2"
+                    >
+                      <Loader2 className="h-5 w-5 animate-spin" />
+                      Creating account...
+                    </motion.div>
+                  ) : (
+                    'Sign Up'
+                  )}
+                </Button>
+
+                <div className="text-center text-sm">
+                  <span className="text-muted-foreground">Already have an account? </span>
                   <button
                     type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                    onClick={() => setMode('signin')}
+                    className="text-primary font-semibold hover:underline focus:outline-none"
                   >
-                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                    Sign in
                   </button>
                 </div>
-                {signInForm.formState.errors.password && (
-                  <p className="text-sm text-destructive">
-                    {signInForm.formState.errors.password.message}
-                  </p>
-                )}
-              </div>
+              </motion.form>
+            ) : (
+              <motion.form
+                key="signin"
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: 20 }}
+                transition={{ duration: 0.3 }}
+                onSubmit={signInForm.handleSubmit(handleSignIn)}
+                className="space-y-4"
+              >
+                <div className="space-y-2">
+                  <Label htmlFor="signin-email">Email</Label>
+                  <Input
+                    id="signin-email"
+                    type="email"
+                    placeholder="name@example.com"
+                    autoComplete="username"
+                    autoFocus
+                    {...signInForm.register('email')}
+                    className="h-11 bg-background/50 focus:bg-background transition-colors"
+                  />
+                  {signInForm.formState.errors.email && (
+                    <motion.p
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: 'auto' }}
+                      className="text-sm text-destructive flex items-center gap-1"
+                    >
+                      <AlertCircle className="w-4 h-4" />
+                      {signInForm.formState.errors.email.message}
+                    </motion.p>
+                  )}
+                </div>
 
-              <div className="flex items-center justify-between">
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="signin-password">Password</Label>
+                    <button
+                      type="button"
+                      onClick={handleForgotPassword}
+                      disabled={resetLoading}
+                      className="text-xs text-primary hover:underline disabled:opacity-50 font-medium"
+                    >
+                      {resetLoading ? 'Sending...' : 'Forgot password?'}
+                    </button>
+                  </div>
+                  <div className="relative">
+                    <Input
+                      id="signin-password"
+                      type={showPassword ? 'text' : 'password'}
+                      placeholder="Enter your password"
+                      autoComplete="current-password"
+                      {...signInForm.register('password')}
+                      className="h-11 pr-10 bg-background/50 focus:bg-background transition-colors"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors p-1 rounded-full hover:bg-muted"
+                    >
+                      {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                    </button>
+                  </div>
+                  {signInForm.formState.errors.password && (
+                    <motion.p
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: 'auto' }}
+                      className="text-sm text-destructive flex items-center gap-1"
+                    >
+                      <AlertCircle className="w-4 h-4" />
+                      {signInForm.formState.errors.password.message}
+                    </motion.p>
+                  )}
+                </div>
+
                 <div className="flex items-center space-x-2">
                   <Checkbox
                     id="remember"
@@ -311,54 +370,58 @@ export default function SimpleAuthForm({ onSuccess }: SimpleAuthFormProps) {
                   />
                   <Label
                     htmlFor="remember"
-                    className="text-sm font-normal cursor-pointer"
+                    className="text-sm font-normal cursor-pointer text-muted-foreground"
                   >
-                    Remember me
+                    Remember me for 30 days
                   </Label>
                 </div>
-                <button
-                  type="button"
-                  onClick={handleForgotPassword}
-                  disabled={resetLoading}
-                  className="text-sm text-primary font-medium hover:underline disabled:opacity-50"
-                >
-                  {resetLoading ? 'Sending...' : 'Forgot password?'}
-                </button>
-              </div>
 
-              {authError && (
-                <div className="text-sm text-destructive bg-destructive/10 px-3 py-2 rounded-md">
-                  {authError}
+                <AnimatePresence>
+                  {authError && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -10 }}
+                      className="p-3 rounded-md bg-destructive/10 text-destructive text-sm flex items-start gap-2"
+                    >
+                      <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" />
+                      <span>{authError}</span>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+
+                <Button
+                  type="submit"
+                  className="w-full h-11 text-base font-semibold shadow-lg hover:shadow-xl transition-all duration-300"
+                  disabled={isLoading}
+                >
+                  {isLoading ? (
+                    <motion.div
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      className="flex items-center gap-2"
+                    >
+                      <Loader2 className="h-5 w-5 animate-spin" />
+                      Signing in...
+                    </motion.div>
+                  ) : (
+                    'Sign In'
+                  )}
+                </Button>
+
+                <div className="text-center text-sm">
+                  <span className="text-muted-foreground">Don't have an account? </span>
+                  <button
+                    type="button"
+                    onClick={() => setMode('signup')}
+                    className="text-primary font-semibold hover:underline focus:outline-none"
+                  >
+                    Sign up
+                  </button>
                 </div>
-              )}
-
-              <Button
-                type="submit"
-                className="w-full h-11 text-base font-semibold"
-                disabled={isLoading}
-              >
-                {isLoading ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Signing in...
-                  </>
-                ) : (
-                  'Sign In'
-                )}
-              </Button>
-
-              <p className="text-center text-sm text-muted-foreground">
-                Don't have an account?{' '}
-                <button
-                  type="button"
-                  onClick={() => setMode('signup')}
-                  className="text-primary font-medium hover:underline"
-                >
-                  Sign up
-                </button>
-              </p>
-            </form>
-          )}
+              </motion.form>
+            )}
+          </AnimatePresence>
         </CardContent>
       </Card>
     </div>

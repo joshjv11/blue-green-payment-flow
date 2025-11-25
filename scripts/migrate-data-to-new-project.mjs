@@ -46,6 +46,7 @@ const TABLES_TO_MIGRATE = [
   'customers',
   'products',
   'expenses',
+  'invoices'
 ];
 
 // ============================================================================
@@ -59,7 +60,7 @@ function log(message, type = 'info') {
     error: '❌',
     warning: '⚠️',
   }[type] || 'ℹ️';
-  
+
   console.log(`${prefix} ${message}`);
 }
 
@@ -70,7 +71,7 @@ function validateConfig() {
   if (!NEW_SERVICE_ROLE_KEY) {
     throw new Error('NEW_SERVICE_ROLE_KEY environment variable is required');
   }
-  
+
   log(`Old project: ${OLD_SUPABASE_URL}`, 'info');
   log(`New project: ${NEW_SUPABASE_URL}`, 'info');
 }
@@ -82,22 +83,22 @@ async function getTableColumns(supabase, tableName) {
       .from(tableName)
       .select('*')
       .limit(0);
-    
+
     if (error) {
       // Try to infer from error or return null
       return null;
     }
-    
+
     // We can't directly get columns, so we'll try to select one row
     const { data: sampleData } = await supabase
       .from(tableName)
       .select('*')
       .limit(1);
-    
+
     if (sampleData && sampleData.length > 0) {
       return Object.keys(sampleData[0]);
     }
-    
+
     return null;
   } catch (error) {
     return null;
@@ -109,7 +110,7 @@ async function getTableData(supabase, tableName) {
     const { data, error } = await supabase
       .from(tableName)
       .select('*');
-    
+
     if (error) {
       // Table might not exist - that's okay
       if (error.code === 'PGRST116' || error.message?.includes('does not exist')) {
@@ -118,7 +119,7 @@ async function getTableData(supabase, tableName) {
       }
       throw error;
     }
-    
+
     return data || [];
   } catch (error) {
     log(`Error fetching ${tableName}: ${error.message}`, 'error');
@@ -130,7 +131,7 @@ function filterColumns(data, allowedColumns) {
   if (!data || !allowedColumns || allowedColumns.length === 0) {
     return data;
   }
-  
+
   return data.map(row => {
     const filtered = {};
     allowedColumns.forEach(col => {
@@ -152,21 +153,8 @@ async function insertTableData(supabase, tableName, data, userMapping = null) {
     // Map user_ids if mapping provided
     let mappedData = data;
     if (userMapping) {
-      mappedData = data.map(row => {
-        const mapped = { ...row };
-        
-        // Map user_id fields
-        if (mapped.user_id && userMapping[mapped.user_id]) {
-          mapped.user_id = userMapping[mapped.user_id];
-        }
-        
-        // Map id if it's a user_id reference (for profiles)
-        if (tableName === 'profiles' && mapped.id && userMapping[mapped.id]) {
-          mapped.id = userMapping[mapped.id];
-        }
-        
-        return mapped;
-      }).filter(row => {
+      // Filter first, then map
+      mappedData = data.filter(row => {
         // Filter out rows where user_id couldn't be mapped (unless profiles table)
         if (tableName === 'profiles') {
           return row.id && userMapping[row.id]; // Only migrate profiles for mapped users
@@ -175,6 +163,20 @@ async function insertTableData(supabase, tableName, data, userMapping = null) {
           return userMapping[row.user_id]; // Only migrate rows for mapped users
         }
         return true; // Keep rows without user_id
+      }).map(row => {
+        const mapped = { ...row };
+
+        // Map user_id fields
+        if (mapped.user_id && userMapping[mapped.user_id]) {
+          mapped.user_id = userMapping[mapped.user_id];
+        }
+
+        // Map id if it's a user_id reference (for profiles)
+        if (tableName === 'profiles' && mapped.id && userMapping[mapped.id]) {
+          mapped.id = userMapping[mapped.id];
+        }
+
+        return mapped;
       });
     }
 
@@ -189,8 +191,8 @@ async function insertTableData(supabase, tableName, data, userMapping = null) {
       const batch = mappedData.slice(i, i + 100);
       const { error } = await supabase
         .from(tableName)
-        .insert(batch);
-      
+        .upsert(batch);
+
       if (error) {
         // Check if it's a conflict error (data already exists)
         if (error.code === '23505' || error.message?.includes('duplicate') || error.code === 'PGRST301') {
@@ -213,7 +215,7 @@ async function insertTableData(supabase, tableName, data, userMapping = null) {
           for (const row of batch) {
             const { error: rowError } = await supabase
               .from(tableName)
-              .insert(row);
+              .upsert(row);
             if (!rowError) {
               batchInserted++;
             } else {
@@ -226,7 +228,7 @@ async function insertTableData(supabase, tableName, data, userMapping = null) {
         inserted += batch.length;
       }
     }
-    
+
     log(`  Migrated ${inserted}/${mappedData.length} rows to ${tableName}`, inserted === mappedData.length ? 'success' : 'warning');
     return inserted;
   } catch (error) {
@@ -238,7 +240,7 @@ async function insertTableData(supabase, tableName, data, userMapping = null) {
 
 async function createUserMapping(oldSupabase, newSupabase) {
   log('Creating user ID mapping...', 'info');
-  
+
   // Get users from old project (by email)
   const { data: oldUsers, error: oldError } = await oldSupabase.auth.admin.listUsers();
   if (oldError) {
@@ -256,7 +258,7 @@ async function createUserMapping(oldSupabase, newSupabase) {
   // Create mapping: old_user_id -> new_user_id (by email)
   const mapping = {};
   const newUsersByEmail = {};
-  
+
   newUsers.users.forEach(user => {
     newUsersByEmail[user.email?.toLowerCase()] = user.id;
   });
@@ -327,13 +329,13 @@ async function migrateData() {
 
     // Migrate each table
     const results = {};
-    
+
     for (const tableName of TABLES_TO_MIGRATE) {
       log(`Migrating ${tableName}...`, 'info');
-      
+
       // Get data from old project
       const data = await getTableData(oldSupabase, tableName);
-      
+
       if (data === null) {
         results[tableName] = { skipped: true };
         continue;
@@ -343,6 +345,15 @@ async function migrateData() {
         log(`  No data to migrate for ${tableName}`, 'warning');
         results[tableName] = { total: 0, inserted: 0 };
         continue;
+      }
+
+      // Map column names BEFORE filtering
+      if (tableName === 'bills') {
+        data.forEach(row => {
+          if (row.name) {
+            row.title = row.name;
+          }
+        });
       }
 
       // Filter columns to only include those that exist in new table
@@ -363,12 +374,12 @@ async function migrateData() {
         filteredData,
         Object.keys(userMapping).length > 0 ? userMapping : null
       );
-      
+
       results[tableName] = {
         total: data.length,
         inserted,
       };
-      
+
       log('', 'info');
     }
 
@@ -376,7 +387,7 @@ async function migrateData() {
     log('═══════════════════════════════════════', 'info');
     log('📊 Migration Summary', 'info');
     log('═══════════════════════════════════════', 'info');
-    
+
     for (const [table, result] of Object.entries(results)) {
       if (result.skipped) {
         log(`${table}: SKIPPED (table doesn't exist)`, 'warning');
@@ -384,7 +395,7 @@ async function migrateData() {
         log(`${table}: ${result.inserted}/${result.total} rows migrated`, 'success');
       }
     }
-    
+
     log('', 'info');
     log('✅ Migration complete!', 'success');
     log('', 'info');
