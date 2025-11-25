@@ -55,7 +55,9 @@ export const TierBadge = ({
   showLevel = true,
   className 
 }: TierBadgeProps) => {
-  const config = tierConfig[tier];
+  // Defensive: Ensure tier is valid, fallback to bronze
+  const validTier = (tier && tierConfig[tier]) ? tier : 'bronze';
+  const config = tierConfig[validTier];
   const Icon = config.icon;
 
   if (variant === 'icon-only') {
