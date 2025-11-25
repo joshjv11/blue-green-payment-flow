@@ -232,14 +232,18 @@ const AdminCMS = () => {
         .order('created_at', { ascending: false });
 
       if (profilesError) {
-        console.error('Error loading profiles:', profilesError);
+        console.error('❌ Error loading profiles:', profilesError);
+      } else {
+        console.log('✅ Loaded profiles:', profilesData?.length);
       }
 
       // Fetch auth users to get email addresses
       const { data: authData, error: authError } = await adminSupabase.auth.admin.listUsers();
 
       if (authError) {
-        console.error('Error loading auth users:', authError);
+        console.error('❌ Error loading auth users:', authError);
+      } else {
+        console.log('✅ Loaded auth users:', authData?.users?.length);
       }
 
       // Merge profiles with auth users to get emails
@@ -248,6 +252,9 @@ const AdminCMS = () => {
         ...profile,
         email: authUsersMap.get(profile.id)?.email || null
       }));
+
+      console.log('✅ Merged users with emails:', usersWithEmails.length);
+      console.log('📧 Sample user:', usersWithEmails[0]);
 
       setUsers(usersWithEmails);
 
@@ -288,7 +295,13 @@ const AdminCMS = () => {
         setUserPlans(plansData || []);
       }
 
-      console.log(`✅ Loaded ${usersWithEmails?.length || 0} users, ${plansData?.length || 0} plans, ${paymentsData?.length || 0} payments`);
+      console.log('✅ Loaded', usersWithEmails?.length || 0, 'users,', plansData?.length || 0, 'plans,', paymentsData?.length || 0, 'payments');
+      console.log('📊 Final state:', {
+        users: usersWithEmails?.length,
+        plans: plansData?.length,
+        payments: paymentsData?.length
+      });
+
       toast({
         title: 'Data Loaded',
         description: `${usersWithEmails?.length || 0} users, ${plansData?.length || 0} plans, ${paymentsData?.length || 0} payments`,
