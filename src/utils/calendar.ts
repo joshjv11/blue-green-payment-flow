@@ -20,11 +20,11 @@ export interface Bill {
 // Generate Google Calendar URL
 export const generateGoogleCalendarUrl = (bill: Bill): string => {
   const dueDate = new Date(bill.due_date);
-  
+
   // Set event time to 9 AM on due date
   const startDateTime = new Date(dueDate);
   startDateTime.setHours(9, 0, 0, 0);
-  
+
   const endDateTime = new Date(startDateTime);
   endDateTime.setHours(10, 0, 0, 0); // 1 hour duration
 
@@ -36,11 +36,11 @@ export const generateGoogleCalendarUrl = (bill: Bill): string => {
     action: 'TEMPLATE',
     text: `💰 ${bill.name} - ₹${bill.amount.toLocaleString('en-IN')}`,
     dates: `${formatDateForGoogle(startDateTime)}/${formatDateForGoogle(endDateTime)}`,
-    details: `Bill Payment Reminder\n\nAmount: ₹${bill.amount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}\nCategory: ${bill.category.charAt(0).toUpperCase() + bill.category.slice(1).replace('_', ' ')}\nDue Date: ${dueDate.toLocaleDateString('en-IN', { 
-      weekday: 'long', 
-      year: 'numeric', 
-      month: 'long', 
-      day: 'numeric' 
+    details: `Bill Payment Reminder\n\nAmount: ₹${bill.amount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}\nCategory: ${bill.category ? bill.category.charAt(0).toUpperCase() + bill.category.slice(1).replace('_', ' ') : 'Uncategorized'}\nDue Date: ${dueDate.toLocaleDateString('en-IN', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
     })}\n${bill.notes ? `Notes: ${bill.notes}` : ''}\n\n📝 Don't forget to pay this bill on time!\n\n💡 Manage all your bills at invoiceflow.dev`,
     location: 'InvoiceFlow - Bill Management',
   });
@@ -53,7 +53,7 @@ export const generateICSFile = (bill: Bill): string => {
   const dueDate = new Date(bill.due_date);
   const startDateTime = new Date(dueDate);
   startDateTime.setHours(9, 0, 0, 0);
-  
+
   const endDateTime = new Date(startDateTime);
   endDateTime.setHours(10, 0, 0, 0);
 
@@ -75,7 +75,7 @@ DTEND:${formatDateForICS(endDateTime)}
 DTSTAMP:${timestamp}
 UID:bill-${bill.id}@invoiceflow.dev
 CREATED:${timestamp}
-DESCRIPTION:Bill Payment Reminder\\n\\nAmount: ₹${bill.amount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}\\nCategory: ${bill.category.charAt(0).toUpperCase() + bill.category.slice(1).replace('_', ' ')}\\nDue Date: ${dueDate.toLocaleDateString('en-IN')}\\n${bill.notes ? `Notes: ${bill.notes}\\n` : ''}\\nManage at invoiceflow.dev
+DESCRIPTION:Bill Payment Reminder\\n\\nAmount: ₹${bill.amount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}\\nCategory: ${bill.category ? bill.category.charAt(0).toUpperCase() + bill.category.slice(1).replace('_', ' ') : 'Uncategorized'}\\nDue Date: ${dueDate.toLocaleDateString('en-IN')}\\n${bill.notes ? `Notes: ${bill.notes}\\n` : ''}\\nManage at invoiceflow.dev
 LAST-MODIFIED:${timestamp}
 LOCATION:InvoiceFlow - Bill Management
 SEQUENCE:0
@@ -103,14 +103,14 @@ export const downloadICSFile = (bill: Bill): void => {
   const icsContent = generateICSFile(bill);
   const blob = new Blob([icsContent], { type: 'text/calendar;charset=utf-8' });
   const url = URL.createObjectURL(blob);
-  
+
   const link = document.createElement('a');
   link.href = url;
   link.download = `${bill.name.replace(/[^a-z0-9]/gi, '_').toLowerCase()}_reminder.ics`;
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
-  
+
   URL.revokeObjectURL(url);
 };
 
@@ -118,15 +118,15 @@ export const downloadICSFile = (bill: Bill): void => {
 export const createMultipleReminders = (bill: Bill): CalendarEvent[] => {
   const dueDate = new Date(bill.due_date);
   const reminders = [1, 3, 7]; // days before
-  
+
   return reminders.map(days => {
     const reminderDate = new Date(dueDate);
     reminderDate.setDate(reminderDate.getDate() - days);
     reminderDate.setHours(9, 0, 0, 0);
-    
+
     const endDate = new Date(reminderDate);
     endDate.setHours(9, 30, 0, 0);
-    
+
     return {
       title: `📋 Bill Reminder: ${bill.name} (Due in ${days} day${days !== 1 ? 's' : ''})`,
       description: `Reminder: ${bill.name} payment of ₹${bill.amount.toLocaleString('en-IN')} is due ${days === 1 ? 'tomorrow' : `in ${days} days`}.\n\nDue Date: ${dueDate.toLocaleDateString('en-IN')}\nCategory: ${bill.category}\n${bill.notes ? `Notes: ${bill.notes}` : ''}`,

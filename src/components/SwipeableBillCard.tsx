@@ -36,10 +36,10 @@ export function SwipeableBillCard({ bill, onToggleStatus, getStatusColor }: Swip
 
   const handleTouchMove = (e: React.TouchEvent) => {
     if (bill.status === 'paid' || !isSwiping) return;
-    
+
     const currentX = e.touches[0].clientX;
     const diff = currentX - startXRef.current;
-    
+
     // Only allow right swipe (to mark as paid)
     if (diff > 0 && diff < 200) {
       setSwipeOffset(diff);
@@ -57,7 +57,7 @@ export function SwipeableBillCard({ bill, onToggleStatus, getStatusColor }: Swip
       // Trigger mark as paid
       onToggleStatus(bill);
     }
-    
+
     // Reset
     setIsSwiping(false);
     setSwipeOffset(0);
@@ -97,7 +97,7 @@ export function SwipeableBillCard({ bill, onToggleStatus, getStatusColor }: Swip
           <div className="flex-1 min-w-0">
             <div className="font-semibold text-base mb-1 truncate">{bill.name}</div>
             <div className="text-sm text-muted-foreground">
-              {formatINRCompact(bill.amount)} • {bill.category.charAt(0).toUpperCase() + bill.category.slice(1)}
+              {formatINRCompact(bill.amount)} • {bill.category ? bill.category.charAt(0).toUpperCase() + bill.category.slice(1) : 'Uncategorized'}
             </div>
             <div className="text-xs text-muted-foreground mt-1">
               Due: {new Date(parseISO(bill.due_date)).toLocaleDateString('en-IN', {

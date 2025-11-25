@@ -23,15 +23,15 @@ export const DashboardAnalytics = ({ bills, isPro = false }: DashboardAnalyticsP
   const monthlyData = bills.reduce((acc, bill) => {
     const date = new Date(bill.due_date);
     const monthKey = date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
-    
+
     if (!acc[monthKey]) {
       acc[monthKey] = { month: monthKey, paid: 0, unpaid: 0, overdue: 0 };
     }
-    
+
     if (bill.status === 'paid') acc[monthKey].paid += bill.amount;
     else if (bill.status === 'overdue') acc[monthKey].overdue += bill.amount;
     else acc[monthKey].unpaid += bill.amount;
-    
+
     return acc;
   }, {} as Record<string, { month: string; paid: number; unpaid: number; overdue: number }>);
 
@@ -46,6 +46,9 @@ export const DashboardAnalytics = ({ bills, isPro = false }: DashboardAnalyticsP
 
   // Category breakdown
   const categoryData = bills.reduce((acc, bill) => {
+    // Skip bills without a category
+    if (!bill.category) return acc;
+
     const category = bill.category.charAt(0).toUpperCase() + bill.category.slice(1);
     if (!acc[category]) {
       acc[category] = { name: category, amount: 0 };
@@ -76,7 +79,7 @@ export const DashboardAnalytics = ({ bills, isPro = false }: DashboardAnalyticsP
         <div className="flex items-center gap-3 mb-4">
           <div className={cn(
             "p-3 rounded-xl",
-            isPro 
+            isPro
               ? "bg-gradient-to-br from-[hsl(45,100%,60%)]/20 to-[hsl(35,100%,55%)]/10"
               : "bg-primary/10"
           )}>
@@ -118,7 +121,7 @@ export const DashboardAnalytics = ({ bills, isPro = false }: DashboardAnalyticsP
               ₹{animatedRevenue}k
             </p>
           </motion.div>
-          
+
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -169,63 +172,63 @@ export const DashboardAnalytics = ({ bills, isPro = false }: DashboardAnalyticsP
             "glass border-border/50 shadow-glass transition-all duration-300 hover:shadow-float",
             isPro && "glass-pro border-[hsl(45,100%,60%)]/30 shadow-pro-strong"
           )}>
-          <CardHeader>
-            <CardTitle className={cn(
-              "text-base transition-colors duration-300",
-              isPro && "pro-gradient-text"
-            )}>
-              Monthly Trends
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
+            <CardHeader>
+              <CardTitle className={cn(
+                "text-base transition-colors duration-300",
+                isPro && "pro-gradient-text"
+              )}>
+                Monthly Trends
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
               <ResponsiveContainer width="100%" height={220}>
-              <BarChart data={monthlyChartData}>
-                <defs>
-                  <linearGradient id="paidGradient" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="hsl(142, 76%, 36%)" stopOpacity={0.8}/>
-                    <stop offset="100%" stopColor="hsl(142, 76%, 36%)" stopOpacity={0.4}/>
-                  </linearGradient>
-                  <linearGradient id="unpaidGradient" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor={isPro ? "hsl(45, 100%, 60%)" : "hsl(250, 95%, 68%)"} stopOpacity={0.8}/>
-                    <stop offset="100%" stopColor={isPro ? "hsl(45, 100%, 60%)" : "hsl(250, 95%, 68%)"} stopOpacity={0.4}/>
-                  </linearGradient>
-                  <linearGradient id="overdueGradient" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="hsl(0, 84%, 60%)" stopOpacity={0.8}/>
-                    <stop offset="100%" stopColor="hsl(0, 84%, 60%)" stopOpacity={0.4}/>
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.15} vertical={false} />
-                <XAxis 
-                  dataKey="month" 
-                  tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 11, fontWeight: 500 }}
-                  stroke="hsl(var(--border))"
-                  tickLine={false}
-                  axisLine={false}
-                />
-                <YAxis 
-                  tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 11, fontWeight: 500 }}
-                  stroke="hsl(var(--border))"
-                  tickLine={false}
-                  axisLine={false}
-                />
-                <Tooltip 
-                  contentStyle={{ 
-                    background: 'hsl(var(--card))', 
-                    border: '1px solid hsl(var(--border))',
-                    borderRadius: '12px',
-                    fontSize: '12px',
-                    fontWeight: 600,
-                    backdropFilter: 'blur(12px)',
-                    padding: '12px'
-                  }}
-                  cursor={{ fill: 'hsl(var(--muted))', opacity: 0.1 }}
-                />
-                <Bar dataKey="paid" fill="url(#paidGradient)" radius={[6, 6, 0, 0]} />
-                <Bar dataKey="unpaid" fill="url(#unpaidGradient)" radius={[6, 6, 0, 0]} />
-                <Bar dataKey="overdue" fill="url(#overdueGradient)" radius={[6, 6, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          </CardContent>
+                <BarChart data={monthlyChartData}>
+                  <defs>
+                    <linearGradient id="paidGradient" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="hsl(142, 76%, 36%)" stopOpacity={0.8} />
+                      <stop offset="100%" stopColor="hsl(142, 76%, 36%)" stopOpacity={0.4} />
+                    </linearGradient>
+                    <linearGradient id="unpaidGradient" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor={isPro ? "hsl(45, 100%, 60%)" : "hsl(250, 95%, 68%)"} stopOpacity={0.8} />
+                      <stop offset="100%" stopColor={isPro ? "hsl(45, 100%, 60%)" : "hsl(250, 95%, 68%)"} stopOpacity={0.4} />
+                    </linearGradient>
+                    <linearGradient id="overdueGradient" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="hsl(0, 84%, 60%)" stopOpacity={0.8} />
+                      <stop offset="100%" stopColor="hsl(0, 84%, 60%)" stopOpacity={0.4} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.15} vertical={false} />
+                  <XAxis
+                    dataKey="month"
+                    tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 11, fontWeight: 500 }}
+                    stroke="hsl(var(--border))"
+                    tickLine={false}
+                    axisLine={false}
+                  />
+                  <YAxis
+                    tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 11, fontWeight: 500 }}
+                    stroke="hsl(var(--border))"
+                    tickLine={false}
+                    axisLine={false}
+                  />
+                  <Tooltip
+                    contentStyle={{
+                      background: 'hsl(var(--card))',
+                      border: '1px solid hsl(var(--border))',
+                      borderRadius: '12px',
+                      fontSize: '12px',
+                      fontWeight: 600,
+                      backdropFilter: 'blur(12px)',
+                      padding: '12px'
+                    }}
+                    cursor={{ fill: 'hsl(var(--muted))', opacity: 0.1 }}
+                  />
+                  <Bar dataKey="paid" fill="url(#paidGradient)" radius={[6, 6, 0, 0]} />
+                  <Bar dataKey="unpaid" fill="url(#unpaidGradient)" radius={[6, 6, 0, 0]} />
+                  <Bar dataKey="overdue" fill="url(#overdueGradient)" radius={[6, 6, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </CardContent>
           </Card>
         </motion.div>
 
@@ -239,45 +242,45 @@ export const DashboardAnalytics = ({ bills, isPro = false }: DashboardAnalyticsP
             "glass border-border/50 shadow-glass transition-all duration-300 hover:shadow-float",
             isPro && "glass-pro border-[hsl(45,100%,60%)]/30 shadow-pro-strong"
           )}>
-          <CardHeader>
-            <CardTitle className={cn(
-              "text-base transition-colors duration-300",
-              isPro && "pro-gradient-text"
-            )}>
-              Category Breakdown
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={200}>
-              <PieChart>
-                <Pie
-                  data={statusData}
-                  cx="50%"
-                  cy="50%"
-                  innerRadius={50}
-                  outerRadius={80}
-                  paddingAngle={5}
-                  dataKey="value"
-                >
-                  {statusData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} />
-                  ))}
-                </Pie>
-                <Tooltip 
-                  contentStyle={{ 
-                    background: 'hsl(var(--card))', 
-                    border: '1px solid hsl(var(--border))',
-                    borderRadius: '8px',
-                    fontSize: '12px'
-                  }}
-                />
-                <Legend 
-                  wrapperStyle={{ fontSize: '12px' }}
-                  iconType="circle"
-                />
-              </PieChart>
-            </ResponsiveContainer>
-          </CardContent>
+            <CardHeader>
+              <CardTitle className={cn(
+                "text-base transition-colors duration-300",
+                isPro && "pro-gradient-text"
+              )}>
+                Category Breakdown
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ResponsiveContainer width="100%" height={200}>
+                <PieChart>
+                  <Pie
+                    data={statusData}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={50}
+                    outerRadius={80}
+                    paddingAngle={5}
+                    dataKey="value"
+                  >
+                    {statusData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.color} />
+                    ))}
+                  </Pie>
+                  <Tooltip
+                    contentStyle={{
+                      background: 'hsl(var(--card))',
+                      border: '1px solid hsl(var(--border))',
+                      borderRadius: '8px',
+                      fontSize: '12px'
+                    }}
+                  />
+                  <Legend
+                    wrapperStyle={{ fontSize: '12px' }}
+                    iconType="circle"
+                  />
+                </PieChart>
+              </ResponsiveContainer>
+            </CardContent>
           </Card>
         </motion.div>
       </div>
