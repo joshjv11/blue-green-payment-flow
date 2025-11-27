@@ -34,17 +34,7 @@ import { DashboardAnalytics } from '@/components/DashboardAnalytics';
 import { FloatingActionButtons } from '@/components/FloatingActionButtons';
 import { EmptyState } from '@/components/EmptyState';
 import { motion } from 'framer-motion';
-import { RewardProgressBar } from '@/components/RewardProgressBar';
-import { CelebrationAnimation } from '@/components/CelebrationAnimation';
-import { MotivationalBanner } from '@/components/MotivationalBanner';
-import { TierBadge } from '@/components/TierBadge';
-import { useRewards } from '@/hooks/useRewards';
 import { MobileLayout } from '@/components/MobileLayout';
-import { useDailyBonus } from '@/hooks/useDailyBonus';
-import { DailyBonusWheel } from '@/components/DailyBonusWheel';
-import { useStreakProtection } from '@/hooks/useStreakProtection';
-import { StreakCountdownBanner } from '@/components/StreakCountdownBanner';
-import { StreakShieldShop } from '@/components/StreakShieldShop';
 import { useEntitlements } from '@/lib/useEntitlements';
 import { trackFeatureUsage } from '@/lib/analytics';
 import { SavingsGoalCard } from '@/components/SavingsGoalCard';
@@ -78,21 +68,6 @@ const Dashboard = () => {
   const { plan: contextPlan } = usePlan();
   const isPro = contextPlan === 'pro';
   const { plan, aiQueriesUsed, aiQueriesLimit, loading: planLoading } = useSupabasePlan();
-  const { rewards, badges, loading: rewardsLoading, awardXP, updateStreak, checkAndAwardMilestoneBadges } = useRewards();
-  const { canClaim: canClaimBonus, claimDailyBonus, loading: bonusLoading } = useDailyBonus();
-  const {
-    timeUntilExpiry,
-    formatTimeRemaining,
-    isStreakInDanger,
-    isCritical,
-    getShieldCounts,
-    useShield,
-    purchaseShield
-  } = useStreakProtection();
-  const [showCelebration, setShowCelebration] = useState(false);
-  const [celebrationData, setCelebrationData] = useState<any>(null);
-  const [showBonusWheel, setShowBonusWheel] = useState(false);
-  const [showShieldShop, setShowShieldShop] = useState(false);
   const [profile, setProfile] = useState<any>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [fullName, setFullName] = useState('');
@@ -161,16 +136,8 @@ const Dashboard = () => {
       checkPasskeySupport();
       track('dashboard_viewed', { user_id: user?.id });
 
-      // Show daily bonus with unpredictable timing
-      if (canClaimBonus && !showBonusWheel) {
-        const delay = Math.random() * 5000; // 0-5 seconds
-        const timer = setTimeout(() => {
-          setShowBonusWheel(true);
-        }, delay);
-        return () => clearTimeout(timer);
-      }
     }
-  }, [user, track, canClaimBonus]);
+  }, [user, track]);
 
   const fetchProfile = async () => {
     try {
@@ -339,47 +306,9 @@ const Dashboard = () => {
         setLocalBills(updatedBills);
       }
 
-      // Gamification logic
-      if (newStatus === 'paid' && rewards) {
-        const dueDate = parseISO(bill.due_date);
-        const today = new Date();
-        const daysEarly = differenceInDays(dueDate, today);
-
-        let xpAmount = 5; // On-time
-        let description = 'Bill paid on time';
-
-        if (daysEarly > 0) {
-          xpAmount = 10; // Early payment
-          description = `Bill paid ${daysEarly} days early`;
-        } else if (daysEarly < 0) {
-          xpAmount = -5; // Late payment
-          description = 'Bill paid late';
-        }
-
-        const result: any = await awardXP('bill_paid', xpAmount, description, bill.id);
-        await updateStreak(true, daysEarly);
-        await checkAndAwardMilestoneBadges();
-
-        // Show celebration
-        if (result) {
-          setCelebrationData({
-            xpAwarded: result.xp_awarded || xpAmount,
-            levelUp: result.level_up || false,
-            newLevel: result.new_level || rewards.current_level,
-          });
-          setShowCelebration(true);
-          setTimeout(() => setShowCelebration(false), 2000);
-        }
-
-        toast({
-          title: `Bill marked as paid! +${xpAmount} XP`,
-          description: daysEarly > 0 ? '🔥 Early payment bonus!' : 'Great job!',
-        });
-      } else {
-        toast({
-          title: `Bill marked as ${newStatus}!`,
-        });
-      }
+      toast({
+        title: `Bill marked as ${newStatus}!`,
+      });
 
       await fetchBills();
     } catch (error: any) {
@@ -486,15 +415,6 @@ const Dashboard = () => {
       <OnboardingTour />
       <div className="min-h-screen bg-background pb-24 md:pb-6">
 
-        {/* Daily Bonus Wheel */}
-        {showBonusWheel && (
-          <DailyBonusWheel
-            onClaim={claimDailyBonus}
-            onClose={() => setShowBonusWheel(false)}
-            loading={bonusLoading}
-          />
-        )}
-
         {/* Main Content */}
         <main className="container mx-auto px-4 md:px-6 py-6 md:py-8 space-y-6 md:space-y-8 max-w-7xl">
           {/* Passkey Banner */}
@@ -520,13 +440,6 @@ const Dashboard = () => {
                   <p className="text-sm text-muted-foreground">
                     {profile?.full_name || user?.email?.split('@')[0] || 'Welcome back'}
                   </p>
-                  {rewards && (
-                    <TierBadge
-                      tier={rewards.tier}
-                      level={rewards.current_level}
-                      variant="icon-only"
-                    />
-                  )}
                 </div>
               </div>
             </div>
@@ -555,17 +468,6 @@ const Dashboard = () => {
               </Button>
             </div>
           </motion.div>
-
-          {/* Reward Progress Bar */}
-          {rewards && (
-            <RewardProgressBar
-              currentXP={rewards.total_xp}
-              currentLevel={rewards.current_level}
-              tier={rewards.tier}
-              streak={rewards.current_streak}
-              isPro={isPro}
-            />
-          )}
 
           {/* Admin CMS Button - Only visible to admins */}
           {isAdmin && (
@@ -603,56 +505,6 @@ const Dashboard = () => {
             </motion.div>
           )}
 
-
-          {/* Motivational Banner */}
-          {rewards && rewards.current_streak >= 3 && (
-            <MotivationalBanner
-              message={`🔥 ${rewards.current_streak}-day streak! Don't break it now!`}
-              type="streak"
-              isPro={isPro}
-            />
-          )}
-
-          {rewards && overdueBills.length > 0 && rewards.current_streak === 0 && (
-            <MotivationalBanner
-              message="⏰ Clear your overdue bills to start a new streak!"
-              icon="⚡"
-              type="warning"
-              isPro={isPro}
-            />
-          )}
-
-          {/* Streak Countdown Banner */}
-          {rewards && rewards.current_streak > 0 && isStreakInDanger() && (
-            <StreakCountdownBanner
-              streak={rewards.current_streak}
-              timeRemaining={formatTimeRemaining()}
-              isCritical={isCritical()}
-              isInDanger={isStreakInDanger()}
-              shieldCount={getShieldCounts().total}
-              onUseShield={async () => {
-                await useShield();
-                toast({
-                  title: 'Streak Protected!',
-                  description: 'Your streak has been saved',
-                });
-              }}
-              onBuyShield={() => setShowShieldShop(true)}
-            />
-          )}
-
-          {/* Shield Shop Modal */}
-          {rewards && (
-            <StreakShieldShop
-              open={showShieldShop}
-              onClose={() => setShowShieldShop(false)}
-              onPurchase={async (type) => {
-                await purchaseShield(type);
-              }}
-              currentXP={rewards.total_xp}
-              shieldCounts={getShieldCounts()}
-            />
-          )}
 
           {/* Hero Metrics - Simplified to 3 key metrics */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 md:gap-6">
@@ -1121,17 +973,6 @@ const Dashboard = () => {
           showUpgrade={plan === 'free'}
           isPro={isPro}
         />
-
-        {/* Celebration Animation */}
-        {celebrationData && (
-          <CelebrationAnimation
-            trigger={showCelebration}
-            xpAwarded={celebrationData.xpAwarded}
-            levelUp={celebrationData.levelUp}
-            newLevel={celebrationData.newLevel}
-            onComplete={() => setCelebrationData(null)}
-          />
-        )}
 
         {/* Upgrade Modal */}
         <UpgradeModal

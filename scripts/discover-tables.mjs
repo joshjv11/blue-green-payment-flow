@@ -17,8 +17,7 @@ async function listTables() {
     // Tables we know of:
     const candidates = [
         'profiles', 'bills', 'reminders', 'user_plans', 'payment_transactions',
-        'customers', 'products', 'expenses', 'user_badges', 'user_rewards',
-        'temporary_unlocks', 'streak_shields', 'daily_bonuses', 'subscriptions',
+        'customers', 'products', 'expenses', 'subscriptions',
         'invoices', 'receipts', 'audit_logs', 'feedback', 'notifications'
     ];
 

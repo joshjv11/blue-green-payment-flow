@@ -26,7 +26,6 @@ import { EmptyState } from '@/components/EmptyState';
 import { LoadingSkeleton } from '@/components/LoadingSkeleton';
 import FreemiumLimitCard from '@/components/FreemiumLimitCard';
 import PlanStatusCard from '@/components/PlanStatusCard';
-import { TierBadge } from '@/components/TierBadge';
 import { ProBadge } from '@/components/ProBadge';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import ErrorBoundary from '@/components/ErrorBoundary';
@@ -123,15 +122,6 @@ const COMPONENTS = [
     description: 'Current plan status',
     defaultProps: {
       onUpgrade: () => console.log('Upgrade clicked'),
-    },
-  },
-  {
-    name: 'TierBadge',
-    component: TierBadge,
-    category: 'UI',
-    description: 'User tier badge',
-    defaultProps: {
-      tier: 'pro',
     },
   },
   {

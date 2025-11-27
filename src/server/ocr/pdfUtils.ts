@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { createCanvas, Image } from "@napi-rs/canvas";
+import { createCanvas, Image, type SKRSContext2D } from "@napi-rs/canvas";
 import {
   getDocument,
   GlobalWorkerOptions,
@@ -63,11 +63,14 @@ async function renderPdfPage(
   });
 
   const canvas = createCanvas(viewport.width, viewport.height);
-  const context = canvas.getContext("2d");
+  const context = canvas.getContext("2d") as SKRSContext2D | null;
+  if (!context) {
+    throw new Error("Failed to obtain 2D canvas context");
+  }
   // pdf.js expects Image to be present on global scope
   // @ts-expect-error - assign for pdfjs rendering
   global.Image = Image;
-  const renderContext = {
+  const renderContext: Parameters<typeof page.render>[0] = {
     canvasContext: context,
     viewport,
   };

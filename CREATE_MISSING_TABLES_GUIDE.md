@@ -2,11 +2,9 @@
 
 ## 🔍 Problem
 
-The app is showing 404 errors because these tables don't exist in the new Supabase project:
+The app is showing 404 errors because these subscription tables don't exist in the new Supabase project:
 - ❌ `user_plans` - Required for subscription management
 - ❌ `payment_transactions` - Required for payment tracking
-- ❌ `user_badges` - Optional (for gamification)
-- ❌ `user_rewards` - Optional (for rewards system)
 
 ## 🚀 Quick Fix (2 minutes)
 
@@ -30,8 +28,6 @@ Copy the entire contents of `scripts/create-missing-tables.sql` and paste it int
 The script will automatically show you a verification query at the end. You should see:
 - ✅ `user_plans` - 10 columns
 - ✅ `payment_transactions` - 11 columns
-- ✅ `user_badges` - 8 columns
-- ✅ `user_rewards` - 16 columns
 
 ## ✅ What Gets Created
 
@@ -46,17 +42,6 @@ The script will automatically show you a verification query at the end. You shou
 - Transaction status (pending, completed, failed, verified)
 - Payment method tracking
 - Processed status for automation
-
-### 3. **user_badges** Table (Optional)
-- Gamification badges
-- XP earned
-- Badge tiers and icons
-
-### 4. **user_rewards** Table (Optional)
-- Rewards system
-- Streak tracking
-- XP and level management
-- Payment statistics
 
 ## 🔒 Security Features
 

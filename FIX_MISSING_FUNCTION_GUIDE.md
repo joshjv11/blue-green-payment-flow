@@ -28,7 +28,7 @@ The `scripts/create-missing-tables.sql` file has been updated to include:
 ### Step 3: Verify
 
 The script will automatically:
-- ✅ Create all missing tables (`user_plans`, `payment_transactions`, `user_badges`, `user_rewards`)
+- ✅ Create all missing tables (`user_plans`, `payment_transactions`)
 - ✅ Create the `create_default_user_plan` function
 - ✅ Create default plans for existing users (including you!)
 - ✅ Show verification output at the end

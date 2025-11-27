@@ -11,7 +11,7 @@ export const invoiceExtractionQueue = new Queue<InvoiceExtractionJobData>(
     connection: redisOptions,
     defaultJobOptions: {
       attempts: 3,
-      timeout: 90_000,
+      timeout: 90000,
       backoff: {
         type: "exponential",
         delay: 5000,

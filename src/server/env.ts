@@ -5,6 +5,7 @@ const envSchema = z.object({
   SUPABASE_SERVICE_ROLE_KEY: z.string().min(1),
   REDIS_URL: z.string().min(1),
   OCR_TESSERACT_LANG: z.string().default("eng"),
+  CLAUDE_API_KEY: z.string().min(1).optional(),
   OCR_CONFIDENCE_THRESHOLD: z
     .string()
     .optional()
@@ -32,6 +33,7 @@ export const env = envSchema.parse({
   SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY,
   REDIS_URL: process.env.REDIS_URL,
   OCR_TESSERACT_LANG: process.env.OCR_TESSERACT_LANG,
+  CLAUDE_API_KEY: process.env.CLAUDE_API_KEY,
   OCR_CONFIDENCE_THRESHOLD: process.env.OCR_CONFIDENCE_THRESHOLD,
   OCR_MAX_PAGES: process.env.OCR_MAX_PAGES,
   OCR_QUEUE_CONCURRENCY: process.env.OCR_QUEUE_CONCURRENCY,

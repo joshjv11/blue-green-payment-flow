@@ -3,9 +3,11 @@ import { CONFIDENCE_THRESHOLD, env } from "../env.ts";
 import type { StructuredInvoiceExtraction } from "../types.ts";
 import { structuredInvoiceExtractionSchema } from "./schemas.ts";
 
-const anthropic = new Anthropic({
-  apiKey: env.CLAUDE_API_KEY,
-});
+const anthropic = env.CLAUDE_API_KEY
+  ? new Anthropic({
+      apiKey: env.CLAUDE_API_KEY,
+    })
+  : null;
 
 const CLAUDE_MODEL = "claude-3-5-sonnet-20241022";
 
@@ -53,6 +55,9 @@ export async function runClaudeVisionInference(
   pages: Array<{ buffer: Buffer; pageNumber: number }>,
   sourceDocumentType: "pdf" | "image",
 ): Promise<StructuredInvoiceExtraction> {
+  if (!anthropic) {
+    throw new Error("Claude OCR is disabled (missing CLAUDE_API_KEY)");
+  }
   const prompt = buildPrompt();
 
   const content = [

@@ -131,7 +131,6 @@ This checklist tracks testing status for all components in the application.
 - [ ] AppNavigation
 - [ ] AppSidebar
 - [ ] BackToDashboard
-- [ ] BadgeGallery
 - [ ] BillLimitBanner
 - [ ] BillReminderManager
 - [ ] Breadcrumb
@@ -139,9 +138,7 @@ This checklist tracks testing status for all components in the application.
 - [ ] BulkEInvoiceProcessor
 - [ ] BusinessSettings
 - [ ] CallToAction
-- [ ] CelebrationAnimation
 - [ ] ConnectionStatus
-- [ ] DailyBonusWheel
 - [ ] DashboardAnalytics
 - [ ] DebugInfo
 - [ ] EInvoiceButton
@@ -161,7 +158,6 @@ This checklist tracks testing status for all components in the application.
 - [ ] Header
 - [ ] Hero
 - [ ] InvoicePDFPreview
-- [ ] MotivationalBanner
 - [ ] Navigation
 - [ ] OnboardingTour
 - [ ] OneClickGSTRFiling
@@ -180,13 +176,10 @@ This checklist tracks testing status for all components in the application.
 - [ ] ReminderDashboard
 - [ ] ReminderSettingsModal
 - [ ] RequirePlan
-- [ ] RewardProgressBar
 - [ ] ScrollReveal
 - [ ] SecretAdminLock
 - [ ] SettingsDrawer
 - [ ] SmartBillForm
-- [ ] StreakCountdownBanner
-- [ ] StreakShieldShop
 - [ ] SwipeableBillCard
 - [ ] TaxSummary
 - [ ] TeamManagement

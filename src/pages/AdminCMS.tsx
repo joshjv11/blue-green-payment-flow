@@ -16,6 +16,7 @@ import { UserInsightsTable } from '@/components/admin/UserInsightsTable';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/lib/supabase';
 import { createClient } from '@supabase/supabase-js';
+import type { User as SupabaseAuthUser } from '@supabase/supabase-js';
 import { format } from 'date-fns';
 import { useSystemAdminStatus } from '@/hooks/useSystemAdminStatus';
 
@@ -247,7 +248,10 @@ const AdminCMS = () => {
       }
 
       // Merge profiles with auth users to get emails
-      const authUsersMap = new Map(authData?.users?.map(u => [u.id, u]) || []);
+      const authUsers = authData?.users ?? [];
+      const authUsersMap = new Map<string, SupabaseAuthUser>(
+        authUsers.map((user) => [user.id, user] as const),
+      );
       const usersWithEmails = (profilesData || []).map(profile => ({
         ...profile,
         email: authUsersMap.get(profile.id)?.email || null

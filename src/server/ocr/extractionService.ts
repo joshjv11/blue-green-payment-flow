@@ -74,8 +74,9 @@ export class OCRExtractionService {
         );
       }
 
-      const validated =
-        structuredInvoiceExtractionSchema.parse<StructuredInvoiceExtraction>(finalStructured);
+      const validated = structuredInvoiceExtractionSchema.parse(
+        finalStructured,
+      ) as StructuredInvoiceExtraction;
 
       const payload: ExtractionPersistencePayload = {
         workspaceId: job.workspaceId,

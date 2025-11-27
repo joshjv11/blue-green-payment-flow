@@ -536,47 +536,6 @@ export type Database = {
         }
         Relationships: []
       }
-      daily_bonuses: {
-        Row: {
-          bonus_date: string
-          claimed_at: string | null
-          created_at: string
-          id: string
-          reward_type: string
-          reward_value: Json
-          streak_day: number
-          user_id: string
-        }
-        Insert: {
-          bonus_date?: string
-          claimed_at?: string | null
-          created_at?: string
-          id?: string
-          reward_type: string
-          reward_value: Json
-          streak_day?: number
-          user_id: string
-        }
-        Update: {
-          bonus_date?: string
-          claimed_at?: string | null
-          created_at?: string
-          id?: string
-          reward_type?: string
-          reward_value?: Json
-          streak_day?: number
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "daily_bonuses_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       einvoice_queue: {
         Row: {
           ack_date: string | null
@@ -1634,85 +1593,6 @@ export type Database = {
           },
         ]
       }
-      streak_history: {
-        Row: {
-          broke_at: string
-          created_at: string
-          id: string
-          protection_method: string | null
-          streak_length: number
-          user_id: string
-          was_protected: boolean
-        }
-        Insert: {
-          broke_at?: string
-          created_at?: string
-          id?: string
-          protection_method?: string | null
-          streak_length: number
-          user_id: string
-          was_protected?: boolean
-        }
-        Update: {
-          broke_at?: string
-          created_at?: string
-          id?: string
-          protection_method?: string | null
-          streak_length?: number
-          user_id?: string
-          was_protected?: boolean
-        }
-        Relationships: [
-          {
-            foreignKeyName: "streak_history_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      streak_shields: {
-        Row: {
-          created_at: string
-          earned_method: string
-          expires_at: string | null
-          id: string
-          is_active: boolean
-          shield_type: string
-          used_at: string | null
-          user_id: string
-        }
-        Insert: {
-          created_at?: string
-          earned_method: string
-          expires_at?: string | null
-          id?: string
-          is_active?: boolean
-          shield_type: string
-          used_at?: string | null
-          user_id: string
-        }
-        Update: {
-          created_at?: string
-          earned_method?: string
-          expires_at?: string | null
-          id?: string
-          is_active?: boolean
-          shield_type?: string
-          used_at?: string | null
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "streak_shields_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       team_invitations: {
         Row: {
           accepted_at: string | null
@@ -1851,132 +1731,6 @@ export type Database = {
           },
         ]
       }
-      temporary_unlocks: {
-        Row: {
-          created_at: string
-          expires_at: string
-          id: string
-          is_active: boolean
-          unlock_data: Json
-          unlock_type: string
-          unlocked_at: string
-          user_id: string
-        }
-        Insert: {
-          created_at?: string
-          expires_at: string
-          id?: string
-          is_active?: boolean
-          unlock_data: Json
-          unlock_type: string
-          unlocked_at?: string
-          user_id: string
-        }
-        Update: {
-          created_at?: string
-          expires_at?: string
-          id?: string
-          is_active?: boolean
-          unlock_data?: Json
-          unlock_type?: string
-          unlocked_at?: string
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "temporary_unlocks_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      user_badges: {
-        Row: {
-          badge_description: string | null
-          badge_icon: string | null
-          badge_id: string
-          badge_name: string
-          badge_tier: string | null
-          earned_at: string
-          id: string
-          user_id: string
-          xp_earned: number | null
-        }
-        Insert: {
-          badge_description?: string | null
-          badge_icon?: string | null
-          badge_id: string
-          badge_name: string
-          badge_tier?: string | null
-          earned_at?: string
-          id?: string
-          user_id: string
-          xp_earned?: number | null
-        }
-        Update: {
-          badge_description?: string | null
-          badge_icon?: string | null
-          badge_id?: string
-          badge_name?: string
-          badge_tier?: string | null
-          earned_at?: string
-          id?: string
-          user_id?: string
-          xp_earned?: number | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "user_badges_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "user_entitlements_v1"
-            referencedColumns: ["user_id"]
-          },
-        ]
-      }
-      user_collectibles: {
-        Row: {
-          collected_at: string
-          collectible_id: string
-          collectible_name: string
-          collectible_type: string
-          id: string
-          image_url: string | null
-          rarity: string
-          user_id: string
-        }
-        Insert: {
-          collected_at?: string
-          collectible_id: string
-          collectible_name: string
-          collectible_type: string
-          id?: string
-          image_url?: string | null
-          rarity: string
-          user_id: string
-        }
-        Update: {
-          collected_at?: string
-          collectible_id?: string
-          collectible_name?: string
-          collectible_type?: string
-          id?: string
-          image_url?: string | null
-          rarity?: string
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "user_collectibles_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       user_plan_changes: {
         Row: {
           changed_at: string
@@ -2062,77 +1816,6 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "user_plans_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: true
-            referencedRelation: "user_entitlements_v1"
-            referencedColumns: ["user_id"]
-          },
-        ]
-      }
-      user_rewards: {
-        Row: {
-          created_at: string
-          current_level: number
-          current_streak: number
-          early_payments: number
-          has_streak_insurance: boolean
-          id: string
-          last_activity_date: string | null
-          last_streak_save_date: string | null
-          late_payments: number
-          longest_streak: number
-          on_time_payments: number
-          streak_expires_at: string | null
-          tier: string
-          total_bills_paid: number
-          total_shields_used: number
-          total_xp: number
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          created_at?: string
-          current_level?: number
-          current_streak?: number
-          early_payments?: number
-          has_streak_insurance?: boolean
-          id?: string
-          last_activity_date?: string | null
-          last_streak_save_date?: string | null
-          late_payments?: number
-          longest_streak?: number
-          on_time_payments?: number
-          streak_expires_at?: string | null
-          tier?: string
-          total_bills_paid?: number
-          total_shields_used?: number
-          total_xp?: number
-          updated_at?: string
-          user_id: string
-        }
-        Update: {
-          created_at?: string
-          current_level?: number
-          current_streak?: number
-          early_payments?: number
-          has_streak_insurance?: boolean
-          id?: string
-          last_activity_date?: string | null
-          last_streak_save_date?: string | null
-          late_payments?: number
-          longest_streak?: number
-          on_time_payments?: number
-          streak_expires_at?: string | null
-          tier?: string
-          total_bills_paid?: number
-          total_shields_used?: number
-          total_xp?: number
-          updated_at?: string
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "user_rewards_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: true
             referencedRelation: "user_entitlements_v1"
@@ -2355,58 +2038,6 @@ export type Database = {
           },
           {
             foreignKeyName: "whatsapp_messages_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "user_entitlements_v1"
-            referencedColumns: ["user_id"]
-          },
-        ]
-      }
-      xp_transactions: {
-        Row: {
-          action_type: string
-          created_at: string
-          description: string | null
-          id: string
-          related_bill_id: string | null
-          user_id: string
-          xp_amount: number
-        }
-        Insert: {
-          action_type: string
-          created_at?: string
-          description?: string | null
-          id?: string
-          related_bill_id?: string | null
-          user_id: string
-          xp_amount: number
-        }
-        Update: {
-          action_type?: string
-          created_at?: string
-          description?: string | null
-          id?: string
-          related_bill_id?: string | null
-          user_id?: string
-          xp_amount?: number
-        }
-        Relationships: [
-          {
-            foreignKeyName: "xp_transactions_related_bill_id_fkey"
-            columns: ["related_bill_id"]
-            isOneToOne: false
-            referencedRelation: "bills"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "xp_transactions_related_bill_id_fkey"
-            columns: ["related_bill_id"]
-            isOneToOne: false
-            referencedRelation: "upcoming_bills_v1"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "xp_transactions_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "user_entitlements_v1"
@@ -2699,24 +2330,6 @@ export type Database = {
         }[]
       }
       amount_to_words: { Args: { amount: number }; Returns: string }
-      award_streak_shield: {
-        Args: {
-          p_earned_method: string
-          p_shield_type: string
-          p_user_id: string
-        }
-        Returns: string
-      }
-      award_xp: {
-        Args: {
-          p_action_type: string
-          p_description?: string
-          p_related_bill_id?: string
-          p_user_id: string
-          p_xp_amount: number
-        }
-        Returns: Json
-      }
       calculate_gst_breakdown: {
         Args: {
           p_gst_rate: number
@@ -2729,13 +2342,6 @@ export type Database = {
           sgst: number
         }[]
       }
-      calculate_streak_expiration: {
-        Args: { p_last_activity_date: string }
-        Returns: string
-      }
-      calculate_user_level: { Args: { xp: number }; Returns: number }
-      calculate_user_tier: { Args: { level: number }; Returns: string }
-      can_claim_daily_bonus: { Args: { p_user_id: string }; Returns: boolean }
       can_manage_team_members: {
         Args: { target_team_id: string }
         Returns: boolean
@@ -2750,7 +2356,6 @@ export type Database = {
         Returns: undefined
       }
       deactivate_expired_plans: { Args: never; Returns: undefined }
-      generate_daily_reward: { Args: never; Returns: Json }
       generate_invoice_number: {
         Args: { p_order_type: string; p_user_id: string }
         Returns: string
@@ -2816,10 +2421,6 @@ export type Database = {
         Args: { p_action: string; p_notes?: string; p_payment_id?: string }
         Returns: undefined
       }
-      purchase_streak_shield: {
-        Args: { p_shield_type: string; p_user_id: string; p_xp_cost: number }
-        Returns: Json
-      }
       require_payment_access_verification: { Args: never; Returns: boolean }
       schedule_manual_reminder: {
         Args: { p_bill_id: string; p_days_before?: number }
@@ -2828,10 +2429,6 @@ export type Database = {
       set_user_active_status: {
         Args: { active_status: boolean; target_user_id: string }
         Returns: undefined
-      }
-      use_streak_shield: {
-        Args: { p_shield_type?: string; p_user_id: string }
-        Returns: Json
       }
     }
     Enums: {
