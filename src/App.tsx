@@ -48,6 +48,7 @@ import FinancialReports from './pages/FinancialReports';
 import AICoach from './pages/AICoach';
 import Upgrade from './pages/Upgrade';
 import Payment from './pages/Payment';
+import PaymentSuccess from './pages/PaymentSuccess';
 import Admin from './pages/Admin';
 import AdminCMS from './pages/AdminCMS';
 import AdminUsers from './pages/AdminUsers';
@@ -66,71 +67,71 @@ function AppRoutes() {
       <Route path="/auth" element={<PageTransition><Auth /></PageTransition>} />
       <Route path="/terms" element={<PageTransition><Terms /></PageTransition>} />
       <Route path="/privacy" element={<PageTransition><Privacy /></PageTransition>} />
-      <Route 
-        path="/dashboard" 
+      <Route
+        path="/dashboard"
         element={
           <ProtectedRoute>
             <PageTransition><Dashboard /></PageTransition>
           </ProtectedRoute>
-        } 
+        }
       />
-      <Route 
-        path="/bills" 
+      <Route
+        path="/bills"
         element={
           <ProtectedRoute>
             <PageTransition><Bills /></PageTransition>
           </ProtectedRoute>
-        } 
+        }
       />
-      <Route 
-        path="/analytics" 
+      <Route
+        path="/analytics"
         element={
           <ProtectedRoute>
             <PageTransition><Analytics /></PageTransition>
           </ProtectedRoute>
-        } 
+        }
       />
-      <Route 
-        path="/sales" 
+      <Route
+        path="/sales"
         element={
           <ProtectedRoute>
             <RequirePlan requiredPlan="premium" featureName="Sales Orders">
               <PageTransition><Sales /></PageTransition>
             </RequirePlan>
           </ProtectedRoute>
-        } 
+        }
       />
-      <Route 
-        path="/sales-list" 
+      <Route
+        path="/sales-list"
         element={
           <ProtectedRoute>
             <RequirePlan requiredPlan="premium" featureName="Sales Orders">
               <PageTransition><SalesList /></PageTransition>
             </RequirePlan>
           </ProtectedRoute>
-        } 
+        }
       />
-      <Route 
-        path="/sales-v2" 
+      <Route
+        path="/sales-v2"
         element={
           <ProtectedRoute>
             <RequirePlan requiredPlan="premium" featureName="Sales Orders">
               <PageTransition><SalesV2 /></PageTransition>
             </RequirePlan>
           </ProtectedRoute>
-        } 
+        }
       />
-      <Route 
-        path="/whatsapp" 
+      <Route
+        path="/whatsapp"
         element={
           <ProtectedRoute>
             <RequirePlan requiredPlan="pro" featureName="WhatsApp Business Integration">
               <PageTransition><WhatsAppDashboard /></PageTransition>
             </RequirePlan>
           </ProtectedRoute>
-        } 
+        }
       />
-      <Route 
+      <Route
         path="/purchases"
         element={
           <ProtectedRoute>
@@ -138,9 +139,9 @@ function AppRoutes() {
               <PageTransition><Purchases /></PageTransition>
             </RequirePlan>
           </ProtectedRoute>
-        } 
+        }
       />
-      <Route 
+      <Route
         path="/purchases-list"
         element={
           <ProtectedRoute>
@@ -148,9 +149,9 @@ function AppRoutes() {
               <PageTransition><PurchasesList /></PageTransition>
             </RequirePlan>
           </ProtectedRoute>
-        } 
+        }
       />
-      <Route 
+      <Route
         path="/purchases-v2"
         element={
           <ProtectedRoute>
@@ -158,77 +159,77 @@ function AppRoutes() {
               <PageTransition><PurchasesV2 /></PageTransition>
             </RequirePlan>
           </ProtectedRoute>
-        } 
+        }
       />
-      <Route 
-        path="/expenses" 
+      <Route
+        path="/expenses"
         element={
           <ProtectedRoute>
             <RequirePlan requiredPlan="premium" featureName="Expense Management">
               <PageTransition><Expenses /></PageTransition>
             </RequirePlan>
           </ProtectedRoute>
-        } 
+        }
       />
-      <Route 
-        path="/inventory" 
+      <Route
+        path="/inventory"
         element={
           <ProtectedRoute>
             <RequirePlan requiredPlan="premium" featureName="Inventory Management">
               <PageTransition><Inventory /></PageTransition>
             </RequirePlan>
           </ProtectedRoute>
-        } 
+        }
       />
-      <Route 
-        path="/inventory-ledger" 
+      <Route
+        path="/inventory-ledger"
         element={
           <ProtectedRoute>
             <RequirePlan requiredPlan="premium" featureName="Inventory Management">
               <PageTransition><InventoryLedger /></PageTransition>
             </RequirePlan>
           </ProtectedRoute>
-        } 
+        }
       />
-      <Route 
-        path="/ai-coach" 
+      <Route
+        path="/ai-coach"
         element={
           <ProtectedRoute>
             <PageTransition><AICoach /></PageTransition>
           </ProtectedRoute>
-        } 
+        }
       />
-      <Route 
-        path="/gst-summary" 
+      <Route
+        path="/gst-summary"
         element={
           <ProtectedRoute>
             <RequirePlan requiredPlan="premium" featureName="GST/VAT Summary">
               <PageTransition><GSTSummary /></PageTransition>
             </RequirePlan>
           </ProtectedRoute>
-        } 
+        }
       />
-      <Route 
-        path="/reports/tax" 
+      <Route
+        path="/reports/tax"
         element={
           <ProtectedRoute>
             <RequirePlan requiredPlan="premium" featureName="Tax Reports">
               <PageTransition><Reports /></PageTransition>
             </RequirePlan>
           </ProtectedRoute>
-        } 
+        }
       />
-      <Route 
-        path="/reports/financial" 
+      <Route
+        path="/reports/financial"
         element={
           <ProtectedRoute>
             <RequirePlan requiredPlan="premium" featureName="Financial Reports">
               <PageTransition><FinancialReports /></PageTransition>
             </RequirePlan>
           </ProtectedRoute>
-        } 
+        }
       />
-      <Route 
+      <Route
         path="/exports"
         element={
           <ProtectedRoute>
@@ -236,7 +237,7 @@ function AppRoutes() {
               <PageTransition><Exports /></PageTransition>
             </RequirePlan>
           </ProtectedRoute>
-        } 
+        }
       />
       <Route
         path="/settings"
@@ -244,7 +245,7 @@ function AppRoutes() {
           <ProtectedRoute>
             <PageTransition><Settings /></PageTransition>
           </ProtectedRoute>
-        } 
+        }
       />
       <Route
         path="/settings/taxes"
@@ -252,7 +253,7 @@ function AppRoutes() {
           <ProtectedRoute>
             <PageTransition><TaxSettings /></PageTransition>
           </ProtectedRoute>
-        } 
+        }
       />
       <Route
         path="/gst"
@@ -262,7 +263,7 @@ function AppRoutes() {
               <PageTransition><GSTDashboard /></PageTransition>
             </RequirePlan>
           </ProtectedRoute>
-        } 
+        }
       />
       <Route
         path="/settings/e-invoice"
@@ -272,7 +273,7 @@ function AppRoutes() {
               <PageTransition><EInvoiceSettings /></PageTransition>
             </RequirePlan>
           </ProtectedRoute>
-        } 
+        }
       />
       <Route
         path="/gstr-filing"
@@ -282,7 +283,7 @@ function AppRoutes() {
               <PageTransition><GSTRFiling /></PageTransition>
             </RequirePlan>
           </ProtectedRoute>
-        } 
+        }
       />
       <Route
         path="/savings-goals"
@@ -292,7 +293,7 @@ function AppRoutes() {
               <PageTransition><SavingsGoals /></PageTransition>
             </RequirePlan>
           </ProtectedRoute>
-        } 
+        }
       />
       <Route
         path="/emi-manager"
@@ -302,7 +303,7 @@ function AppRoutes() {
               <PageTransition><EMIManager /></PageTransition>
             </RequirePlan>
           </ProtectedRoute>
-        } 
+        }
       />
       <Route
         path="/spending-insights"
@@ -312,7 +313,7 @@ function AppRoutes() {
               <PageTransition><SpendingInsights /></PageTransition>
             </RequirePlan>
           </ProtectedRoute>
-        } 
+        }
       />
       <Route
         path="/upgrade"
@@ -320,7 +321,7 @@ function AppRoutes() {
           <ProtectedRoute>
             <PageTransition><Upgrade /></PageTransition>
           </ProtectedRoute>
-        } 
+        }
       />
       <Route
         path="/payment"
@@ -328,53 +329,61 @@ function AppRoutes() {
           <ProtectedRoute>
             <PageTransition><Payment /></PageTransition>
           </ProtectedRoute>
-        } 
+        }
+      />
+      <Route
+        path="/payment/success"
+        element={
+          <ProtectedRoute>
+            <PageTransition><PaymentSuccess /></PageTransition>
+          </ProtectedRoute>
+        }
       />
       <Route
         path="/admin-cms"
         element={
           <PageTransition><AdminCMS /></PageTransition>
-        } 
+        }
       />
-      <Route 
+      <Route
         path="/admin"
         element={
           <ProtectedRoute>
             <PageTransition><Admin /></PageTransition>
           </ProtectedRoute>
-        } 
+        }
       />
-      <Route 
-        path="/admin/users" 
+      <Route
+        path="/admin/users"
         element={
           <ProtectedRoute>
             <PageTransition><AdminUserPlans /></PageTransition>
           </ProtectedRoute>
-        } 
+        }
       />
-      <Route 
-        path="/admin/plans" 
+      <Route
+        path="/admin/plans"
         element={
           <ProtectedRoute>
             <PageTransition><AdminPlans /></PageTransition>
           </ProtectedRoute>
-        } 
+        }
       />
-      <Route 
-        path="/admin/db-health" 
+      <Route
+        path="/admin/db-health"
         element={
           <ProtectedRoute>
             <PageTransition><AdminDbHealth /></PageTransition>
           </ProtectedRoute>
-        } 
+        }
       />
-      <Route 
-        path="/admin/logs" 
+      <Route
+        path="/admin/logs"
         element={
           <ProtectedRoute>
             <PageTransition><AdminLogs /></PageTransition>
           </ProtectedRoute>
-        } 
+        }
       />
       <Route
         path="/component-playground"

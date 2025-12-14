@@ -54,6 +54,14 @@ export default defineConfig(({ mode }) => ({
         target: 'http://localhost:4000',
         changeOrigin: true,
       },
+      '/api/dodo': {
+        target: 'http://localhost:4000',
+        changeOrigin: true,
+      },
+      '/api/razorpay': {
+        target: 'http://localhost:4000',
+        changeOrigin: true,
+      },
     },
   },
   plugins: [react(), mode === "development" && componentTagger()].filter(Boolean),

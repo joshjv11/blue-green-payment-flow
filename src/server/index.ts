@@ -4,6 +4,8 @@ import helmet from "helmet";
 import morgan from "morgan";
 import { invoiceExtractionRouter } from "./api/invoiceExtractionRouter.ts";
 import { matchingRouter } from "./api/matchingRouter.ts";
+import { dodoRouter } from "./api/dodoRouter.ts";
+import { razorpayRouter } from "./api/razorpayRouter.ts";
 
 const app = express();
 
@@ -17,6 +19,8 @@ app.get("/api/health", (_req, res) => {
 
 app.use("/api/invoices", invoiceExtractionRouter);
 app.use("/api/matches", matchingRouter);
+app.use("/api/dodo", dodoRouter);
+app.use("/api/razorpay", razorpayRouter);
 
 app.use(
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
