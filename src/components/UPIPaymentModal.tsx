@@ -32,13 +32,6 @@ const UPIPaymentModal = ({ open, onOpenChange, plan }: UPIPaymentModalProps) => 
 
   const currentPlan = PAYMENT_CONFIG.PLANS[plan];
   const merchantUpiId = PAYMENT_CONFIG.UPI_ID;
-  
-  console.log('🏦 Payment Modal - Plan Details:', { 
-    plan, 
-    amount: currentPlan.amount, 
-    upiId: merchantUpiId, 
-    user: user?.email 
-  });
 
   // Check for existing pending payments on modal open
   useEffect(() => {

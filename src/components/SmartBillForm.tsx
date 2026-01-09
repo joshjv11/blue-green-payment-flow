@@ -1,4 +1,6 @@
 import { useState, useEffect } from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -11,6 +13,7 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
+import { billFormSchema, type BillFormData as ZodBillFormData } from '@/lib/schemas/bill';
 import { 
   Lightbulb, 
   Calendar,
@@ -53,6 +56,7 @@ interface SmartBillFormProps {
   setFormData: (data: BillFormData) => void;
   onSubmit: (e: React.FormEvent) => void;
   editingBill?: any;
+  submitting?: boolean;
 }
 
 const billTemplates = [
@@ -126,7 +130,7 @@ const categoryDetection: Record<string, string> = {
   'mortgage': 'loan'
 };
 
-const SmartBillForm = ({ formData, setFormData, onSubmit, editingBill }: SmartBillFormProps) => {
+const SmartBillForm = ({ formData, setFormData, onSubmit, editingBill, submitting = false }: SmartBillFormProps) => {
   const { toast } = useToast();
   const [locale] = useLocalStorage<Locale>('invoiceflow_locale', 'en-IN');
   const [smartSuggestions, setSmartSuggestions] = useState<string[]>([]);
@@ -485,8 +489,14 @@ const SmartBillForm = ({ formData, setFormData, onSubmit, editingBill }: SmartBi
           variant="gradient"
           className="w-full" 
           size="lg"
+          disabled={submitting}
         >
-          {editingBill ? (
+          {submitting ? (
+            <>
+              <Loader2 className="h-5 w-5 animate-spin" />
+              {editingBill ? 'Updating...' : 'Adding...'}
+            </>
+          ) : editingBill ? (
             <>
               <Save className="h-5 w-5" />
               Update Bill

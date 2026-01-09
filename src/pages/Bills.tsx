@@ -13,8 +13,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase, isSupabaseConfigured } from '@/lib/supabase';
 import { useToast } from '@/hooks/use-toast';
-import { useLocalStorage } from '@/hooks/useLocalStorage';
-import { useOfflineCache } from '@/hooks/useOfflineCache';
+// Removed localStorage and offline cache - using Supabase only
 import { trackFeatureUsage } from '@/lib/analytics';
 import SmartBillForm from '@/components/SmartBillForm';
 import ReminderSettingsModal from '@/components/ReminderSettingsModal';
@@ -116,8 +115,7 @@ const Bills = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [sortField, setSortField] = useState<keyof Bill>('due_date');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
-  const [localBills, setLocalBills] = useLocalStorage<Bill[]>(`bills_${user?.id}`, []);
-  const { isOnline, addToCache, syncWithServer } = useOfflineCache();
+  const [submitting, setSubmitting] = useState(false);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [reminderModalBill, setReminderModalBill] = useState<Bill | null>(null);
   const isMobile = useIsMobile();
@@ -159,6 +157,58 @@ const Bills = () => {
       // Track bills page view
       trackFeatureUsage('bills', 'view');
       fetchBills();
+
+      // Set up real-time subscription for bills
+      const billsChannel = supabase
+        .channel(`bills-changes-${user.id}`)
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'bills',
+            filter: `user_id=eq.${user.id}`
+          },
+          (payload) => {
+            console.log('📋 Real-time bill update:', payload);
+            
+            if (payload.eventType === 'INSERT') {
+              // Add new bill to state
+              setBills(prev => {
+                const exists = prev.find(b => b.id === payload.new.id);
+                if (exists) return prev;
+                return [payload.new as Bill, ...prev].sort((a, b) => 
+                  new Date(a.due_date).getTime() - new Date(b.due_date).getTime()
+                );
+              });
+              
+              toast({
+                title: "Bill Added",
+                description: `${(payload.new as Bill).name} was added`,
+              });
+            } else if (payload.eventType === 'UPDATE') {
+              // Update existing bill in state
+              setBills(prev => prev.map(bill => 
+                bill.id === payload.new.id ? payload.new as Bill : bill
+              ).sort((a, b) => 
+                new Date(a.due_date).getTime() - new Date(b.due_date).getTime()
+              ));
+            } else if (payload.eventType === 'DELETE') {
+              // Remove deleted bill from state
+              setBills(prev => prev.filter(bill => bill.id !== payload.old.id));
+              
+              toast({
+                title: "Bill Deleted",
+                description: "Bill was removed",
+              });
+            }
+          }
+        )
+        .subscribe();
+
+      return () => {
+        supabase.removeChannel(billsChannel);
+      };
     }
   }, [user]);
 
@@ -171,9 +221,6 @@ const Bills = () => {
         const data = await pgrst<any[]>('/bills?select=*&order=due_date.asc&limit=200');
         const billsData = data || [];
         setBills(billsData);
-        if (billsData.length > 0) {
-          addToCache(billsData.slice(0, 30));
-        }
         console.log(`✅ [PGRST] Loaded ${billsData.length} bills successfully`);
       } else if (isSupabaseConfigured && supabase) {
         const { data, error } = await supabase
@@ -200,17 +247,10 @@ const Bills = () => {
         const billsData = data || [];
         setBills(billsData);
         
-        // Cache bills for offline access (last 30)
-        if (billsData.length > 0) {
-          addToCache(billsData.slice(0, 30));
-        }
-        
         console.log(`✅ Loaded ${billsData.length} bills successfully`);
       } else {
-        // Use cached bills if offline
-        const cachedBills = localBills.length > 0 ? localBills : [];
-        setBills(cachedBills);
-        console.log(`📱 Loaded ${cachedBills.length} bills from local storage (offline mode)`);
+        // If Supabase is not configured, show error
+        throw new Error('Database connection not available. Please check your connection.');
       }
     } catch (error: any) {
       console.error('❌ Error in fetchBills:', error);
@@ -227,6 +267,9 @@ const Bills = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    if (submitting) return; // Prevent double submission
+    
+    setSubmitting(true);
     console.log('💾 Submitting bill form:', { name: formData.name, amount: formData.amount, editing: !!editingBill });
     
     // Enhanced validation
@@ -261,6 +304,7 @@ const Bills = () => {
     if (!editingBill && !canAddBill(bills.length)) {
       console.log('🚫 Bill limit reached, showing upgrade modal');
       setShowUpgradeModal(true);
+      setSubmitting(false);
       return;
     }
 
@@ -320,9 +364,6 @@ const Bills = () => {
             }
           }
 
-          // Cache the new bill for offline access
-          addToCache([insertedBill]);
-          
           // Track bill creation
           trackFeatureUsage('bills', 'create', { 
             category: billData.category,
@@ -369,15 +410,7 @@ const Bills = () => {
           }
         }
       } else {
-        // Local storage fallback
-        if (editingBill) {
-          const updatedBills = localBills.map(bill =>
-            bill.id === editingBill.id ? billData : bill
-          );
-          setLocalBills(updatedBills);
-        } else {
-          setLocalBills([...localBills, billData]);
-        }
+        throw new Error('Database connection not available. Please check your connection.');
       }
 
       // Only show success toast for edits (new bills handle their own toasts above)
@@ -420,6 +453,8 @@ const Bills = () => {
         description: errorMessage,
         variant: "destructive",
       });
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -467,8 +502,7 @@ const Bills = () => {
           }
         }
       } else {
-        const updatedBills = localBills.filter(bill => bill.id !== billId);
-        setLocalBills(updatedBills);
+        throw new Error('Database connection not available. Please check your connection.');
       }
       
       // Track bill deletion
@@ -735,6 +769,7 @@ const Bills = () => {
                       setFormData={setFormData}
                       onSubmit={handleSubmit}
                       editingBill={editingBill}
+                      submitting={submitting}
                     />
                 </DialogContent>
                 </Dialog>

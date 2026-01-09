@@ -67,7 +67,16 @@ const Dashboard = () => {
   const { track } = useAnalytics();
   const { plan: contextPlan } = usePlan();
   const isPro = contextPlan === 'pro';
-  const { plan, aiQueriesUsed, aiQueriesLimit, loading: planLoading } = useSupabasePlan();
+  const { 
+    plan, 
+    aiQueriesUsed, 
+    aiQueriesLimit, 
+    loading: planLoading,
+    billLimit, 
+    canAddBill, 
+    canMakeAIQuery, 
+    getAIQueriesRemaining 
+  } = useSupabasePlan();
   const [profile, setProfile] = useState<any>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [fullName, setFullName] = useState('');
@@ -79,7 +88,6 @@ const Dashboard = () => {
   const [showExportImport, setShowExportImport] = useState(false);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [showPasskeyBanner, setShowPasskeyBanner] = useState(false);
-  const { billLimit, canAddBill, canMakeAIQuery, getAIQueriesRemaining } = useSupabasePlan();
   const { isPremium, loading: entitlementsLoading } = useEntitlements();
   const [savingsGoals, setSavingsGoals] = useState<any[]>([]);
   const [activeEMIs, setActiveEMIs] = useState<any[]>([]);

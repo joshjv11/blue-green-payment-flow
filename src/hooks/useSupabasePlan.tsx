@@ -46,20 +46,28 @@ export const useSupabasePlan = () => {
       console.log('📊 No user found, skipping plan fetch');
       return;
     }
-    
+
     console.log('📊 Fetching plan for user:', user.email);
     setLoading(true);
-    
+
     try {
-      // First try to get existing plan
+      // First try to get existing plan (latest one)
       const { data: existingPlan, error: fetchError } = await supabase
         .from('user_plans')
         .select('*')
         .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(1)
         .maybeSingle();
 
       if (fetchError) {
-        console.error('❌ Error fetching user plan:', fetchError);
+        console.error('❌ Error fetching user plan:',
+          fetchError.message || 'Unknown error',
+          '\nCode:', fetchError.code,
+          '\nDetails:', fetchError.details,
+          '\nHint:', fetchError.hint,
+          '\nFull error:', fetchError
+        );
         throw fetchError;
       }
 
@@ -68,9 +76,15 @@ export const useSupabasePlan = () => {
         // Create default plan using RPC
         const { error: rpcError } = await supabase
           .rpc('create_default_user_plan', { _user_id: user.id });
-        
+
         if (rpcError) {
-          console.error('❌ Error creating default plan:', rpcError);
+          console.error('❌ Error creating default plan:',
+            rpcError.message || 'Unknown error',
+            '\nCode:', rpcError.code,
+            '\nDetails:', rpcError.details,
+            '\nHint:', rpcError.hint,
+            '\nFull error:', rpcError
+          );
           throw rpcError;
         }
 
@@ -82,10 +96,16 @@ export const useSupabasePlan = () => {
           .maybeSingle();
 
         if (newFetchError) {
-          console.error('❌ Error fetching new plan:', newFetchError);
+          console.error('❌ Error fetching new plan:',
+            newFetchError.message || 'Unknown error',
+            '\nCode:', newFetchError.code,
+            '\nDetails:', newFetchError.details,
+            '\nHint:', newFetchError.hint,
+            '\nFull error:', newFetchError
+          );
           throw newFetchError;
         }
-        
+
         console.log('✅ Default plan created successfully');
         setUserPlan(newPlan as SupabaseUserPlan);
       } else {
@@ -93,8 +113,14 @@ export const useSupabasePlan = () => {
         setUserPlan(existingPlan as SupabaseUserPlan);
       }
     } catch (error: any) {
-      console.error('❌ Failed to fetch user plan:', error);
-      
+      console.error('❌ Failed to fetch user plan:',
+        error?.message || String(error),
+        '\nCode:', error?.code,
+        '\nDetails:', error?.details,
+        '\nHint:', error?.hint,
+        '\nFull error:', error
+      );
+
       // Set a safe default plan to prevent crashes
       const defaultPlan = {
         id: crypto.randomUUID(),
@@ -106,10 +132,10 @@ export const useSupabasePlan = () => {
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
       } as SupabaseUserPlan;
-      
+
       console.log('⚠️ Using fallback default plan');
       setUserPlan(defaultPlan);
-      
+
       // Only show error toast for non-permission errors
       if (!error.message?.includes('permission') && !error.message?.includes('policy')) {
         toast({
@@ -189,8 +215,8 @@ export const useSupabasePlan = () => {
     try {
       const { error } = await supabase
         .from('user_plans')
-        .update({ 
-          ai_queries_used: currentPlanData.aiQueriesUsed + 1 
+        .update({
+          ai_queries_used: currentPlanData.aiQueriesUsed + 1
         })
         .eq('user_id', user.id);
 
@@ -215,7 +241,7 @@ export const useSupabasePlan = () => {
     try {
       const { error } = await supabase
         .from('user_plans')
-        .update({ 
+        .update({
           plan: 'pro',
           ai_queries_limit: 999999,
         })
@@ -244,7 +270,7 @@ export const useSupabasePlan = () => {
     try {
       const { error } = await supabase
         .from('user_plans')
-        .update({ 
+        .update({
           plan: 'free',
           ai_queries_limit: 3,
           ai_queries_used: Math.min(3, currentPlanData.aiQueriesUsed),
@@ -269,10 +295,14 @@ export const useSupabasePlan = () => {
   };
 
   useEffect(() => {
-    if (user) {
+    if (user?.id) {
       fetchUserPlan();
+    } else {
+      setUserPlan(null);
+      setLoading(false);
     }
-  }, [user]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id]);
 
   return {
     ...currentPlanData,

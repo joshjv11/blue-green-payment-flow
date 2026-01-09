@@ -151,13 +151,23 @@ const handler = async (req: Request): Promise<Response> => {
       providerReferenceId = rp?.id || '';
       console.log('✅ Razorpay payment link generated:', providerReferenceId);
     } else if (gateway === 'phonepe') {
-      // Placeholder for PhonePe integration
-      paymentLinkUrl = `https://phonepe.com/pay/${Date.now()}`;
-      console.log('✅ PhonePe payment link generated');
+      // PhonePe integration not yet implemented
+      return new Response(JSON.stringify({ 
+        error: 'PhonePe integration not available',
+        message: 'Please use Razorpay or UPI payment methods'
+      }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
     } else if (gateway === 'paytm') {
-      // Placeholder for Paytm integration
-      paymentLinkUrl = `https://paytm.com/pay/${Date.now()}`;
-      console.log('✅ Paytm payment link generated');
+      // Paytm integration not yet implemented
+      return new Response(JSON.stringify({ 
+        error: 'Paytm integration not available',
+        message: 'Please use Razorpay or UPI payment methods'
+      }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
     }
 
     // Set expiration (24 hours from now)

@@ -149,7 +149,7 @@ serve(async (req) => {
       
       // Method 2: Infer from amount if reference_id doesn't specify
       if (!planType) {
-        if (amount === 100) planType = 'pro';
+        if (amount === 99) planType = 'pro';
         else if (amount === 999) planType = 'premium';
       }
       

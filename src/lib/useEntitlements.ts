@@ -17,13 +17,31 @@ export function useEntitlements() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    let isMounted = true;
+    
     (async () => {
       try {
         setLoading(true);
-        const { data: { user } } = await supabase.auth.getUser();
+        const { data: { user }, error: authError } = await supabase.auth.getUser();
+        
+        if (authError) {
+          console.error('❌ useEntitlements auth error:', 
+            authError.message || 'Unknown error',
+            '\nCode:', authError.code,
+            '\nFull error:', authError
+          );
+          if (isMounted) {
+            setData(null);
+            setLoading(false);
+          }
+          return;
+        }
+        
         if (!user) {
-          setData(null);
-          setLoading(false);
+          if (isMounted) {
+            setData(null);
+            setLoading(false);
+          }
           return;
         }
         
@@ -34,19 +52,23 @@ export function useEntitlements() {
           .eq('user_id', user.id)
           .maybeSingle();
         
-        if (fetchError) throw fetchError;
+        if (fetchError) {
+          console.error('❌ useEntitlements fetch error:', 
+            fetchError.message || 'Unknown error',
+            '\nCode:', fetchError.code,
+            '\nDetails:', fetchError.details,
+            '\nHint:', fetchError.hint,
+            '\nFull error:', fetchError
+          );
+          throw fetchError;
+        }
+        
+        if (!isMounted) return;
         
         if (userPlan) {
           // Check if plan is active
           const isActive = userPlan.is_active && (!userPlan.expires_at || new Date(userPlan.expires_at) > new Date());
           const plan = userPlan.plan || 'free';
-          
-          console.log('📊 useEntitlements:', {
-            plan,
-            isActive,
-            expires_at: userPlan.expires_at,
-            is_active: userPlan.is_active
-          });
           
           setData({
             user_id: user.id,
@@ -70,7 +92,15 @@ export function useEntitlements() {
           });
         }
       } catch (e: any) {
-        console.error('❌ useEntitlements error:', e);
+        if (!isMounted) return;
+        
+        console.error('❌ useEntitlements error:', 
+          e?.message || String(e),
+          '\nCode:', e?.code,
+          '\nDetails:', e?.details,
+          '\nHint:', e?.hint,
+          '\nFull error:', e
+        );
         setError(e?.message ?? String(e));
         // Fallback to free plan on error
         setData({
@@ -83,9 +113,15 @@ export function useEntitlements() {
           current_period_end: null,
         });
       } finally {
-        setLoading(false);
+        if (isMounted) {
+          setLoading(false);
+        }
       }
     })();
+    
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   return { 

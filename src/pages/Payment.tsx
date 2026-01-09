@@ -18,7 +18,7 @@ const Payment = () => {
   const { user } = useAuth();
 
   const planType = searchParams.get('plan') as 'pro' | 'premium' | null;
-  const amountMap = { pro: 1, premium: 999 } as const;
+  const amountMap = { pro: 99, premium: 999 } as const;
   const amount = planType ? amountMap[planType] : 0;
   const planName = planType === 'premium' ? 'Premium' : 'Pro';
 
@@ -82,8 +82,13 @@ const Payment = () => {
         throw new Error('No order returned');
       }
 
+      const razorpayKeyId = import.meta.env.VITE_RAZORPAY_KEY_ID;
+      if (!razorpayKeyId) {
+        throw new Error('Razorpay key not configured. Please contact support.');
+      }
+
       const options = {
-        key: import.meta.env.VITE_RAZORPAY_KEY_ID || "rzp_live_RrTZxtIPgH7zsH",
+        key: razorpayKeyId,
         amount: order.amount,
         currency: order.currency,
         name: "InvoiceFlow",
