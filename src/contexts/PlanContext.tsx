@@ -89,18 +89,21 @@ export const PlanProvider: React.FC<{ children: React.ReactNode }> = ({ children
       // If view query fails, fallback to direct table query
       if (error || !data) {
         console.warn('⚠️ View query failed, using direct table query');
+        // Use order and limit to get the latest plan if multiple exist (fixes duplicate row error)
         const fallbackPromise = supabase
           .from('user_plans')
           .select('*')
           .eq('user_id', user.id)
-          .maybeSingle();
+          .order('created_at', { ascending: false })
+          .limit(1);
 
         const fallbackResult = await Promise.race([
           fallbackPromise,
           new Promise((_, reject) => setTimeout(() => reject(new Error('Fallback timeout')), 3000))
         ]) as any;
 
-        data = fallbackResult.data;
+        // Extract first plan from array if multiple exist
+        data = fallbackResult.data && fallbackResult.data.length > 0 ? fallbackResult.data[0] : null;
         error = fallbackResult.error;
       }
 

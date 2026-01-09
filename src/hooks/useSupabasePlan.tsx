@@ -52,13 +52,15 @@ export const useSupabasePlan = () => {
 
     try {
       // First try to get existing plan (latest one)
-      const { data: existingPlan, error: fetchError } = await supabase
+      // Use order and limit to get the latest plan if multiple exist (fixes duplicate row error)
+      const { data: existingPlans, error: fetchError } = await supabase
         .from('user_plans')
         .select('*')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false })
-        .limit(1)
-        .maybeSingle();
+        .limit(1);
+      
+      const existingPlan = existingPlans && existingPlans.length > 0 ? existingPlans[0] : null;
 
       if (fetchError) {
         console.error('❌ Error fetching user plan:', {
