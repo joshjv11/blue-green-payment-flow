@@ -61,13 +61,13 @@ export const useSupabasePlan = () => {
         .maybeSingle();
 
       if (fetchError) {
-        console.error('❌ Error fetching user plan:',
-          fetchError.message || 'Unknown error',
-          '\nCode:', fetchError.code,
-          '\nDetails:', fetchError.details,
-          '\nHint:', fetchError.hint,
-          '\nFull error:', fetchError
-        );
+        console.error('❌ Error fetching user plan:', {
+          message: fetchError.message || 'Unknown error',
+          code: fetchError.code,
+          details: fetchError.details,
+          hint: fetchError.hint,
+          fullError: fetchError
+        });
         throw fetchError;
       }
 
@@ -78,13 +78,89 @@ export const useSupabasePlan = () => {
           .rpc('create_default_user_plan', { _user_id: user.id });
 
         if (rpcError) {
-          console.error('❌ Error creating default plan:',
-            rpcError.message || 'Unknown error',
-            '\nCode:', rpcError.code,
-            '\nDetails:', rpcError.details,
-            '\nHint:', rpcError.hint,
-            '\nFull error:', rpcError
-          );
+          console.error('❌ Error creating default plan:', {
+            message: rpcError.message || 'Unknown error',
+            code: rpcError.code,
+            details: rpcError.details,
+            hint: rpcError.hint,
+            fullError: rpcError
+          });
+          
+          // If RPC doesn't exist or fails, try direct insert instead
+          if (rpcError.code === '42883' || rpcError.code === '42501' || rpcError.message?.includes('does not exist') || rpcError.message?.includes('permission')) {
+            console.log('📊 RPC function failed, creating plan directly...');
+            try {
+              const { data: insertedPlan, error: insertError } = await supabase
+                .from('user_plans')
+                .insert({
+                  user_id: user.id,
+                  plan: 'free',
+                  ai_queries_used: 0,
+                  ai_queries_limit: 3,
+                  ai_queries_reset_date: new Date().toISOString().split('T')[0],
+                  is_active: true,
+                  started_at: new Date().toISOString(),
+                })
+                .select()
+                .single();
+              
+              if (insertError) {
+                // If insert also fails due to RLS, use upsert
+                if (insertError.code === '42501' || insertError.message?.includes('permission')) {
+                  console.log('📊 Insert failed due to RLS, trying upsert...');
+                  const { data: upsertedPlan, error: upsertError } = await supabase
+                    .from('user_plans')
+                    .upsert({
+                      user_id: user.id,
+                      plan: 'free',
+                      ai_queries_used: 0,
+                      ai_queries_limit: 3,
+                      ai_queries_reset_date: new Date().toISOString().split('T')[0],
+                      is_active: true,
+                      started_at: new Date().toISOString(),
+                    }, {
+                      onConflict: 'user_id'
+                    })
+                    .select()
+                    .single();
+                  
+                  if (upsertError) {
+                    console.error('❌ Error upserting plan:', {
+                      message: upsertError.message || 'Unknown error',
+                      code: upsertError.code,
+                      details: upsertError.details,
+                      hint: upsertError.hint,
+                      fullError: upsertError
+                    });
+                    throw upsertError;
+                  }
+                  
+                  console.log('✅ Plan upserted successfully');
+                  setUserPlan(upsertedPlan as SupabaseUserPlan);
+                  setLoading(false);
+                  return;
+                }
+                
+                console.error('❌ Error creating plan directly:', {
+                  message: insertError.message || 'Unknown error',
+                  code: insertError.code,
+                  details: insertError.details,
+                  hint: insertError.hint,
+                  fullError: insertError
+                });
+                throw insertError;
+              }
+              
+              console.log('✅ Plan created directly');
+              setUserPlan(insertedPlan as SupabaseUserPlan);
+              setLoading(false);
+              return;
+            } catch (directInsertError: any) {
+              console.error('❌ Direct insert also failed:', directInsertError);
+              throw directInsertError;
+            }
+          }
+          
           throw rpcError;
         }
 
@@ -96,13 +172,13 @@ export const useSupabasePlan = () => {
           .maybeSingle();
 
         if (newFetchError) {
-          console.error('❌ Error fetching new plan:',
-            newFetchError.message || 'Unknown error',
-            '\nCode:', newFetchError.code,
-            '\nDetails:', newFetchError.details,
-            '\nHint:', newFetchError.hint,
-            '\nFull error:', newFetchError
-          );
+          console.error('❌ Error fetching new plan:', {
+            message: newFetchError.message || 'Unknown error',
+            code: newFetchError.code,
+            details: newFetchError.details,
+            hint: newFetchError.hint,
+            fullError: newFetchError
+          });
           throw newFetchError;
         }
 
@@ -113,13 +189,13 @@ export const useSupabasePlan = () => {
         setUserPlan(existingPlan as SupabaseUserPlan);
       }
     } catch (error: any) {
-      console.error('❌ Failed to fetch user plan:',
-        error?.message || String(error),
-        '\nCode:', error?.code,
-        '\nDetails:', error?.details,
-        '\nHint:', error?.hint,
-        '\nFull error:', error
-      );
+      console.error('❌ Failed to fetch user plan:', {
+        message: error?.message || String(error),
+        code: error?.code,
+        details: error?.details,
+        hint: error?.hint,
+        fullError: error
+      });
 
       // Set a safe default plan to prevent crashes
       const defaultPlan = {
