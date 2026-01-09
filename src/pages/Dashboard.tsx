@@ -647,7 +647,7 @@ const Dashboard = () => {
                     </div>
                     <div>
                       <p className="text-xs uppercase tracking-wider text-muted-foreground mb-1">Current Plan</p>
-                      <p className={cn(
+                      <div className={cn(
                         "text-xl md:text-2xl font-bold capitalize",
                         (contextPlan === 'pro' || contextPlan === 'premium') && "pro-gradient-text"
                       )}>
@@ -656,7 +656,7 @@ const Dashboard = () => {
                         ) : (
                           contextPlan || plan || 'Free'
                         )}
-                      </p>
+                      </div>
                     </div>
                   </div>
                   {!(contextPlan === 'pro' || contextPlan === 'premium') && (

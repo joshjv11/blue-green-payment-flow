@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/lib/supabase';
+import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
 
 interface ExtractionResult {
@@ -22,10 +23,14 @@ interface InvoiceOCRUploaderProps {
 }
 
 export function InvoiceOCRUploader({ userId, onPrefill, onBillCreated }: InvoiceOCRUploaderProps) {
+  const { user } = useAuth();
   const [file, setFile] = useState<File | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [extractionResult, setExtractionResult] = useState<ExtractionResult | null>(null);
   const [error, setError] = useState<string | null>(null);
+  
+  // Use authenticated user ID to ensure RLS policy compliance
+  const authenticatedUserId = user?.id || userId;
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0];
@@ -59,9 +64,13 @@ export function InvoiceOCRUploader({ userId, onPrefill, onBillCreated }: Invoice
     setError(null);
 
     try {
-      // Generate unique filename
+      if (!authenticatedUserId) {
+        throw new Error('User not authenticated');
+      }
+
+      // Generate unique filename using authenticated user ID for RLS compliance
       const fileExt = file.name.split('.').pop();
-      const fileName = `${userId}/${Date.now()}.${fileExt}`;
+      const fileName = `${authenticatedUserId}/${Date.now()}.${fileExt}`;
 
       // Upload to Supabase Storage
       const { error: uploadError } = await supabase.storage
@@ -81,7 +90,7 @@ export function InvoiceOCRUploader({ userId, onPrefill, onBillCreated }: Invoice
       console.log('🚀 Calling extract-invoice-ocr edge function...', {
         bucket: 'receipts',
         path: fileName,
-        userId,
+        userId: authenticatedUserId,
         project: 'fbzfddgqfqjuvpjzvhfi'
       });
 
@@ -89,7 +98,7 @@ export function InvoiceOCRUploader({ userId, onPrefill, onBillCreated }: Invoice
         body: {
           bucket: 'receipts',
           path: fileName,
-          userId,
+          userId: authenticatedUserId,
           persist: true
         }
       });

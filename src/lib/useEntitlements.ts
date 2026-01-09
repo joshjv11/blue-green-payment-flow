@@ -46,11 +46,15 @@ export function useEntitlements() {
         }
         
         // Query user_plans table directly instead of view
-        const { data: userPlan, error: fetchError } = await supabase
+        // Use order and limit to get the latest plan if multiple exist
+        const { data: userPlans, error: fetchError } = await supabase
           .from('user_plans')
           .select('*')
           .eq('user_id', user.id)
-          .maybeSingle();
+          .order('created_at', { ascending: false })
+          .limit(1);
+        
+        const userPlan = userPlans && userPlans.length > 0 ? userPlans[0] : null;
         
         if (fetchError) {
           console.error('❌ useEntitlements fetch error:', {
