@@ -112,7 +112,13 @@ export const PlanProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return data;
 
     } catch (error: any) {
-      console.error('❌ Plan fetch error:', error);
+      console.error('❌ Plan fetch error:', {
+        message: error?.message || String(error),
+        code: error?.code,
+        details: error?.details,
+        hint: error?.hint,
+        fullError: error ? JSON.stringify(error, Object.getOwnPropertyNames(error), 2) : 'No error object'
+      });
 
       // Serve stale data if available
       if (cached && now - cached.timestamp < STALE_TTL) {
@@ -186,7 +192,13 @@ export const PlanProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
 
     } catch (error: any) {
-      console.error('❌ Failed to refresh plan:', error);
+      console.error('❌ Failed to refresh plan:', {
+        message: error?.message || String(error),
+        code: error?.code,
+        details: error?.details,
+        hint: error?.hint,
+        fullError: error ? JSON.stringify(error, Object.getOwnPropertyNames(error), 2) : 'No error object'
+      });
       
       // Set safe defaults
       setPlan('free');

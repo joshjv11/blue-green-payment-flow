@@ -25,11 +25,11 @@ export function useEntitlements() {
         const { data: { user }, error: authError } = await supabase.auth.getUser();
         
         if (authError) {
-          console.error('❌ useEntitlements auth error:', 
-            authError.message || 'Unknown error',
-            '\nCode:', authError.code,
-            '\nFull error:', authError
-          );
+          console.error('❌ useEntitlements auth error:', {
+            message: authError.message || 'Unknown error',
+            code: authError.code,
+            fullError: JSON.stringify(authError, Object.getOwnPropertyNames(authError), 2)
+          });
           if (isMounted) {
             setData(null);
             setLoading(false);
@@ -53,13 +53,13 @@ export function useEntitlements() {
           .maybeSingle();
         
         if (fetchError) {
-          console.error('❌ useEntitlements fetch error:', 
-            fetchError.message || 'Unknown error',
-            '\nCode:', fetchError.code,
-            '\nDetails:', fetchError.details,
-            '\nHint:', fetchError.hint,
-            '\nFull error:', fetchError
-          );
+          console.error('❌ useEntitlements fetch error:', {
+            message: fetchError.message || 'Unknown error',
+            code: fetchError.code,
+            details: fetchError.details,
+            hint: fetchError.hint,
+            fullError: JSON.stringify(fetchError, Object.getOwnPropertyNames(fetchError), 2)
+          });
           throw fetchError;
         }
         
@@ -94,13 +94,13 @@ export function useEntitlements() {
       } catch (e: any) {
         if (!isMounted) return;
         
-        console.error('❌ useEntitlements error:', 
-          e?.message || String(e),
-          '\nCode:', e?.code,
-          '\nDetails:', e?.details,
-          '\nHint:', e?.hint,
-          '\nFull error:', e
-        );
+        console.error('❌ useEntitlements error:', {
+          message: e?.message || String(e),
+          code: e?.code,
+          details: e?.details,
+          hint: e?.hint,
+          fullError: e ? JSON.stringify(e, Object.getOwnPropertyNames(e), 2) : 'No error object'
+        });
         setError(e?.message ?? String(e));
         // Fallback to free plan on error
         setData({

@@ -73,12 +73,12 @@ const UPIPaymentModal = ({ open, onOpenChange, plan }: UPIPaymentModalProps) => 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    console.log('🏦 Submitting payment details:', { 
-      userPhone, 
-      transactionId, 
+    console.log('🏦 Submitting payment details:', {
+      userPhone,
+      transactionId,
       plan: currentPlan.name,
       amount: currentPlan.amount,
-      user: user?.email 
+      user: user?.email
     });
     
     if (!user || !transactionId.trim() || !userPhone.trim()) {
