@@ -53,10 +53,15 @@ function getSupabaseClient() {
 
   supabaseInstance = createClient<Database>(PGRST_URL, PGRST_ANON_KEY, {
     auth: {
-      // Auth is handled by our custom Express server — disable built-in Supabase auth.
+      // Auth is handled by our custom Express server — disable ALL built-in Supabase auth.
+      // storageKey uses a different prefix so the SDK never picks up old
+      // sb-fbzfddgqfqjuvpjzvhfi-auth-token values sitting in localStorage
+      // from the previous Supabase project, which were causing the
+      // _callRefreshToken → ERR_NAME_NOT_RESOLVED loop.
       persistSession: false,
       autoRefreshToken: false,
       detectSessionInUrl: false,
+      storageKey: 'pgrst-client-auth',
     },
     global: {
       fetch: async (url: RequestInfo | URL, options?: RequestInit) => {
