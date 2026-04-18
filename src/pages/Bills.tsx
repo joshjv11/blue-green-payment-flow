@@ -158,57 +158,7 @@ const Bills = () => {
       trackFeatureUsage('bills', 'view');
       fetchBills();
 
-      // Set up real-time subscription for bills
-      const billsChannel = supabase
-        .channel(`bills-changes-${user.id}`)
-        .on(
-          'postgres_changes',
-          {
-            event: '*',
-            schema: 'public',
-            table: 'bills',
-            filter: `user_id=eq.${user.id}`
-          },
-          (payload) => {
-            console.log('📋 Real-time bill update:', payload);
-            
-            if (payload.eventType === 'INSERT') {
-              // Add new bill to state
-              setBills(prev => {
-                const exists = prev.find(b => b.id === payload.new.id);
-                if (exists) return prev;
-                return [payload.new as Bill, ...prev].sort((a, b) => 
-                  new Date(a.due_date).getTime() - new Date(b.due_date).getTime()
-                );
-              });
-              
-              toast({
-                title: "Bill Added",
-                description: `${(payload.new as Bill).name} was added`,
-              });
-            } else if (payload.eventType === 'UPDATE') {
-              // Update existing bill in state
-              setBills(prev => prev.map(bill => 
-                bill.id === payload.new.id ? payload.new as Bill : bill
-              ).sort((a, b) => 
-                new Date(a.due_date).getTime() - new Date(b.due_date).getTime()
-              ));
-            } else if (payload.eventType === 'DELETE') {
-              // Remove deleted bill from state
-              setBills(prev => prev.filter(bill => bill.id !== payload.old.id));
-              
-              toast({
-                title: "Bill Deleted",
-                description: "Bill was removed",
-              });
-            }
-          }
-        )
-        .subscribe();
-
-      return () => {
-        supabase.removeChannel(billsChannel);
-      };
+      // PostgREST has no realtime WebSocket support; mutations refresh state directly.
     }
   }, [user]);
 

@@ -98,26 +98,9 @@ export const usePremiumStatus = (): PremiumStatus => {
 
     fetchPremiumStatus();
 
-    // Set up realtime subscription for plan changes
-    const channel = supabase
-      .channel('premium-status-changes')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'user_plans',
-          filter: `user_id=eq.${user.id}`,
-        },
-        () => {
-          fetchPremiumStatus();
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
+    // Poll every 60 s — PostgREST has no realtime WebSocket support.
+    const interval = setInterval(fetchPremiumStatus, 60_000);
+    return () => clearInterval(interval);
   }, [user]);
 
   return status;

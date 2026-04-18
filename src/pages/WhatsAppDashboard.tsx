@@ -61,52 +61,7 @@ export default function WhatsAppDashboard() {
     if (user) {
       loadData();
       
-      // Set up Realtime subscription for WhatsApp message status updates
-      const messagesChannel = supabase
-        .channel('whatsapp-messages-changes')
-        .on(
-          'postgres_changes',
-          {
-            event: '*',
-            schema: 'public',
-            table: 'whatsapp_messages',
-            filter: `user_id=eq.${user.id}`
-          },
-          (payload) => {
-            console.log('WhatsApp message update:', payload);
-            
-            if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
-              // Update the message in state
-              setWhatsappMessages(prev => {
-                const existing = prev.find(m => m.id === payload.new.id);
-                if (existing) {
-                  // Update existing
-                  return prev.map(m => m.id === payload.new.id ? payload.new as WhatsAppMessage : m);
-                } else {
-                  // Add new
-                  return [payload.new as WhatsAppMessage, ...prev].slice(0, 20);
-                }
-              });
-              
-              // Show toast for status changes
-              if (payload.eventType === 'UPDATE' && payload.old.status !== payload.new.status) {
-                const status = (payload.new as any).status;
-                if (status === 'sent' || status === 'delivered') {
-                  toast.success(`Message ${status} successfully`);
-                } else if (status === 'failed') {
-                  toast.error('Message failed to send');
-                }
-              }
-            } else if (payload.eventType === 'DELETE') {
-              setWhatsappMessages(prev => prev.filter(m => m.id !== payload.old.id));
-            }
-          }
-        )
-        .subscribe();
-
-      return () => {
-        supabase.removeChannel(messagesChannel);
-      };
+      // PostgREST has no realtime WebSocket support; loadData() is called after each mutation.
     }
   }, [user]);
 

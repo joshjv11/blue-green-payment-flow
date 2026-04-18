@@ -23,23 +23,8 @@ const ConnectionStatus = () => {
     // Set up connection monitoring
     const interval = setInterval(checkConnection, 30000); // Check every 30 seconds
 
-    // Listen for Supabase realtime connection changes
-    const subscription = supabase.channel('connection-status')
-      .on('presence', { event: 'sync' }, () => {
-        setConnectionState('connected');
-        setRetryCount(0);
-      })
-      .subscribe((status) => {
-        if (status === 'SUBSCRIBED') {
-          setConnectionState('connected');
-        } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
-          setConnectionState('error');
-        }
-      });
-
     return () => {
       clearInterval(interval);
-      supabase.removeChannel(subscription);
     };
   }, []);
 

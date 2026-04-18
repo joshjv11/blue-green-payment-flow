@@ -58,47 +58,7 @@ const Expenses = () => {
     if (user) {
       fetchExpenses();
 
-      // Set up real-time subscription for expenses
-      const expensesChannel = supabase
-        .channel(`expenses-changes-${user.id}`)
-        .on(
-          'postgres_changes',
-          {
-            event: '*',
-            schema: 'public',
-            table: 'expenses',
-            filter: `user_id=eq.${user.id}`
-          },
-          (payload) => {
-            console.log('💰 Real-time expense update:', payload);
-            
-            if (payload.eventType === 'INSERT') {
-              // Add new expense to state
-              setExpenses(prev => {
-                const exists = prev.find(e => e.id === payload.new.id);
-                if (exists) return prev;
-                return [payload.new as Expense, ...prev].sort((a, b) => 
-                  new Date(b.date).getTime() - new Date(a.date).getTime()
-                );
-              });
-            } else if (payload.eventType === 'UPDATE') {
-              // Update existing expense in state
-              setExpenses(prev => prev.map(expense => 
-                expense.id === payload.new.id ? payload.new as Expense : expense
-              ).sort((a, b) => 
-                new Date(b.date).getTime() - new Date(a.date).getTime()
-              ));
-            } else if (payload.eventType === 'DELETE') {
-              // Remove deleted expense from state
-              setExpenses(prev => prev.filter(expense => expense.id !== payload.old.id));
-            }
-          }
-        )
-        .subscribe();
-
-      return () => {
-        supabase.removeChannel(expensesChannel);
-      };
+      // PostgREST has no realtime WebSocket support; mutations refresh state directly.
     }
   }, [user]);
 
