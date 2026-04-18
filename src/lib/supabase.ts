@@ -22,16 +22,21 @@ const getEnvVar = (name: string): string | undefined => {
   return undefined;
 };
 
-// PostgREST URL — must be set via VITE_PGRST_URL environment variable.
-// No fallback to any Supabase URL; a missing var will log a clear error.
+// PostgREST URL.
+// Production on Netlify: use the built-in Netlify proxy at /pgrst (no CORS issues, no external server needed).
+// Anywhere else: fall back to VITE_PGRST_URL env var.
 const PGRST_URL = (() => {
+  // On Netlify, window.location.hostname ends with .netlify.app or the custom domain.
+  // Use the same-origin proxy path — Netlify rewrites /pgrst/* → PostgREST.
+  if (typeof window !== 'undefined' &&
+      (window.location.hostname.includes('netlify.app') ||
+       window.location.hostname === 'invoiceflow.dev' ||
+       window.location.hostname === 'www.invoiceflow.dev')) {
+    return window.location.origin + '/pgrst';
+  }
   const url = getEnvVar('VITE_PGRST_URL');
   if (!url) {
-    console.error(
-      '❌ VITE_PGRST_URL is not set. ' +
-      'Add it to your Vercel environment variables and redeploy. ' +
-      'DB queries will fail until this is configured.'
-    );
+    console.error('❌ VITE_PGRST_URL is not set. DB queries will fail.');
     return '';
   }
   return url;
