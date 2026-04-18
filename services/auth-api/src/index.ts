@@ -754,4 +754,5 @@ app.use('/db', async (req: Request, res: Response) => {
 const port = Number(process.env.PORT || 8787);
 app.listen(port, () => {
   console.log(`Auth/Storage API running on :${port}`);
+  console.log(`PostgREST proxy: ${POSTGREST_INTERNAL_URL ? POSTGREST_INTERNAL_URL : 'NOT CONFIGURED — set POSTGREST_URL'}`);
 });
