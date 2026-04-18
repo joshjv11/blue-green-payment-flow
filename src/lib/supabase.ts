@@ -65,17 +65,23 @@ function getSupabaseClient() {
     },
     global: {
       fetch: async (url: RequestInfo | URL, options?: RequestInit) => {
+        // supabase-js appends /rest/v1/ because it assumes a Supabase/Kong gateway.
+        // Raw PostgREST serves tables directly at /, so strip the prefix.
+        let reqUrl = url.toString();
+        if (reqUrl.includes('/rest/v1/')) {
+          reqUrl = reqUrl.replace('/rest/v1/', '/');
+        }
+
         // Inject our custom JWT so PostgREST RLS policies still work.
         const token =
           typeof window !== 'undefined'
             ? window.localStorage.getItem('invoiceflow_jwt')
             : null;
+        const headers = new Headers(options?.headers);
         if (token) {
-          const headers = new Headers(options?.headers);
           headers.set('Authorization', `Bearer ${token}`);
-          options = { ...options, headers };
         }
-        return fetch(url, options);
+        return fetch(reqUrl, { ...options, headers });
       },
     },
   });
