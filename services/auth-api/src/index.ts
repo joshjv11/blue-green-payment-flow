@@ -684,6 +684,70 @@ Current context: ${context || 'General bill management assistance'}`;
 });
 
 // ---------------------------------------------------------------------------
+// ROUTE: PostgREST proxy
+//
+// The browser cannot call PostgREST directly because PostgREST doesn't send
+// CORS headers for cross-origin requests. This transparent proxy solves that:
+// the browser talks to THIS server (CORS enabled), and we forward the request
+// to PostgREST on Render's internal network.
+//
+// Frontend: set VITE_PGRST_URL = https://<this-service>.onrender.com/db
+// Render:   set POSTGREST_URL  = https://invoiceflow-postgrest.onrender.com
+// ---------------------------------------------------------------------------
+
+const POSTGREST_INTERNAL_URL = (process.env.POSTGREST_URL || '').replace(/\/$/, '');
+
+app.use('/db', async (req: Request, res: Response) => {
+  if (!POSTGREST_INTERNAL_URL) {
+    res.status(500).json({ error: 'POSTGREST_URL is not configured on the server.' });
+    return;
+  }
+
+  // req.url already contains the path + query string relative to /db
+  const targetUrl = `${POSTGREST_INTERNAL_URL}${req.url}`;
+
+  try {
+    const forwardHeaders: Record<string, string> = {};
+
+    // Forward the JWT so PostgREST RLS policies still apply
+    const auth = req.headers.authorization;
+    if (auth) forwardHeaders['Authorization'] = auth;
+
+    // PostgREST-specific request headers
+    const prefer = req.headers['prefer'];
+    if (prefer) forwardHeaders['Prefer'] = prefer as string;
+
+    const accept = req.headers['accept'];
+    if (accept) forwardHeaders['Accept'] = accept as string;
+
+    if (['POST', 'PATCH', 'PUT'].includes(req.method)) {
+      forwardHeaders['Content-Type'] = 'application/json';
+    }
+
+    const pgResponse = await fetch(targetUrl, {
+      method: req.method,
+      headers: forwardHeaders,
+      body: ['POST', 'PATCH', 'PUT'].includes(req.method)
+        ? JSON.stringify(req.body)
+        : undefined,
+    });
+
+    // Forward PostgREST metadata headers the client may need
+    const contentRange = pgResponse.headers.get('content-range');
+    if (contentRange) res.setHeader('Content-Range', contentRange);
+
+    const contentType = pgResponse.headers.get('content-type');
+    if (contentType) res.setHeader('Content-Type', contentType);
+
+    const text = await pgResponse.text();
+    res.status(pgResponse.status).send(text);
+  } catch (err: any) {
+    console.error('PostgREST proxy error:', err);
+    res.status(502).json({ error: 'Failed to reach PostgREST: ' + err.message });
+  }
+});
+
+// ---------------------------------------------------------------------------
 // Start
 // ---------------------------------------------------------------------------
 
