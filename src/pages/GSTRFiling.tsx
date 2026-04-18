@@ -206,14 +206,20 @@ export default function GSTRFiling() {
   const handleReconcileITC = async () => {
     setLoading(true);
     try {
-      const { data, error } = await supabase.functions.invoke('reconcile-itc', {
-        body: {
-          period: selectedPeriod || undefined,
-          auto_download_form2a: true,
+      const API_BASE = (import.meta as any).env?.VITE_API_BASE || 'http://localhost:8787';
+      const token = localStorage.getItem('invoiceflow_jwt');
+      const apiRes = await fetch(`${API_BASE}/api/reconcile-itc`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
+        body: JSON.stringify({ period: selectedPeriod || undefined, auto_download_form2a: true }),
       });
+      const data = await apiRes.json();
+      const error = apiRes.ok ? null : data;
 
-      if (error) throw error;
+      if (error) throw new Error(error?.error || 'Reconciliation failed');
 
       if (data.success) {
         toast({

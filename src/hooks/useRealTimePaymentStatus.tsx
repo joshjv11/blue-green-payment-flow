@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useAuth } from './useAuth';
 import { supabase } from '@/lib/supabase';
 import { useToast } from './use-toast';
@@ -15,6 +15,7 @@ export const useRealTimePaymentStatus = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
+  const welcomeShownRef = useRef(false);
   const [paymentStatus, setPaymentStatus] = useState<PaymentStatus>({
     hasPendingPayments: false,
     hasVerifiedPayments: false,
@@ -44,18 +45,17 @@ export const useRealTimePaymentStatus = () => {
           pendingCount: pending.length,
         });
 
-        // Handle newly verified payments
-        if (verified.length > 0) {
+        // Handle newly verified payments — show welcome toast only once per session
+        if (verified.length > 0 && !welcomeShownRef.current) {
+          welcomeShownRef.current = true;
           console.log('🎉 Found newly verified payments:', verified.length);
-          
-          // Show welcome message
+
           toast({
             title: "🎉 Payment Verified!",
             description: "Welcome to Pro! All features are now unlocked.",
             duration: 8000,
           });
 
-          // Navigate to dashboard with welcome flag
           setTimeout(() => {
             navigate('/dashboard?welcome=pro');
           }, 2000);
@@ -75,26 +75,9 @@ export const useRealTimePaymentStatus = () => {
     // Initial fetch
     fetchPaymentStatus();
 
-    // Set up real-time subscription
-    const subscription = supabase
-      .channel(`payment_status_${user.id}`)
-      .on('postgres_changes', 
-        { 
-          event: '*', 
-          schema: 'public', 
-          table: 'payment_transactions',
-          filter: `user_id=eq.${user.id}`
-        }, 
-        (payload) => {
-          console.log('💳 Real-time payment update:', payload);
-          fetchPaymentStatus();
-        }
-      )
-      .subscribe();
-
-    return () => {
-      subscription.unsubscribe();
-    };
+    // Poll every 10 seconds for payment status updates
+    const interval = setInterval(fetchPaymentStatus, 10_000);
+    return () => clearInterval(interval);
   }, [user, toast, navigate]);
 
   return paymentStatus;

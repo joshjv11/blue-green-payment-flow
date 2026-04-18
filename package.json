@@ -31,7 +31,8 @@
     "dev:postgrest": "docker compose -f scripts/postgrest/docker-compose.yml --env-file scripts/postgrest/.env.postgrest up",
     "dev:postgrest:detached": "docker compose -f scripts/postgrest/docker-compose.yml --env-file scripts/postgrest/.env.postgrest up -d",
     "dev:stack": "concurrently -c \"cyan,magenta,green\" -n postgrest,auth,web \"npm run dev:postgrest\" \"npm run dev:auth\" \"npm run dev:web\"",
-    "smoke": "node scripts/smoke.mjs"
+    "smoke": "node scripts/smoke.mjs",
+    "ingest": "mkdir -p .ai-context && gitingest . --exclude .ai-context,node_modules,dist,.git -o .ai-context/invoiceflow-context.md"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.12.1",

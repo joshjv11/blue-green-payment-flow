@@ -197,38 +197,24 @@ export default function GSTDashboard() {
   const handleQuickITCReconciliation = async () => {
     setItcStatus('running');
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        throw new Error('Not authenticated');
-      }
+      const API_BASE = (import.meta as any).env?.VITE_API_BASE || 'http://localhost:8787';
+      const token = localStorage.getItem('invoiceflow_jwt');
 
-      let responseData: any = null;
-      let responseError: any = null;
-      
-      try {
-        const result = await supabase.functions.invoke('reconcile-itc', {
-          body: {
-            period: new Date().toISOString().slice(0, 7), // Current month
-            auto_download_form2a: true,
-          },
-        });
-        responseData = result.data;
-        responseError = result.error;
-      } catch (invokeError: any) {
-        // If invoke throws, it might have response data
-        console.error('Invoke exception:', invokeError);
-        responseError = invokeError;
-        // Try to extract response body if available
-        if (invokeError.response) {
-          try {
-            responseData = await invokeError.response.json();
-          } catch (_) {
-            // Ignore JSON parse errors
-          }
-        }
-      }
-      
-      const { data, error } = { data: responseData, error: responseError };
+      const apiRes = await fetch(`${API_BASE}/api/reconcile-itc`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({
+          period: new Date().toISOString().slice(0, 7),
+          auto_download_form2a: true,
+        }),
+      });
+
+      const responseData = await apiRes.json();
+      const responseError = apiRes.ok ? null : responseData;
+      const { data, error } = { data: apiRes.ok ? responseData : null, error: responseError };
 
       // Check if data has error field (functions often return error in data even with non-2xx)
       if (data?.error) {

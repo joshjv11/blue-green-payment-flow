@@ -138,21 +138,30 @@ export const ReceiptUpload = ({ onClose, onSuccess }: ReceiptUploadProps) => {
       setUploading(true);
       let attachmentUrl = null;
 
-      // Upload file to storage if exists
+      // Upload file to Cloudflare R2 via presigned URL
       if (file) {
-        const fileExt = file.name.split('.').pop();
-        const fileName = `${user!.id}/${Date.now()}.${fileExt}`;
-        
-        const { error: uploadError } = await supabase.storage
-          .from('receipts')
-          .upload(fileName, file);
+        const API_BASE = (import.meta as any).env?.VITE_API_BASE || 'http://localhost:8787';
+        const token = localStorage.getItem('invoiceflow_jwt');
 
-        if (uploadError) throw uploadError;
+        const signRes = await fetch(`${API_BASE}/storage/sign-upload`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
+          body: JSON.stringify({ fileName: file.name, contentType: file.type }),
+        });
 
-        const { data: { publicUrl } } = supabase.storage
-          .from('receipts')
-          .getPublicUrl(fileName);
-        
+        if (!signRes.ok) throw new Error('Failed to get upload URL');
+        const { uploadUrl, publicUrl } = await signRes.json();
+
+        const uploadRes = await fetch(uploadUrl, {
+          method: 'PUT',
+          headers: { 'Content-Type': file.type },
+          body: file,
+        });
+
+        if (!uploadRes.ok) throw new Error('File upload to storage failed');
         attachmentUrl = publicUrl;
       }
 

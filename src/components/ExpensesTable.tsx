@@ -60,13 +60,25 @@ export const ExpensesTable = ({ expenses, loading, onRefresh }: ExpensesTablePro
     try {
       setDeleting(true);
       
-      // Get expense to delete attachment
+      // Delete attachment from R2 storage if present
       const expense = expenses.find(e => e.id === deleteId);
       if (expense?.attachment_url) {
-        // Extract file path from URL and delete from storage
-        const fileName = expense.attachment_url.split('/').pop();
-        if (fileName) {
-          await supabase.storage.from('receipts').remove([fileName]);
+        try {
+          const API_BASE = (import.meta as any).env?.VITE_API_BASE || 'http://localhost:8787';
+          const token = localStorage.getItem('invoiceflow_jwt');
+          // Extract the storage key from the URL (everything after the bucket domain)
+          const urlObj = new URL(expense.attachment_url);
+          const filePath = urlObj.pathname.slice(1); // remove leading '/'
+          await fetch(`${API_BASE}/storage/delete`, {
+            method: 'DELETE',
+            headers: {
+              'Content-Type': 'application/json',
+              ...(token ? { Authorization: `Bearer ${token}` } : {}),
+            },
+            body: JSON.stringify({ filePath }),
+          });
+        } catch {
+          // Non-critical: continue with DB delete even if storage delete fails
         }
       }
 

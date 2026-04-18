@@ -44,26 +44,9 @@ const PaymentStatusTracker = () => {
 
     fetchPayments();
 
-    // Subscribe to real-time updates
-    const subscription = supabase
-      .channel('payment_updates')
-      .on('postgres_changes', 
-        { 
-          event: '*', 
-          schema: 'public', 
-          table: 'payment_transactions',
-          filter: `user_id=eq.${user.id}`
-        }, 
-        (payload) => {
-          console.log('💳 Payment update received:', payload);
-          fetchPayments(); // Refresh payments when status changes
-        }
-      )
-      .subscribe();
-
-    return () => {
-      subscription.unsubscribe();
-    };
+    // Poll every 10 seconds for payment status updates
+    const interval = setInterval(fetchPayments, 10_000);
+    return () => clearInterval(interval);
   }, [user]);
 
   const getStatusIcon = (status: string) => {

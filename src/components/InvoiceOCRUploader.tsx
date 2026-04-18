@@ -3,7 +3,6 @@ import { Upload, FileText, Loader2, CheckCircle2, XCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
 
@@ -68,51 +67,53 @@ export function InvoiceOCRUploader({ userId, onPrefill, onBillCreated }: Invoice
         throw new Error('User not authenticated');
       }
 
-      // Generate unique filename using authenticated user ID for RLS compliance
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${authenticatedUserId}/${Date.now()}.${fileExt}`;
+      // Upload to Cloudflare R2 via presigned URL
+      const API_BASE = (import.meta as any).env?.VITE_API_BASE || 'http://localhost:8787';
+      const token = localStorage.getItem('invoiceflow_jwt');
 
-      // Upload to Supabase Storage
-      const { error: uploadError } = await supabase.storage
-        .from('receipts')
-        .upload(fileName, file, {
-          cacheControl: '3600',
-          upsert: false
-        });
+      const signRes = await fetch(`${API_BASE}/storage/sign-upload`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({ fileName: file.name, contentType: file.type }),
+      });
 
-      if (uploadError) {
-        throw new Error(`Upload failed: ${uploadError.message}`);
-      }
+      if (!signRes.ok) throw new Error('Failed to get upload URL');
+      const { uploadUrl, publicUrl: storedUrl, filePath } = await signRes.json();
 
+      const uploadRes = await fetch(uploadUrl, {
+        method: 'PUT',
+        headers: { 'Content-Type': file.type },
+        body: file,
+      });
+
+      if (!uploadRes.ok) throw new Error('File upload to storage failed');
       toast.success('File uploaded successfully');
 
-      // Call OCR edge function with detailed logging
-      console.log('🚀 Calling extract-invoice-ocr edge function...', {
-        bucket: 'receipts',
-        path: fileName,
-        userId: authenticatedUserId,
-        project: 'fbzfddgqfqjuvpjzvhfi'
-      });
+      // Call OCR API endpoint
+      console.log('🚀 Calling extract-invoice-ocr API...', { filePath, userId: authenticatedUserId });
 
-      const { data, error: functionError } = await supabase.functions.invoke('extract-invoice-ocr', {
-        body: {
-          bucket: 'receipts',
-          path: fileName,
+      const ocrRes = await fetch(`${API_BASE}/api/extract-invoice-ocr`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({
+          publicUrl: storedUrl,
+          filePath,
           userId: authenticatedUserId,
-          persist: true
-        }
+          persist: true,
+        }),
       });
 
-      console.log('📦 Edge function response:', { data, error: functionError });
+      const data = await ocrRes.json();
+      console.log('📦 OCR API response:', data);
 
-      if (functionError) {
-        console.error('❌ Edge function error details:', {
-          message: functionError.message,
-          name: functionError.name,
-          stack: functionError.stack,
-          context: functionError.context
-        });
-        throw new Error(`OCR failed: ${functionError.message || 'Edge function not reachable'}`);
+      if (!ocrRes.ok) {
+        throw new Error(`OCR failed: ${data.error || 'API not reachable'}`);
       }
 
       console.log('✅ OCR Response:', data);

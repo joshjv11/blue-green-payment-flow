@@ -1,7 +1,22 @@
 import { createContext, useContext, useEffect, useState } from 'react';
-import { User, Session, AuthChangeEvent } from '@supabase/supabase-js';
-import { supabase, isSupabaseConfigured } from '@/lib/supabase';
+import { supabase } from '@/lib/supabase';
+import type { AppUser } from '@/lib/supabase';
 import { useToast } from '@/hooks/use-toast';
+
+// ---------------------------------------------------------------------------
+// Local types (replaces @supabase/supabase-js User / Session)
+// ---------------------------------------------------------------------------
+
+export interface User extends AppUser {}
+
+export interface Session {
+  access_token: string;
+  user: User;
+}
+
+// ---------------------------------------------------------------------------
+// Context
+// ---------------------------------------------------------------------------
 
 interface AuthContextType {
   user: User | null;
@@ -17,175 +32,108 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+
+const API_BASE = (() => {
+  try {
+    return (import.meta as any).env?.VITE_API_BASE as string || 'http://localhost:8787';
+  } catch {
+    return 'http://localhost:8787';
+  }
+})();
+
+function saveSession(token: string, user: User) {
+  localStorage.setItem('invoiceflow_jwt', token);
+  localStorage.setItem('invoiceflow_user', JSON.stringify(user));
+}
+
+function clearSession() {
+  localStorage.removeItem('invoiceflow_jwt');
+  localStorage.removeItem('invoiceflow_user');
+}
+
+function loadSession(): { token: string; user: User } | null {
+  const token = localStorage.getItem('invoiceflow_jwt');
+  const raw = localStorage.getItem('invoiceflow_user');
+  if (!token || !raw) return null;
+  try {
+    const user: User = JSON.parse(raw);
+    // Basic JWT expiry check (without a library)
+    const payload = JSON.parse(atob(token.split('.')[1]));
+    if (payload.exp && payload.exp * 1000 < Date.now()) {
+      clearSession();
+      return null;
+    }
+    return { token, user };
+  } catch {
+    return null;
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Provider
+// ---------------------------------------------------------------------------
+
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
 
+  // On mount: restore session from localStorage
   useEffect(() => {
-    console.log('🔐 Auth: Initializing Supabase auth state management...');
-    
-    // Helper function to handle profile creation (deferred to prevent auth deadlock)
-    const handleNewUserProfileCreation = async (user: User) => {
-      try {
-        const { data: existingProfile } = await supabase
-          .from('profiles')
-          .select('id')
-          .eq('id', user.id)
-          .single();
-
-        if (!existingProfile) {
-          console.log('👤 Creating profile for new user:', user.email);
-          const { error: profileError } = await supabase
-            .from('profiles')
-            .insert({
-              id: user.id,
-              email: user.email!,
-              full_name: user.user_metadata?.full_name || user.user_metadata?.name || null,
-              company: user.user_metadata?.company || null,
-              avatar_url: user.user_metadata?.avatar_url || user.user_metadata?.picture || null,
-            });
-          
-          if (profileError) {
-            console.warn('⚠️ Profile creation error:', profileError);
-          } else {
-            console.log('✅ Profile created successfully');
-            
-            // Add sample data for new users
-            try {
-              console.log('📊 Adding sample data for new user');
-              const { error: seedError } = await supabase.rpc('add_sample_data_for_user', {
-                target_user_id: user.id
-              });
-              
-              if (seedError) {
-                console.error('❌ Error adding sample data:', seedError);
-              } else {
-                console.log('✅ Sample data added successfully');
-              }
-            } catch (seedError) {
-              console.error('❌ Error calling sample data function:', seedError);
-            }
-          }
-        } else {
-          console.log('👤 Existing user, profile already exists');
-        }
-      } catch (error) {
-        console.error('❌ Error handling profile:', error);
-      }
-    };
-    
-    // Set up auth state listener FIRST to catch all events
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event: AuthChangeEvent, session: Session | null) => {
-        console.log('🔐 Auth state changed:', event, session?.user?.email || 'No user');
-        
-        // CRITICAL: Only synchronous updates here to prevent infinite loops
-        setSession(session);
-        setUser(session?.user ?? null);
-        setLoading(false);
-        
-        // Handle different auth events
-        switch (event) {
-          case 'SIGNED_IN':
-            console.log('✅ User signed in successfully');
-            
-            // Defer async DB operations to prevent deadlock in auth callback
-            if (session?.user) {
-              setTimeout(() => {
-                handleNewUserProfileCreation(session.user);
-              }, 0);
-            }
-            break;
-            
-          case 'SIGNED_OUT':
-            console.log('👋 User signed out');
-            break;
-            
-          case 'TOKEN_REFRESHED':
-            console.log('🔄 Token refreshed successfully');
-            break;
-            
-          default:
-            console.log('🔐 Auth event:', event);
-        }
-      }
-    );
-
-    // THEN check for existing session immediately
-    supabase.auth.getSession().then(({ data: { session }, error }) => {
-      if (error) {
-        console.error('❌ Error getting initial session:', error);
-        setSession(null);
-        setUser(null);
-      } else {
-        console.log('🔐 Initial session check:', session?.user?.email || 'No session found');
-        setSession(session);
-        setUser(session?.user ?? null);
-      }
-      setLoading(false);
-    });
-
-    // Cleanup subscription on unmount
-    return () => {
-      console.log('🔐 Cleaning up auth subscription');
-      subscription.unsubscribe();
-    };
+    console.log('🔐 Auth: Restoring session from localStorage...');
+    const saved = loadSession();
+    if (saved) {
+      console.log('🔐 Session restored for:', saved.user.email);
+      setUser(saved.user);
+      setSession({ access_token: saved.token, user: saved.user });
+    } else {
+      console.log('🔐 No valid session found');
+    }
+    setLoading(false);
   }, []);
 
-  const signUp = async (email: string, password: string, fullName?: string, company?: string) => {
+  const signUp = async (email: string, password: string, fullName?: string, company?: string): Promise<{ session: Session | null; requiresEmailConfirmation: boolean }> => {
     try {
       setLoading(true);
       console.log('🔐 Attempting signup for:', email);
-      
-      const redirectUrl = `${window.location.origin}/`;
-      
-      const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          emailRedirectTo: redirectUrl,
-          data: {
-            full_name: fullName,
-            company: company,
-          }
-        }
+
+      const res = await fetch(`${API_BASE}/auth/signup`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password, full_name: fullName, company }),
       });
 
-      if (error) {
-        console.error('❌ Signup error:', error);
-        throw error;
+      const data = await res.json();
+
+      if (!res.ok) {
+        const message = data.error || 'Failed to create account. Please try again.';
+        toast({ title: 'Error creating account', description: message, variant: 'destructive' });
+        throw new Error(message);
       }
 
-      console.log('✅ Signup successful for:', data.user?.email);
-      console.log('📧 Email confirmation required:', !data.session);
-      
-      // Return session and confirmation status for the caller to handle
-      return {
-        session: data.session,
-        requiresEmailConfirmation: !data.session
-      };
+      const { token, user: newUser } = data as { token: string; user: User };
+      saveSession(token, newUser);
+      setUser(newUser);
+      const sess: Session = { access_token: token, user: newUser };
+      setSession(sess);
+
+      console.log('✅ Signup successful for:', newUser.email);
+
+      // Seed sample data for new user
+      try {
+        await supabase.rpc('add_sample_data_for_user', { target_user_id: newUser.id });
+        console.log('✅ Sample data seeded');
+      } catch (seedErr) {
+        console.warn('⚠️ Sample data seed failed:', seedErr);
+      }
+
+      return { session: sess, requiresEmailConfirmation: false };
     } catch (error: any) {
       console.error('❌ Signup failed:', error);
-      
-      let errorMessage = 'Failed to create account. Please try again.';
-      
-      if (error.message?.includes('User already registered')) {
-        errorMessage = 'An account with this email already exists. Please try signing in instead.';
-      } else if (error.message?.includes('Password should be')) {
-        errorMessage = 'Password must be at least 6 characters long.';
-      } else if (error.message?.includes('Invalid email')) {
-        errorMessage = 'Please enter a valid email address.';
-      } else if (error.message) {
-        errorMessage = error.message;
-      }
-      
-      toast({
-        title: "Error creating account",
-        description: errorMessage,
-        variant: "destructive",
-      });
       throw error;
     } finally {
       setLoading(false);
@@ -197,198 +145,90 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       setLoading(true);
       console.log('🔐 Attempting signin for:', email);
 
-      // Check if Supabase is configured
-      if (!isSupabaseConfigured) {
-        const error = new Error('Supabase is not configured. Please check your API keys.');
-        console.error('❌ Supabase configuration error:', error);
-        toast({
-          title: "Configuration Error",
-          description: "Supabase API keys are missing or invalid. Please check your environment variables.",
-          variant: "destructive",
-        });
-        throw error;
-      }
-
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
+      const res = await fetch(`${API_BASE}/auth/signin`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
       });
 
-      if (error) {
-        console.error('❌ Signin error:', error);
-        
-        // Provide user-friendly error messages
-        let errorMessage = error.message;
-        if (error.message?.includes('Invalid API key') || error.message?.includes('API key')) {
-          errorMessage = 'Authentication service is not properly configured. Please contact support.';
-        } else if (error.message?.includes('Invalid login credentials')) {
-          errorMessage = 'Invalid email or password. Please try again.';
-        } else if (error.message?.includes('Email not confirmed') || error.message?.includes('email_not_confirmed')) {
-          errorMessage = 'Please check your email and click the confirmation link before signing in. If you haven\'t received it, try signing up again or contact support.';
-        }
-        
-        toast({
-          title: "Sign in failed",
-          description: errorMessage,
-          variant: "destructive",
-        });
-        throw error;
+      const data = await res.json();
+
+      if (!res.ok) {
+        let message = data.error || 'Sign in failed.';
+        if (res.status === 401) message = 'Invalid email or password. Please try again.';
+        toast({ title: 'Sign in failed', description: message, variant: 'destructive' });
+        throw new Error(message);
       }
 
-      // Ensure session is properly set
-      if (data.session) {
-        console.log('✅ Signin successful for:', data.user?.email);
-        console.log('✅ Session established:', data.session.access_token ? 'Yes' : 'No');
-        
-        // Force update auth state immediately
-        setSession(data.session);
-        setUser(data.user);
-        
-        toast({
-          title: "Welcome back!",
-          description: "You've successfully signed in.",
-        });
-      } else {
-        console.warn('⚠️ Signin succeeded but no session returned');
-        // Wait a bit for session to be established
-        await new Promise(resolve => setTimeout(resolve, 200));
-        const { data: { session: newSession } } = await supabase.auth.getSession();
-        if (newSession) {
-          setSession(newSession);
-          setUser(newSession.user);
-          console.log('✅ Session retrieved after delay');
-        }
-      }
+      const { token, user: loggedInUser } = data as { token: string; user: User };
+      saveSession(token, loggedInUser);
+      setUser(loggedInUser);
+      const sess: Session = { access_token: token, user: loggedInUser };
+      setSession(sess);
+
+      console.log('✅ Signin successful for:', loggedInUser.email);
+      toast({ title: 'Welcome back!', description: "You've successfully signed in." });
     } catch (error: any) {
       console.error('❌ Signin failed:', error);
-      // Don't throw again if we already showed a toast
-      if (!error.message?.includes('Invalid API key')) {
-        throw error;
-      }
+      throw error;
     } finally {
       setLoading(false);
     }
   };
 
   const signOut = async () => {
-    console.log('🚪 Starting instant logout...');
-    
-    // Immediate UI state clear for instant UX
+    console.log('🚪 Signing out...');
     setUser(null);
     setSession(null);
-    setLoading(false); // Set to false immediately to prevent UI delays
-    
-    try {
-      // Perform Supabase logout in background (non-blocking)
-      const { error } = await supabase.auth.signOut();
-      if (error) {
-        console.error('❌ Supabase signOut error:', error);
-        // Don't re-throw - user is already logged out in UI
-      }
-      
-      console.log('✅ Instant logout completed');
-    } catch (error: any) {
-      console.error('❌ Background sign out error:', error);
-      // Silently handle - user experience already complete
-    }
+    clearSession();
+    console.log('✅ Signed out');
   };
 
   const resetPassword = async (email: string) => {
     try {
-      console.log('🔐 Sending password reset email to:', email);
-
-      const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/auth?mode=reset`,
+      const res = await fetch(`${API_BASE}/auth/reset-password`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
       });
 
-      if (error) {
-        console.error('❌ Password reset error:', error);
-        throw error;
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || 'Failed to send reset email.');
       }
 
-      console.log('✅ Password reset email sent');
-      toast({
-        title: "Password reset email sent!",
-        description: "Check your email for a link to reset your password.",
-      });
+      toast({ title: 'Password reset email sent!', description: 'Check your email for a reset link.' });
     } catch (error: any) {
-      console.error('❌ Password reset failed:', error);
-      
-      let errorMessage = 'Failed to send password reset email. Please try again.';
-      
-      if (error.message?.includes('User not found')) {
-        errorMessage = 'No account found with this email address.';
-      } else if (error.message?.includes('Invalid email')) {
-        errorMessage = 'Please enter a valid email address.';
-      } else if (error.message) {
-        errorMessage = error.message;
-      }
-      
-      toast({
-        title: "Error sending reset email",
-        description: errorMessage,
-        variant: "destructive",
-      });
+      toast({ title: 'Error sending reset email', description: error.message, variant: 'destructive' });
       throw error;
     }
   };
 
   const signInWithMagicLink = async (email: string) => {
     try {
-      console.log('🔐 Sending magic link to:', email);
-
-      // Get the next URL from current search params
-      const urlParams = new URLSearchParams(window.location.search);
-      const nextUrl = urlParams.get('next') || '/dashboard';
-      
-      const redirectTo = `${window.location.origin}/auth/callback?next=${encodeURIComponent(nextUrl)}`;
-
-      const { error } = await supabase.auth.signInWithOtp({
-        email,
-        options: {
-          emailRedirectTo: redirectTo,
-          shouldCreateUser: true,
-        }
+      const res = await fetch(`${API_BASE}/auth/magic-link`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
       });
 
-      if (error) {
-        console.error('❌ Magic link error:', error);
-        throw error;
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || 'Failed to send magic link.');
       }
 
-      console.log('✅ Magic link sent');
-      toast({
-        title: "Magic link sent!",
-        description: "Check your email and click the link to sign in instantly.",
-      });
+      toast({ title: 'Magic link sent!', description: 'Check your email and click the link to sign in.' });
     } catch (error: any) {
-      console.error('❌ Magic link failed:', error);
-      
-      let errorMessage = 'Failed to send magic link. Please try again.';
-      
-      if (error.message?.includes('Invalid email')) {
-        errorMessage = 'Please enter a valid email address.';
-      } else if (error.message) {
-        errorMessage = error.message;
-      }
-      
-      toast({
-        title: "Error sending magic link",
-        description: errorMessage,
-        variant: "destructive",
-      });
+      toast({ title: 'Error sending magic link', description: error.message, variant: 'destructive' });
       throw error;
     }
   };
 
   const updateProfile = async (fullName: string, company?: string) => {
+    if (!user) throw new Error('No user logged in');
     try {
-      if (!user) {
-        throw new Error('No user logged in');
-      }
-      
-      console.log('👤 Updating profile for user:', user.email);
       setLoading(true);
+      console.log('👤 Updating profile for:', user.email);
 
       const { error } = await supabase
         .from('profiles')
@@ -399,30 +239,27 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         })
         .eq('id', user.id);
 
-      if (error) {
-        console.error('❌ Profile update error:', error);
-        throw error;
-      }
+      if (error) throw error;
 
-      console.log('✅ Profile updated successfully');
-      toast({
-        title: "Profile updated successfully!",
-        description: "Your profile information has been saved.",
-      });
+      // Update local cache
+      const updated: User = { ...user, full_name: fullName, company: company || null };
+      setUser(updated);
+      if (session) {
+        setSession({ ...session, user: updated });
+      }
+      localStorage.setItem('invoiceflow_user', JSON.stringify(updated));
+
+      console.log('✅ Profile updated');
+      toast({ title: 'Profile updated successfully!' });
     } catch (error: any) {
-      console.error('❌ Profile update failed:', error);
-      toast({
-        title: "Error updating profile",
-        description: error.message || 'Failed to update profile. Please try again.',
-        variant: "destructive",
-      });
+      toast({ title: 'Error updating profile', description: error.message, variant: 'destructive' });
       throw error;
     } finally {
       setLoading(false);
     }
   };
 
-  const value = {
+  const value: AuthContextType = {
     user,
     session,
     loading,

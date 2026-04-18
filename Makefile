@@ -1,4 +1,4 @@
-.PHONY: help db.setup admin verify smoke clean
+.PHONY: help db.setup admin verify smoke clean ingest
 
 # Load environment variables
 -include .env
@@ -20,6 +20,7 @@ help:
 	@echo "  make test.watch       - Run tests in watch mode"
 	@echo "  make import           - Import data from CSV files (if available)"
 	@echo "  make clean            - Clean temporary files"
+	@echo "  make ingest           - Generate AI context file (.ai-context/invoiceflow-context.md)"
 	@echo ""
 	@echo "Example workflow:"
 	@echo "  1. Set env vars in .env (VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY, SUPABASE_SERVICE_ROLE_KEY)"
@@ -91,6 +92,13 @@ import:
 	fi
 	@psql "$(NEW_DB_URL)" -f import/import.sql
 	@echo "✅ Import complete!"
+
+# Generate AI context snapshot for LLM consumption
+ingest:
+	@echo "📦 Generating AI context file..."
+	@mkdir -p .ai-context
+	@gitingest . --exclude .ai-context,node_modules,dist,.git -o .ai-context/invoiceflow-context.md
+	@echo "✅ Saved to .ai-context/invoiceflow-context.md"
 
 # Clean temporary files
 clean:

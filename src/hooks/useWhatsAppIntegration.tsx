@@ -97,9 +97,18 @@ export const useWhatsAppIntegration = () => {
   const generatePaymentLink = async (params: GeneratePaymentLinkParams) => {
     setIsGeneratingLink(true);
     try {
-      const { data, error } = await supabase.functions.invoke('generate-payment-link', {
-        body: params
+      const API_BASE = (import.meta as any).env?.VITE_API_BASE || 'http://localhost:8787';
+      const token = localStorage.getItem('invoiceflow_jwt');
+      const apiRes = await fetch(`${API_BASE}/api/generate-payment-link`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify(params),
       });
+      const data = await apiRes.json();
+      const error = apiRes.ok ? null : data;
 
       if (error) {
         console.error('Payment link generation error:', error);

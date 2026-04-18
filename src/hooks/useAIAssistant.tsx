@@ -424,27 +424,30 @@ export const useAIAssistant = () => {
         }
       }
 
-      console.log('🤖 Calling AI assistant edge function...');
+      console.log('🤖 Calling AI assistant API...');
 
-      // Call the Edge Function
+      const API_BASE = (() => {
+        try { return (import.meta as any).env?.VITE_API_BASE || 'http://localhost:8787'; } catch { return 'http://localhost:8787'; }
+      })();
+      const jwtToken = localStorage.getItem('invoiceflow_jwt');
+
       let response: any;
       try {
-        response = await supabase.functions.invoke('ai-assistant', {
-          body: {
-            message,
-            bills,
-            context
-          }
+        const apiRes = await fetch(`${API_BASE}/api/ai-assistant`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(jwtToken ? { Authorization: `Bearer ${jwtToken}` } : {}),
+          },
+          body: JSON.stringify({ message, bills, context }),
         });
-        console.log('🔍 Raw Supabase invoke response:', {
-          hasData: !!response.data,
-          hasError: !!response.error,
-          dataType: typeof response.data,
-          errorType: typeof response.error,
-          fullResponse: response
-        });
+        const apiData = await apiRes.json();
+        response = apiRes.ok
+          ? { data: apiData, error: null }
+          : { data: null, error: apiData };
+        console.log('🔍 API response:', { ok: apiRes.ok, data: apiData });
       } catch (invokeError) {
-        console.error('❌ Supabase invoke threw exception:', invokeError);
+        console.error('❌ AI API threw exception:', invokeError);
         throw invokeError;
       }
 

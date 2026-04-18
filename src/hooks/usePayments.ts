@@ -1,7 +1,9 @@
-import { supabase } from '@/lib/supabase';
+const API_BASE = (() => {
+  try { return (import.meta as any).env?.VITE_API_BASE || 'http://localhost:8787'; } catch { return 'http://localhost:8787'; }
+})();
 
 type CreatePaymentLinkArgs = {
-  amountInRupees: number; // e.g. 499.99
+  amountInRupees: number;
   customer?: { name?: string; email?: string; contact?: string };
   description?: string;
   referenceId?: string;
@@ -9,22 +11,30 @@ type CreatePaymentLinkArgs = {
 };
 
 export async function createRazorpayPaymentLink(args: CreatePaymentLinkArgs) {
-  const amountPaise = Math.round((args.amountInRupees || 0) * 100);
-  const { data, error } = await supabase.functions.invoke('create-razorpay-order', {
-    body: {
-      amount: amountPaise,
-      description: args.description,
-      reference_id: args.referenceId,
-      customer: args.customer,
-      notes: args.notes,
+  const token = localStorage.getItem('invoiceflow_jwt');
+
+  const res = await fetch(`${API_BASE}/api/generate-payment-link`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
     },
+    body: JSON.stringify({
+      amount: args.amountInRupees,
+      gateway: 'razorpay',
+      notes: args.description,
+      referenceId: args.referenceId,
+    }),
   });
 
-  if (error) throw error;
-  if (!data?.success || !data?.shortUrl) {
-    throw new Error(data?.error?.description || 'Failed to create payment link');
+  const data = await res.json();
+  if (!res.ok || !data?.success) {
+    throw new Error(data?.error || 'Failed to create payment link');
   }
-  return { linkId: data.linkId as string, shortUrl: data.shortUrl as string };
+  return {
+    linkId: data.paymentLink.providerReferenceId as string,
+    shortUrl: data.paymentLink.url as string,
+  };
 }
 
 export async function createDodoPaymentLink(args: CreatePaymentLinkArgs) {

@@ -1,5 +1,5 @@
 import { pdf } from "@react-pdf/renderer";
-import { supabase } from "@/lib/supabase";
+import { getCurrentUser, getCurrentToken } from "@/lib/supabase";
 import { InvoicePDFDocument } from "@/components/pdf/InvoicePDFDocument";
 
 interface GeneratePDFParams {
@@ -24,32 +24,39 @@ export async function generateInvoicePDF({ invoiceData, businessSettings, type }
     ).toBlob();
 
     // Get current user
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      throw new Error("User not authenticated");
-    }
+    const user = getCurrentUser();
+    if (!user) throw new Error("User not authenticated");
 
     // Generate filename
-    const partyName = type === "sale" 
-      ? invoiceData.customer_name 
+    const partyName = type === "sale"
+      ? invoiceData.customer_name
       : invoiceData.supplier_name;
-    const sanitizedPartyName = partyName.replace(/[^a-zA-Z0-9]/g, "_");
-    const fileName = `${user.id}/Invoice_${invoiceData.invoice_number}_${sanitizedPartyName}.pdf`;
+    const sanitizedPartyName = (partyName || "Unknown").replace(/[^a-zA-Z0-9]/g, "_");
+    const fileName = `Invoice_${invoiceData.invoice_number}_${sanitizedPartyName}.pdf`;
 
-    // Upload to Supabase Storage
-    const { data, error } = await supabase.storage
-      .from("invoice-pdfs")
-      .upload(fileName, blob, {
-        contentType: "application/pdf",
-        upsert: true,
-      });
+    // Upload to Cloudflare R2 via presigned URL
+    const API_BASE = (import.meta as any).env?.VITE_API_BASE || "http://localhost:8787";
+    const token = getCurrentToken();
 
-    if (error) throw error;
+    const signRes = await fetch(`${API_BASE}/storage/sign-upload`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+      body: JSON.stringify({ fileName, contentType: "application/pdf" }),
+    });
 
-    // Get public URL
-    const { data: { publicUrl } } = supabase.storage
-      .from("invoice-pdfs")
-      .getPublicUrl(data.path);
+    if (!signRes.ok) throw new Error("Failed to get upload URL for PDF");
+    const { uploadUrl, publicUrl } = await signRes.json();
+
+    const uploadRes = await fetch(uploadUrl, {
+      method: "PUT",
+      headers: { "Content-Type": "application/pdf" },
+      body: blob,
+    });
+
+    if (!uploadRes.ok) throw new Error("PDF upload to storage failed");
 
     return {
       success: true,
