@@ -10,8 +10,8 @@ await build({
   platform: 'node',
   target: 'node20',
   format: 'cjs',
-  outfile: path.join(root, '../api/index.cjs'),
+  outfile: path.join(root, '../api/index.js'),
   logLevel: 'info',
 });
 
-console.log('Built api/index.cjs for Vercel');
+console.log('Built api/index.js for Vercel');
