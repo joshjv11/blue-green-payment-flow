@@ -11,7 +11,6 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, Eye, EyeOff, AlertCircle, Mail } from 'lucide-react';
-import { supabase } from '@/lib/supabase';
 import invoiceFlowLogo from '@/assets/invoiceflow-logo.png';
 
 const signInSchema = z.object({
@@ -47,7 +46,7 @@ const EnhancedAuthForm = ({ onSuccess }: EnhancedAuthFormProps) => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [resetPasswordLoading, setResetPasswordLoading] = useState(false);
   const [magicLinkLoading, setMagicLinkLoading] = useState(false);
-  const { signIn, signUp, resetPassword, signInWithMagicLink, loading } = useAuth();
+  const { signIn, signUp, requestPasswordReset, loading } = useAuth();
   const { toast } = useToast();
 
   const signInForm = useForm<SignInFormData>({
@@ -93,32 +92,12 @@ const EnhancedAuthForm = ({ onSuccess }: EnhancedAuthFormProps) => {
 
   const handleGoogleSignIn = async () => {
     try {
-      console.log('🔐 Initiating Google OAuth flow...');
-      
-      const { data, error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-          redirectTo: `${window.location.origin}/dashboard`,
-          scopes: 'openid email profile',
-          queryParams: {
-            access_type: 'offline',
-            prompt: 'consent',
-          }
-        }
+      console.log('🔐 Google OAuth not available');
+      toast({
+        title: 'Google sign-in not available',
+        description: 'Please use email and password to sign in.',
+        variant: 'destructive',
       });
-
-      if (error) {
-        console.error('❌ Google OAuth error:', error);
-        toast({
-          title: "Sign-in failed",
-          description: error.message || "Failed to sign in with Google. Please try again.",
-          variant: "destructive"
-        });
-        return;
-      }
-      
-      console.log('✅ Google OAuth initiated successfully');
-      // OAuth will redirect, no need to call onSuccess here
     } catch (error: any) {
       console.error('❌ Google sign in error:', error);
       toast({
@@ -138,7 +117,7 @@ const EnhancedAuthForm = ({ onSuccess }: EnhancedAuthFormProps) => {
 
     setResetPasswordLoading(true);
     try {
-      await resetPassword(email);
+      await requestPasswordReset(email);
     } catch (error: any) {
       // Error handling is already done in the useAuth hook with toast
       console.error('Reset password error:', error);
@@ -147,12 +126,14 @@ const EnhancedAuthForm = ({ onSuccess }: EnhancedAuthFormProps) => {
     }
   };
 
-  const handleMagicLink = async (email: string) => {
+  const handleMagicLink = async (_email: string) => {
     setMagicLinkLoading(true);
     try {
-      await signInWithMagicLink(email);
-    } catch (error: any) {
-      console.error('Magic link error:', error);
+      toast({
+        title: 'Not available',
+        description: 'Magic link sign-in is not available. Use email and password.',
+        variant: 'destructive',
+      });
     } finally {
       setMagicLinkLoading(false);
     }

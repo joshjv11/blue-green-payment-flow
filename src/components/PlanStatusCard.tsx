@@ -2,7 +2,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Crown, Zap, Users, TrendingUp } from 'lucide-react';
-import { useSupabasePlan } from '@/hooks/useSupabasePlan';
+import { useAppPlan } from '@/hooks/useAppPlan';
 
 interface PlanStatusCardProps {
   onUpgrade?: () => void;
@@ -10,7 +10,7 @@ interface PlanStatusCardProps {
 }
 
 const PlanStatusCard = ({ onUpgrade, compact = false }: PlanStatusCardProps) => {
-  const { plan, loading, aiQueriesUsed, aiQueriesLimit, hasUnlimitedAI } = useSupabasePlan();
+  const { plan, loading, aiQueriesUsed, aiQueriesLimit, hasUnlimitedAI } = useAppPlan();
 
   if (loading) {
     return (

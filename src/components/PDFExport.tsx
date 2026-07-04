@@ -6,7 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
-import { useSupabaseData } from '@/hooks/useSupabaseData';
+import { useAppData } from '@/hooks/useAppData';
 import { useTeams } from '@/hooks/useTeams';
 import { useToast } from '@/hooks/use-toast';
 import { RefreshCw, FileText, Download, BarChart3, DollarSign, Calendar, Users } from 'lucide-react';
@@ -19,7 +19,7 @@ interface PDFExportProps {
 }
 
 const PDFExport = ({ bills, teamId }: PDFExportProps) => {
-  const { bills: allBills, userPlan } = useSupabaseData();
+  const { bills: allBills, userPlan } = useAppData();
   const { teams } = useTeams();
   const { toast } = useToast();
   

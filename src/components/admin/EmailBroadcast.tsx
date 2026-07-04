@@ -9,7 +9,6 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Mail, Send, Loader2, X, Plus, Users } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { supabase } from '@/lib/supabase';
 
 const FROM_EMAILS = [
   { value: 'personal', label: 'joshuavaz55@gmail.com', address: 'joshuavaz55@gmail.com' },
@@ -31,10 +30,7 @@ export function EmailBroadcast() {
   const loadUserEmails = async () => {
     setLoadingUsers(true);
     try {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('email')
-        .not('email', 'is', null);
+      const data = []; const error = null; /* legacy table not migrated */
 
       if (error) throw error;
 
@@ -172,15 +168,13 @@ export function EmailBroadcast() {
 
       // First, check if the edge function is accessible
       try {
-        const testResponse = await supabase.functions.invoke('send-broadcast-email', {
-          body: { test: true },
-        });
+        const testResponse = { data: null, error: { message: "not migrated" } }
       } catch (testErr: any) {
         // If edge function doesn't exist, show helpful message
         if (testErr.message?.includes('not found') || testErr.message?.includes('404')) {
           toast({
             title: 'Edge Function Not Deployed',
-            description: 'Please deploy the send-broadcast-email edge function first. Run: supabase functions deploy send-broadcast-email',
+            description: 'Email broadcast is not migrated yet.',
             variant: 'destructive',
           });
           setSending(false);
@@ -190,15 +184,7 @@ export function EmailBroadcast() {
 
       for (const recipient of recipients) {
         try {
-          const { data, error } = await supabase.functions.invoke('send-broadcast-email', {
-            body: {
-              to: recipient,
-              from: fromAddress,
-              subject: subject,
-              html: htmlBody,
-              text: body,
-            },
-          });
+          const data = null; const error = { message: "not migrated" };
 
           if (error) {
             console.error(`Failed to send to ${recipient}:`, error);
@@ -436,8 +422,8 @@ export function EmailBroadcast() {
             <AlertDescription className="text-xs space-y-1">
               <p><strong>Requirements:</strong></p>
               <ul className="list-disc list-inside space-y-1 ml-2">
-                <li>Deploy edge function: <code className="bg-muted px-1 rounded">supabase functions deploy send-broadcast-email</code></li>
-                <li>Set <code className="bg-muted px-1 rounded">RESEND_API_KEY</code> in Supabase Edge Functions secrets</li>
+                <li>Email broadcast API endpoint is not migrated yet</li>
+                <li>Set <code className="bg-muted px-1 rounded">RESEND_API_KEY</code> in API server environment</li>
                 <li>Verify domain/email in Resend dashboard if using custom from address</li>
               </ul>
             </AlertDescription>

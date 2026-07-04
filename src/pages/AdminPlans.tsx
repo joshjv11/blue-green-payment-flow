@@ -11,7 +11,6 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
-import { supabase } from '@/lib/supabase';
 import { BackToDashboard } from '@/components/BackToDashboard';
 import { format } from 'date-fns';
 
@@ -41,108 +40,17 @@ export default function AdminPlans() {
 
   const checkAdminStatus = async () => {
     if (!user) return;
-    
-    const { data } = await supabase
-      .from('profiles')
-      .select('email')
-      .eq('id', user.id)
-      .single();
-    
-    // Check if admin via RPC or fallback to profile check
-    try {
-      const { data: isAdminData, error } = await supabase.rpc('is_system_admin', { user_id: user.id });
-      if (error) {
-        // RPC function might not exist - fail silently
-        if (error.code === '42883' || error.code === 'PGRST204') {
-          setIsAdmin(false);
-          return;
-        }
-      }
-      setIsAdmin(!!isAdminData);
-    } catch (error: any) {
-      // Fail silently if function doesn't exist
-      if (error?.code === '42883' || error?.code === 'PGRST204' || error?.message?.includes('does not exist')) {
-        setIsAdmin(false);
-        return;
-      }
-      console.warn('⚠️ Admin check failed:', error);
-      setIsAdmin(false);
-    }
+    console.warn('Admin not migrated');
+    setIsAdmin(false);
   };
 
   const fetchPlanChanges = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('user_plan_changes')
-        .select('*')
-        .order('changed_at', { ascending: false })
-        .limit(20);
-      
-      if (error) throw error;
-      setPlanChanges(data || []);
-    } catch (error: any) {
-      console.error('Error fetching plan changes:', error);
-    }
+    console.warn('Plan changes not migrated');
+    setPlanChanges([]);
   };
 
   const handleSetPlan = async () => {
-    if (!email.trim()) {
-      toast({ title: 'Please enter an email address', variant: 'destructive' });
-      return;
-    }
-
-    setLoading(true);
-
-    try {
-      // First, find user by email
-      const { data: userData, error: userError } = await supabase
-        .from('profiles')
-        .select('id, email')
-        .eq('email', email.trim().toLowerCase())
-        .maybeSingle();
-
-      if (userError) throw userError;
-      if (!userData) {
-        toast({ title: 'User not found', description: 'No user with that email exists', variant: 'destructive' });
-        setLoading(false);
-        return;
-      }
-
-      const days = duration === 'no-expiry' ? null : parseInt(duration);
-      const expiresAt = days ? new Date(Date.now() + days * 24 * 60 * 60 * 1000).toISOString() : null;
-
-      // Direct upsert (set_user_plan RPC not available)
-      const { error: upsertError } = await supabase
-        .from('user_plans')
-        .upsert({
-          user_id: userData.id,
-          plan: selectedPlan,
-          is_active: true,
-          expires_at: expiresAt,
-          updated_at: new Date().toISOString(),
-        }, { 
-          onConflict: 'user_id' 
-        });
-
-      if (upsertError) throw upsertError;
-
-      toast({ 
-        title: 'Plan updated successfully',
-        description: `${email} is now on ${selectedPlan} plan`,
-      });
-
-      setEmail('');
-      fetchPlanChanges();
-    } catch (error: any) {
-      console.error('Error setting plan:', error);
-      toast({ 
-        title: 'Failed to update plan', 
-        description: error.message,
-        variant: 'destructive' 
-      });
-    } finally {
-      setLoading(false);
-    }
+    toast({ title: 'Not available', description: 'Admin plan management is not migrated yet.', variant: 'destructive' });
   };
 
   if (!isAdmin) {

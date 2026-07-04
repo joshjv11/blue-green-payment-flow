@@ -7,7 +7,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { useToast } from '@/hooks/use-toast';
-import { useSupabaseData } from '@/hooks/useSupabaseData';
+import { useAppData } from '@/hooks/useAppData';
 import { Upload, Download, CheckCircle, XCircle, AlertTriangle, FileText } from 'lucide-react';
 
 interface BulkOperationResult {
@@ -18,7 +18,7 @@ interface BulkOperationResult {
 }
 
 const BulkBillOperations = () => {
-  const { addBill, bills } = useSupabaseData();
+  const { addBill, bills } = useAppData();
   const { toast } = useToast();
   
   const [csvFile, setCsvFile] = useState<File | null>(null);

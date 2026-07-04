@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
-import { supabase } from '@/lib/supabase';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -9,7 +8,7 @@ import { ExpensesTable } from '@/components/ExpensesTable';
 import { ExpenseCategoryFilter } from '@/components/ExpenseCategoryFilter';
 import { ExpenseChart } from '@/components/ExpenseChart';
 import { exportExpensesToCSV, exportExpensesToPDF } from '@/utils/expenseExport';
-import { useSupabasePlan } from '@/hooks/useSupabasePlan';
+import { useAppPlan } from '@/hooks/useAppPlan';
 import UpgradeModal from '@/components/UpgradeModal';
 import { format, startOfMonth, endOfMonth } from 'date-fns';
 import { BackToDashboard } from '@/components/BackToDashboard';
@@ -43,7 +42,7 @@ const EXPENSE_CATEGORIES = [
 const Expenses = () => {
   const { user } = useAuth();
   const { toast } = useToast();
-  const { isPremium } = useSupabasePlan();
+  const { isPremium } = useAppPlan();
   const isPro = isPremium;
   
   const [expenses, setExpenses] = useState<Expense[]>([]);
@@ -71,11 +70,7 @@ const Expenses = () => {
   const fetchExpenses = async () => {
     try {
       setLoading(true);
-      const { data, error } = await supabase
-        .from('expenses')
-        .select('*')
-        .eq('user_id', user!.id)
-        .order('date', { ascending: false });
+      const data = []; const error = null; /* legacy table not migrated */
 
       if (error) throw error;
       setExpenses(data || []);

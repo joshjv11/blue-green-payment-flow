@@ -5,6 +5,18 @@
   "devCommand": "npm run dev",
   "installCommand": "npm install",
   "rewrites": [
+    { "source": "/health", "destination": "https://invoiceflow-ar-api.onrender.com/health" },
+    { "source": "/auth/:path*", "destination": "https://invoiceflow-ar-api.onrender.com/auth/:path*" },
+    { "source": "/orgs/:path*", "destination": "https://invoiceflow-ar-api.onrender.com/orgs/:path*" },
+    { "source": "/customers/:path*", "destination": "https://invoiceflow-ar-api.onrender.com/customers/:path*" },
+    { "source": "/invoices/:path*", "destination": "https://invoiceflow-ar-api.onrender.com/invoices/:path*" },
+    { "source": "/sequences/:path*", "destination": "https://invoiceflow-ar-api.onrender.com/sequences/:path*" },
+    { "source": "/payments/:path*", "destination": "https://invoiceflow-ar-api.onrender.com/payments/:path*" },
+    { "source": "/webhooks/:path*", "destination": "https://invoiceflow-ar-api.onrender.com/webhooks/:path*" },
+    { "source": "/public/:path*", "destination": "https://invoiceflow-ar-api.onrender.com/public/:path*" },
+    { "source": "/storage/:path*", "destination": "https://invoiceflow-ar-api.onrender.com/storage/:path*" },
+    { "source": "/ai/:path*", "destination": "https://invoiceflow-ar-api.onrender.com/ai/:path*" },
+    { "source": "/api/:path*", "destination": "https://invoiceflow-ar-api.onrender.com/api/:path*" },
     {
       "source": "/(.*)",
       "destination": "/index.html"

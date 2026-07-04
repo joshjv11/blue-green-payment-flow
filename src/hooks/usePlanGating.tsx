@@ -1,4 +1,4 @@
-import { useSupabasePlan, UserPlan } from './useSupabasePlan';
+import { useAppPlan, UserPlan } from './useAppPlan';
 import { usePremiumStatus } from './usePremiumStatus';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from './use-toast';
@@ -22,7 +22,7 @@ const FEATURE_ACCESS: Record<string, FeatureAccess> = {
 };
 
 export const usePlanGating = () => {
-  const planData = useSupabasePlan();
+  const planData = useAppPlan();
   const premiumStatus = usePremiumStatus();
   const navigate = useNavigate();
   const { toast } = useToast();

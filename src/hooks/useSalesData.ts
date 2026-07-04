@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
-import { supabase } from '@/lib/supabase';
+import { useAuth } from './useAuth';
+import * as invoicesApi from '@/lib/endpoints/invoices';
 
 export interface SalesKpis {
   orders: number;
@@ -15,6 +16,7 @@ export interface SalesTrendPoint {
 }
 
 export function useSalesData(dateFrom: string, dateTo: string) {
+  const { user } = useAuth();
   const [kpis, setKpis] = useState<SalesKpis | null>(null);
   const [trend, setTrend] = useState<SalesTrendPoint[]>([]);
   const [loading, setLoading] = useState(true);
@@ -23,40 +25,43 @@ export function useSalesData(dateFrom: string, dateTo: string) {
   useEffect(() => {
     let cancelled = false;
     async function load() {
+      if (!user) {
+        setLoading(false);
+        return;
+      }
       setLoading(true);
       setError(null);
       try {
-        // Fallback: compute from sales_orders
-        try {
-          const { data: { user } } = await supabase.auth.getUser();
-          if (!user) throw new Error('Not authenticated');
-          const { data: sales, error: se } = await supabase
-            .from('sales_orders')
-            .select('id, grand_total, tax_amount, transaction_date')
-            .eq('user_id', user.id)
-            .gte('transaction_date', dateFrom)
-            .lte('transaction_date', dateTo);
-          if (se) throw se;
-          const orders = sales?.length || 0;
-          const gmv = (sales || []).reduce((s, r: any) => s + Number(r.grand_total || 0), 0);
-          const tax = (sales || []).reduce((s, r: any) => s + Number(r.tax_amount || 0), 0);
-          const avg_order_value = orders > 0 ? gmv / orders : 0;
-          const byDate: Record<string, { orders: number; sales_amount: number; }> = {};
-          (sales || []).forEach((r: any) => {
-            const d = new Date(r.transaction_date).toISOString().slice(0, 10);
-            byDate[d] = byDate[d] || { orders: 0, sales_amount: 0 };
-            byDate[d].orders += 1;
-            byDate[d].sales_amount += Number(r.grand_total || 0);
-          });
-          const trendPoints = Object.entries(byDate)
-            .sort(([a], [b]) => a.localeCompare(b))
-            .map(([d, v]) => ({ d, orders: v.orders, sales_amount: v.sales_amount }));
-          if (!cancelled) {
-            setKpis({ orders, gmv, tax, avg_order_value });
-            setTrend(trendPoints);
-          }
-        } catch (fe: any) {
-          if (!cancelled) setError(fe.message || 'Failed to load sales data');
+        const invoices = await invoicesApi.listInvoices();
+        const sales = invoices.filter((inv) => {
+          const d = inv.issuedate?.slice(0, 10) || inv.duedate?.slice(0, 10);
+          return d && d >= dateFrom && d <= dateTo;
+        });
+        const orders = sales.length;
+        const gmv = sales.reduce((s, r) => s + Number(r.amount || 0), 0);
+        const tax = sales.reduce((s, r) => s + Number(r.taxamount || 0), 0);
+        const avg_order_value = orders > 0 ? gmv / orders : 0;
+        const byDate: Record<string, { orders: number; sales_amount: number }> = {};
+        sales.forEach((r) => {
+          const d = (r.issuedate || r.duedate || '').slice(0, 10);
+          if (!d) return;
+          byDate[d] = byDate[d] || { orders: 0, sales_amount: 0 };
+          byDate[d].orders += 1;
+          byDate[d].sales_amount += Number(r.amount || 0);
+        });
+        const trendPoints = Object.entries(byDate)
+          .sort(([a], [b]) => a.localeCompare(b))
+          .map(([d, v]) => ({ d, orders: v.orders, sales_amount: v.sales_amount }));
+        if (!cancelled) {
+          setKpis({ orders, gmv, tax, avg_order_value });
+          setTrend(trendPoints);
+        }
+      } catch (fe: unknown) {
+        if (!cancelled) {
+          const message = fe instanceof Error ? fe.message : 'Failed to load sales data';
+          console.warn('Sales data fallback:', message);
+          setKpis({ orders: 0, gmv: 0, tax: 0, avg_order_value: 0 });
+          setTrend([]);
         }
       } finally {
         if (!cancelled) setLoading(false);
@@ -64,10 +69,8 @@ export function useSalesData(dateFrom: string, dateTo: string) {
     }
     load();
     return () => { cancelled = true; };
-  }, [dateFrom, dateTo]);
+  }, [dateFrom, dateTo, user]);
 
   const summary = useMemo(() => kpis || { orders: 0, gmv: 0, tax: 0, avg_order_value: 0 }, [kpis]);
   return { kpis: summary, trend, loading, error };
 }
-
-

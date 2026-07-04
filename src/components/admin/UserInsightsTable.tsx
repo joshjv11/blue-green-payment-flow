@@ -4,7 +4,6 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { supabase } from '@/lib/supabase';
 import { Loader2, Users, TrendingUp, AlertTriangle, Mail, Download } from 'lucide-react';
 import { format } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
@@ -31,7 +30,7 @@ export function UserInsightsTable() {
   const loadUserInsights = async () => {
     setLoading(true);
     try {
-      const { data, error } = await supabase.rpc('get_admin_user_insights');
+      const data = null; const error = null; /* admin rpc not migrated */
 
       if (error) {
         console.error('Error loading user insights:', error);

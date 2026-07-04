@@ -1,9 +1,6 @@
-import { supabase } from '@/lib/supabase';
-
 /**
- * Log security events for abuse detection
- * This should be called from edge functions or server-side code
- * For client-side, use sparingly to avoid exposing security logic
+ * Log security events for abuse detection.
+ * Admin security logging is not migrated yet — events are logged locally only.
  */
 export async function logSecurityEvent(
   eventType: 'failed_login' | 'rate_limit_hit' | 'suspicious_api_call' | 'payment_fraud_attempt' | 'unauthorized_access' | 'abnormal_activity',
@@ -14,10 +11,8 @@ export async function logSecurityEvent(
   userAgent?: string
 ) {
   try {
-    // Feature disabled - requires database table
-    console.log('Security event (disabled):', eventType, severity, metadata);
+    console.log('Security event (local only):', eventType, severity, { metadata, userId, ipAddress, userAgent });
   } catch (error) {
     console.error('Error in logSecurityEvent:', error);
   }
 }
-

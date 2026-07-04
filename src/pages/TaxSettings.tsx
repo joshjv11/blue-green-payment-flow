@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { supabase } from "@/lib/supabase";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -8,9 +7,11 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { useAuth } from '@/hooks/useAuth';
 import { useToast } from "@/hooks/use-toast";
 import { ArrowLeft, Building2, Globe, DollarSign, FileText, AlertCircle } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { getMyOrganization, updateOrganization } from "@/lib/endpoints/orgs";
 import { BackToDashboard } from "@/components/BackToDashboard";
 
 const COUNTRIES = [
@@ -48,6 +49,7 @@ const TAX_REGIMES = [
 
 export default function TaxSettings() {
   const navigate = useNavigate();
+  const { user: authUser } = useAuth();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -65,7 +67,7 @@ export default function TaxSettings() {
 
   useEffect(() => {
     fetchBusinessSettings();
-  }, []);
+  }, [authUser]);
 
   useEffect(() => {
     // Auto-fill tax ID label based on regime
@@ -81,34 +83,27 @@ export default function TaxSettings() {
   const fetchBusinessSettings = async () => {
     setLoading(true);
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const user = authUser;
       if (!user) return;
 
-      const { data, error } = await supabase
-        .from("business_settings")
-        .select("*")
-        .eq("user_id", user.id)
-        .maybeSingle();
+      const org = await getMyOrganization();
+      const addr = (org.address ?? {}) as Record<string, string>;
 
-      if (error) throw error;
-
-      if (data) {
-        setFormData({
-          business_name: data.business_name || "",
-          business_address: data.business_address || "",
-          country: data.country || "IN",
-          currency: data.currency || "INR",
-          base_currency: data.base_currency || "INR",
-          number_format: data.number_format || "1,234.56",
-          tax_regime: data.tax_regime || "IND_GST",
-          business_tax_id_label: data.business_tax_id_label || "",
-          business_tax_id_value: data.business_tax_id_value || "",
-        });
-      }
-    } catch (error: any) {
+      setFormData({
+        business_name: org.name || "",
+        business_address: addr.line1 || "",
+        country: addr.country || "IN",
+        currency: addr.currency || "INR",
+        base_currency: addr.base_currency || "INR",
+        number_format: addr.number_format || "1,234.56",
+        tax_regime: addr.tax_regime || "IND_GST",
+        business_tax_id_label: addr.business_tax_id_label || (addr.tax_regime === "UAE_VAT" ? "TRN" : "GSTIN"),
+        business_tax_id_value: org.gstin || addr.business_tax_id_value || "",
+      });
+    } catch (error: unknown) {
       toast({
         title: "Error loading settings",
-        description: error.message,
+        description: error instanceof Error ? error.message : "Could not load settings",
         variant: "destructive",
       });
     } finally {
@@ -119,28 +114,32 @@ export default function TaxSettings() {
   const handleSave = async () => {
     setSaving(true);
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const user = authUser;
       if (!user) return;
 
-      const { error } = await supabase
-        .from("business_settings")
-        .upsert({
-          user_id: user.id,
-          ...formData,
-        }, {
-          onConflict: "user_id"
-        });
-
-      if (error) throw error;
+      await updateOrganization(user.org_id, {
+        name: formData.business_name.trim(),
+        gstin: formData.business_tax_id_value.trim() || null,
+        address: {
+          line1: formData.business_address.trim(),
+          country: formData.country,
+          currency: formData.currency,
+          base_currency: formData.base_currency,
+          number_format: formData.number_format,
+          tax_regime: formData.tax_regime,
+          business_tax_id_label: formData.business_tax_id_label,
+          business_tax_id_value: formData.business_tax_id_value.trim(),
+        },
+      });
 
       toast({
         title: "Settings Saved",
         description: "Tax settings updated successfully",
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         title: "Error saving settings",
-        description: error.message,
+        description: error instanceof Error ? error.message : "Save failed",
         variant: "destructive",
       });
     } finally {

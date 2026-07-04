@@ -1,6 +1,7 @@
-import { useState, useEffect } from "react";
-import { supabase } from "@/lib/supabase";
-import { useToast } from "@/hooks/use-toast";
+import { useState, useEffect } from 'react';
+import { useAuth } from './useAuth';
+import * as orgsApi from '@/lib/endpoints/orgs';
+import { useToast } from '@/hooks/use-toast';
 
 export interface BusinessSettings {
   business_name: string;
@@ -9,81 +10,67 @@ export interface BusinessSettings {
   currency: string;
   base_currency: string;
   number_format: string;
-  tax_regime: "IND_GST" | "UAE_VAT" | "GENERIC_VAT" | "NO_TAX";
+  tax_regime: 'IND_GST' | 'UAE_VAT' | 'GENERIC_VAT' | 'NO_TAX';
   business_tax_id_label: string;
   business_tax_id_value: string;
 }
 
 const DEFAULT_SETTINGS: BusinessSettings = {
-  business_name: "",
-  business_address: "",
-  country: "IN",
-  currency: "INR",
-  base_currency: "INR",
-  number_format: "1,234.56",
-  tax_regime: "IND_GST",
-  business_tax_id_label: "GSTIN",
-  business_tax_id_value: "",
+  business_name: '',
+  business_address: '',
+  country: 'IN',
+  currency: 'INR',
+  base_currency: 'INR',
+  number_format: '1,234.56',
+  tax_regime: 'IND_GST',
+  business_tax_id_label: 'GSTIN',
+  business_tax_id_value: '',
 };
 
 export function useBusinessSettings() {
+  const { user } = useAuth();
   const { toast } = useToast();
   const [settings, setSettings] = useState<BusinessSettings>(DEFAULT_SETTINGS);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     fetchSettings();
-  }, []);
+  }, [user]);
 
   const fetchSettings = async () => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
         setSettings(DEFAULT_SETTINGS);
         setLoading(false);
         return;
       }
 
-      const { data, error } = await supabase
-        .from("business_settings")
-        .select("*")
-        .eq("user_id", user.id)
-        .maybeSingle();
+      const org = await orgsApi.getMyOrganization();
+      const address = org.address as { line1?: string; city?: string; state?: string } | null;
+      const addressStr = address
+        ? [address.line1, address.city, address.state].filter(Boolean).join(', ')
+        : '';
 
-      if (error) throw error;
-
-      if (data) {
-        setSettings({
-          business_name: data.business_name || "",
-          business_address: data.business_address || "",
-          country: data.country || "IN",
-          currency: data.currency || "INR",
-          base_currency: data.base_currency || "INR",
-          number_format: data.number_format || "1,234.56",
-          tax_regime: (data.tax_regime || "IND_GST") as "IND_GST" | "UAE_VAT" | "GENERIC_VAT" | "NO_TAX",
-          business_tax_id_label: data.business_tax_id_label || "GSTIN",
-          business_tax_id_value: data.business_tax_id_value || "",
-        });
-      } else {
-        // Create default settings for user
-        const { error: insertError } = await supabase
-          .from("business_settings")
-          .insert({
-            user_id: user.id,
-            ...DEFAULT_SETTINGS,
-          });
-
-        if (insertError) throw insertError;
-        setSettings(DEFAULT_SETTINGS);
-      }
-    } catch (error: any) {
-      console.error("Error fetching business settings:", error);
-      toast({
-        title: "Error loading business settings",
-        description: error.message,
-        variant: "destructive",
+      setSettings({
+        business_name: org.name || '',
+        business_address: addressStr,
+        country: 'IN',
+        currency: 'INR',
+        base_currency: 'INR',
+        number_format: '1,234.56',
+        tax_regime: 'IND_GST',
+        business_tax_id_label: 'GSTIN',
+        business_tax_id_value: org.gstin || '',
       });
+    } catch (error: unknown) {
+      console.warn('Business settings fallback to defaults:', error);
       setSettings(DEFAULT_SETTINGS);
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      toast({
+        title: 'Error loading business settings',
+        description: message,
+        variant: 'destructive',
+      });
     } finally {
       setLoading(false);
     }

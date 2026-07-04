@@ -11,9 +11,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useAuth } from '@/hooks/useAuth';
-import { supabase, isSupabaseConfigured } from '@/lib/supabase';
 import { useToast } from '@/hooks/use-toast';
-// Removed localStorage and offline cache - using Supabase only
+// Bills data loaded via invoices API
 import { trackFeatureUsage } from '@/lib/analytics';
 import SmartBillForm from '@/components/SmartBillForm';
 import ReminderSettingsModal from '@/components/ReminderSettingsModal';
@@ -37,7 +36,7 @@ import {
   Loader2
 } from 'lucide-react';
 import { format, parseISO, differenceInDays, isAfter, isBefore, addDays } from 'date-fns';
-import { useSupabasePlan } from '@/hooks/useSupabasePlan';
+import { useAppPlan } from '@/hooks/useAppPlan';
 import UpgradeModal from '@/components/UpgradeModal';
 import FreemiumLimitCard from '@/components/FreemiumLimitCard';
 import BillLimitBanner from '@/components/BillLimitBanner';
@@ -52,6 +51,9 @@ import { MessageCircle } from 'lucide-react';
 import { logError, logInfo } from '@/lib/logger';
 import { useLoadingWatchdog } from '@/hooks/useLoadingWatchdog';
 import { cancelAllQueries, refetchAllQueries } from '@/lib/query';
+import * as invoicesApi from '@/lib/endpoints/invoices';
+import * as customersApi from '@/lib/endpoints/customers';
+import type { Invoice } from '@/lib/endpoints/invoices';
 
 interface Bill {
   id: string;
@@ -103,6 +105,45 @@ const categories = [
   'other'
 ];
 
+function mapInvoiceStatus(status: string, dueDate: string): Bill['status'] {
+  if (status === 'paid') return 'paid';
+  const due = dueDate ? new Date(dueDate) : null;
+  if (due && due < new Date() && status !== 'paid') return 'overdue';
+  return 'unpaid';
+}
+
+function invoiceToBill(inv: Invoice, userId: string): Bill {
+  return {
+    id: inv.id,
+    user_id: userId,
+    name: inv.customername || inv.invoicenumber || 'Invoice',
+    amount: Number(inv.amount || 0),
+    due_date: inv.duedate || inv.issuedate || new Date().toISOString().slice(0, 10),
+    category: 'other',
+    recurring: false,
+    status: mapInvoiceStatus(inv.status, inv.duedate),
+    notes: null,
+    created_at: inv.createdat || new Date().toISOString(),
+    updated_at: inv.updatedat || new Date().toISOString(),
+    auto_reminder_enabled: false,
+    reminder_days_before: 1,
+  };
+}
+
+async function ensureCustomer(name: string): Promise<string> {
+  const customers = await customersApi.listCustomers(name);
+  const existing = customers.find((c) => c.name === name);
+  if (existing) return existing.id;
+  const created = await customersApi.createCustomer({ name });
+  return created.id;
+}
+
+function billStatusToInvoice(status: Bill['status']): string {
+  if (status === 'paid') return 'paid';
+  if (status === 'overdue') return 'sent';
+  return 'draft';
+}
+
 const Bills = () => {
   const { user, signOut } = useAuth();
   const { toast } = useToast();
@@ -118,7 +159,7 @@ const Bills = () => {
   const [reminderModalBill, setReminderModalBill] = useState<Bill | null>(null);
   const isMobile = useIsMobile();
   
-  const planData = useSupabasePlan();
+  const planData = useAppPlan();
   const { plan, billLimit, canAddBill, loading: planLoading, aiQueriesUsed, aiQueriesLimit } = planData;
   const isPro = plan === 'pro' || plan === 'premium';
   
@@ -163,43 +204,10 @@ const Bills = () => {
   const fetchBills = async () => {
     try {
       setLoading(true);
-      const usePgrstBills = import.meta.env.VITE_USE_PGRST_BILLS === 'true';
-      if (usePgrstBills) {
-        const { pgrst } = await import('@/lib/pgrst');
-        const data = await pgrst<any[]>('/bills?select=*&order=due_date.asc&limit=200');
-        const billsData = data || [];
-        setBills(billsData);
-        console.log(`✅ [PGRST] Loaded ${billsData.length} bills successfully`);
-      } else if (isSupabaseConfigured && supabase) {
-        const { data, error } = await supabase
-          .from('bills')
-          .select('*')
-          .eq('user_id', user!.id)
-          .order('due_date', { ascending: true });
-
-        if (error) {
-          console.error('🔴 Bills fetch error:', error);
-          
-          // Handle specific Supabase errors
-          if (error.code === 'PGRST116') {
-            throw new Error('No bills found. Start by adding your first bill!');
-          } else if (error.code === '42501') {
-            throw new Error('Permission denied. Please log in again.');
-          } else if (error.message.includes('network')) {
-            throw new Error('Network error. Please check your connection and try again.');
-          } else {
-            throw new Error(`Database error: ${error.message}`);
-          }
-        }
-        
-        const billsData = data || [];
-        setBills(billsData);
-        
-        console.log(`✅ Loaded ${billsData.length} bills successfully`);
-      } else {
-        // If Supabase is not configured, show error
-        throw new Error('Database connection not available. Please check your connection.');
-      }
+      const invoices = await invoicesApi.listInvoices();
+      const billsData = invoices.map((inv) => invoiceToBill(inv, user!.id));
+      setBills(billsData);
+      console.log(`✅ Loaded ${billsData.length} bills successfully`);
     } catch (error: any) {
       console.error('❌ Error in fetchBills:', error);
       toast({
@@ -275,102 +283,46 @@ const Bills = () => {
 
       console.log(`💾 ${editingBill ? 'Updating' : 'Creating'} bill:`, billData);
 
-      if (isSupabaseConfigured && supabase) {
-        if (editingBill) {
-          const { error } = await supabase
-            .from('bills')
-            .update(billData)
-            .eq('id', editingBill.id);
-          
-          if (error) {
-            console.error('🔴 Bill update error:', error);
-            
-            if (error.code === '42501') {
-              throw new Error('Permission denied. This bill may belong to another user.');
-            } else if (error.code === 'PGRST116') {
-              throw new Error('Bill not found. It may have been deleted.');
-            } else {
-              throw new Error(`Failed to update bill: ${error.message}`);
-            }
-          }
-        } else {
-          const { data: insertedBill, error } = await supabase
-            .from('bills')
-            .insert([billData])
-            .select()
-            .single();
-          
-          if (error) {
-            console.error('🔴 Bill creation error:', error);
-            
-            if (error.code === '23505') {
-              throw new Error('A bill with this information already exists.');
-            } else if (error.code === '42501') {
-              throw new Error('Permission denied. Please log in again.');
-            } else {
-              throw new Error(`Failed to create bill: ${error.message}`);
-            }
-          }
-
-          // Track bill creation
-          trackFeatureUsage('bills', 'create', { 
-            category: billData.category,
-            amount: billData.amount 
-          });
-          
-          // Auto-schedule reminder for new bills
-          if (insertedBill && billData.auto_reminder_enabled && billData.due_date) {
-            try {
-              console.log('🔔 Auto-scheduling reminder for new bill:', insertedBill.name);
-              
-              const { error: reminderError } = await supabase.functions.invoke('schedule-individual-reminder', {
-                body: {
-                  bill_id: insertedBill.id,
-                  reminder_days_before: billData.reminder_days_before || 1
-                }
-              });
-
-              if (reminderError) {
-                console.error('❌ Failed to auto-schedule reminder:', reminderError);
-                // Don't throw error here - bill creation succeeded
-                toast({
-                  title: "Bill Added",
-                  description: "Bill saved, but reminder scheduling failed. You can set it up manually.",
-                  variant: "destructive",
-                });
-              } else {
-                console.log('✅ Auto-reminder scheduled successfully');
-                toast({
-                  title: "Bill Added with Reminder!",
-                  description: `${billData.name} saved and reminder scheduled for ${billData.reminder_days_before} day(s) before due date`,
-                });
-              }
-            } catch (reminderError: any) {
-              console.error('❌ Auto-reminder scheduling error:', reminderError);
-              // Don't throw error here - bill creation succeeded
-            }
-          } else {
-            toast({
-              title: "✅ Bill Added Successfully!",
-              description: `${billData.name} added to your bills list`,
-              duration: 4000,
-            });
-          }
-        }
-      } else {
-        throw new Error('Database connection not available. Please check your connection.');
-      }
-
-      // Only show success toast for edits (new bills handle their own toasts above)
       if (editingBill) {
-      // Track bill update
-      trackFeatureUsage('Bills', 'submit', { action: 'update' });
-      
-      toast({
-        title: "✅ Bill Updated Successfully!",
-        description: `${billData.name} has been updated`,
-        duration: 4000,
-      });
+        await invoicesApi.updateInvoice(editingBill.id, {
+          amount: billData.amount,
+          duedate: billData.due_date,
+          status: billStatusToInvoice(billData.status),
+        });
+        trackFeatureUsage('Bills', 'submit', { action: 'update' });
+        toast({
+          title: "✅ Bill Updated Successfully!",
+          description: `${billData.name} has been updated`,
+          duration: 4000,
+        });
+      } else {
+        const customerId = await ensureCustomer(billData.name);
+        const inv = await invoicesApi.createInvoice({
+          customerid: customerId,
+          invoicenumber: `BILL-${Date.now()}`,
+          issuedate: new Date().toISOString().slice(0, 10),
+          duedate: billData.due_date,
+          amount: billData.amount,
+          status: billStatusToInvoice(billData.status),
+        });
+        trackFeatureUsage('bills', 'create', {
+          category: billData.category,
+          amount: billData.amount,
+        });
+        if (billData.auto_reminder_enabled && billData.due_date) {
+          console.warn('Reminder scheduling not migrated');
+          toast({
+            title: "Bill Added",
+            description: "Bill saved. Reminder scheduling is not available yet.",
+          });
+        } else {
+          toast({
+            title: "✅ Bill Added Successfully!",
+            description: `${billData.name} added to your bills list`,
+            duration: 4000,
+          });
+        }
+        void inv;
       }
 
       console.log(`✅ Bill ${editingBill ? 'updated' : 'created'} successfully`);
@@ -432,26 +384,7 @@ const Bills = () => {
     try {
       console.log('🗑️ Deleting bill:', billId);
       
-      if (isSupabaseConfigured && supabase) {
-        const { error } = await supabase
-          .from('bills')
-          .delete()
-          .eq('id', billId);
-        
-        if (error) {
-          console.error('🔴 Bill deletion error:', error);
-          
-          if (error.code === '42501') {
-            throw new Error('Permission denied. You can only delete your own bills.');
-          } else if (error.code === 'PGRST116') {
-            throw new Error('Bill not found. It may have already been deleted.');
-          } else {
-            throw new Error(`Failed to delete bill: ${error.message}`);
-          }
-        }
-      } else {
-        throw new Error('Database connection not available. Please check your connection.');
-      }
+      await invoicesApi.deleteInvoice(billId);
       
       // Track bill deletion
       trackFeatureUsage('Bills', 'click', { action: 'delete' });
@@ -492,22 +425,12 @@ const Bills = () => {
   const handleScheduleWhatsAppReminder = async (billId: string) => {
     setSchedulingReminder(billId);
     try {
-      const { data, error } = await supabase.functions.invoke('schedule-bill-reminders-enhanced', {
-        body: {
-          bill_id: billId,
-        },
+      console.warn('WhatsApp reminder scheduling not migrated');
+      toast({
+        title: 'Reminders not available',
+        description: 'Bill reminder scheduling has not been migrated yet.',
+        variant: 'destructive',
       });
-
-      if (error) throw error;
-
-      if (data.success) {
-        toast({
-          title: "WhatsApp Reminders Scheduled! ✅",
-          description: `${data.scheduled_count} reminder(s) created. Click the WhatsApp link when it's time!`,
-        });
-      } else {
-        throw new Error(data.error || 'Failed to schedule reminders');
-      }
     } catch (error: any) {
       toast({
         title: "Scheduling Failed",

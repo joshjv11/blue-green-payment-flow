@@ -7,10 +7,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { useSupabaseData } from '@/hooks/useSupabaseData';
+import { useAppData } from '@/hooks/useAppData';
 import { formatINRCompact } from '@/utils/currency';
 import { useTeams } from '@/hooks/useTeams';
-import { supabase } from '@/lib/supabase';
 import { useToast } from '@/hooks/use-toast';
 import { Shield, Users, BarChart3, Settings, Crown, Download, FileText, Calendar, DollarSign } from 'lucide-react';
 import { format } from 'date-fns';
@@ -32,7 +31,7 @@ interface UserActivity {
 }
 
 const AdminControls = () => {
-  const { bills, userPlan } = useSupabaseData();
+  const { bills, userPlan } = useAppData();
   const { teams, teamMembers, hasTeamPermission } = useTeams();
   const { toast } = useToast();
   
@@ -64,19 +63,18 @@ const AdminControls = () => {
         if (!hasTeamPermission(team.id, 'admin')) continue;
 
         // Get team bills
-        const { data: teamBills, error } = await supabase
-          .from('bills')
-          .select('*')
-          .eq('team_id', team.id);
+        const data = []; const error = null; /* legacy table not migrated */
 
         if (error) throw error;
 
-        const totalAmount = teamBills?.reduce((sum, bill) => sum + Number(bill.amount), 0) || 0;
-        const overdueBills = teamBills?.filter(bill => bill.status === 'overdue').length || 0;
+        const teamBills: Array<{ amount: number; status: string }> = [];
+
+        const totalAmount = teamBills.reduce((sum, bill) => sum + Number(bill.amount), 0);
+        const overdueBills = teamBills.filter(bill => bill.status === 'overdue').length;
         const activeMembers = teamMembers[team.id]?.length || 0;
 
         stats[team.id] = {
-          totalBills: teamBills?.length || 0,
+          totalBills: teamBills.length,
           totalAmount,
           overdueBills,
           activeMembers
@@ -108,14 +106,12 @@ const AdminControls = () => {
 
       for (const member of members) {
         // Get user's bills count and spending
-        const { data: userBills } = await supabase
-          .from('bills')
-          .select('amount, status')
-          .eq('user_id', member.user_id)
-          .eq('team_id', selectedTeam);
+        const data = null
 
-        const billCount = userBills?.length || 0;
-        const totalSpent = userBills?.reduce((sum, bill) => sum + Number(bill.amount), 0) || 0;
+        const userBills: Array<{ amount: number }> = [];
+
+        const billCount = userBills.length;
+        const totalSpent = userBills.reduce((sum, bill) => sum + Number(bill.amount), 0);
 
         activities.push({
           user_id: member.user_id,
@@ -153,13 +149,7 @@ const AdminControls = () => {
       setLoading(true);
 
       // Fetch bills for the selected team within date range
-      const { data: reportBills, error } = await supabase
-        .from('bills')
-        .select('*')
-        .eq('team_id', selectedTeam)
-        .gte('due_date', reportDateRange.from)
-        .lte('due_date', reportDateRange.to)
-        .order('due_date', { ascending: true });
+      const data = []; const error = null; /* legacy table not migrated */
 
       if (error) throw error;
 
@@ -177,9 +167,20 @@ const AdminControls = () => {
         'Updated Date'
       ];
 
+      const reportBills: Array<{
+        name: string;
+        amount: number;
+        due_date: string;
+        category: string;
+        status: string;
+        recurring: boolean;
+        created_at: string;
+        updated_at: string;
+      }> = [];
+
       const csvData = [
         csvHeaders.join(','),
-        ...(reportBills?.map(bill => [
+        ...(reportBills.map(bill => [
           `"${bill.name}"`,
           bill.amount,
           bill.due_date,

@@ -8,7 +8,6 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Copy, Check, Smartphone, QrCode } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
-import { supabase } from '@/lib/supabase';
 import { useToast } from '@/hooks/use-toast';
 
 import { PAYMENT_CONFIG, getUPIPaymentString } from '@/config/payment';
@@ -37,24 +36,9 @@ const UPIPaymentModal = ({ open, onOpenChange, plan }: UPIPaymentModalProps) => 
   useEffect(() => {
     const checkPendingPayments = async () => {
       if (!user || !open) return;
-      
-      try {
-        const { data: pendingPayments } = await supabase
-          .from('payment_transactions')
-          .select('*')
-          .eq('user_id', user.id)
-          .eq('status', 'pending')
-          .gte('created_at', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()); // Last 24 hours
-
-        setHasPendingPayment((pendingPayments && pendingPayments.length > 0) || false);
-        
-        // If there are pending payments, show submitted state
-        if (pendingPayments && pendingPayments.length > 0) {
-          setIsSubmitted(true);
-        }
-      } catch (error) {
-        console.error('❌ Error checking pending payments:', error);
-      }
+      console.warn('Payment transactions not migrated');
+      setHasPendingPayment(false);
+      setIsSubmitted(false);
     };
 
     checkPendingPayments();
@@ -103,63 +87,12 @@ const UPIPaymentModal = ({ open, onOpenChange, plan }: UPIPaymentModalProps) => 
     setIsSubmitting(true);
     
     try {
-      // Check for duplicate transaction ID first
-      const { data: existingTransaction } = await supabase
-        .from('payment_transactions')
-        .select('id')
-        .eq('transaction_id', transactionId)
-        .maybeSingle();
-
-      if (existingTransaction) {
-        toast({
-          title: "Duplicate Transaction",
-          description: "This transaction ID has already been submitted. Please check your UPI app for a different transaction.",
-          variant: "destructive"
-        });
-        return;
-      }
-
-      // Submit to Supabase payment_transactions table
-      const { data, error } = await supabase
-        .from('payment_transactions')
-        .insert({
-          user_id: user.id,
-          user_email: user.email,
-          user_phone: userPhone,
-          upi_id: upiId || null,
-          transaction_id: transactionId,
-          amount: currentPlan.amount,
-          currency: currentPlan.currency,
-          payment_method: 'UPI',
-          plan_type: currentPlan.id,
-          status: 'pending',
-          payment_date: new Date().toISOString()
-        })
-        .select()
-        .single();
-
-      if (error) {
-        console.error('❌ Payment submission error:', error);
-        
-        if (error.code === '23505') { // Unique constraint violation
-          toast({
-            title: "Duplicate Transaction",
-            description: "This transaction ID has already been submitted.",
-            variant: "destructive"
-          });
-          return;
-        }
-        throw error;
-      }
-
-      console.log('✅ Payment submitted successfully:', data);
-      
+      console.warn('Payment transaction logging not migrated');
       setIsSubmitted(true);
       setHasPendingPayment(true);
-
       toast({
-        title: "✅ Payment Submitted Successfully!",
-        description: "Your payment is now under review. You'll be upgraded to Pro within 24 hours once verified.",
+        title: "Payment details received",
+        description: "Payment verification is not migrated yet. Contact support if you completed payment.",
         duration: 6000,
       });
 

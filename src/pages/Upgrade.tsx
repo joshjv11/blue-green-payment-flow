@@ -5,7 +5,6 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Check, Crown, Zap, Rocket, X } from 'lucide-react';
 import { usePlan } from '@/contexts/PlanContext';
-import { supabase } from '@/lib/supabase';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
 import {
@@ -43,16 +42,7 @@ const Upgrade = () => {
       const expiresAt = new Date();
       expiresAt.setDate(expiresAt.getDate() + 30); // 30 days from now
 
-      const { error } = await supabase
-        .from('user_plans')
-        .update({
-          plan: selectedPlan,
-          is_active: true,
-          started_at: new Date().toISOString(),
-          expires_at: expiresAt.toISOString(),
-          ai_queries_limit: 999999,
-        })
-        .eq('user_id', user.id);
+      const error = { message: "not migrated" };
 
       if (error) throw error;
 

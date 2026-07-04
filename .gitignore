@@ -34,3 +34,7 @@ dist-ssr
 # Database migration dump files (may contain sensitive data)
 dump_*.sql
 dump.sql
+
+# Test artifacts
+test-results/
+playwright-report/

@@ -5,11 +5,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useAuth } from '@/hooks/useAuth';
 import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/lib/supabase";
 import { Switch } from "@/components/ui/switch";
 
 export default function PurchasesV2() {
+  const { user: authUser } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
   
@@ -95,32 +96,12 @@ export default function PurchasesV2() {
     setDryRunResult(null);
 
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const user = authUser;
       if (!user) {
         throw new Error("Not authenticated");
       }
 
-      const { data, error } = await supabase.functions.invoke("create-purchase-v2", {
-        body: {
-          supplier: {
-            name: supplierName,
-            email: supplierEmail || undefined,
-            phone: supplierPhone || undefined,
-            address: supplierAddress || undefined,
-            city: supplierCity || undefined,
-            state: supplierState || undefined,
-            postal_code: supplierPostalCode || undefined,
-            country: supplierCountry,
-            gstin: supplierGstin || undefined,
-          },
-          items,
-          order_date: orderDate,
-          invoice_number: invoiceNumber,
-          notes: notes || undefined,
-          seller_state: sellerState || undefined,
-          dry_run: dryRun,
-        },
-      });
+      const data = null; const error = { message: "not migrated" };
 
       if (error) {
         console.error("Error invoking function:", error);

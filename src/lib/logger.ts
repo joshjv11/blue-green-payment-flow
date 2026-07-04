@@ -1,4 +1,4 @@
-import { supabase, isSupabaseConfigured } from '@/lib/supabase';
+import { getAccessToken } from '@/lib/apiClient';
 
 interface LogEventParams {
   level?: 'info' | 'warn' | 'error';
@@ -19,20 +19,12 @@ interface LogEventParams {
  */
 export const logEvent = async (params: LogEventParams): Promise<void> => {
   try {
-    if (!isSupabaseConfigured || !supabase) {
-      console.warn('⚠️ Logging disabled: Supabase not configured');
-      return;
-    }
-
     const route = window.location.pathname;
     const sessionId = sessionStorage.getItem('session_id') || crypto.randomUUID();
     sessionStorage.setItem('session_id', sessionId);
 
-    // Get auth token if available
-    const { data: { session } } = await supabase.auth.getSession();
-    const token = session?.access_token;
+    const token = getAccessToken();
 
-    // Build log payload
     const payload = {
       level: params.level || 'info',
       event: params.event,
@@ -48,49 +40,19 @@ export const logEvent = async (params: LogEventParams): Promise<void> => {
         ...params.context,
         session_id: sessionId,
         timestamp: new Date().toISOString(),
+        has_token: !!token,
       },
     };
 
-    // Get Supabase URL from client
-    const supabaseUrl = 'https://fbzfddgqfqjuvpjzvhfi.supabase.co';
-    const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZiemZkZGdxZnFqdXZwanp2aGZpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM3MTMyMTAsImV4cCI6MjA3OTI4OTIxMH0.ulFXrPwMvrXJGIjli9KQvoM_T8lb6VBqGHfP_LsfQ7Q';
-
-    // Send log to edge function (fire and forget with keepalive)
-    // TODO: Re-enable when edge function is deployed
-    // Temporarily disabled to prevent CORS errors
-    /*
-    fetch(`${supabaseUrl}/functions/v1/log-client-event`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': token ? `Bearer ${token}` : '',
-        'apikey': supabaseAnonKey,
-      },
-      body: JSON.stringify(payload),
-      keepalive: true, // Ensure log is sent even if page is closed
-    }).catch((error) => {
-      // Swallow all errors silently - logging should never break the app
-      // CORS errors, 404s, network errors are all acceptable
-      if (process.env.NODE_ENV === 'development') {
-        console.debug('📊 Log event failed (non-critical, edge function may not exist):', error.message);
-      }
-    });
-    */
-
-    // Also log to console in development
     if (process.env.NODE_ENV === 'development') {
       const emoji = params.level === 'error' ? '🔴' : params.level === 'warn' ? '⚠️' : '📊';
       console.log(`${emoji} [${params.level?.toUpperCase()}] ${params.event}`, payload);
     }
   } catch (error) {
-    // Swallow all errors - logging should never break the app
     console.debug('Logger error (non-critical):', error);
   }
 };
 
-/**
- * Log an error with full stack trace
- */
 export const logError = async (
   error: Error,
   component?: string,
@@ -110,9 +72,6 @@ export const logError = async (
   });
 };
 
-/**
- * Log a warning
- */
 export const logWarning = async (
   message: string,
   component?: string,
@@ -129,9 +88,6 @@ export const logWarning = async (
   });
 };
 
-/**
- * Log an info event
- */
 export const logInfo = async (
   event: string,
   component?: string,

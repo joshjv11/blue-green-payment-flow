@@ -1,7 +1,7 @@
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Crown, Zap, Infinity, TrendingUp } from 'lucide-react';
-import { useSupabasePlan } from '@/hooks/useSupabasePlan';
+import { useAppPlan } from '@/hooks/useAppPlan';
 
 interface FreemiumLimitCardProps {
   type: 'bills' | 'ai';
@@ -11,7 +11,7 @@ interface FreemiumLimitCardProps {
 }
 
 const FreemiumLimitCard = ({ type, currentCount, onUpgrade, className }: FreemiumLimitCardProps) => {
-  const { plan, billLimit, aiQueriesUsed, aiQueriesLimit, getAIQueriesRemaining } = useSupabasePlan();
+  const { plan, billLimit, aiQueriesUsed, aiQueriesLimit, getAIQueriesRemaining } = useAppPlan();
 
   if (plan === 'pro') return null;
 

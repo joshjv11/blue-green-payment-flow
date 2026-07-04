@@ -36,7 +36,7 @@ interface AuthFormProps {
 const AuthForm = ({ onSuccess }: AuthFormProps) => {
   const [activeTab, setActiveTab] = useState('signin');
   const [resetPasswordLoading, setResetPasswordLoading] = useState(false);
-  const { signIn, signUp, resetPassword, loading } = useAuth();
+  const { signIn, signUp, requestPasswordReset, loading } = useAuth();
 
   const signInForm = useForm<SignInFormData>({
     resolver: zodResolver(signInSchema),
@@ -84,7 +84,7 @@ const AuthForm = ({ onSuccess }: AuthFormProps) => {
 
     setResetPasswordLoading(true);
     try {
-      await resetPassword(email);
+      await requestPasswordReset(email);
     } catch (error) {
       // Error handling is done in the useAuth hook
     } finally {

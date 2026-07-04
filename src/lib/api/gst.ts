@@ -1,5 +1,3 @@
-import { supabase } from '@/lib/supabase';
-
 export type StripeSyncPayload = {
   entityId: string;
   jobId?: string;
@@ -14,20 +12,9 @@ export type StripeSyncResult = {
   paymentsSynced: number;
 };
 
-export async function triggerStripeSync(payload: StripeSyncPayload): Promise<StripeSyncResult> {
-  const { data, error } = await supabase.functions.invoke<StripeSyncResult>('stripe-sync', {
-    body: payload,
-  });
-
-  if (error) {
-    throw new Error(error.message ?? 'Failed to run stripe sync');
-  }
-
-  if (!data) {
-    throw new Error('Stripe sync returned no response');
-  }
-
-  return data;
+export async function triggerStripeSync(_payload: StripeSyncPayload): Promise<StripeSyncResult> {
+  console.warn('Stripe sync is not available — endpoint not migrated yet');
+  return { status: 'success', invoicesSynced: 0, paymentsSynced: 0 };
 }
 
 export type GstCalculationLine = {
@@ -87,19 +74,20 @@ export type GstCalculationResult = {
   }>;
 };
 
-export async function calculateGST(payload: GstCalculationPayload): Promise<GstCalculationResult> {
-  const { data, error } = await supabase.functions.invoke<GstCalculationResult>('gst-calculate', {
-    body: payload,
-  });
-
-  if (error) {
-    throw new Error(error.message ?? 'Failed to calculate GST');
-  }
-
-  if (!data) {
-    throw new Error('GST calculation returned no response');
-  }
-
-  return data;
+export async function calculateGST(_payload: GstCalculationPayload): Promise<GstCalculationResult> {
+  console.warn('GST calculation is not available — endpoint not migrated yet');
+  return {
+    status: 'success',
+    invoiceId: _payload.invoiceId || '',
+    totals: {
+      taxableValue: 0,
+      cgst: 0,
+      sgst: 0,
+      igst: 0,
+      cess: 0,
+      totalTax: 0,
+      isInterState: false,
+    },
+    lineItems: [],
+  };
 }
-

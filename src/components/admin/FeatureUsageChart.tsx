@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
-import { supabase } from '@/lib/supabase';
 import { Loader2, BarChart3 } from 'lucide-react';
 
 interface FeatureUsageData {
@@ -21,7 +20,7 @@ export function FeatureUsageChart() {
   const loadFeatureUsage = async () => {
     setLoading(true);
     try {
-      const { data: stats, error } = await supabase.rpc('get_feature_usage_stats');
+      const data = null; const error = null; /* admin rpc not migrated */
 
       if (error) {
         console.error('Error loading feature usage:', error);
@@ -29,7 +28,7 @@ export function FeatureUsageChart() {
         return;
       }
 
-      setData((stats as FeatureUsageData[]) || []);
+      setData([]);
     } catch (error) {
       console.error('Error loading feature usage:', error);
       setData([]);

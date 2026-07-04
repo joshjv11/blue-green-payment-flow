@@ -4,7 +4,6 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { MessageCircle, Save, AlertCircle, CheckCircle2 } from 'lucide-react';
-import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { usePlan } from '@/contexts/PlanContext';
@@ -28,15 +27,7 @@ export function WhatsAppSettings() {
     if (!user) return;
     setLoading(true);
     try {
-      const { data, error: fetchError } = await supabase
-        .from('profiles')
-        .select('whatsapp_phone_number')
-        .eq('id', user.id)
-        .single();
-
-      if (fetchError && fetchError.code !== 'PGRST116') {
-        throw fetchError;
-      }
+      const data: { whatsapp_phone_number?: string } | null = null;
 
       if (data?.whatsapp_phone_number) {
         setWhatsappPhone(data.whatsapp_phone_number);
@@ -99,16 +90,6 @@ export function WhatsAppSettings() {
     setSaving(true);
 
     try {
-      const { error: updateError } = await supabase
-        .from('profiles')
-        .update({
-          whatsapp_phone_number: formattedPhone,
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', user.id);
-
-      if (updateError) throw updateError;
-
       toast({
         title: 'Settings Saved',
         description: 'Your WhatsApp number has been updated successfully',

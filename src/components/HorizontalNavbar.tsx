@@ -80,7 +80,7 @@ const adminItems: NavItem[] = [
 ];
 
 export function HorizontalNavbar() {
-  const { user, signOut } = useAuth();
+  const { user, signOut, resendVerification } = useAuth();
   const { plan, isPremium, isPro, loading } = useEntitlements();
   const location = useLocation();
   const navigate = useNavigate();
@@ -197,6 +197,21 @@ export function HorizontalNavbar() {
   }
 
   return (
+    <>
+    {user && !user.verified && (
+      <div className="bg-amber-500/10 border-b border-amber-500/30 px-4 py-2 text-center text-sm">
+        <span className="text-amber-900 dark:text-amber-100">
+          Verify your email to send payment reminders.{' '}
+        </span>
+        <button
+          type="button"
+          onClick={() => resendVerification()}
+          className="font-medium underline underline-offset-2 hover:opacity-80"
+        >
+          Resend verification email
+        </button>
+      </div>
+    )}
     <nav className="border-b-2 border-border/60 bg-gradient-to-r from-background via-background/98 to-background backdrop-blur-xl shadow-lg sticky top-0 z-50">
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16">
@@ -403,6 +418,7 @@ export function HorizontalNavbar() {
         </div>
       </div>
     </nav>
+    </>
   );
 }
 

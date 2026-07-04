@@ -1,7 +1,7 @@
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Crown, Infinity, AlertTriangle } from 'lucide-react';
-import { useSupabasePlan } from '@/hooks/useSupabasePlan';
+import { useAppPlan } from '@/hooks/useAppPlan';
 
 interface BillLimitBannerProps {
   currentCount: number;
@@ -9,7 +9,7 @@ interface BillLimitBannerProps {
 }
 
 const BillLimitBanner = ({ currentCount, onUpgrade }: BillLimitBannerProps) => {
-  const { plan, billLimit } = useSupabasePlan();
+  const { plan, billLimit } = useAppPlan();
 
   if (plan === 'pro') return null;
 

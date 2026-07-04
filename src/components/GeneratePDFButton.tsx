@@ -2,8 +2,8 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { FileText, Loader2 } from "lucide-react";
 import { InvoicePDFPreview } from "./InvoicePDFPreview";
-import { supabase } from "@/lib/supabase";
 import { useToast } from "@/hooks/use-toast";
+import { getInvoice } from "@/lib/endpoints/invoices";
 
 interface GeneratePDFButtonProps {
   invoiceId: string;
@@ -28,37 +28,19 @@ export function GeneratePDFButton({
   const fetchInvoiceData = async () => {
     setLoading(true);
     try {
-      const tableName = type === "sale" ? "sales_orders" : "purchase_orders";
-
-      // Fetch invoice header
-      const { data: invoice, error: invoiceError } = await supabase
-        .from(tableName)
-        .select("*")
-        .eq("id", invoiceId)
-        .single();
-
-      if (invoiceError) throw invoiceError;
-
-      // Fetch order lines
-      const { data: lines, error: linesError } = await supabase
-        .from("order_lines")
-        .select("*")
-        .eq("order_id", invoiceId)
-        .eq("order_type", type);
-
-      if (linesError) throw linesError;
-
+      const invoice = await getInvoice(invoiceId);
       setInvoiceData({
         ...invoice,
-        lines: lines || [],
+        invoice_number: invoice.invoicenumber,
+        customer_name: invoice.customername,
+        lines: invoice.lineitems || [],
       });
-
       setShowPreview(true);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Error fetching invoice data:", error);
       toast({
         title: "Error loading invoice",
-        description: error.message,
+        description: error instanceof Error ? error.message : "Failed to load invoice",
         variant: "destructive",
       });
     } finally {
@@ -66,17 +48,8 @@ export function GeneratePDFButton({
     }
   };
 
-  const handlePDFGenerated = async (pdfUrl: string) => {
-    // Update invoice record with PDF URL
-    const tableName = type === "sale" ? "sales_orders" : "purchase_orders";
-    const { error } = await supabase
-      .from(tableName)
-      .update({ pdf_url: pdfUrl })
-      .eq("id", invoiceId);
-
-    if (error) {
-      console.error("Error updating PDF URL:", error);
-    }
+  const handlePDFGenerated = async (_pdfUrl: string) => {
+    console.warn('PDF URL persistence not migrated for legacy sales/purchase orders');
   };
 
   return (

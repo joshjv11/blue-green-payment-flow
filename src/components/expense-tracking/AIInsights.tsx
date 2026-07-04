@@ -4,9 +4,10 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { differenceInDays, endOfMonth, startOfMonth } from 'date-fns';
 import { Brain, TrendingUp, TrendingDown, AlertTriangle, Lightbulb, Target, Zap, Loader2 } from 'lucide-react';
-import { supabase } from '@/lib/supabase';
-import { format, startOfMonth, endOfMonth, subMonths, differenceInDays } from 'date-fns';
+import { useAuth } from '@/hooks/useAuth';
+import { aiAssistant } from '@/lib/endpoints/ai';
 
 interface AIInsight {
   type: 'spending_pattern' | 'budget_warning' | 'savings_opportunity' | 'category_analysis' | 'predictive_alert';
@@ -32,6 +33,7 @@ export function AIInsights({
   todaySpent,
   dailyBudget,
 }: AIInsightsProps) {
+  const { user: authUser } = useAuth();
   const [insights, setInsights] = useState<AIInsight[]>([]);
   const [loading, setLoading] = useState(true);
   const [aiMessage, setAiMessage] = useState<string>('');
@@ -139,7 +141,7 @@ export function AIInsights({
 
     setAnalyzing(true);
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const user = authUser;
       if (!user) return;
 
       // Prepare context for AI
@@ -176,18 +178,9 @@ Keep it concise (2-3 sentences), friendly, and actionable. Focus on practical st
 
       // Try to use Edge Function first (handles CORS and API keys securely)
       try {
-        const { data, error } = await supabase.functions.invoke('ai-assistant-enhanced', {
-          body: {
-            message: prompt,
-            taskType: 'spending_analysis',
-            context: JSON.stringify(spendingContext),
-          },
-        });
-
-        if (!error && data?.response) {
-          setAiMessage(data.response);
-          return; // Success, no need to try other methods
-        }
+        const { reply } = await aiAssistant(prompt, spendingContext);
+        setAiMessage(reply);
+        return;
       } catch (error) {
         console.warn('Edge function error, trying direct API:', error);
       }

@@ -13,7 +13,8 @@ import {
   LogOut,
   Shield,
   ChevronRight,
-  Zap
+  Zap,
+  CreditCard
 } from "lucide-react";
 import { NavLink, useLocation } from "react-router-dom";
 import {

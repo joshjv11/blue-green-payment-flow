@@ -2,15 +2,15 @@ import { useState, useEffect } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { supabase } from '@/lib/supabase';
-import { useSupabaseData } from '@/hooks/useSupabaseData';
+import { useAppData } from '@/hooks/useAppData';
 import { useToast } from '@/hooks/use-toast';
 import { Wifi, WifiOff, RefreshCw, CheckCircle, AlertCircle, Clock } from 'lucide-react';
+import { getApiBase } from '@/lib/apiClient';
 
 type ConnectionState = 'connected' | 'disconnected' | 'syncing' | 'error';
 
 const ConnectionStatus = () => {
-  const { syncing, syncLocalStorageData } = useSupabaseData();
+  const { syncing, syncLocalStorageData } = useAppData();
   const { toast } = useToast();
   const [connectionState, setConnectionState] = useState<ConnectionState>('connected');
   const [lastSync, setLastSync] = useState<Date | null>(null);
@@ -39,17 +39,17 @@ const ConnectionStatus = () => {
 
   const checkConnection = async () => {
     try {
-      const { error } = await supabase.from('profiles').select('id').limit(1);
-      if (error) {
+      const res = await fetch(`${getApiBase()}/health`, { credentials: 'include' });
+      if (!res.ok) {
         setConnectionState('error');
-        setRetryCount(prev => prev + 1);
+        setRetryCount((prev) => prev + 1);
       } else {
         setConnectionState('connected');
         setRetryCount(0);
       }
-    } catch (error) {
+    } catch {
       setConnectionState('disconnected');
-      setRetryCount(prev => prev + 1);
+      setRetryCount((prev) => prev + 1);
     }
   };
 

@@ -11,7 +11,6 @@ import { InputOTP, InputOTPGroup, InputOTPSlot, InputOTPSeparator } from '@/comp
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, Mail, Phone, Fingerprint, Shield, Zap, AlertCircle } from 'lucide-react';
-import { supabase } from '@/lib/supabase';
 import invoiceFlowLogo from '@/assets/invoiceflow-logo.png';
 import { useAnalytics } from '@/hooks/useAnalytics';
 
@@ -45,7 +44,7 @@ const AuthV2Form = ({ onSuccess }: AuthV2FormProps) => {
   const [otpChannel, setOtpChannel] = useState<'email' | 'sms'>('email');
   const [resendCooldown, setResendCooldown] = useState(0);
   const [isOffline, setIsOffline] = useState(!navigator.onLine);
-  const { signInWithMagicLink, loading } = useAuth();
+  const { loading } = useAuth();
   const { toast } = useToast();
   const { track } = useAnalytics();
 
@@ -142,20 +141,12 @@ const AuthV2Form = ({ onSuccess }: AuthV2FormProps) => {
   const handleMagicLink = async (data: EmailFormData) => {
     setMagicLinkLoading(true);
     try {
-      // Store email in localStorage for callback verification
-      localStorage.setItem('login_email', data.email);
-      
-      const redirectTo = new URLSearchParams(window.location.search).get('next') || '/dashboard';
-      
-      await signInWithMagicLink(data.email);
       track('auth_magiclink_sent', { email: data.email });
-      
       toast({
-        title: "Magic link sent!",
-        description: "Check your email—click the link to finish sign-in.",
+        title: 'Magic link not available',
+        description: 'Please use email and password sign-in on the main auth page.',
+        variant: 'destructive',
       });
-    } catch (error: any) {
-      track('auth_error', { kind: 'magiclink_failed', error: error.message });
     } finally {
       setMagicLinkLoading(false);
     }
@@ -164,7 +155,6 @@ const AuthV2Form = ({ onSuccess }: AuthV2FormProps) => {
   const handleSendOTP = async (channel: 'email' | 'sms') => {
     setOtpLoading(true);
     setOtpChannel(channel);
-    
     try {
       const contact = channel === 'email' 
         ? emailForm.getValues('email')
@@ -179,85 +169,22 @@ const AuthV2Form = ({ onSuccess }: AuthV2FormProps) => {
         return;
       }
 
-      // Send OTP via Supabase
-      if (channel === 'email') {
-        const { error } = await supabase.auth.signInWithOtp({
-          email: contact,
-          options: {
-            shouldCreateUser: true,
-          }
-        });
-        if (error) throw error;
-      } else {
-        const { error } = await supabase.auth.signInWithOtp({
-          phone: contact,
-          options: {
-            shouldCreateUser: true,
-          }
-        });
-        if (error) throw error;
-      }
-
-      setOtpSent(true);
-      setResendCooldown(60);
-      track('auth_otp_sent', { channel });
-      
       toast({
-        title: `Code sent via ${channel}!`,
-        description: `Enter the 6-digit code we sent to ${contact}`,
-      });
-
-      // Start cooldown timer
-      const timer = setInterval(() => {
-        setResendCooldown((prev) => {
-          if (prev <= 1) {
-            clearInterval(timer);
-            return 0;
-          }
-          return prev - 1;
-        });
-      }, 1000);
-
-    } catch (error: any) {
-      track('auth_error', { kind: 'otp_send_failed', channel, error: error.message });
-      toast({
-        title: "Failed to send code",
-        description: error.message || "Please try again",
-        variant: "destructive",
+        title: 'OTP sign-in not available',
+        description: 'Please use email and password sign-in on the main auth page.',
+        variant: 'destructive',
       });
     } finally {
       setOtpLoading(false);
     }
   };
 
-  const handleVerifyOTP = async (data: OTPFormData) => {
-    try {
-      const contact = otpChannel === 'email' 
-        ? emailForm.getValues('email')
-        : phoneForm.getValues('phone');
-
-      const verifyData = otpChannel === 'email'
-        ? { email: contact, token: data.otp, type: 'email' as const }
-        : { phone: contact, token: data.otp, type: 'sms' as const };
-
-      const { error } = await supabase.auth.verifyOtp(verifyData);
-      
-      if (error) throw error;
-
-      track('auth_otp_verified', { channel: otpChannel });
-      toast({
-        title: "You're in—welcome back!",
-        description: "Successfully verified your code",
-      });
-      onSuccess?.();
-    } catch (error: any) {
-      track('auth_error', { kind: 'otp_verify_failed', channel: otpChannel, error: error.message });
-      toast({
-        title: "Invalid code",
-        description: "Please check the code and try again",
-        variant: "destructive",
-      });
-    }
+  const handleVerifyOTP = async (_data: OTPFormData) => {
+    toast({
+      title: 'OTP sign-in not available',
+      description: 'Please use email and password sign-in on the main auth page.',
+      variant: 'destructive',
+    });
   };
 
   const handleResendOTP = () => {

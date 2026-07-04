@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
-import { useSupabasePlan } from '@/hooks/useSupabasePlan';
+import { useAppPlan } from '@/hooks/useAppPlan';
 import { TrendingUp, TrendingDown, AlertTriangle, Calendar, DollarSign, Target, Zap } from 'lucide-react';
 import { BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, ResponsiveContainer, XAxis, YAxis, CartesianGrid, Legend } from 'recharts';
 import { parseISO, format, addMonths, differenceInDays, startOfMonth, endOfMonth, subMonths, eachMonthOfInterval } from 'date-fns';
@@ -27,7 +27,7 @@ interface AdvancedAnalyticsProps {
 }
 
 const AdvancedAnalytics = ({ bills }: AdvancedAnalyticsProps) => {
-  const { plan } = useSupabasePlan();
+  const { plan } = useAppPlan();
   // Bills are now passed as props - no more mock data!
 
   // Expense Forecasting - predict next 6 months based on recurring bills

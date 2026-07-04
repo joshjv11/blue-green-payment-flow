@@ -128,7 +128,7 @@ const Payment = () => {
           }
         },
         prefill: {
-          name: user?.user_metadata?.full_name || '',
+          name: user?.full_name || '',
           email: user?.email || '',
           contact: ''
         },

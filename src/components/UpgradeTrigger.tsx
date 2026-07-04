@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Crown, Zap, Plus } from 'lucide-react';
-import { useSupabasePlan } from '@/hooks/useSupabasePlan';
+import { useAppPlan } from '@/hooks/useAppPlan';
 import UpgradeModal from './UpgradeModal';
 
 interface UpgradeTriggerProps {
@@ -24,7 +24,7 @@ const UpgradeTrigger = ({
   disabled = false
 }: UpgradeTriggerProps) => {
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
-  const { plan, aiQueriesUsed, aiQueriesLimit } = useSupabasePlan();
+  const { plan, aiQueriesUsed, aiQueriesLimit } = useAppPlan();
 
   // Don't show upgrade button for Pro users
   if (plan === 'pro') {

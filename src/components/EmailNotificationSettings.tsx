@@ -5,7 +5,6 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/hooks/use-toast';
-import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/hooks/useAuth';
 import { Mail, Bell, Save, Loader2 } from 'lucide-react';
 
@@ -26,20 +25,12 @@ const EmailNotificationSettings = () => {
   const fetchUserSettings = async () => {
     try {
       setLoading(true);
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('email, reminder_email, email_notifications_enabled')
-        .eq('id', user?.id)
-        .single();
-
-      if (error) {
-        console.error('Error fetching user settings:', error);
-        return;
-      }
-
+      const data: { reminder_email?: string; email?: string; email_notifications_enabled?: boolean } | null = null;
       if (data) {
         setReminderEmail(data.reminder_email || data.email || '');
         setEmailEnabled(data.email_notifications_enabled !== false);
+      } else if (user?.email) {
+        setReminderEmail(user.email);
       }
     } catch (error) {
       console.error('Error fetching settings:', error);
@@ -67,13 +58,7 @@ const EmailNotificationSettings = () => {
         }
       }
 
-      const { error } = await supabase
-        .from('profiles')
-        .update({
-          reminder_email: reminderEmail || null,
-          email_notifications_enabled: emailEnabled && !!reminderEmail,
-        })
-        .eq('id', user.id);
+      const error = { message: "not migrated" };
 
       if (error) {
         console.error('Error saving settings:', error);
@@ -105,18 +90,9 @@ const EmailNotificationSettings = () => {
     try {
       setSaving(true);
       
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('full_name')
-        .eq('id', user?.id)
-        .single();
+      const data = null
       
-      const { error } = await supabase.functions.invoke('send-test-email', {
-        body: { 
-          email: reminderEmail,
-          name: profile?.full_name || user?.email?.split('@')[0]
-        }
-      });
+      const error = { message: "not migrated" };
 
       if (error) throw error;
 

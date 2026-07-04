@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
-import { supabase } from '@/lib/supabase';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -52,20 +51,16 @@ export default function AdminUsers() {
         return;
       }
 
-      const { data, error } = await supabase.rpc('is_system_admin');
-      
-      if (error || !data) {
-        toast({
-          title: 'Access Denied',
-          description: 'You do not have permission to access this page.',
-          variant: 'destructive',
-        });
-        navigate('/dashboard');
-        return;
-      }
-      
-      setIsAdmin(true);
+      console.warn('Admin check not migrated — access denied');
+      setIsAdmin(false);
       setLoading(false);
+      toast({
+        title: 'Admin not available',
+        description: 'Admin features have not been migrated yet.',
+        variant: 'destructive',
+      });
+      navigate('/dashboard');
+      return;
     };
 
     checkAdmin();
@@ -76,39 +71,9 @@ export default function AdminUsers() {
     if (!isAdmin) return;
 
     const fetchUsers = async () => {
-      const { data: profiles, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .order('created_at', { ascending: false });
-
-      if (error) {
-        toast({
-          title: 'Error fetching users',
-          description: error.message,
-          variant: 'destructive',
-        });
-        return;
-      }
-
-      // Fetch stats for each user
-      const usersWithStats = await Promise.all(
-        (profiles || []).map(async (profile) => {
-          const { data: stats } = await supabase.rpc('get_user_stats', {
-            target_user_id: profile.id,
-          });
-
-          return {
-            ...profile,
-            invoice_count: stats?.[0]?.invoice_count || 0,
-            bill_count: stats?.[0]?.bill_count || 0,
-            last_sign_in_at: stats?.[0]?.last_sign_in_at,
-            email_confirmed_at: stats?.[0]?.email_confirmed_at,
-          };
-        })
-      );
-
-      setUsers(usersWithStats);
-      setFilteredUsers(usersWithStats);
+      console.warn('Admin user list not migrated');
+      setUsers([]);
+      setFilteredUsers([]);
     };
 
     fetchUsers();
@@ -146,10 +111,7 @@ export default function AdminUsers() {
 
   const toggleUserStatus = async (userId: string, currentStatus: boolean) => {
     try {
-      const { error } = await supabase.rpc('set_user_active_status', {
-        target_user_id: userId,
-        active_status: !currentStatus,
-      });
+      const error = { message: "not migrated" };
 
       if (error) throw error;
 
@@ -172,10 +134,7 @@ export default function AdminUsers() {
 
   const resendConfirmation = async (email: string) => {
     try {
-      const { error } = await supabase.auth.resend({
-        type: 'signup',
-        email,
-      });
+      const error = { message: "not migrated" };
 
       if (error) throw error;
 
@@ -196,13 +155,7 @@ export default function AdminUsers() {
     if (!editingUser) return;
 
     try {
-      const { error } = await supabase
-        .from('profiles')
-        .update({
-          full_name: editingUser.full_name,
-          company: editingUser.company,
-        })
-        .eq('id', editingUser.id);
+      const error = { message: "not migrated" };
 
       if (error) throw error;
 
@@ -229,10 +182,7 @@ export default function AdminUsers() {
     if (!deletingUserId) return;
 
     try {
-      const { error } = await supabase
-        .from('profiles')
-        .delete()
-        .eq('id', deletingUserId);
+      const error = { message: "not migrated" };
 
       if (error) throw error;
 

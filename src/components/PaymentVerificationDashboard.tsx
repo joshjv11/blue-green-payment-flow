@@ -8,7 +8,6 @@ import { Separator } from '@/components/ui/separator';
 import { CheckCircle, XCircle, Clock, Search, ArrowUpDown } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
-import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/hooks/useAuth';
 
 interface PaymentTransaction {
@@ -42,10 +41,7 @@ const PaymentVerificationDashboard = () => {
   const fetchTransactions = async () => {
     try {
       setLoading(true);
-      const { data, error } = await supabase
-        .from('payment_transactions')
-        .select('*')
-        .order('created_at', { ascending: false });
+      const data = []; const error = null; /* legacy table not migrated */
 
       if (error) {
         console.error('Error fetching transactions:', error);
@@ -76,14 +72,7 @@ const PaymentVerificationDashboard = () => {
 
   const handleVerification = async (transactionId: string, status: 'verified' | 'rejected') => {
     try {
-      const { error } = await supabase
-        .from('payment_transactions')
-        .update({
-          status,
-          verified_by: user?.id,
-          verified_at: new Date().toISOString(),
-        })
-        .eq('id', transactionId);
+      const error = { message: "not migrated" };
 
       if (error) {
         console.error('Error updating transaction:', error);

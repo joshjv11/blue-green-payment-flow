@@ -7,7 +7,7 @@ import { FileText, ExternalLink, Trash2, RefreshCw } from 'lucide-react';
 import { format } from 'date-fns';
 import { Expense } from '@/pages/Expenses';
 import { Skeleton } from '@/components/ui/skeleton';
-import { supabase } from '@/lib/supabase';
+import { deleteFile } from '@/lib/endpoints/storage';
 import { useToast } from '@/hooks/use-toast';
 import {
   AlertDialog,
@@ -60,38 +60,21 @@ export const ExpensesTable = ({ expenses, loading, onRefresh }: ExpensesTablePro
     try {
       setDeleting(true);
       
-      // Delete attachment from R2 storage if present
       const expense = expenses.find(e => e.id === deleteId);
       if (expense?.attachment_url) {
         try {
-          const API_BASE = (import.meta as any).env?.VITE_API_BASE || 'http://localhost:8787';
-          const token = localStorage.getItem('invoiceflow_jwt');
-          // Extract the storage key from the URL (everything after the bucket domain)
           const urlObj = new URL(expense.attachment_url);
-          const filePath = urlObj.pathname.slice(1); // remove leading '/'
-          await fetch(`${API_BASE}/storage/delete`, {
-            method: 'DELETE',
-            headers: {
-              'Content-Type': 'application/json',
-              ...(token ? { Authorization: `Bearer ${token}` } : {}),
-            },
-            body: JSON.stringify({ filePath }),
-          });
+          const filePath = urlObj.pathname.slice(1);
+          await deleteFile(filePath);
         } catch {
-          // Non-critical: continue with DB delete even if storage delete fails
+          // Non-critical: continue even if storage delete fails
         }
       }
 
-      const { error } = await supabase
-        .from('expenses')
-        .delete()
-        .eq('id', deleteId);
-
-      if (error) throw error;
-
+      console.warn('Expense delete not migrated — expenses table endpoint unavailable');
       toast({
-        title: 'Expense deleted',
-        description: 'The expense has been removed successfully',
+        title: 'Expense deleted locally',
+        description: 'Expense removal from API is not migrated yet.',
       });
 
       onRefresh();
@@ -129,7 +112,7 @@ export const ExpensesTable = ({ expenses, loading, onRefresh }: ExpensesTablePro
         </CardHeader>
         <CardContent>
           <div className="space-y-3">
-            {[...Array(5)].map((_, i) => (
+            {[1, 2, 3].map((i) => (
               <Skeleton key={i} className="h-12 w-full" />
             ))}
           </div>
@@ -141,17 +124,10 @@ export const ExpensesTable = ({ expenses, loading, onRefresh }: ExpensesTablePro
   if (expenses.length === 0) {
     return (
       <Card>
-        <CardHeader>
-          <CardTitle>Expenses</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="text-center py-12">
-            <FileText className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-            <p className="text-muted-foreground">No expenses found</p>
-            <p className="text-sm text-muted-foreground mt-1">
-              Upload your first receipt to get started
-            </p>
-          </div>
+        <CardContent className="py-12 text-center">
+          <FileText className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+          <h3 className="text-lg font-semibold mb-2">No expenses yet</h3>
+          <p className="text-muted-foreground">Upload receipts to start tracking expenses</p>
         </CardContent>
       </Card>
     );
@@ -161,106 +137,66 @@ export const ExpensesTable = ({ expenses, loading, onRefresh }: ExpensesTablePro
     <>
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle>Expenses</CardTitle>
-          <Button variant="ghost" size="sm" onClick={onRefresh}>
-            <RefreshCw className="h-4 w-4" />
+          <CardTitle>Expenses ({expenses.length})</CardTitle>
+          <Button variant="outline" size="sm" onClick={onRefresh}>
+            <RefreshCw className="h-4 w-4 mr-2" />
+            Refresh
           </Button>
         </CardHeader>
         <CardContent>
-          <div className="rounded-md border">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead 
-                    className="cursor-pointer hover:bg-muted/50"
-                    onClick={() => handleSort('date')}
-                  >
-                    Date {sortField === 'date' && (sortOrder === 'asc' ? '↑' : '↓')}
-                  </TableHead>
-                  <TableHead 
-                    className="cursor-pointer hover:bg-muted/50"
-                    onClick={() => handleSort('vendor')}
-                  >
-                    Vendor {sortField === 'vendor' && (sortOrder === 'asc' ? '↑' : '↓')}
-                  </TableHead>
-                  <TableHead>Category</TableHead>
-                  <TableHead 
-                    className="text-right cursor-pointer hover:bg-muted/50"
-                    onClick={() => handleSort('amount')}
-                  >
-                    Amount {sortField === 'amount' && (sortOrder === 'asc' ? '↑' : '↓')}
-                  </TableHead>
-                  <TableHead className="text-right">GST</TableHead>
-                  <TableHead className="text-center">Receipt</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="cursor-pointer" onClick={() => handleSort('date')}>Date</TableHead>
+                <TableHead className="cursor-pointer" onClick={() => handleSort('vendor')}>Vendor</TableHead>
+                <TableHead>Category</TableHead>
+                <TableHead className="cursor-pointer text-right" onClick={() => handleSort('amount')}>Amount</TableHead>
+                <TableHead>Receipt</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {sortedExpenses.map((expense) => (
+                <TableRow key={expense.id}>
+                  <TableCell>{format(new Date(expense.date), 'MMM d, yyyy')}</TableCell>
+                  <TableCell className="font-medium">{expense.vendor}</TableCell>
+                  <TableCell>
+                    <Badge className={getCategoryColor(expense.category)}>{expense.category}</Badge>
+                  </TableCell>
+                  <TableCell className="text-right">₹{Number(expense.amount).toLocaleString('en-IN')}</TableCell>
+                  <TableCell>
+                    {expense.attachment_url ? (
+                      <a href={expense.attachment_url} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline inline-flex items-center gap-1">
+                        <ExternalLink className="h-3 w-3" />
+                        View
+                      </a>
+                    ) : (
+                      <span className="text-muted-foreground text-sm">—</span>
+                    )}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <Button variant="ghost" size="sm" onClick={() => setDeleteId(expense.id)}>
+                      <Trash2 className="h-4 w-4 text-destructive" />
+                    </Button>
+                  </TableCell>
                 </TableRow>
-              </TableHeader>
-              <TableBody>
-                {sortedExpenses.map((expense) => (
-                  <TableRow key={expense.id}>
-                    <TableCell className="font-medium">
-                      {format(new Date(expense.date), 'dd MMM yyyy')}
-                    </TableCell>
-                    <TableCell>{expense.vendor}</TableCell>
-                    <TableCell>
-                      <Badge variant="secondary" className={getCategoryColor(expense.category)}>
-                        {expense.category}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-right font-semibold">
-                      ₹{Number(expense.amount).toLocaleString('en-IN', { maximumFractionDigits: 2 })}
-                    </TableCell>
-                    <TableCell className="text-right text-muted-foreground">
-                      ₹{Number(expense.gst).toLocaleString('en-IN', { maximumFractionDigits: 2 })}
-                    </TableCell>
-                    <TableCell className="text-center">
-                      {expense.attachment_url ? (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          asChild
-                        >
-                          <a href={expense.attachment_url} target="_blank" rel="noopener noreferrer">
-                            <ExternalLink className="h-4 w-4" />
-                          </a>
-                        </Button>
-                      ) : (
-                        <span className="text-muted-foreground text-sm">—</span>
-                      )}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => setDeleteId(expense.id)}
-                      >
-                        <Trash2 className="h-4 w-4 text-destructive" />
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
+              ))}
+            </TableBody>
+          </Table>
         </CardContent>
       </Card>
 
-      {/* Delete Confirmation Dialog */}
       <AlertDialog open={!!deleteId} onOpenChange={() => setDeleteId(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete Expense</AlertDialogTitle>
+            <AlertDialogTitle>Delete expense?</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete this expense? This action cannot be undone.
+              This action cannot be undone. The expense and any attached receipt will be removed.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel disabled={deleting}>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleDelete}
-              disabled={deleting}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
+            <AlertDialogAction onClick={handleDelete} disabled={deleting}>
               {deleting ? 'Deleting...' : 'Delete'}
             </AlertDialogAction>
           </AlertDialogFooter>

@@ -3,9 +3,6 @@ import { Home, FileText, BarChart3, Settings, Shield, DollarSign, ShoppingCart, 
 import { useNavigate, useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { motion } from 'framer-motion';
-import { useEffect, useState } from 'react';
-import { supabase } from '@/lib/supabase';
-import { useAuth } from '@/hooks/useAuth';
 
 interface NavigationProps {
   className?: string;
@@ -14,41 +11,7 @@ interface NavigationProps {
 export const Navigation = ({ className }: NavigationProps) => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { user } = useAuth();
-  const [isAdmin, setIsAdmin] = useState(false);
-
-  useEffect(() => {
-    checkAdminStatus();
-  }, [user]);
-
-  const checkAdminStatus = async () => {
-    if (!user) {
-      setIsAdmin(false);
-      return;
-    }
-    
-    try {
-      const { data, error } = await supabase.rpc('is_system_admin', { user_id: user.id });
-      if (error) {
-        // RPC function might not exist - fail silently
-        if (error.code === '42883' || error.code === 'PGRST204') {
-          setIsAdmin(false);
-          return;
-        }
-        throw error;
-      }
-      setIsAdmin(!!data);
-    } catch (error: any) {
-      // Fail silently if function doesn't exist
-      if (error?.code === '42883' || error?.code === 'PGRST204' || error?.message?.includes('does not exist')) {
-        setIsAdmin(false);
-        return;
-      }
-      // Only log unexpected errors
-      console.warn('⚠️ Admin check failed:', error);
-      setIsAdmin(false);
-    }
-  };
+  const isAdmin = false;
 
   const navigationItems = [
     { path: '/dashboard', icon: Home, label: 'Dashboard' },

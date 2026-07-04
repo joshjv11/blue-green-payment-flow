@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import { supabase } from '@/lib/supabase';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -56,48 +55,10 @@ export default function AdminPlanManager() {
   }, [searchQuery, userPlans]);
 
   const fetchUserPlans = async () => {
-    try {
-      setLoading(true);
-
-      // Fetch user plans
-      const { data: plans, error: plansError } = await supabase
-        .from('user_plans')
-        .select('*')
-        .order('created_at', { ascending: false });
-
-      if (plansError) throw plansError;
-
-      // Fetch profiles separately and merge
-      if (plans && plans.length > 0) {
-        const userIds = plans.map(p => p.user_id);
-        const { data: profiles } = await supabase
-          .from('profiles')
-          .select('id, email, full_name')
-          .in('id', userIds);
-
-        const profileMap = new Map(profiles?.map(p => [p.id, p]) || []);
-        
-        const plansWithProfiles = plans.map(plan => ({
-          ...plan,
-          profile: profileMap.get(plan.user_id) || { email: '', full_name: null }
-        })) as UserPlan[];
-
-        setUserPlans(plansWithProfiles);
-        setFilteredPlans(plansWithProfiles);
-      } else {
-        setUserPlans([]);
-        setFilteredPlans([]);
-      }
-    } catch (error: any) {
-      console.error('Error fetching user plans:', error);
-      toast({
-        title: 'Error loading plans',
-        description: error.message,
-        variant: 'destructive',
-      });
-    } finally {
-      setLoading(false);
-    }
+    console.warn('Admin plan manager not migrated');
+    setUserPlans([]);
+    setFilteredPlans([]);
+    setLoading(false);
   };
 
   const handlePlanUpdate = async () => {
@@ -106,14 +67,7 @@ export default function AdminPlanManager() {
     try {
       setSaving(true);
 
-      const { error } = await supabase
-        .from('user_plans')
-        .update({
-          plan: newPlan,
-          ai_queries_limit: newPlan === 'pro' ? 999999 : 3,
-          updated_at: new Date().toISOString(),
-        })
-        .eq('user_id', editingUser.user_id);
+      const error = { message: "not migrated" };
 
       if (error) throw error;
 

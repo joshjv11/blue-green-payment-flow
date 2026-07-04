@@ -6,7 +6,6 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/lib/supabase";
 import { Loader2, Plus, Trash2 } from "lucide-react";
 import { useBusinessSettings } from "@/hooks/useBusinessSettings";
 
@@ -86,37 +85,12 @@ export default function SalesV2() {
     setLoading(true);
 
     try {
-      const { data: { session } } = await supabase.auth.getSession();
+      const session = null;
       if (!session) {
         throw new Error("Not authenticated");
       }
 
-      const { data, error } = await supabase.functions.invoke("create-sale-v2", {
-        body: {
-          customer: {
-            name: customerName,
-            email: customerEmail || undefined,
-            phone: customerPhone || undefined,
-            address: customerAddress || undefined,
-            city: customerCity || undefined,
-            state: customerState || undefined,
-            postal_code: customerPostalCode || undefined,
-            country: customerCountry || "India",
-            gstin: customerGstin || undefined,
-          },
-          items: items.map(item => ({
-            description: item.description,
-            quantity: Number(item.quantity),
-            unit_price: Number(item.unit_price),
-            discount: Number(item.discount) || 0,
-            tax_rate: Number(item.tax_rate),
-          })),
-          order_date: orderDate,
-          invoice_number: invoiceNumber,
-          notes: notes || undefined,
-          seller_state: settings.country === "IN" ? customerState : undefined,
-        },
-      });
+      const data = null; const error = { message: "not migrated" };
 
       if (error) {
         console.error("Error invoking function:", error);

@@ -19,7 +19,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useWhatsAppIntegration } from '@/hooks/useWhatsAppIntegration';
-import { supabase } from '@/lib/supabase';
 import { Megaphone, Users, Plus, X, ExternalLink, Copy } from 'lucide-react';
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from 'sonner';
@@ -91,11 +90,7 @@ export const WhatsAppBroadcastModal = ({
   }, [broadcastType]);
 
   const fetchCustomers = async () => {
-    const { data } = await supabase
-      .from('customers')
-      .select('id, name, phone, email')
-      .not('phone', 'is', null)
-      .order('name');
+    const data = null
     
     if (data) {
       setCustomers(data);

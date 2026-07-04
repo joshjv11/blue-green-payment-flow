@@ -1,2 +1,13 @@
-/pgrst/*  https://invoiceflow-postgrest.onrender.com/:splat  200
-/*        /index.html                                        200
+/auth/*        https://invoiceflow-ar-api.onrender.com/auth/:splat        200
+/orgs/*        https://invoiceflow-ar-api.onrender.com/orgs/:splat        200
+/customers/*   https://invoiceflow-ar-api.onrender.com/customers/:splat   200
+/invoices/*    https://invoiceflow-ar-api.onrender.com/invoices/:splat    200
+/sequences/*   https://invoiceflow-ar-api.onrender.com/sequences/:splat   200
+/payments/*    https://invoiceflow-ar-api.onrender.com/payments/:splat    200
+/webhooks/*    https://invoiceflow-ar-api.onrender.com/webhooks/:splat    200
+/public/*      https://invoiceflow-ar-api.onrender.com/public/:splat      200
+/storage/*     https://invoiceflow-ar-api.onrender.com/storage/:splat     200
+/ai/*          https://invoiceflow-ar-api.onrender.com/ai/:splat          200
+/api/*         https://invoiceflow-ar-api.onrender.com/api/:splat         200
+/health        https://invoiceflow-ar-api.onrender.com/health             200
+/*             /index.html                                                200

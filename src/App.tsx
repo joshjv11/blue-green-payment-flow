@@ -18,6 +18,8 @@ import { usePageTracking } from '@/hooks/usePageTracking';
 import { useLoginTracking } from '@/hooks/useLoginTracking';
 import Index from './pages/Index';
 import Auth from './pages/Auth';
+import ResetPassword from './pages/ResetPassword';
+import VerifyEmail from './pages/VerifyEmail';
 import Terms from './pages/Terms';
 import Privacy from './pages/Privacy';
 import Dashboard from './pages/Dashboard';
@@ -51,6 +53,8 @@ function AppRoutes() {
     <Routes>
       <Route path="/" element={<PageTransition><Index /></PageTransition>} />
       <Route path="/auth" element={<PageTransition><Auth /></PageTransition>} />
+      <Route path="/reset-password" element={<PageTransition><ResetPassword /></PageTransition>} />
+      <Route path="/verify-email" element={<PageTransition><VerifyEmail /></PageTransition>} />
       <Route path="/terms" element={<PageTransition><Terms /></PageTransition>} />
       <Route path="/privacy" element={<PageTransition><Privacy /></PageTransition>} />
       <Route

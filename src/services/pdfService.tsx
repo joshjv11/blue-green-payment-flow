@@ -1,5 +1,5 @@
 import { pdf } from "@react-pdf/renderer";
-import { getCurrentUser, getCurrentToken } from "@/lib/supabase";
+import { signUpload } from '@/lib/endpoints/storage';
 import { InvoicePDFDocument } from "@/components/pdf/InvoicePDFDocument";
 
 interface GeneratePDFParams {
@@ -23,32 +23,13 @@ export async function generateInvoicePDF({ invoiceData, businessSettings, type }
       />
     ).toBlob();
 
-    // Get current user
-    const user = getCurrentUser();
-    if (!user) throw new Error("User not authenticated");
-
-    // Generate filename
     const partyName = type === "sale"
       ? invoiceData.customer_name
       : invoiceData.supplier_name;
     const sanitizedPartyName = (partyName || "Unknown").replace(/[^a-zA-Z0-9]/g, "_");
     const fileName = `Invoice_${invoiceData.invoice_number}_${sanitizedPartyName}.pdf`;
 
-    // Upload to Cloudflare R2 via presigned URL
-    const API_BASE = (import.meta as any).env?.VITE_API_BASE || "http://localhost:8787";
-    const token = getCurrentToken();
-
-    const signRes = await fetch(`${API_BASE}/storage/sign-upload`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      },
-      body: JSON.stringify({ fileName, contentType: "application/pdf" }),
-    });
-
-    if (!signRes.ok) throw new Error("Failed to get upload URL for PDF");
-    const { uploadUrl, publicUrl } = await signRes.json();
+    const { uploadUrl, publicUrl } = await signUpload(fileName, 'application/pdf');
 
     const uploadRes = await fetch(uploadUrl, {
       method: "PUT",

@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/hooks/useAuth';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -62,67 +61,15 @@ export default function AdminUserPlans() {
       return;
     }
 
-    try {
-      const { data, error } = await supabase.rpc('is_system_admin');
-      if (error) throw error;
-      
-      if (!data) {
-        toast({
-          title: 'Access Denied',
-          description: 'You do not have admin privileges',
-          variant: 'destructive',
-        });
-        navigate('/dashboard');
-        return;
-      }
-      
-      setIsAdmin(true);
-    } catch (error) {
-      console.error('Error checking admin status:', error);
-      navigate('/dashboard');
-    } finally {
-      setLoading(false);
-    }
+    console.warn('Admin not migrated');
+    toast({ title: 'Admin not available', description: 'Admin features have not been migrated yet.', variant: 'destructive' });
+    navigate('/dashboard');
+    setLoading(false);
   };
 
   const fetchUsers = async () => {
-    try {
-      const { data: profiles, error: profilesError } = await supabase
-        .from('profiles')
-        .select('id, email, full_name, short_id')
-        .order('email');
-
-      if (profilesError) throw profilesError;
-
-      const { data: plans, error: plansError } = await supabase
-        .from('user_plans')
-        .select('user_id, plan, updated_at');
-
-      if (plansError) throw plansError;
-
-      const plansMap = new Map(plans?.map(p => [p.user_id, p]) || []);
-
-      const usersData: UserPlanData[] = (profiles || []).map(profile => {
-        const plan = plansMap.get(profile.id);
-        return {
-          user_id: profile.id,
-          email: profile.email,
-          full_name: profile.full_name,
-          short_id: profile.short_id,
-          current_plan: plan?.plan || 'free',
-          updated_at: plan?.updated_at || new Date().toISOString(),
-        };
-      });
-
-      setUsers(usersData);
-    } catch (error) {
-      console.error('Error fetching users:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to load users',
-        variant: 'destructive',
-      });
-    }
+    console.warn('Admin user plans not migrated');
+    setUsers([]);
   };
 
   const filterUsers = () => {
@@ -143,9 +90,7 @@ export default function AdminUserPlans() {
   const updateUserPlan = async (userId: string, newPlan: string) => {
     setUpdatingPlan(userId);
     try {
-      const { data, error } = await supabase.functions.invoke('admin-update-user-plan', {
-        body: { user_id: userId, new_plan: newPlan }
-      });
+      const data = null; const error = { message: "not migrated" };
 
       if (error) throw error;
 
@@ -173,19 +118,7 @@ export default function AdminUserPlans() {
   const fetchPlanHistory = async (userId: string) => {
     setLoadingHistory(true);
     try {
-      const { data, error } = await supabase
-        .from('user_plan_changes')
-        .select(`
-          id,
-          old_plan,
-          new_plan,
-          changed_at,
-          changed_by,
-          changer:profiles!user_plan_changes_changed_by_fkey(email)
-        `)
-        .eq('user_id', userId)
-        .order('changed_at', { ascending: false })
-        .limit(10);
+      const data = []; const error = null; /* legacy table not migrated */
 
       if (error) throw error;
 

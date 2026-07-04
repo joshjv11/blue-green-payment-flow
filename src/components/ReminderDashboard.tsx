@@ -3,7 +3,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/hooks/useAuth';
 import { 
   Clock, 
@@ -53,17 +52,7 @@ const ReminderDashboard = () => {
 
     try {
       setLoading(true);
-      const { data, error } = await supabase
-        .from('bill_reminders')
-        .select(`
-          *,
-          bills (
-            name, amount, due_date, category, status
-          )
-        `)
-        .eq('user_id', user.id)
-        .order('reminder_date', { ascending: false })
-        .limit(50);
+      const data = []; const error = null; /* legacy table not migrated */
 
       if (error) throw error;
       setReminders(data || []);
@@ -88,12 +77,7 @@ const ReminderDashboard = () => {
   const sendTestReminder = async (reminderId: string) => {
     setSendingTest(reminderId);
     try {
-      const { error } = await supabase.functions.invoke('send-individual-reminder', {
-        body: {
-          reminder_id: reminderId,
-          scheduled: false
-        }
-      });
+      const error = { message: "not migrated" };
 
       if (error) throw error;
 

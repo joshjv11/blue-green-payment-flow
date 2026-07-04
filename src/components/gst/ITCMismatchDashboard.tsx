@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import { supabase } from '@/lib/supabase';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -51,11 +50,7 @@ export function ITCMismatchDashboard() {
 
     setLoading(true);
     try {
-      const { data, error } = await supabase
-        .from('itc_mismatch_alerts' as any)
-        .select('id, invoice_number, vendor_name, mismatch_type, difference_amount, is_resolved, details, created_at, resolved_at, gstin')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false });
+      const data = []; const error = null; /* legacy table not migrated */
 
       if (error) {
         // Table doesn't exist yet - return empty array
@@ -109,10 +104,7 @@ export function ITCMismatchDashboard() {
         dispute_requested_at: new Date().toISOString(),
       };
 
-      const { error } = await supabase
-        .from('itc_mismatch_alerts' as any)
-        .update({ details: updatedDetails })
-        .eq('id', mismatch.id);
+      const error = { message: "not migrated" };
 
       if (error) throw error;
 
@@ -150,14 +142,7 @@ export function ITCMismatchDashboard() {
         resolution_notes: resolutionNotes || null,
       };
 
-      const { error } = await supabase
-        .from('itc_mismatch_alerts' as any)
-        .update({
-          is_resolved: true,
-          resolved_at: new Date().toISOString(),
-          details: updatedDetails,
-        })
-        .eq('id', mismatch.id);
+      const error = { message: "not migrated" };
 
       if (error) throw error;
 

@@ -9,8 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
 import { Bell, Clock, Calendar, Mail, Loader2 } from 'lucide-react';
-import { useSupabaseData } from '@/hooks/useSupabaseData';
-import { supabase } from '@/lib/supabase';
+import { useAppData } from '@/hooks/useAppData';
 
 interface ReminderSettingsModalProps {
   bill: any;
@@ -32,13 +31,7 @@ const ReminderSettingsModal = ({ bill, isOpen, onClose, onReminderScheduled }: R
     try {
       console.log('🔔 Scheduling individual reminder for bill:', bill.id);
       
-      const { error } = await supabase.functions.invoke('schedule-individual-reminder', {
-        body: {
-          bill_id: bill.id,
-          reminder_days_before: reminderDays,
-          priority: priority
-        }
-      });
+      const error = { message: "not migrated" };
 
       if (error) {
         console.error('❌ Failed to schedule reminder:', error);

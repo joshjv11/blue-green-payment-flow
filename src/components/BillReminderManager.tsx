@@ -5,7 +5,6 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/hooks/useAuth';
 import { Mail, Clock, CheckCircle, AlertCircle, TestTube, Calendar, Send, Loader2, Settings } from 'lucide-react';
 
@@ -22,9 +21,7 @@ const BillReminderManager = () => {
     try {
       console.log('🧪 Testing enhanced bill reminder system...');
       
-      const { data, error } = await supabase.functions.invoke('send-bill-reminders-enhanced', {
-        body: { test: true, manual: true }
-      });
+      const data = null; const error = { message: "not migrated" };
 
       if (error) throw error;
 
@@ -59,12 +56,7 @@ const BillReminderManager = () => {
     try {
       console.log('📧 Sending comprehensive test email...');
       
-      const { data, error } = await supabase.functions.invoke('send-comprehensive-test-email', {
-        body: { 
-          email: testEmail,
-          testType: 'manual_admin_test'
-        }
-      });
+      const data = null; const error = { message: "not migrated" };
 
       if (error) throw error;
 
@@ -90,7 +82,7 @@ const BillReminderManager = () => {
     try {
       console.log('⏰ Setting up enhanced scheduled bill reminders...');
       
-      const { data, error } = await supabase.functions.invoke('schedule-bill-reminders');
+      const data = null; const error = { message: "not migrated" };
 
       if (error) throw error;
 

@@ -10,7 +10,7 @@ export const useWhatsAppIntegration = () => {
 
   const disabled = () => {
     toast.error(DISABLED_MSG);
-    return Promise.resolve({ success: false, error: DISABLED_MSG });
+    return Promise.resolve({ success: false, error: DISABLED_MSG, whatsappLinks: [] as Array<{ phone: string; name: string; url: string }> });
   };
 
   return {

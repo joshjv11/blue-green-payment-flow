@@ -3,7 +3,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { supabase } from '@/lib/supabase';
 import { Loader2, Shield, AlertTriangle } from 'lucide-react';
 import { format } from 'date-fns';
 
@@ -37,7 +36,7 @@ export function SecurityEventsTable() {
   const loadSecurityEvents = async () => {
     setLoading(true);
     try {
-      const { data, error } = await supabase.rpc('get_security_events');
+      const data = null; const error = null; /* admin rpc not migrated */
 
       if (error) {
         console.error('Error loading security events:', error);

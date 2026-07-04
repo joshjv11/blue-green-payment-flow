@@ -1,11 +1,9 @@
-import { z } from "zod";
+import { z } from 'zod';
 
 const envSchema = z.object({
-  SUPABASE_URL: z.string().url(),
-  SUPABASE_SERVICE_ROLE_KEY: z.string().min(1),
+  DATABASE_URL: z.string().optional(),
 });
 
 export const env = envSchema.parse({
-  SUPABASE_URL: process.env.SUPABASE_URL,
-  SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY,
+  DATABASE_URL: process.env.DATABASE_URL,
 });

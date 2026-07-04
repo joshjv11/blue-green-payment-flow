@@ -9,8 +9,8 @@ export async function createDodoPaymentLink(_args: any): Promise<never> {
   throw new Error('Payment system is temporarily offline.');
 }
 
-export async function createRazorpayOrderLocal(_args: any): Promise<never> {
-  throw new Error('Payment system is temporarily offline.');
+export async function createRazorpayOrderLocal(_args: any): Promise<{ id: string; amount: number; currency: string } | null> {
+  return null;
 }
 
 export const usePayments = () => {

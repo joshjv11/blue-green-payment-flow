@@ -11,7 +11,6 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, Eye, EyeOff, AlertCircle } from 'lucide-react';
-import { supabase } from '@/lib/supabase';
 import invoiceFlowLogo from '@/assets/invoiceflow-logo.png';
 import { useAnalytics } from '@/hooks/useAnalytics';
 
@@ -64,7 +63,7 @@ const GoogleAuthForm = ({ onSuccess }: GoogleAuthFormProps) => {
   const [resetPasswordLoading, setResetPasswordLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   const [oneTapDismissed, setOneTapDismissed] = useState(false);
-  const { signIn, signUp, resetPassword, loading } = useAuth();
+  const { signIn, signUp, requestPasswordReset, loading } = useAuth();
   const { toast } = useToast();
   const { track } = useAnalytics();
 
@@ -93,23 +92,11 @@ const GoogleAuthForm = ({ onSuccess }: GoogleAuthFormProps) => {
     setGoogleLoading(true);
     try {
       track('auth_google_onetap_attempt');
-
-      // Exchange Google ID token with Supabase
-      const { data, error } = await supabase.auth.signInWithIdToken({
-        provider: 'google',
-        token: credential,
+      toast({
+        title: 'Google sign-in not available',
+        description: 'Please use email and password to sign in.',
+        variant: 'destructive',
       });
-
-      if (error) throw error;
-
-      if (data.session) {
-        track('auth_google_onetap_success');
-        toast({
-          title: "You're in—welcome back!",
-          description: "Signed in with Google",
-        });
-        onSuccess?.();
-      }
     } catch (error: any) {
       console.error('Google One Tap error:', error);
       track('auth_error', { kind: 'google_onetap_failed', error: error.message });
@@ -169,29 +156,14 @@ const GoogleAuthForm = ({ onSuccess }: GoogleAuthFormProps) => {
     setGoogleLoading(true);
     try {
       track('auth_google_button_attempt');
-      
-      const { data, error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-          redirectTo: `${window.location.origin}/auth/callback?next=/dashboard`,
-          queryParams: {
-            access_type: 'offline',
-            prompt: 'consent',
-          }
-        }
+      toast({
+        title: 'Google sign-in not available',
+        description: 'Please use email and password to sign in.',
+        variant: 'destructive',
       });
-
-      if (error) throw error;
-
-      track('auth_google_button_initiated');
-      // OAuth will redirect, no need to call onSuccess here
     } catch (error: any) {
       track('auth_error', { kind: 'google_button_failed', error: error.message });
-      toast({
-        title: "Google login canceled",
-        description: "Please try again or use email/password below",
-        variant: "destructive",
-      });
+    } finally {
       setGoogleLoading(false);
     }
   };
@@ -228,7 +200,7 @@ const GoogleAuthForm = ({ onSuccess }: GoogleAuthFormProps) => {
     setResetPasswordLoading(true);
     try {
       track('auth_password_reset_attempt');
-      await resetPassword(email);
+      await requestPasswordReset(email);
       track('auth_password_reset_success');
     } catch (error: any) {
       track('auth_error', { kind: 'password_reset_failed', error: error.message });

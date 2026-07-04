@@ -12,11 +12,14 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { supabase } from '@/lib/supabase';
+
+import { passwordSchema } from '@/lib/passwordSchema';
+import { ApiError } from '@/lib/apiClient';
 
 const signUpSchema = z.object({
+  fullName: z.string().min(1, 'Please enter your name'),
   email: z.string().email('Please enter a valid email address'),
-  password: z.string().min(8, 'Password must be at least 8 characters'),
+  password: passwordSchema,
 });
 
 const signInSchema = z.object({
@@ -39,12 +42,12 @@ export default function SimpleAuthForm({ onSuccess }: SimpleAuthFormProps) {
   const [resetLoading, setResetLoading] = useState(false);
   const [authError, setAuthError] = useState<string>('');
   const navigate = useNavigate();
-  const { signUp, signIn, resetPassword } = useAuth();
+  const { signUp, signIn, requestPasswordReset } = useAuth();
   const { toast } = useToast();
 
   const signUpForm = useForm<SignUpFormData>({
     resolver: zodResolver(signUpSchema),
-    defaultValues: { email: '', password: '' },
+    defaultValues: { fullName: '', email: '', password: '' },
   });
 
   const signInForm = useForm<SignInFormData>({
@@ -62,38 +65,22 @@ export default function SimpleAuthForm({ onSuccess }: SimpleAuthFormProps) {
   const handleSignUp = async (data: SignUpFormData) => {
     setIsLoading(true);
     try {
-      const result = await signUp(data.email, data.password);
+      const result = await signUp(data.email, data.password, data.fullName);
 
       if (result.requiresEmailConfirmation) {
         toast({
           title: 'Check your email',
-          description: 'We sent you a confirmation link. Please verify your email before signing in.',
+          description: 'We sent a verification link. You can use the app now, but reminders require a verified email.',
         });
-        setMode('signin');
       } else {
         toast({
           title: 'Welcome to InvoiceFlow!',
           description: 'Your account has been created successfully.',
         });
-
-        // Wait for session to be established
-        let attempts = 0;
-        const maxAttempts = 10;
-
-        while (attempts < maxAttempts) {
-          const { data: { session } } = await supabase.auth.getSession();
-          if (session?.user) {
-            onSuccess?.();
-            navigate('/dashboard', { replace: true });
-            return;
-          }
-          await new Promise(resolve => setTimeout(resolve, 100));
-          attempts++;
-        }
-
-        onSuccess?.();
-        navigate('/dashboard', { replace: true });
       }
+
+      onSuccess?.();
+      navigate('/dashboard', { replace: true });
     } catch (error: any) {
       // Error handling is done in useAuth hook
     } finally {
@@ -106,28 +93,13 @@ export default function SimpleAuthForm({ onSuccess }: SimpleAuthFormProps) {
     setAuthError('');
     try {
       await signIn(data.email, data.password);
-
-      let attempts = 0;
-      const maxAttempts = 10;
-
-      while (attempts < maxAttempts) {
-        const { data: { session } } = await supabase.auth.getSession();
-        if (session?.user) {
-          onSuccess?.();
-          navigate('/dashboard', { replace: true });
-          return;
-        }
-        await new Promise(resolve => setTimeout(resolve, 100));
-        attempts++;
-      }
-
       onSuccess?.();
       navigate('/dashboard', { replace: true });
-    } catch (error: any) {
-      if (error.message?.includes('Invalid login credentials')) {
+    } catch (error: unknown) {
+      if (error instanceof ApiError && error.status === 401) {
         setAuthError('Invalid email or password');
-      } else if (error.message?.includes('Email not confirmed')) {
-        setAuthError('Please verify your email before signing in');
+      } else if (error instanceof Error && error.message.includes('Invalid credentials')) {
+        setAuthError('Invalid email or password');
       } else {
         setAuthError('Unable to sign in. Please try again');
       }
@@ -150,7 +122,7 @@ export default function SimpleAuthForm({ onSuccess }: SimpleAuthFormProps) {
 
     setResetLoading(true);
     try {
-      await resetPassword(email);
+      await requestPasswordReset(email);
       toast({
         title: 'Check your email',
         description: 'Password reset instructions have been sent to your email.',
@@ -202,6 +174,28 @@ export default function SimpleAuthForm({ onSuccess }: SimpleAuthFormProps) {
                 onSubmit={signUpForm.handleSubmit(handleSignUp)}
                 className="space-y-4"
               >
+                <div className="space-y-2">
+                  <Label htmlFor="signup-name">Full name</Label>
+                  <Input
+                    id="signup-name"
+                    type="text"
+                    placeholder="Your name"
+                    autoComplete="name"
+                    {...signUpForm.register('fullName')}
+                    className="h-12 bg-background/50 focus:bg-background border-border/50 focus:border-primary transition-all duration-300"
+                  />
+                  {signUpForm.formState.errors.fullName && (
+                    <motion.p
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: 'auto' }}
+                      className="text-sm text-destructive flex items-center gap-1"
+                    >
+                      <AlertCircle className="w-4 h-4" />
+                      {signUpForm.formState.errors.fullName.message}
+                    </motion.p>
+                  )}
+                </div>
+
                 <div className="space-y-2">
                   <Label htmlFor="signup-email">Email</Label>
                     <Input

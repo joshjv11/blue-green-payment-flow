@@ -9,7 +9,6 @@ import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
-import { supabase } from '@/lib/supabase';
 import { 
   Bell, 
   Mail, 
@@ -50,15 +49,7 @@ const UserReminderSettings = () => {
 
   const loadUserProfile = async () => {
     try {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', user!.id)
-        .single();
-
-      if (error && error.code !== 'PGRST116') {
-        throw error;
-      }
+      const data: { email_notifications_enabled?: boolean; reminder_email?: string } | null = null;
 
       if (data) {
         setProfile(data);
@@ -89,13 +80,7 @@ const UserReminderSettings = () => {
         reminder_email: settings.reminderEmail || null,
       };
 
-      const { error } = await supabase
-        .from('profiles')
-        .upsert({
-          id: user.id,
-          email: profile?.email || user.email,
-          ...updateData,
-        });
+      const error = { message: "not migrated" };
 
       if (error) throw error;
 
@@ -126,12 +111,7 @@ const UserReminderSettings = () => {
     try {
       const testEmail = settings.reminderEmail || profile?.email || user.email;
       
-      const { error } = await supabase.functions.invoke('send-comprehensive-test-email', {
-        body: {
-          email: testEmail,
-          testType: 'reminder_test'
-        }
-      });
+      const error = { message: "not migrated" };
 
       if (error) throw error;
 

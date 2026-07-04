@@ -5,11 +5,11 @@ import { Badge } from '@/components/ui/badge';
 import { PAYMENT_CONFIG } from '@/config/payment';
 import { CheckCircle, AlertCircle, Clock, CreditCard } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
-import { useSupabasePlan } from '@/hooks/useSupabasePlan';
+import { useAppPlan } from '@/hooks/useAppPlan';
 
 const PaymentFlowTester = () => {
   const { user } = useAuth();
-  const { plan, loading: planLoading } = useSupabasePlan();
+  const { plan, loading: planLoading } = useAppPlan();
   const [testResults, setTestResults] = useState<Array<{
     test: string;
     status: 'pass' | 'fail' | 'pending';

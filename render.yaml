@@ -1,0 +1,31 @@
+# InvoiceFlow production stack — frontend deploys via Vercel (GitHub push).
+# Sync this blueprint in Render Dashboard → New → Blueprint → connect this repo.
+# API URL must match vercel.json rewrites (invoiceflow-ar-api).
+
+databases:
+  - name: invoiceflow-db
+    databaseName: invoiceflow
+    user: invoiceflow
+    plan: free
+
+services:
+  - type: web
+    name: invoiceflow-ar-api
+    runtime: docker
+    dockerfilePath: ./services/api/Dockerfile
+    dockerContext: .
+    plan: free
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        fromDatabase:
+          name: invoiceflow-db
+          property: connectionString
+      - key: JWT_SECRET
+        generateValue: true
+      - key: CORS_ORIGINS
+        value: https://invoiceflow.dev,https://www.invoiceflow.dev,https://blue-green-payment-flow.vercel.app
+      - key: APP_URL
+        value: https://invoiceflow.dev

@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Brain, Loader2, Zap, AlertTriangle, TrendingUp, CheckCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { supabase } from '@/lib/supabase';
+import { aiAssistantEnhanced } from '@/lib/endpoints/ai';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
 interface AnalysisResult {
@@ -52,58 +52,8 @@ export function AIAssistant() {
         },
       };
 
-      // 1. Get all users
-      try {
-        const { data: usersData } = await supabase
-          .from('profiles')
-          .select('id, email, full_name, created_at, updated_at')
-          .order('created_at', { ascending: false });
-        analysisData.users = usersData || [];
-      } catch (e) {
-        console.error('Error fetching users:', e);
-      }
-
-      // 2. Get all plans
-      try {
-        const { data: plansData } = await supabase
-          .from('user_plans')
-          .select('*');
-        analysisData.plans = plansData || [];
-      } catch (e) {
-        console.error('Error fetching plans:', e);
-      }
-
-      // 3. Get all payments
-      try {
-        const { data: paymentsData } = await supabase
-          .from('payment_transactions')
-          .select('*');
-        analysisData.payments = paymentsData || [];
-      } catch (e) {
-        console.error('Error fetching payments:', e);
-      }
-
-      // 4. Get bills data
-      try {
-        const { data: billsData } = await supabase
-          .from('bills')
-          .select('id, user_id, amount, status, due_date, category')
-          .limit(100);
-        analysisData.bills = billsData || [];
-      } catch (e) {
-        console.error('Error fetching bills:', e);
-      }
-
-      // 5. Get expenses data
-      try {
-        const { data: expensesData } = await supabase
-          .from('expenses')
-          .select('id, user_id, amount, category, date')
-          .limit(100);
-        analysisData.expenses = expensesData || [];
-      } catch (e) {
-        console.error('Error fetching expenses:', e);
-      }
+      // Legacy admin tables not migrated — analysis uses empty datasets
+      console.warn('Admin data collection not migrated');
 
       // Analyze the data and generate insights
       const results: AnalysisResult[] = [];
@@ -381,19 +331,8 @@ ${results.length > 0 ? 'Review the warnings and suggestions below for improvemen
         }
       }
 
-      // Fallback to edge function
-      const { data, error } = await supabase.functions.invoke('ai-assistant-enhanced', {
-        body: {
-          message: userMessage,
-          taskType: 'admin_assistance',
-        },
-      });
-
-      if (!error && data?.response) {
-        setChatHistory(prev => [...prev, { role: 'assistant', content: data.response }]);
-      } else {
-        throw new Error('Failed to get AI response');
-      }
+      const { reply } = await aiAssistantEnhanced(userMessage, { chatHistory });
+      setChatHistory((prev) => [...prev, { role: 'assistant', content: reply }]);
     } catch (error: any) {
       console.error('Chat error:', error);
       setChatHistory(prev => [...prev, { 

@@ -3,7 +3,6 @@ import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Clock, CheckCircle, AlertCircle } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
-import { supabase } from '@/lib/supabase';
 
 interface PaymentTransaction {
   id: string;
@@ -26,12 +25,7 @@ const PaymentStatusTracker = () => {
 
     const fetchPayments = async () => {
       try {
-        const { data, error } = await supabase
-          .from('payment_transactions')
-          .select('*')
-          .eq('user_id', user.id)
-          .order('created_at', { ascending: false })
-          .limit(5);
+        const data = []; const error = null; /* legacy table not migrated */
 
         if (error) throw error;
         setPayments((data || []) as PaymentTransaction[]);

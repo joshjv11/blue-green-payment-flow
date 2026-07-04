@@ -1,9 +1,9 @@
 import { useState, useEffect } from "react";
-import { supabase } from "@/lib/supabase";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Download, TrendingUp, AlertCircle, FileText } from "lucide-react";
+import { useAuth } from '@/hooks/useAuth';
 import { useToast } from "@/hooks/use-toast";
 import { format, startOfMonth, endOfMonth, subMonths } from "date-fns";
 import { useBusinessSettings } from "@/hooks/useBusinessSettings";
@@ -27,6 +27,7 @@ interface TaxData {
 }
 
 export default function TaxSummary() {
+  const { user: authUser } = useAuth();
   const [taxData, setTaxData] = useState<TaxData[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedMonth, setSelectedMonth] = useState<Date>(new Date());
@@ -44,48 +45,9 @@ export default function TaxSummary() {
 
   const fetchTaxData = async () => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-
-      const startDate = startOfMonth(selectedMonth);
-      const endDate = endOfMonth(selectedMonth);
-
-      // Fetch sales orders
-      const { data: salesData, error: salesError } = await supabase
-        .from("sales_orders")
-        .select("*")
-        .eq("user_id", user.id)
-        .gte("transaction_date", format(startDate, "yyyy-MM-dd"))
-        .lte("transaction_date", format(endDate, "yyyy-MM-dd"));
-
-      if (salesError) throw salesError;
-
-      // Fetch purchase orders
-      const { data: purchaseData, error: purchaseError } = await supabase
-        .from("purchase_orders")
-        .select("*")
-        .eq("user_id", user.id)
-        .gte("transaction_date", format(startDate, "yyyy-MM-dd"))
-        .lte("transaction_date", format(endDate, "yyyy-MM-dd"));
-
-      if (purchaseError) throw purchaseError;
-
-      // Aggregate data
-      const monthData: TaxData = {
-        month: format(selectedMonth, "MMMM yyyy"),
-        sales_taxable: salesData?.reduce((sum, s) => sum + (Number(s.total_amount) || 0), 0) || 0,
-        sales_cgst: salesData?.reduce((sum, s) => sum + (Number(s.cgst_amount) || 0), 0) || 0,
-        sales_sgst: salesData?.reduce((sum, s) => sum + (Number(s.sgst_amount) || 0), 0) || 0,
-        sales_igst: salesData?.reduce((sum, s) => sum + (Number(s.igst_amount) || 0), 0) || 0,
-        sales_vat: salesData?.reduce((sum, s) => sum + (Number(s.tax_amount) || 0), 0) || 0,
-        purchase_taxable: purchaseData?.reduce((sum, p) => sum + (Number(p.total_amount) || 0), 0) || 0,
-        purchase_cgst: purchaseData?.reduce((sum, p) => sum + (Number(p.cgst_amount) || 0), 0) || 0,
-        purchase_sgst: purchaseData?.reduce((sum, p) => sum + (Number(p.sgst_amount) || 0), 0) || 0,
-        purchase_igst: purchaseData?.reduce((sum, p) => sum + (Number(p.igst_amount) || 0), 0) || 0,
-        purchase_vat: purchaseData?.reduce((sum, p) => sum + (Number(p.tax_amount) || 0), 0) || 0,
-      };
-
-      setTaxData([monthData]);
+      if (!authUser) return;
+      console.warn('Tax summary not migrated');
+      setTaxData([]);
     } catch (error: any) {
       toast({
         title: "Error loading tax data",
@@ -99,72 +61,12 @@ export default function TaxSummary() {
 
   const handleExport = async (type: string) => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user || taxData.length === 0) return;
-
-      const startDate = startOfMonth(selectedMonth);
-      const endDate = endOfMonth(selectedMonth);
-
-      // Fetch detailed data for export
-      const { data: salesData } = await supabase
-        .from("sales_orders")
-        .select("*")
-        .eq("user_id", user.id)
-        .gte("transaction_date", format(startDate, "yyyy-MM-dd"))
-        .lte("transaction_date", format(endDate, "yyyy-MM-dd"));
-
-      const { data: purchaseData } = await supabase
-        .from("purchase_orders")
-        .select("*")
-        .eq("user_id", user.id)
-        .gte("transaction_date", format(startDate, "yyyy-MM-dd"))
-        .lte("transaction_date", format(endDate, "yyyy-MM-dd"));
-
-      let csv = "";
-      let fileName = "";
-
-      switch (type) {
-        case "gstr1":
-          csv = exportGSTR1CSV(salesData as any || [], settings);
-          fileName = `GSTR1_Draft_${format(selectedMonth, "MMM_yyyy")}.csv`;
-          break;
-        case "gstr3b":
-          csv = exportGSTR3BCSV(salesData as any || [], purchaseData as any || [], settings);
-          fileName = `GSTR3B_Draft_${format(selectedMonth, "MMM_yyyy")}.csv`;
-          break;
-        case "uae_vat":
-          csv = exportUAEVATCSV(salesData as any || [], purchaseData as any || [], settings);
-          fileName = `UAE_VAT_Return_${format(selectedMonth, "MMM_yyyy")}.csv`;
-          break;
-        case "generic_vat":
-          csv = exportGenericVATCSV(salesData as any || [], purchaseData as any || [], settings);
-          fileName = `VAT_Report_${format(selectedMonth, "MMM_yyyy")}.csv`;
-          break;
-        default:
-          csv = exportTaxReportCSV(salesData as any || [], purchaseData as any || [], settings);
-          fileName = `Tax_Report_${format(selectedMonth, "MMM_yyyy")}.csv`;
+      if (!authUser || taxData.length === 0) {
+        toast({ title: 'Export unavailable', description: 'Tax export is not migrated yet.', variant: 'destructive' });
+        return;
       }
-
-      // Download CSV
-      const blob = new Blob([csv], { type: "text/csv" });
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = fileName;
-      a.click();
-
-      // Log export
-      await supabase.from("export_logs").insert({
-        user_id: user.id,
-        export_type: `tax_${type}`,
-        file_name: fileName,
-        file_format: "csv",
-        date_from: format(startDate, "yyyy-MM-dd"),
-        date_to: format(endDate, "yyyy-MM-dd"),
-        record_count: (salesData?.length || 0) + (purchaseData?.length || 0),
-      });
-
-      toast({ title: "Export successful", description: `Downloaded ${fileName}` });
+      toast({ title: 'Export unavailable', description: 'Tax export is not migrated yet.', variant: 'destructive' });
+      return;
     } catch (error: any) {
       toast({
         title: "Export failed",

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
-import { useSupabasePlan } from '@/hooks/useSupabasePlan';
+import { useAppPlan } from '@/hooks/useAppPlan';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -36,14 +36,14 @@ const DebugInfo = ({ className }: DebugInfoProps) => {
   let fetchUserPlan = null;
   
   try {
-    const planData = useSupabasePlan();
+    const planData = useAppPlan();
     plan = planData.plan;
     aiQueriesUsed = planData.aiQueriesUsed;
     aiQueriesLimit = planData.aiQueriesLimit;
     planLoading = planData.loading;
     fetchUserPlan = planData.fetchUserPlan;
   } catch (error) {
-    console.warn('DebugInfo: useSupabasePlan not available');
+    console.warn('DebugInfo: useAppPlan not available');
     planLoading = false;
   }
 

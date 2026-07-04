@@ -1,9 +1,9 @@
 import { useState, useEffect } from "react";
-import { supabase } from "@/lib/supabase";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { FileText, Download, TrendingUp } from "lucide-react";
+import { useAuth } from '@/hooks/useAuth';
 import { useToast } from "@/hooks/use-toast";
 import { PageTransition } from "@/components/PageTransition";
 import { BackToDashboard } from "@/components/BackToDashboard";
@@ -21,6 +21,7 @@ interface GSTSummaryData {
 }
 
 export default function GSTSummary() {
+  const { user: authUser } = useAuth();
   const [summaryData, setSummaryData] = useState<GSTSummaryData[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedMonth, setSelectedMonth] = useState<Date>(new Date());
@@ -32,54 +33,9 @@ export default function GSTSummary() {
 
   const fetchGSTSummary = async () => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-
-      const startDate = startOfMonth(selectedMonth);
-      const endDate = endOfMonth(selectedMonth);
-
-      // Fetch sales data
-      const { data: salesData, error: salesError } = await supabase
-        .from("sales_orders")
-        .select("*")
-        .eq("user_id", user.id)
-        .gte("transaction_date", format(startDate, "yyyy-MM-dd"))
-        .lte("transaction_date", format(endDate, "yyyy-MM-dd"));
-
-      if (salesError) throw salesError;
-
-      // Fetch purchase data
-      const { data: purchaseData, error: purchaseError } = await supabase
-        .from("purchase_orders")
-        .select("*")
-        .eq("user_id", user.id)
-        .gte("transaction_date", format(startDate, "yyyy-MM-dd"))
-        .lte("transaction_date", format(endDate, "yyyy-MM-dd"));
-
-      if (purchaseError) throw purchaseError;
-
-      // Aggregate data
-      const salesSummary = {
-        month: format(selectedMonth, "MMMM yyyy"),
-        transaction_type: "Sales",
-        total_cgst: salesData?.reduce((sum, s) => sum + (Number(s.cgst_amount) || 0), 0) || 0,
-        total_sgst: salesData?.reduce((sum, s) => sum + (Number(s.sgst_amount) || 0), 0) || 0,
-        total_igst: salesData?.reduce((sum, s) => sum + (Number(s.igst_amount) || 0), 0) || 0,
-        total_tax: salesData?.reduce((sum, s) => sum + (Number(s.tax_amount) || 0), 0) || 0,
-        total_amount: salesData?.reduce((sum, s) => sum + (Number(s.grand_total) || 0), 0) || 0,
-      };
-
-      const purchaseSummary = {
-        month: format(selectedMonth, "MMMM yyyy"),
-        transaction_type: "Purchases",
-        total_cgst: purchaseData?.reduce((sum, p) => sum + (Number(p.cgst_amount) || 0), 0) || 0,
-        total_sgst: purchaseData?.reduce((sum, p) => sum + (Number(p.sgst_amount) || 0), 0) || 0,
-        total_igst: purchaseData?.reduce((sum, p) => sum + (Number(p.igst_amount) || 0), 0) || 0,
-        total_tax: purchaseData?.reduce((sum, p) => sum + (Number(p.tax_amount) || 0), 0) || 0,
-        total_amount: purchaseData?.reduce((sum, p) => sum + (Number(p.grand_total) || 0), 0) || 0,
-      };
-
-      setSummaryData([salesSummary, purchaseSummary]);
+      if (!authUser) return;
+      console.warn('GST summary not migrated — sales_orders/purchase_orders unavailable');
+      setSummaryData([]);
     } catch (error: any) {
       toast({
         title: "Error",
