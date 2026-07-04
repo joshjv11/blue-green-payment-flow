@@ -47,19 +47,25 @@ function parseEnv() {
   const env = result.data;
   const isProduction = env.NODE_ENV === 'production';
 
-  if (isProduction && (!env.CORS_ORIGINS || env.CORS_ORIGINS.trim() === '')) {
-    console.error('Environment validation failed: CORS_ORIGINS is required in production');
-    process.exit(1);
-  }
-
   if (isProduction && env.JWT_SECRET.length < 32) {
     console.error('Environment validation failed: JWT_SECRET must be at least 32 characters in production');
     process.exit(1);
   }
 
+  if (isProduction && (!env.CORS_ORIGINS || env.CORS_ORIGINS.trim() === '')) {
+    console.warn('CORS_ORIGINS not set — using default production origins');
+  }
+
   const corsOrigins = env.CORS_ORIGINS
     ? env.CORS_ORIGINS.split(',').map((o) => o.trim()).filter(Boolean)
-    : ['http://localhost:5173', 'http://localhost:8080'];
+    : isProduction
+      ? [
+          env.APP_URL,
+          'https://invoiceflow.dev',
+          'https://www.invoiceflow.dev',
+          'https://blue-green-payment-flow.vercel.app',
+        ]
+      : ['http://localhost:5173', 'http://localhost:8080'];
 
   if (isProduction && corsOrigins.includes('*')) {
     console.error('Environment validation failed: CORS_ORIGINS must not include * in production');
