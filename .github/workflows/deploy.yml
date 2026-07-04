@@ -1,0 +1,134 @@
+name: Deploy Production
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: production-deploy
+  cancel-in-progress: false
+
+jobs:
+  sync-api-dist:
+    if: ${{ !contains(github.event.head_commit.message, '[skip ci]') }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+
+      - name: Install dependencies and sync Render deploy bundle
+        run: |
+          npm ci
+          npm --prefix services/api ci
+          npm run sync:api-dist
+
+      - name: Commit synced API dist for Render
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add services/auth-api/dist services/auth-api/db/schema.sql
+          if git diff --staged --quiet; then
+            echo "API dist already up to date."
+            exit 0
+          fi
+          git commit -m "chore: sync API dist for Render [skip ci]"
+          git push
+
+  verify:
+    if: ${{ !contains(github.event.head_commit.message, '[skip ci]') }}
+    needs: sync-api-dist
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+
+      - name: Install frontend dependencies
+        run: npm ci
+
+      - name: Typecheck frontend
+        run: npm run typecheck
+
+      - name: Install API dependencies
+        working-directory: services/api
+        run: npm ci
+
+      - name: Typecheck API
+        working-directory: services/api
+        run: npm run typecheck
+
+      - name: Run API tests
+        working-directory: services/api
+        run: npm test
+
+  render:
+    needs: verify
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' && !contains(github.event.head_commit.message, '[skip ci]')
+    steps:
+      - name: Trigger Render deploy
+        env:
+          RENDER_DEPLOY_HOOK_URL: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
+        run: |
+          if [ -z "$RENDER_DEPLOY_HOOK_URL" ]; then
+            echo "::warning::RENDER_DEPLOY_HOOK_URL secret is not set."
+            echo "Add it from Render Dashboard → blue-green-payment-flow → Settings → Deploy Hook"
+            exit 0
+          fi
+          echo "Triggering Render deploy..."
+          curl -fsS -X POST "$RENDER_DEPLOY_HOOK_URL"
+          echo "Render deploy hook triggered."
+
+  vercel:
+    needs: verify
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' && !contains(github.event.head_commit.message, '[skip ci]')
+    steps:
+      - name: Trigger Vercel production deploy
+        env:
+          VERCEL_DEPLOY_HOOK_URL: ${{ secrets.VERCEL_DEPLOY_HOOK_URL }}
+        run: |
+          if [ -z "$VERCEL_DEPLOY_HOOK_URL" ]; then
+            echo "No VERCEL_DEPLOY_HOOK_URL — relying on Vercel GitHub integration."
+            exit 0
+          fi
+          echo "Triggering Vercel deploy..."
+          curl -fsS -X POST "$VERCEL_DEPLOY_HOOK_URL"
+          echo "Vercel deploy hook triggered."
+
+  domain:
+    needs: [verify, vercel]
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' && !contains(github.event.head_commit.message, '[skip ci]')
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Point invoiceflow.dev at Vercel (GoDaddy + Vercel API)
+        env:
+          GODADDY_API_KEY: ${{ secrets.GODADDY_API_KEY }}
+          GODADDY_API_SECRET: ${{ secrets.GODADDY_API_SECRET }}
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_PROJECT: blue-green-payment-flow
+          VERCEL_TEAM: joshs-projects-3930381e
+        run: |
+          if [ -z "$GODADDY_API_KEY" ] || [ -z "$GODADDY_API_SECRET" ] || [ -z "$VERCEL_TOKEN" ]; then
+            echo "::warning::Domain migration skipped — add GODADDY_API_KEY, GODADDY_API_SECRET, and VERCEL_TOKEN to GitHub repo secrets."
+            echo "Until DNS moves off Lovable (185.158.133.1), invoiceflow.dev will serve the old build."
+            echo "Latest code is live at https://blue-green-payment-flow.vercel.app"
+            exit 0
+          fi
+          node scripts/setup-production-domain.mjs

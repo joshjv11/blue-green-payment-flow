@@ -21,6 +21,8 @@
     "apply:schema": "node scripts/db/apply-schema.mjs",
     "dev:web": "vite",
     "dev:api": "npm --prefix services/api run dev",
+    "sync:api-dist": "npm --prefix services/api run build && cp -R services/api/dist/* services/auth-api/dist/ && cp db/schema.sql db/apply.mjs services/auth-api/db/",
+    "predeploy:api": "npm run sync:api-dist",
     "smoke": "node scripts/smoke.mjs",
     "test:e2e": "playwright test",
     "typecheck": "tsc --noEmit -p tsconfig.app.json"

@@ -16,7 +16,7 @@ const envSchema = z.object({
   CORS_ORIGINS: z.string().optional(),
   ACCESS_TOKEN_EXPIRES_IN: z.string().default('15m'),
   REFRESH_TOKEN_EXPIRES_DAYS: z.coerce.number().default(30),
-  APP_URL: z.string().default('http://localhost:8080'),
+  APP_URL: z.string().default('https://invoiceflow.dev'),
   EMAIL_FROM: z.string().default('InvoiceFlow <noreply@invoiceflow.dev>'),
   R2_ACCESS_KEY_ID: z.string().optional(),
   R2_SECRET_ACCESS_KEY: z.string().optional(),
