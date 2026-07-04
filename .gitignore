@@ -42,4 +42,5 @@ test-results/
 playwright-report/
 
 # Vercel serverless API bundle (built in CI)
+api/index.cjs
 api/index.js

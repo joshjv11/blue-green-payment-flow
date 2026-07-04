@@ -1,15 +1,31 @@
 import { Pool } from 'pg';
 import { env } from './env.js';
 
-export const pool = new Pool({
-  connectionString: env.DATABASE_URL,
-  max: 20,
-  idleTimeoutMillis: 30_000,
-  connectionTimeoutMillis: 5_000,
-});
+let poolInstance: Pool | undefined;
 
-pool.on('error', (err) => {
-  console.error('Unexpected PostgreSQL pool error:', err);
+function getPool(): Pool {
+  if (!poolInstance) {
+    poolInstance = new Pool({
+      connectionString: env.DATABASE_URL,
+      max: 20,
+      idleTimeoutMillis: 30_000,
+      connectionTimeoutMillis: 5_000,
+    });
+    poolInstance.on('error', (err) => {
+      console.error('Unexpected PostgreSQL pool error:', err);
+    });
+  }
+  return poolInstance;
+}
+
+export const pool = new Proxy({} as Pool, {
+  get(_target, prop) {
+    const value = getPool()[prop as keyof Pool];
+    if (typeof value === 'function') {
+      return (value as (...args: unknown[]) => unknown).bind(getPool());
+    }
+    return value;
+  },
 });
 
 export async function checkDbConnection(): Promise<boolean> {

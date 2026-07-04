@@ -37,7 +37,11 @@ function parseEnv() {
     const result = envSchema.safeParse(process.env);
     if (!result.success) {
         const missing = result.error.issues.map((i) => i.message).join('; ');
-        console.error(`Environment validation failed: ${missing}`);
+        const message = `Environment validation failed: ${missing}`;
+        if (process.env.VERCEL) {
+            throw new Error(message);
+        }
+        console.error(message);
         process.exit(1);
     }
     const env = result.data;
@@ -64,4 +68,14 @@ function parseEnv() {
     }
     return { ...env, corsOrigins };
 }
-export const env = parseEnv();
+let cachedEnv;
+function getEnv() {
+    if (!cachedEnv)
+        cachedEnv = parseEnv();
+    return cachedEnv;
+}
+export const env = new Proxy({}, {
+    get(_target, prop) {
+        return getEnv()[prop];
+    },
+});

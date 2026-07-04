@@ -5,16 +5,25 @@ import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { env } from '../env.js';
 import { requireAuth } from '../middleware/auth.js';
 const router = Router();
-const s3 = env.R2_ACCESS_KEY_ID && env.R2_SECRET_ACCESS_KEY && env.R2_ENDPOINT
-    ? new S3Client({
-        region: 'auto',
-        endpoint: env.R2_ENDPOINT,
-        credentials: {
-            accessKeyId: env.R2_ACCESS_KEY_ID,
-            secretAccessKey: env.R2_SECRET_ACCESS_KEY,
-        },
-    })
-    : null;
+let s3;
+function getS3() {
+    if (s3 !== undefined)
+        return s3;
+    if (env.R2_ACCESS_KEY_ID && env.R2_SECRET_ACCESS_KEY && env.R2_ENDPOINT) {
+        s3 = new S3Client({
+            region: 'auto',
+            endpoint: env.R2_ENDPOINT,
+            credentials: {
+                accessKeyId: env.R2_ACCESS_KEY_ID,
+                secretAccessKey: env.R2_SECRET_ACCESS_KEY,
+            },
+        });
+    }
+    else {
+        s3 = null;
+    }
+    return s3;
+}
 function sanitizeFileName(fileName) {
     const raw = String(fileName);
     if (!raw || raw.includes('..') || raw.includes('/') || raw.includes('\\') || raw.includes('\0')) {
@@ -27,7 +36,8 @@ router.post('/sign-upload', requireAuth, async (req, res) => {
     const safeFileName = sanitizeFileName(fileName);
     if (!safeFileName)
         return res.status(400).json({ error: 'Invalid fileName' });
-    if (!s3 || !env.R2_BUCKET)
+    const client = getS3();
+    if (!client || !env.R2_BUCKET)
         return res.status(500).json({ error: 'R2 not configured' });
     const orgId = req.auth.orgId;
     const filePath = `${orgId}/${randomUUID()}-${safeFileName}`;
@@ -37,7 +47,7 @@ router.post('/sign-upload', requireAuth, async (req, res) => {
             Key: filePath,
             ContentType: contentType || 'application/octet-stream',
         });
-        const uploadUrl = await getSignedUrl(s3, command, { expiresIn: 3600 });
+        const uploadUrl = await getSignedUrl(client, command, { expiresIn: 3600 });
         const publicUrl = env.R2_PUBLIC_DOMAIN
             ? `${env.R2_PUBLIC_DOMAIN}/${filePath}`
             : `${env.R2_ENDPOINT}/${env.R2_BUCKET}/${filePath}`;
@@ -58,10 +68,11 @@ router.delete('/delete', requireAuth, async (req, res) => {
     if (normalized.includes('..') || !normalized.startsWith(`${orgId}/`)) {
         return res.status(403).json({ error: 'Forbidden: file does not belong to your organization' });
     }
-    if (!s3 || !env.R2_BUCKET)
+    const client = getS3();
+    if (!client || !env.R2_BUCKET)
         return res.status(500).json({ error: 'R2 not configured' });
     try {
-        await s3.send(new DeleteObjectCommand({ Bucket: env.R2_BUCKET, Key: normalized }));
+        await client.send(new DeleteObjectCommand({ Bucket: env.R2_BUCKET, Key: normalized }));
         res.json({ ok: true });
     }
     catch (err) {

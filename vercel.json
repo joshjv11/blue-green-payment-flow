@@ -5,13 +5,12 @@
   "devCommand": "npm run dev",
   "installCommand": "npm ci",
   "functions": {
-    "api/index.js": {
+    "api/index.cjs": {
       "maxDuration": 60
     }
   },
   "rewrites": [
     { "source": "/health", "destination": "/api" },
-    { "source": "/auth", "destination": "/api" },
     { "source": "/auth/:path*", "destination": "/api" },
     { "source": "/orgs", "destination": "/api" },
     { "source": "/orgs/:path*", "destination": "/api" },
