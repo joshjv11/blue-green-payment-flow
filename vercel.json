@@ -1,12 +1,13 @@
 {
-  "buildCommand": "npm run build && npm run build:vercel-api",
+  "buildCommand": "npm --prefix services/api ci && npm --prefix services/api run build && npm run build",
   "outputDirectory": "dist",
   "framework": "vite",
   "devCommand": "npm run dev",
   "installCommand": "npm ci",
   "functions": {
-    "api/index.js": {
-      "maxDuration": 60
+    "api/index.mjs": {
+      "maxDuration": 60,
+      "includeFiles": "services/api/dist/**"
     }
   },
   "rewrites": [
