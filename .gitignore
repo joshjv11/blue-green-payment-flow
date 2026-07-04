@@ -40,3 +40,6 @@ dump.sql
 # Test artifacts
 test-results/
 playwright-report/
+
+# Vercel serverless API bundle (built in CI)
+api/index.js
