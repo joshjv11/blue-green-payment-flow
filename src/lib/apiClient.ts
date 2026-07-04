@@ -1,17 +1,25 @@
 import type { AuthSession } from '@/lib/types/auth';
 
-const API_BASE = (() => {
-  try {
-    const configured = (import.meta as ImportMeta & { env?: { VITE_API_BASE?: string; PROD?: boolean } }).env
-      ?.VITE_API_BASE;
-    if (configured) return configured.replace(/\/$/, '');
-    // Production: same-origin requests proxied by Vercel/Netlify to the API service
-    if ((import.meta as ImportMeta & { env?: { PROD?: boolean } }).env?.PROD) return '';
-    return 'http://localhost:8787';
-  } catch {
-    return 'http://localhost:8787';
+/** Use same-origin on deployed hosts so Vercel/Netlify rewrites proxy to the API (avoids CORS). */
+function resolveApiBase(): string {
+  const configured = import.meta.env.VITE_API_BASE?.trim().replace(/\/$/, '') ?? '';
+
+  if (typeof window !== 'undefined') {
+    const host = window.location.hostname;
+    const isLocal = host === 'localhost' || host === '127.0.0.1';
+    if (!isLocal) {
+      return '';
+    }
+    return configured || 'http://localhost:8787';
   }
-})();
+
+  if (import.meta.env.PROD) {
+    return configured;
+  }
+  return configured || 'http://localhost:8787';
+}
+
+const API_BASE = resolveApiBase();
 
 let accessToken: string | null = null;
 let currentSession: AuthSession | null = null;
