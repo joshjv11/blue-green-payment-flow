@@ -1,0 +1,50 @@
+/** SQL fragment: orgid = $N — always bind orgId from verified JWT, never from request body. */
+export function orgFilter(paramIndex = 1) {
+    return `orgid = $${paramIndex}`;
+}
+/** Prefix query params with orgId from JWT. */
+export function orgParams(orgId, ...rest) {
+    return [orgId, ...rest];
+}
+export async function findCustomerInOrg(db, customerId, orgId) {
+    const { rows } = await db.query(`SELECT id FROM customers WHERE id = $1 AND ${orgFilter(2)} LIMIT 1`, [customerId, orgId]);
+    return rows[0] ?? null;
+}
+export async function findInvoiceInOrg(db, invoiceId, orgId) {
+    const { rows } = await db.query(`SELECT id, invoicenumber FROM invoices WHERE id = $1 AND ${orgFilter(2)} LIMIT 1`, [invoiceId, orgId]);
+    return rows[0] ?? null;
+}
+export async function reserveAiUsageSlot(db, orgId, limit) {
+    const client = await db.connect();
+    const today = new Date().toISOString().slice(0, 10);
+    try {
+        await client.query('BEGIN');
+        await client.query('SELECT pg_advisory_xact_lock(hashtext($1))', [`aiusage:${orgId}:${today}`]);
+        const existing = await client.query(`SELECT count FROM aiusage WHERE orgid = $1 AND usagedate = $2 FOR UPDATE`, [orgId, today]);
+        const current = existing.rows[0]?.count ?? 0;
+        if (current >= limit) {
+            await client.query('ROLLBACK');
+            return { allowed: false, remaining: 0 };
+        }
+        const { rows } = await client.query(`INSERT INTO aiusage (orgid, usagedate, count)
+       VALUES ($1, $2, 1)
+       ON CONFLICT (orgid, usagedate)
+       DO UPDATE SET count = aiusage.count + 1, updatedat = NOW()
+       RETURNING count`, [orgId, today]);
+        const count = rows[0]?.count ?? current + 1;
+        await client.query('COMMIT');
+        return { allowed: true, remaining: Math.max(0, limit - count) };
+    }
+    catch (err) {
+        await client.query('ROLLBACK');
+        throw err;
+    }
+    finally {
+        client.release();
+    }
+}
+export async function releaseAiUsageSlot(db, orgId) {
+    const today = new Date().toISOString().slice(0, 10);
+    await db.query(`UPDATE aiusage SET count = GREATEST(0, count - 1), updatedat = NOW()
+     WHERE orgid = $1 AND usagedate = $2 AND count > 0`, [orgId, today]);
+}

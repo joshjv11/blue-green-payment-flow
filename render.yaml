@@ -1,6 +1,6 @@
 # InvoiceFlow production stack — frontend deploys via Vercel (GitHub push).
 # Sync this blueprint in Render Dashboard → New → Blueprint → connect this repo.
-# API URL must match vercel.json rewrites (invoiceflow-ar-api).
+# API URL must match vercel.json rewrites (blue-green-payment-flow.onrender.com).
 
 databases:
   - name: invoiceflow-db
@@ -10,10 +10,10 @@ databases:
 
 services:
   - type: web
-    name: invoiceflow-ar-api
+    name: blue-green-payment-flow
     runtime: docker
-    dockerfilePath: ./services/api/Dockerfile
-    dockerContext: .
+    dockerfilePath: ./services/auth-api/Dockerfile
+    dockerContext: ./services/auth-api
     plan: free
     healthCheckPath: /health
     envVars:
