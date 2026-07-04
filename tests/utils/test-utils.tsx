@@ -149,29 +149,3 @@ export const createMockBill = (overrides = {}) => ({
   ...overrides,
 });
 
-export const createMockSavingsGoal = (overrides = {}) => ({
-  id: 'test-goal-id',
-  user_id: 'test-user-id',
-  goal_name: 'Test Goal',
-  target_amount: 10000,
-  current_amount: 5000,
-  monthly_contribution: 1000,
-  goal_type: 'vacation',
-  target_date: '2025-12-31',
-  is_completed: false,
-  ...overrides,
-});
-
-export const createMockEMI = (overrides = {}) => ({
-  id: 'test-emi-id',
-  user_id: 'test-user-id',
-  emi_name: 'Test EMI',
-  principal_amount: 100000,
-  monthly_payment: 5000,
-  interest_rate: 12,
-  tenure_months: 24,
-  start_date: '2025-01-01',
-  status: 'active',
-  ...overrides,
-});
-

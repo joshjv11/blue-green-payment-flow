@@ -51,8 +51,8 @@ export default function ProfitabilityTab() {
               <Button onClick={() => window.location.href = '/sales'} variant="default">
                 Create Sales Order
               </Button>
-              <Button onClick={() => window.location.href = '/inventory'} variant="outline">
-                Add Products
+              <Button onClick={() => window.location.href = '/bills'} variant="outline">
+                Add Invoice
               </Button>
             </div>
           </div>

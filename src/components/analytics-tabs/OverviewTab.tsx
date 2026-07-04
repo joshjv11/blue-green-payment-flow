@@ -40,15 +40,15 @@ const OverviewTab = () => {
               <BarChart3 className="h-12 w-12 mx-auto mb-4 opacity-50" />
               <p className="text-lg font-semibold mb-2">No analytics data yet</p>
               <p className="text-sm mb-6 max-w-md mx-auto">
-                Start tracking your business by creating sales orders and adding products to inventory. 
+                Start tracking your business by creating sales orders and invoices.
                 Once you have data, your analytics will appear here.
               </p>
               <div className="flex gap-3 justify-center">
                 <Button onClick={() => window.location.href = '/sales'} variant="default">
                   Create Sales Order
                 </Button>
-                <Button onClick={() => window.location.href = '/inventory'} variant="outline">
-                  Add Products
+                <Button onClick={() => window.location.href = '/bills'} variant="outline">
+                  Add Invoice
                 </Button>
               </div>
             </div>

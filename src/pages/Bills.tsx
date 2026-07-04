@@ -41,13 +41,11 @@ import { useSupabasePlan } from '@/hooks/useSupabasePlan';
 import UpgradeModal from '@/components/UpgradeModal';
 import FreemiumLimitCard from '@/components/FreemiumLimitCard';
 import BillLimitBanner from '@/components/BillLimitBanner';
-import EnhancedAIAssistantV2 from '@/components/EnhancedAIAssistantV2';
 import { usePaymentVerification } from '@/hooks/usePaymentVerification';
 import { BackToDashboard } from '@/components/BackToDashboard';
 import PlanStatusCard from '@/components/PlanStatusCard';
 import UpgradeTrigger from '@/components/UpgradeTrigger';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { InvoiceOCRUploader } from '@/components/InvoiceOCRUploader';
 import { BillReminderSettings } from '@/components/BillReminderSettings';
 import { formatINRCompact } from '@/utils/currency';
 import { MessageCircle } from 'lucide-react';
@@ -734,11 +732,6 @@ const Bills = () => {
               currentCount={bills.length}
               onUpgrade={() => setShowUpgradeModal(true)}
             />
-            <FreemiumLimitCard
-              type="ai"
-              currentCount={aiQueriesUsed}
-              onUpgrade={() => setShowUpgradeModal(true)}
-            />
           </div>
 
           {/* Bills List */}
@@ -878,37 +871,6 @@ const Bills = () => {
             }}
           />
 
-          <EnhancedAIAssistantV2
-            bills={bills}
-            context="bills page - managing and organizing bills, payment tracking"
-          />
-
-          {/* Invoice OCR Scanner */}
-          <div className="mt-6">
-            <InvoiceOCRUploader
-              userId={user!.id}
-              onPrefill={(data) => {
-                // Pre-fill the form with extracted data
-                setFormData({
-                  name: data.vendor,
-                  amount: data.amount.toString(),
-                  due_date: data.due_date,
-                  category: data.category,
-                  recurring: false,
-                  status: 'unpaid',
-                  notes: `Extracted via OCR (Confidence: ${(data.confidence * 100).toFixed(0)}%)`,
-                  email_reminder: true,
-                  reminder_days: 1,
-                });
-                setIsDialogOpen(true);
-              }}
-              onBillCreated={() => {
-                // Refresh bills list after OCR creation
-                fetchBills();
-                trackFeatureUsage('ocr', 'create');
-              }}
-            />
-          </div>
         </div>
       </main>
     </div>

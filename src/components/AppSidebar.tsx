@@ -3,8 +3,6 @@ import {
   FileText, 
   ShoppingCart, 
   ShoppingBag, 
-  Package, 
-  Download, 
   Settings,
   Receipt,
   BarChart3,
@@ -12,13 +10,8 @@ import {
   Lock,
   Crown,
   Sparkles,
-  MessageCircle,
-  Brain,
-  CreditCard,
   LogOut,
   Shield,
-  Target,
-  PieChart,
   ChevronRight,
   Zap
 } from "lucide-react";
@@ -52,19 +45,12 @@ const coreItems = [
 ];
 
 // Pro Features
-const proItems = [
-  { title: "AI Coach", url: "/ai-coach", icon: Brain, featureKey: "ai-coach", isProminent: true, isNew: true },
-  { title: "WhatsApp", url: "/whatsapp", icon: MessageCircle, featureKey: "whatsapp", requiredPlan: "pro" as const, isProminent: true },
-  { title: "Savings Goals", url: "/savings-goals", icon: Target, featureKey: "savings-goals", requiredPlan: "pro" as const },
-  { title: "EMI Manager", url: "/emi-manager", icon: CreditCard, featureKey: "emi-manager", requiredPlan: "pro" as const },
-  { title: "Spending Insights", url: "/spending-insights", icon: PieChart, featureKey: "spending-insights", requiredPlan: "pro" as const },
-];
+const proItems = [];
 
 // Premium Features - Business Operations
 const premiumBusinessItems = [
   { title: "Sales", url: "/sales", icon: ShoppingCart, featureKey: "sales", requiredPlan: "premium" as const },
   { title: "Purchases", url: "/purchases", icon: ShoppingBag, featureKey: "purchases", requiredPlan: "premium" as const },
-  { title: "Inventory", url: "/inventory", icon: Package, featureKey: "inventory", requiredPlan: "premium" as const },
   { title: "Expenses", url: "/expenses", icon: Wallet, featureKey: "expenses", requiredPlan: "premium" as const },
 ];
 
@@ -73,15 +59,13 @@ const premiumGSTItems = [
   { title: "GST Dashboard", url: "/gst", icon: Shield, featureKey: "gst", requiredPlan: "premium" as const, isProminent: true, isNew: true },
 ];
 
-// Premium Features - Reports & Exports
+// Premium Features - Reports
 const premiumReportsItems = [
   { title: "Tax Reports", url: "/reports/tax", icon: Receipt, featureKey: "reports/tax", requiredPlan: "premium" as const },
   { title: "Financial Reports", url: "/reports/financial", icon: BarChart3, featureKey: "reports/financial", requiredPlan: "premium" as const },
-  { title: "Exports", url: "/exports", icon: Download, featureKey: "exports", requiredPlan: "premium" as const },
 ];
 
 const adminItems = [
-  { title: "Admin CMS", url: "/admin-cms", icon: Shield, featureKey: "admin-cms" },
   { title: "Sales List", url: "/sales-list", icon: ShoppingCart, featureKey: "sales-list", requiredPlan: "premium" as const },
   { title: "Purchases List", url: "/purchases-list", icon: ShoppingBag, featureKey: "purchases-list", requiredPlan: "premium" as const },
 ];
@@ -127,7 +111,6 @@ export function AppSidebar() {
     const isProFeature = item.requiredPlan === 'pro';
     const isProminent = (item as any).isProminent && hasAccess;
     const isNew = (item as any).isNew && hasAccess;
-    const isAICoach = item.featureKey === 'ai-coach';
     const isActive = location.pathname === item.url || location.pathname.startsWith(item.url + '/');
     const isHovered = hoveredItem === item.featureKey;
 
@@ -145,11 +128,6 @@ export function AppSidebar() {
           end 
           className={(props) => {
             const baseClass = getNavClassName(props, isLocked);
-            if (isAICoach && !isLocked) {
-              return props.isActive 
-                ? "bg-gradient-to-r from-purple-600 via-pink-600 to-purple-600 text-white font-semibold border-l-[3px] border-purple-400 shadow-lg shadow-purple-500/30"
-                : "bg-gradient-to-r from-purple-500/10 via-pink-500/10 to-transparent text-purple-700 dark:text-purple-400 hover:from-purple-500/20 hover:via-pink-500/20 hover:to-transparent font-medium border-l-[3px] border-purple-500/30 hover:shadow-md hover:shadow-purple-500/10";
-            }
             if (isProminent && !isLocked) {
               return props.isActive 
                 ? "bg-gradient-to-r from-green-600 via-emerald-600 to-green-600 text-white font-semibold border-l-[3px] border-green-400 shadow-lg shadow-green-500/30"
@@ -168,16 +146,15 @@ export function AppSidebar() {
             <motion.div
               animate={{
                 scale: isHovered ? 1.1 : 1,
-                rotate: isHovered ? (isAICoach ? 5 : 0) : 0,
+                rotate: isHovered ? 0 : 0,
               }}
               transition={{ duration: 0.2, ease: "easeOut" }}
             >
               <item.icon className={cn(
                 "h-4.5 w-4.5 flex-shrink-0 transition-all duration-300", 
-                isAICoach && !isLocked && "text-purple-600 dark:text-purple-400 group-hover/item:text-purple-700",
-                isProminent && !isLocked && !isAICoach && "text-green-600 dark:text-green-400 group-hover/item:text-green-700",
-                isActive && !isAICoach && !isProminent && "text-primary",
-                !isActive && !isAICoach && !isProminent && "text-muted-foreground group-hover/item:text-foreground"
+                isProminent && !isLocked && "text-green-600 dark:text-green-400 group-hover/item:text-green-700",
+                isActive && !isProminent && "text-primary",
+                !isActive && !isProminent && "text-muted-foreground group-hover/item:text-foreground"
               )} />
             </motion.div>
             <AnimatePresence mode="wait">
@@ -225,12 +202,7 @@ export function AppSidebar() {
                       animate={{ scale: 1, opacity: 1 }}
                       transition={{ delay: 0.15 }}
                     >
-                      <Badge variant="outline" className={cn(
-                        "shrink-0 h-5 px-2 text-[10px] font-semibold backdrop-blur-sm",
-                        isAICoach 
-                          ? "bg-gradient-to-r from-purple-600 to-pink-600 text-white border-0 shadow-lg shadow-purple-500/30"
-                          : "bg-green-500/20 text-green-700 dark:text-green-400 border-green-500/50"
-                      )}>
+                      <Badge variant="outline" className="shrink-0 h-5 px-2 text-[10px] font-semibold backdrop-blur-sm bg-green-500/20 text-green-700 dark:text-green-400 border-green-500/50">
                         New
                       </Badge>
                     </motion.div>
@@ -263,21 +235,6 @@ export function AppSidebar() {
           <TooltipContent side="right">
             <p className="font-medium">{item.title}</p>
             <p className="text-xs text-muted-foreground">Requires {planName}</p>
-          </TooltipContent>
-        </Tooltip>
-      );
-    }
-
-    if (isAICoach) {
-      return (
-        <Tooltip key={item.title}>
-          <TooltipTrigger asChild>
-            <div className="relative">
-              {navContent}
-            </div>
-          </TooltipTrigger>
-          <TooltipContent side="right">
-            <p className="text-xs">Make your business smarter using AI</p>
           </TooltipContent>
         </Tooltip>
       );
@@ -472,6 +429,7 @@ export function AppSidebar() {
         </SidebarGroup>
 
         {/* Pro Features - Collapsible */}
+        {proItems.length > 0 && (
         <SidebarGroup>
           <Collapsible open={proOpen} onOpenChange={setProOpen} className="group/collapsible">
             <CollapsibleTrigger asChild>
@@ -537,6 +495,7 @@ export function AppSidebar() {
             </CollapsibleContent>
           </Collapsible>
         </SidebarGroup>
+        )}
 
         {/* Premium Features - Business Operations - Collapsible */}
         <SidebarGroup>
@@ -680,7 +639,7 @@ export function AppSidebar() {
           </Collapsible>
         </SidebarGroup>
 
-        {/* Premium Features - Reports & Exports - Collapsible */}
+        {/* Premium Features - Reports - Collapsible */}
         <SidebarGroup>
           <Collapsible open={premiumReportsOpen} onOpenChange={setPremiumReportsOpen} className="group/collapsible">
             <CollapsibleTrigger asChild>
@@ -810,7 +769,7 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
 
-        {/* Admin CMS Section */}
+        {/* Admin Section */}
         <SidebarGroup>
           <AnimatePresence>
             {open && (

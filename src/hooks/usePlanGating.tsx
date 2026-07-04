@@ -9,29 +9,16 @@ type FeatureAccess = {
 };
 
 const FEATURE_ACCESS: Record<string, FeatureAccess> = {
-  // Free tier - /dashboard, /bills, /analytics
   dashboard: { requiredPlan: 'free', featureName: 'Dashboard' },
   bills: { requiredPlan: 'free', featureName: 'Bills' },
   analytics: { requiredPlan: 'free', featureName: 'Analytics' },
-  
-  // Pro tier - /savings-goals, /emi-manager, /spending-insights, /whatsapp
-  'savings-goals': { requiredPlan: 'pro', featureName: 'Savings Goals' },
-  'emi-manager': { requiredPlan: 'pro', featureName: 'EMI & Debt Manager' },
-  'spending-insights': { requiredPlan: 'pro', featureName: 'Spending Insights' },
   'whatsapp-reminders': { requiredPlan: 'pro', featureName: 'WhatsApp Bill Reminders' },
-  
-  // Premium tier - /sales, /purchases, /expenses, /inventory, /gst-summary, /exports, /reports/*, /e-invoice
   sales: { requiredPlan: 'premium', featureName: 'Sales Orders' },
   purchases: { requiredPlan: 'premium', featureName: 'Purchase Orders' },
   expenses: { requiredPlan: 'premium', featureName: 'Expenses' },
-  inventory: { requiredPlan: 'premium', featureName: 'Inventory Management' },
   'gst-summary': { requiredPlan: 'premium', featureName: 'GST/VAT Summary' },
-  exports: { requiredPlan: 'premium', featureName: 'Exports' },
   'reports/tax': { requiredPlan: 'premium', featureName: 'Tax Reports' },
   'reports/financial': { requiredPlan: 'premium', featureName: 'Financial Reports' },
-  'e-invoice': { requiredPlan: 'premium', featureName: 'E-Invoicing (IRN, E-way Bill)' },
-  'e-invoice-settings': { requiredPlan: 'premium', featureName: 'E-Invoice Settings' },
-  'gstr-filing': { requiredPlan: 'premium', featureName: 'GSTR Filing (GSTR-1, GSTR-3B)' },
 };
 
 export const usePlanGating = () => {
@@ -45,7 +32,6 @@ export const usePlanGating = () => {
     const userRank = rank[premiumStatus.plan];
     const requiredRank = rank[requiredPlan];
     
-    // Check if plan is active
     if (!premiumStatus.isActive && requiredPlan !== 'free') {
       return false;
     }

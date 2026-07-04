@@ -25,7 +25,7 @@ const FreemiumLimitCard = ({ type, currentCount, onUpgrade, className }: Freemiu
       return {
         title: isAtLimit ? "You've reached your bill limit!" : "Almost at your bill limit!",
         message: isAtLimit 
-          ? `You have ${currentCount} bills (free limit: ${billLimit}). Upgrade to Pro for unlimited bills and AI coaching.`
+          ? `You have ${currentCount} bills (free limit: ${billLimit}). Upgrade to Pro for unlimited bills and WhatsApp reminders.`
           : `You have ${currentCount} of ${billLimit} bills. Upgrade to Pro for unlimited bills and advanced features.`,
         icon: <Infinity className="h-6 w-6 text-yellow-600 mt-1 flex-shrink-0" />,
         color: "from-orange-50 to-yellow-50 border-orange-200"
@@ -35,8 +35,8 @@ const FreemiumLimitCard = ({ type, currentCount, onUpgrade, className }: Freemiu
       return {
         title: remaining === 0 ? "AI queries limit reached!" : "Almost out of AI queries!",
         message: remaining === 0
-          ? `You've used all ${aiQueriesLimit} AI queries this month. Upgrade to Pro for unlimited AI coaching.`
-          : `You have ${remaining} AI queries left this month. Upgrade to Pro for unlimited AI financial coach.`,
+          ? `You've used all ${aiQueriesLimit} AI queries this month. Upgrade to Pro for unlimited access.`
+          : `You have ${remaining} AI queries left this month. Upgrade to Pro for unlimited access.`,
         icon: <Zap className="h-6 w-6 text-yellow-600 mt-1 flex-shrink-0" />,
         color: "from-blue-50 to-purple-50 border-blue-200"
       };

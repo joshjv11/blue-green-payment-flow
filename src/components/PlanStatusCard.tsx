@@ -130,7 +130,7 @@ const PlanStatusCard = ({ onUpgrade, compact = false }: PlanStatusCardProps) => 
               <span className="font-medium">Pro benefits active</span>
             </div>
             <p className="text-xs text-muted-foreground mt-1">
-              Unlimited bills, AI coaching, advanced analytics, and priority support
+              Unlimited bills, WhatsApp reminders, advanced analytics, and priority support
             </p>
           </div>
         )}

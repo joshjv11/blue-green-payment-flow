@@ -27,36 +27,22 @@ import Settings from './pages/Settings';
 import Sales from './pages/Sales';
 import SalesList from './pages/SalesList';
 import SalesV2 from './pages/SalesV2';
-import WhatsAppDashboard from './pages/WhatsAppDashboard';
 import Purchases from './pages/Purchases';
 import PurchasesV2 from './pages/PurchasesV2';
 import PurchasesList from './pages/PurchasesList';
-import Inventory from './pages/Inventory';
-import InventoryLedger from './pages/InventoryLedger';
 import GSTSummary from './pages/GSTSummary';
-import Exports from './pages/Exports';
 import Reports from './pages/Reports';
 import TaxSettings from './pages/TaxSettings';
-import EInvoiceSettings from './pages/EInvoiceSettings';
-import GSTRFiling from './pages/GSTRFiling';
 import GSTDashboard from './pages/GSTDashboard';
-import SavingsGoals from './pages/SavingsGoals';
-import EMIManager from './pages/EMIManager';
-import SpendingInsights from './pages/SpendingInsights';
 import Expenses from './pages/Expenses';
 import FinancialReports from './pages/FinancialReports';
-import AICoach from './pages/AICoach';
 import Upgrade from './pages/Upgrade';
 import Payment from './pages/Payment';
 import PaymentSuccess from './pages/PaymentSuccess';
 import Admin from './pages/Admin';
-import AdminCMS from './pages/AdminCMS';
 import AdminUsers from './pages/AdminUsers';
 import AdminUserPlans from './pages/AdminUserPlans';
 import AdminPlans from './pages/AdminPlans';
-import AdminDbHealth from './pages/AdminDbHealth';
-import AdminLogs from './pages/AdminLogs';
-import ComponentPlayground from './pages/ComponentPlayground';
 import NotFound from './pages/NotFound';
 import { RequirePlan } from './components/RequirePlan';
 
@@ -122,16 +108,6 @@ function AppRoutes() {
         }
       />
       <Route
-        path="/whatsapp"
-        element={
-          <ProtectedRoute>
-            <RequirePlan requiredPlan="pro" featureName="WhatsApp Business Integration">
-              <PageTransition><WhatsAppDashboard /></PageTransition>
-            </RequirePlan>
-          </ProtectedRoute>
-        }
-      />
-      <Route
         path="/purchases"
         element={
           <ProtectedRoute>
@@ -172,34 +148,6 @@ function AppRoutes() {
         }
       />
       <Route
-        path="/inventory"
-        element={
-          <ProtectedRoute>
-            <RequirePlan requiredPlan="premium" featureName="Inventory Management">
-              <PageTransition><Inventory /></PageTransition>
-            </RequirePlan>
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/inventory-ledger"
-        element={
-          <ProtectedRoute>
-            <RequirePlan requiredPlan="premium" featureName="Inventory Management">
-              <PageTransition><InventoryLedger /></PageTransition>
-            </RequirePlan>
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/ai-coach"
-        element={
-          <ProtectedRoute>
-            <PageTransition><AICoach /></PageTransition>
-          </ProtectedRoute>
-        }
-      />
-      <Route
         path="/gst-summary"
         element={
           <ProtectedRoute>
@@ -225,16 +173,6 @@ function AppRoutes() {
           <ProtectedRoute>
             <RequirePlan requiredPlan="premium" featureName="Financial Reports">
               <PageTransition><FinancialReports /></PageTransition>
-            </RequirePlan>
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/exports"
-        element={
-          <ProtectedRoute>
-            <RequirePlan requiredPlan="premium" featureName="Exports">
-              <PageTransition><Exports /></PageTransition>
             </RequirePlan>
           </ProtectedRoute>
         }
@@ -266,56 +204,6 @@ function AppRoutes() {
         }
       />
       <Route
-        path="/settings/e-invoice"
-        element={
-          <ProtectedRoute>
-            <RequirePlan requiredPlan="premium" featureName="E-Invoice Settings">
-              <PageTransition><EInvoiceSettings /></PageTransition>
-            </RequirePlan>
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/gstr-filing"
-        element={
-          <ProtectedRoute>
-            <RequirePlan requiredPlan="premium" featureName="GSTR Filing">
-              <PageTransition><GSTRFiling /></PageTransition>
-            </RequirePlan>
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/savings-goals"
-        element={
-          <ProtectedRoute>
-            <RequirePlan requiredPlan="pro" featureName="Savings Goals">
-              <PageTransition><SavingsGoals /></PageTransition>
-            </RequirePlan>
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/emi-manager"
-        element={
-          <ProtectedRoute>
-            <RequirePlan requiredPlan="pro" featureName="EMI Manager">
-              <PageTransition><EMIManager /></PageTransition>
-            </RequirePlan>
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/spending-insights"
-        element={
-          <ProtectedRoute>
-            <RequirePlan requiredPlan="pro" featureName="Spending Insights">
-              <PageTransition><SpendingInsights /></PageTransition>
-            </RequirePlan>
-          </ProtectedRoute>
-        }
-      />
-      <Route
         path="/upgrade"
         element={
           <ProtectedRoute>
@@ -340,12 +228,6 @@ function AppRoutes() {
         }
       />
       <Route
-        path="/admin-cms"
-        element={
-          <PageTransition><AdminCMS /></PageTransition>
-        }
-      />
-      <Route
         path="/admin"
         element={
           <ProtectedRoute>
@@ -366,30 +248,6 @@ function AppRoutes() {
         element={
           <ProtectedRoute>
             <PageTransition><AdminPlans /></PageTransition>
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/admin/db-health"
-        element={
-          <ProtectedRoute>
-            <PageTransition><AdminDbHealth /></PageTransition>
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/admin/logs"
-        element={
-          <ProtectedRoute>
-            <PageTransition><AdminLogs /></PageTransition>
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/component-playground"
-        element={
-          <ProtectedRoute>
-            <PageTransition><ComponentPlayground /></PageTransition>
           </ProtectedRoute>
         }
       />

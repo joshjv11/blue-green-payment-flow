@@ -34,7 +34,6 @@ import {
 import { cn } from '@/lib/utils';
 import { addDays, format, startOfMonth, addMonths } from 'date-fns';
 import { VoiceInput } from '@/components/mobile/VoiceInput';
-import { OCRScanner } from '@/components/mobile/OCRScanner';
 import { SmartDatePicker } from '@/components/mobile/SmartDatePicker';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
 import { Locale, t } from '@/utils/locale';
@@ -280,34 +279,22 @@ const SmartBillForm = ({ formData, setFormData, onSubmit, editingBill, submittin
           </p>
         </div>
 
-        {/* Amount with Smart Validation - Floating Label + OCR Scanner */}
+        {/* Amount with Smart Validation */}
         <div className="space-y-2">
-          <div className="flex gap-2">
-            <FloatingLabelInput
-              id="amount"
-              type="number"
-              step="0.01"
-              label={t('amount', locale) + ' (₹) *'}
-              value={formData.amount}
-              onChange={(e) => {
-                setFormData({ ...formData, amount: e.target.value });
-                if (e.target.value) validateAmount(e.target.value);
-              }}
-              placeholder={t('amount', locale) + ' (₹) *'}
-              required
-              className="flex-1 min-h-[48px]"
-            />
-            <OCRScanner
-              onAmountDetected={(amount) => {
-                setFormData({ ...formData, amount: amount.toString() });
-                validateAmount(amount.toString());
-                toast({
-                  title: 'Amount Scanned',
-                  description: `₹${amount.toLocaleString('en-IN')} detected`,
-                });
-              }}
-            />
-          </div>
+          <FloatingLabelInput
+            id="amount"
+            type="number"
+            step="0.01"
+            label={t('amount', locale) + ' (₹) *'}
+            value={formData.amount}
+            onChange={(e) => {
+              setFormData({ ...formData, amount: e.target.value });
+              if (e.target.value) validateAmount(e.target.value);
+            }}
+            placeholder={t('amount', locale) + ' (₹) *'}
+            required
+            className="min-h-[48px]"
+          />
         </div>
 
         {/* Smart Due Date Selection */}

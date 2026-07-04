@@ -1,36 +1,11 @@
 
-import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { CheckCircle2, ArrowRight } from 'lucide-react';
-import confetti from 'canvas-confetti';
 
 const PaymentSuccess = () => {
     const navigate = useNavigate();
-
-    useEffect(() => {
-        // Fire confetti
-        const duration = 5 * 1000;
-        const animationEnd = Date.now() + duration;
-        const defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 0 };
-
-        const random = (min: number, max: number) => Math.random() * (max - min) + min;
-
-        const interval: any = setInterval(function () {
-            const timeLeft = animationEnd - Date.now();
-
-            if (timeLeft <= 0) {
-                return clearInterval(interval);
-            }
-
-            const particleCount = 50 * (timeLeft / duration);
-            confetti({ ...defaults, particleCount, origin: { x: random(0.1, 0.3), y: Math.random() - 0.2 } });
-            confetti({ ...defaults, particleCount, origin: { x: random(0.7, 0.9), y: Math.random() - 0.2 } });
-        }, 250);
-
-        return () => clearInterval(interval);
-    }, []);
 
     return (
         <div className="min-h-screen grid place-items-center bg-gray-50 dark:bg-gray-900 p-4">
@@ -46,7 +21,7 @@ const PaymentSuccess = () => {
                 </CardHeader>
                 <CardContent className="space-y-6 pt-4">
                     <p className="text-center text-muted-foreground">
-                        Your transaction has been completed successfully via Dodo Payments.
+                        Your transaction has been completed successfully.
                         You will receive a confirmation email shortly.
                     </p>
 

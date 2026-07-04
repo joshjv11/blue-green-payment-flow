@@ -284,7 +284,7 @@ const LandingPage = () => {
             <FeatureCard
               icon={Receipt}
               title="GST Compliance"
-              description="One-click GSTR filing, ITC reconciliation, and e-invoice generation. Stay compliant effortlessly."
+              description="GSTR filing support, ITC reconciliation, and tax reports. Stay compliant with less manual work."
               delay={0.3}
               gradient="amber"
             />

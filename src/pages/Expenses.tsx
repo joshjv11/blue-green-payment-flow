@@ -4,8 +4,7 @@ import { supabase } from '@/lib/supabase';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Download, Upload, Plus } from 'lucide-react';
-import { ReceiptUpload } from '@/components/ReceiptUpload';
+import { Download, Wallet } from 'lucide-react';
 import { ExpensesTable } from '@/components/ExpensesTable';
 import { ExpenseCategoryFilter } from '@/components/ExpenseCategoryFilter';
 import { ExpenseChart } from '@/components/ExpenseChart';
@@ -51,7 +50,6 @@ const Expenses = () => {
   const [filteredExpenses, setFilteredExpenses] = useState<Expense[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState('All');
-  const [showUploadModal, setShowUploadModal] = useState(false);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
 
   useEffect(() => {
@@ -90,11 +88,6 @@ const Expenses = () => {
     } finally {
       setLoading(false);
     }
-  };
-
-  const handleExpenseAdded = () => {
-    fetchExpenses();
-    setShowUploadModal(false);
   };
 
   const handleExportCSV = () => {
@@ -143,23 +136,23 @@ const Expenses = () => {
             <Card className="shadow-lg border-2">
               <CardHeader>
                 <CardTitle className="text-2xl flex items-center gap-2">
-                  <Upload className="h-6 w-6" />
+                  <Wallet className="h-6 w-6" />
                   Expense Tracker
                 </CardTitle>
                 <CardDescription>
-                  Track expenses with OCR receipt scanning, categorization, and detailed reports
+                  Track expenses with categorization and detailed reports
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
                 <div className="bg-gradient-to-r from-orange-50 to-yellow-50 border border-orange-200 rounded-lg p-6">
                   <div className="flex items-start gap-4">
                     <div className="bg-white rounded-full p-3 shadow-sm">
-                      <Upload className="h-6 w-6 text-orange-600" />
+                      <Wallet className="h-6 w-6 text-orange-600" />
                     </div>
                     <div>
                       <h3 className="font-semibold text-lg mb-2">Premium Feature</h3>
                       <p className="text-sm text-muted-foreground mb-4">
-                        Upgrade to Premium to unlock expense tracking with OCR receipt scanning, automatic categorization, and detailed reports.
+                        Upgrade to Premium to unlock expense tracking, automatic categorization, and detailed reports.
                       </p>
                       <Button onClick={() => setShowUpgradeModal(true)}>
                         Upgrade to Premium
@@ -191,7 +184,7 @@ const Expenses = () => {
           <div>
             <h1 className="text-3xl font-bold">Expense Tracker</h1>
             <p className="text-muted-foreground mt-1">
-              Manage your expenses with OCR-powered receipt scanning
+              Manage and track your business expenses
             </p>
           </div>
           <div className="flex gap-2">
@@ -202,10 +195,6 @@ const Expenses = () => {
             <Button variant="outline" onClick={handleExportPDF}>
               <Download className="h-4 w-4 mr-2" />
               PDF
-            </Button>
-            <Button onClick={() => setShowUploadModal(true)}>
-              <Plus className="h-4 w-4 mr-2" />
-              Upload Receipt
             </Button>
           </div>
         </div>
@@ -244,14 +233,6 @@ const Expenses = () => {
           loading={loading}
           onRefresh={fetchExpenses}
         />
-
-        {/* Upload Modal */}
-        {showUploadModal && (
-          <ReceiptUpload
-            onClose={() => setShowUploadModal(false)}
-            onSuccess={handleExpenseAdded}
-          />
-        )}
 
         {/* Upgrade Modal */}
         <UpgradeModal

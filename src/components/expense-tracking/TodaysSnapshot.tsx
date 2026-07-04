@@ -1,7 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { DailyBudgetCard } from './DailyBudgetCard';
 import { Calendar, TrendingUp, Target } from 'lucide-react';
-import { format, startOfWeek, startOfMonth, subDays } from 'date-fns';
+import { format, startOfWeek, startOfMonth } from 'date-fns';
 
 interface TodaysSnapshotProps {
   dailyBudget: number;
@@ -25,7 +25,6 @@ export function TodaysSnapshot({
 
   return (
     <div className="space-y-4">
-      {/* Daily Budget Card - Most Prominent */}
       <DailyBudgetCard
         dailyBudget={dailyBudget}
         todaySpent={todaySpent}
@@ -33,12 +32,8 @@ export function TodaysSnapshot({
         monthlySpent={monthlySpent}
       />
 
-      {/* Quick Stats Row */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card className="cursor-pointer hover:bg-accent transition-colors" onClick={() => {
-          // Navigate to weekly breakdown
-          window.location.href = '/spending-insights?tab=weekly';
-        }}>
+        <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium flex items-center gap-2">
               <Calendar className="h-4 w-4" />
@@ -55,10 +50,7 @@ export function TodaysSnapshot({
           </CardContent>
         </Card>
 
-        <Card className="cursor-pointer hover:bg-accent transition-colors" onClick={() => {
-          // Navigate to monthly breakdown
-          window.location.href = '/spending-insights?tab=monthly';
-        }}>
+        <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium flex items-center gap-2">
               <TrendingUp className="h-4 w-4" />
@@ -75,10 +67,7 @@ export function TodaysSnapshot({
           </CardContent>
         </Card>
 
-        <Card className="cursor-pointer hover:bg-accent transition-colors" onClick={() => {
-          // Navigate to insights
-          window.location.href = '/spending-insights?tab=insights';
-        }}>
+        <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium flex items-center gap-2">
               <Target className="h-4 w-4" />
@@ -98,4 +87,3 @@ export function TodaysSnapshot({
     </div>
   );
 }
-

@@ -33,15 +33,14 @@ const UpgradeModal: React.FC<UpgradeModalProps> = ({
 
   const freeFeatures = [
     'Up to 5 bills',
-    'Only 3 AI queries per month',
     'Basic bill tracking',
     'Due date reminders',
     'Export/Import data'
   ];
 
   const proFeatures = [
-    'Unlimited bills & AI queries',
-    'AI financial coach & insights',
+    'Unlimited bills',
+    'WhatsApp payment reminders',
     'Advanced analytics & reports',
     'Email & SMS reminders',
     'Team collaboration',
@@ -49,7 +48,6 @@ const UpgradeModal: React.FC<UpgradeModalProps> = ({
     'Bill categorization',
     'Recurring bill automation',
     'Payment history tracking',
-    'Smart financial recommendations'
   ];
 
   const getTriggerMessage = () => {
@@ -57,19 +55,19 @@ const UpgradeModal: React.FC<UpgradeModalProps> = ({
       case 'bills':
         return {
           title: "You've reached your bill limit!",
-          message: `You have ${currentBillCount} bills (free limit: 5). Upgrade to Pro for unlimited bills and AI coaching.`,
+          message: `You have ${currentBillCount} bills (free limit: 5). Upgrade to Pro for unlimited bills and WhatsApp reminders.`,
           icon: <Infinity className="h-5 w-5 text-orange-600" />
         };
       case 'ai':
         return {
           title: "AI queries limit reached!",
-          message: `You've used ${aiQueriesUsed} of ${aiQueriesLimit} AI queries this month. Upgrade for unlimited AI financial coaching.`,
+          message: `You've used ${aiQueriesUsed} of ${aiQueriesLimit} queries this month. Upgrade for unlimited access.`,
           icon: <Zap className="h-5 w-5 text-orange-600" />
         };
       default:
         return {
           title: "Unlock Premium Features!",
-          message: "Get unlimited bills, AI coaching, and advanced analytics for less than ₹4 per day.",
+          message: "Get unlimited bills, WhatsApp reminders, and advanced analytics for less than ₹4 per day.",
           icon: <Crown className="h-5 w-5 text-orange-600" />
         };
     }

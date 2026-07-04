@@ -4,25 +4,18 @@ import {
   LayoutDashboard,
   FileText,
   BarChart3,
-  Brain,
-  MessageCircle,
-  Target,
-  CreditCard,
-  PieChart,
   ShoppingCart,
   ShoppingBag,
-  Package,
   Wallet,
   Shield,
   Receipt,
-  Download,
   Settings,
   LogOut,
   ChevronRight,
-  Zap,
   Sparkles,
   Lock,
   Crown,
+  Zap,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -61,39 +54,27 @@ const coreItems: NavItem[] = [
   { title: 'Analytics', url: '/analytics', icon: BarChart3, featureKey: 'analytics' },
 ];
 
-// Pro Features
-const proItems: NavItem[] = [
-  { title: 'AI Coach', url: '/ai-coach', icon: Brain, featureKey: 'ai-coach', isProminent: true, isNew: true },
-  { title: 'WhatsApp', url: '/whatsapp', icon: MessageCircle, featureKey: 'whatsapp', requiredPlan: 'pro', isProminent: true },
-  { title: 'Savings Goals', url: '/savings-goals', icon: Target, featureKey: 'savings-goals', requiredPlan: 'pro' },
-  { title: 'EMI Manager', url: '/emi-manager', icon: CreditCard, featureKey: 'emi-manager', requiredPlan: 'pro' },
-  { title: 'Spending Insights', url: '/spending-insights', icon: PieChart, featureKey: 'spending-insights', requiredPlan: 'pro' },
-];
 
 // Premium Features - Business Operations
 const premiumBusinessItems: NavItem[] = [
   { title: 'Sales', url: '/sales', icon: ShoppingCart, featureKey: 'sales', requiredPlan: 'premium' },
   { title: 'Purchases', url: '/purchases', icon: ShoppingBag, featureKey: 'purchases', requiredPlan: 'premium' },
-  { title: 'Inventory', url: '/inventory', icon: Package, featureKey: 'inventory', requiredPlan: 'premium' },
   { title: 'Expenses', url: '/expenses', icon: Wallet, featureKey: 'expenses', requiredPlan: 'premium' },
 ];
 
 // Premium Features - GST & Compliance
 const premiumGSTItems: NavItem[] = [
   { title: 'GST Dashboard', url: '/gst', icon: Shield, featureKey: 'gst', requiredPlan: 'premium', isProminent: true, isNew: true },
-  { title: 'GSTR Filing', url: '/gstr-filing', icon: Receipt, featureKey: 'gstr-filing', requiredPlan: 'premium' },
 ];
 
-// Premium Features - Reports & Exports
+// Premium Features - Reports
 const premiumReportsItems: NavItem[] = [
   { title: 'Tax Reports', url: '/reports/tax', icon: Receipt, featureKey: 'reports/tax', requiredPlan: 'premium' },
   { title: 'Financial Reports', url: '/reports/financial', icon: BarChart3, featureKey: 'reports/financial', requiredPlan: 'premium' },
-  { title: 'Exports', url: '/exports', icon: Download, featureKey: 'exports', requiredPlan: 'premium' },
 ];
 
 // Admin Items
 const adminItems: NavItem[] = [
-  { title: 'Admin CMS', url: '/admin-cms', icon: Shield, featureKey: 'admin-cms' },
   { title: 'Sales List', url: '/sales-list', icon: ShoppingCart, featureKey: 'sales-list', requiredPlan: 'premium' },
   { title: 'Purchases List', url: '/purchases-list', icon: ShoppingBag, featureKey: 'purchases-list', requiredPlan: 'premium' },
 ];
@@ -234,37 +215,6 @@ export function HorizontalNavbar() {
             {/* Core Items - Always Visible */}
             {coreItems.filter(item => item && item.icon).map(item => renderNavItem(item))}
 
-            {/* Pro Features Dropdown */}
-            {(isPro || isPremium) && (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    className={cn(
-                      'flex items-center gap-2 px-4 py-2.5 h-auto font-medium text-sm',
-                      (location.pathname.startsWith('/ai-coach') ||
-                       location.pathname.startsWith('/whatsapp') ||
-                       location.pathname.startsWith('/savings-goals') ||
-                       location.pathname.startsWith('/emi-manager') ||
-                       location.pathname.startsWith('/spending-insights')) && 'bg-primary/10 text-primary'
-                    )}
-                  >
-                    <Zap className="h-4 w-4 text-blue-500" />
-                    <span>Pro</span>
-                    <ChevronRight className="h-3 w-3 ml-1 rotate-90" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="start" className="w-56">
-                  <DropdownMenuLabel className="flex items-center gap-2">
-                    <Zap className="h-4 w-4 text-blue-500" />
-                    Pro Features
-                  </DropdownMenuLabel>
-                  <DropdownMenuSeparator />
-                  {proItems.filter(item => item && item.icon).map(item => renderNavItem(item, true))}
-                </DropdownMenuContent>
-              </DropdownMenu>
-            )}
-
             {/* Premium Features - Business Dropdown with nested Reports */}
             {isPremium && (
               <DropdownMenu>
@@ -275,10 +225,8 @@ export function HorizontalNavbar() {
                       'flex items-center gap-2 px-4 py-2.5 h-auto font-medium text-sm',
                       (location.pathname.startsWith('/sales') ||
                        location.pathname.startsWith('/purchases') ||
-                       location.pathname.startsWith('/inventory') ||
                        location.pathname.startsWith('/expenses') ||
-                       location.pathname.startsWith('/reports') ||
-                       location.pathname.startsWith('/exports')) && 'bg-primary/10 text-primary'
+                       location.pathname.startsWith('/reports')) && 'bg-primary/10 text-primary'
                     )}
                   >
                     <Sparkles className="h-4 w-4 text-purple-500" />
@@ -297,7 +245,7 @@ export function HorizontalNavbar() {
                   <DropdownMenuSub>
                     <DropdownMenuSubTrigger className="flex items-center gap-3">
                       <BarChart3 className="h-4 w-4" />
-                      <span>Reports & Exports</span>
+                      <span>Reports</span>
                     </DropdownMenuSubTrigger>
                     <DropdownMenuSubContent className="w-56">
                       {premiumReportsItems.filter(item => item && item.icon).map(item => renderNavItem(item, true))}
@@ -315,7 +263,7 @@ export function HorizontalNavbar() {
                     variant="ghost"
                     className={cn(
                       'flex items-center gap-2 px-4 py-2.5 h-auto font-medium text-sm',
-                      (location.pathname.startsWith('/gst') || location.pathname.startsWith('/gstr-filing')) && 'bg-primary/10 text-primary'
+                      (location.pathname.startsWith('/gst')) && 'bg-primary/10 text-primary'
                     )}
                   >
                     <Shield className="h-4 w-4 text-purple-500" />
@@ -348,7 +296,7 @@ export function HorizontalNavbar() {
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="start" className="w-56">
-                  <DropdownMenuLabel>Reports & Exports</DropdownMenuLabel>
+                  <DropdownMenuLabel>Reports</DropdownMenuLabel>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem disabled className="flex items-center gap-2">
                     <Lock className="h-4 w-4" />
